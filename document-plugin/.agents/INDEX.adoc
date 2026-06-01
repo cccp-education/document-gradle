@@ -1,0 +1,95 @@
+= INDEX — Document Gradle (New Orleans 🟢)
+:toc:
+
+_Règles absolues_ : voir `AGENT.adoc`
+_DAG_ : N2 — Plugin Gradle de transformation AsciiDoc multi-format (HTML/PDF/EPUB/DocBook/ManPage)
+_Dépendance N2_ : codex-gradle (compileOnly, AsciidoctorJ partagé)
+
+_Dernière mise à jour_ : 2026-06-01 (Session 000 — Bootstrap)
+_Session terminée_ : 000 — Bootstrap gouvernance + cadrage architecture
+_Prochaine session_ : 001 — Implémentation plugin Gradle stub
+
+'''
+== RÈGLES ABSOLUES (résumé)
+
+=== 1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
+=== 2. PUBLISH — INTERDICTION FORMELLE sans permission
+=== 3. DAG N2 — importable par N3 runner-gradle, jamais importe N3
+=== 4. PROCÉDURE DE FIN DE SESSION — 6 ÉTAPES OBLIGATOIRES
+=== 5. HOOK OUVERTURE — Checklist SESSION_CHECKLIST.adoc obligatoire
+=== 6. ZERO secret/token/api key en dur dans le code source
+=== 7. DOCUMENT CONSOMME ASCIIDOC — lecture seule
+
+'''
+== EPIC DOC-0 — Bootstrap Gouvernance + Cadrage Architecture
+
+[cols="1,3,2", options="header"]
+|===
+| Phase | Livrable | Statut
+| DOC-0a | Structure projet document-gradle/ (root + document-plugin/) | ✅ 2026-06-01
+| DOC-0b | Gouvernance agent (.agents/, AGENT.adoc, INDEX.adoc) | ✅ 2026-06-01
+| DOC-0c | Mise à jour AGENTS.adoc (New Orleans 14ème borough) | ✅ 2026-06-01
+| DOC-0d | Mise à jour PLAN_GLOBAL.adoc (EPIC DOC-x) | ✅ 2026-06-01
+|===
+
+'''
+== Roadmap — État Actuel
+
+[cols="1,3,2,2", options="header"]
+|===
+| EPIC | Description | Statut | Priorité
+| DOC-0 | Bootstrap gouvernance + cadrage architecture | ✅ TERMINÉ (session 000) | P0
+| DOC-1 | Plugin Gradle stub + build structure (settings, build, plugin class, extension) | À faire | P0
+| DOC-2 | generateDocument — génération AsciiDoc assistée par IA via langchain4j (deepseek-v4-pro) | À faire | P1
+| DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | À faire | P1
+| DOC-4 | convertDocumentToPdf — AsciiDoc → PDF (AsciidoctorJ pdf backend) | À faire | P1
+| DOC-5 | Tâches convertDocumentToEpub/DocBook/ManPage | À faire | P2
+| DOC-6 | Intégration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
+| DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
+|===
+
+'''
+== Sessions
+
+|===
+| # | Date | Type | Sujet | Score
+| 000 | 2026-06-01 | bootstrap | DOC-0 — Bootstrap gouvernance + cadrage architecture | ✅ TERMINÉ
+|===
+
+'''
+== Portefeuille — 14 Boroughs
+
+|===
+| Borough | Projet | DAG | Sessions
+| Newark 🔴 | training-gradle | N2 | 010
+| Manhattan | planner-gradle | N2 | 008
+| Brooklyn | codex-gradle | N2 | 018
+| Queens | codebase-gradle | N1 | 046
+| The Bronx | quizz-benchmark-gradle | N2 | 006
+| Staten Island | magic-stick | N2 | 004
+| New Jersey | runner-gradle | N3 | 011
+| Compton | waiter-gradle | N2 | 000
+| Détroit | capsule-gradle | N2 | 000
+| South Central | workspace-gradle | N4 | 001
+| Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
+| Watts 🟠 | hyperframes-gradle | N2 | 000
+| Chiraq 🟤 | readme-gradle | N2 | 003
+| New Orleans 🟢 | document-gradle | N2 | 000
+| Atlanta | agile-gradle | N4 | 000
+|===
+
+'''
+== Fichiers Associés
+
+|===
+| Fichier | Rôle | Type
+| `AGENT.adoc` | Directives complètes | EAGER
+| `.agents/INDEX.adoc` | Dashboard + roadmap + portefeuille | EAGER
+| `.agents/SESSION_CHECKLIST.adoc` | Checklist ouverture/fermeture session | EAGER
+| `.agents/SESSION_PROCEDURE.adoc` | Procédure 6 étapes fin de session | EAGER
+| `PROMPT_REPRISE.adoc` | Mission session en cours | EAGER
+| `.agents/sessions/` | Archives par session | LAZY
+| `.agents/archives/` | Archives tâches terminées | LAZY
+|===
+
+Voir aussi : `TAXONOMIE_WORKSPACE.adoc` (racine workspace) pour l'ontologie complète.

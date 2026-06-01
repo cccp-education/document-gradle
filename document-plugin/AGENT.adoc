@@ -1,0 +1,87 @@
+= AGENT.adoc — Document Gradle
+
+_Produit_ : Plugin Gradle de génération assistée par IA + conversion multi-format AsciiDoc
+_Licence_ : Apache 2.0 (OSS)
+_DAG_ : N2 — Plugin Gradle de documentation
+_Dépendance_ : codex-gradle (compileOnly, AsciidoctorJ partagé), planner-gradle (LLM prompting)
+
+== Principe
+
+Le plugin `document` a deux missions complémentaires :
+
+=== 1. Génération assistée par IA de contenu AsciiDoc
+
+L'IA assiste la rédaction de contenu documentaire en AsciiDoc :
+génération de spécifications, rapports, documentation technique,
+manuels utilisateur, à partir d'un prompt structuré. La tâche
+`generateDocument` utilise un LLM (deepseek-v4-pro) via langchain4j
+pour produire le squelette AsciiDoc que l'humain valide et enrichit.
+
+=== 2. Conversion multi-format via AsciidoctorJ
+
+Le plugin expose chaque convertisseur AsciidoctorJ comme une tâche
+Gradle isolée : HTML5, PDF, EPUB3, DocBook 5, ManPage. Configuration
+fine des attributs, des templates et des options de rendu.
+
+Pipeline complet :
+  Prompt ──→ IA (LLM) ──→ AsciiDoc généré ──→ validation humaine ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
+
+Cas d'usage MVP0 :
+- Génération de documentation technique des plugins (README, specs)
+- Conversion des SPG/SPD AsciiDoc en PDF stagiaire
+- Export EPUB des sessions de formation pour lecture hors-ligne
+- Génération de manuels utilisateur et documentation API
+- Documentation technique des plugins Gradle au format DocBook
+
+== Règles Absolues
+
+=== 1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
+=== 2. PUBLISH — INTERDICTION FORMELLE sans permission
+=== 3. DAG N2 — importable par N3 runner-gradle, jamais importe N3
+=== 4. PROCEDURE DE FIN DE SESSION — 6 ETAPES OBLIGATOIRES (voir `.agents/SESSION_PROCEDURE.adoc`)
+=== 5. HOOK OUVERTURE — Checklist `.agents/SESSION_CHECKLIST.adoc` obligatoire
+=== 6. ZERO secret/token/api key en dur dans le code source
+=== 7. DOCUMENT CONSOMME ASCIIDOC — lit + transforme, ne modifie jamais la source originale
+
+== Tâches Principales
+
+  ./gradlew generateDocument          → génération AsciiDoc assistée par IA (LLM)
+  ./gradlew convertDocumentToHtml     → AsciiDoc → HTML (AsciidoctorJ html5)
+  ./gradlew convertDocumentToPdf      → AsciiDoc → PDF (AsciidoctorJ pdf)
+  ./gradlew convertDocumentToEpub     → AsciiDoc → EPUB (AsciidoctorJ epub)
+  ./gradlew convertDocumentToDocBook  → AsciiDoc → DocBook (AsciidoctorJ docbook)
+  ./gradlew convertDocumentToManPage  → AsciiDoc → ManPage (AsciidoctorJ manpage)
+  ./gradlew check                     → tous les tests (unitaire + fonctionnel)
+
+== Tests
+
+Le projet utilise JUnit5 et GradleTestKit.
+Toute modification de code source DOIT passer `./gradlew check`
+(sauf permission contraire).
+
+== Stack
+
+- Kotlin — DSL Gradle
+- langchain4j — LLM prompting (deepseek-v4-pro)
+- AsciidoctorJ — parsing et conversion multi-format
+- planner-gradle — dépendance compileOnly, partage LLM bridge
+- codex-gradle — dépendance compileOnly, partage AsciidoctorJ
+
+== Formats supportés (AsciidoctorJ)
+
+[cols="2,3"]
+|===
+| Format | Tâche Gradle
+| AsciiDoc (généré) | `generateDocument`
+| HTML5 | `convertDocumentToHtml`
+| PDF | `convertDocumentToPdf`
+| EPUB3 | `convertDocumentToEpub`
+| DocBook 5 | `convertDocumentToDocBook`
+| ManPage | `convertDocumentToManPage`
+|===
+
+== Ne remplace PAS opencode
+
+Le plugin est invoqué PAR opencode (via tool use).
+Il automatise la génération et la conversion documentaire, mais la
+validation humaine du contenu et du rendu final reste obligatoire.

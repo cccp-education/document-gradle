@@ -1,0 +1,3 @@
+= TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
+
+Aucun test pour l'instant — session 000 bootstrap uniquement.

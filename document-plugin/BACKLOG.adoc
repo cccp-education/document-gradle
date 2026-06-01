@@ -1,0 +1,154 @@
+= BACKLOG — Document Gradle (New Orleans 🟢)
+:toc:
+
+_Date création_ : 2026-06-01
+_Version_ : 0.1.0-SNAPSHOT
+
+'''
+== Vision Produit
+
+Un plugin Gradle N2 qui **génère du contenu AsciiDoc assisté par IA**
+et le **transforme dans tous les formats supportés par AsciidoctorJ**
+(HTML5, PDF, EPUB3, DocBook 5, ManPage), sans sortir du pipeline Gradle.
+
+Le plugin couvre deux missions complémentaires :
+
+1. **Génération IA** → un LLM (deepseek-v4-pro) assiste la rédaction
+   de documentation, specs, manuels, rapports en AsciiDoc structuré
+2. **Conversion multi-format** → chaque backend AsciidoctorJ est exposé
+   comme une tâche Gradle isolée avec configuration fine
+
+'''
+== User Stories
+
+=== US-DOC-01 — En tant que rédacteur technique, je veux générer un squelette AsciiDoc via IA
+
+*Priorité* : P1
+*EPIC* : DOC-2
+
+.Valeur
+Gagner du temps sur la rédaction de documentation technique : un prompt
+structuré produit un document AsciiDoc cohérent, que l'humain valide et enrichit.
+
+.Critères d'acceptation
+- La tâche `generateDocument` accepte un prompt (fichier ou inline)
+- Le LLM (deepseek-v4-pro via langchain4j) produit un document AsciiDoc structuré
+- Le document respecte les conventions AsciiDoc du workspace (sectionnement, attributs, include)
+- Un fichier `.adoc` valide est écrit dans le répertoire de sortie
+- La source n'est jamais modifiée — seul le fichier généré est produit
+
+=== US-DOC-02 — En tant que formateur, je veux convertir un SPG AsciiDoc en PDF stagiaire
+
+*Priorité* : P1
+*EPIC* : DOC-4
+
+.Valeur
+Un SPG/SPD rédigé en AsciiDoc devient un PDF imprimable pour le stagiaire,
+avec mise en page professionnelle (Asciidoctor PDF).
+
+.Critères d'acceptation
+- `convertDocumentToPdf` produit un PDF depuis un fichier `.adoc` source
+- Le thème PDF est configurable (attributs Asciidoctor, fichier theme YML)
+- Les tableaux, listes, blocs de code et admonitions sont rendus correctement
+- Le PDF est consultable sur mobile et desktop
+
+=== US-DOC-03 — En tant que développeur, je veux convertir une spec AsciiDoc en HTML5
+
+*Priorité* : P1
+*EPIC* : DOC-3
+
+.Valeur
+Une documentation technique en AsciiDoc devient une page HTML navigable,
+idéale pour publication sur site statique ou GitHub Pages.
+
+.Critères d'acceptation
+- `convertDocumentToHtml` produit un fichier HTML5 valide
+- Le rendu inclut la table des matières, les ancres, la syntaxe colorisée
+- Les includes AsciiDoc sont résolus correctement
+- Le fichier HTML s'affiche correctement dans Chrome, Firefox, Safari
+
+=== US-DOC-04 — En tant que lecteur mobile, je veux exporter une formation en EPUB
+
+*Priorité* : P2
+*EPIC* : DOC-5
+
+.Valeur
+Les sessions de formation sont lisibles hors-ligne sur liseuse Kindle/Kobo
+ou application de lecture EPUB.
+
+.Critères d'acceptation
+- `convertDocumentToEpub` produit un fichier `.epub` valide
+- La structure du document (chapitres, sections) est préservée dans la navigation
+- Les images sont intégrées au format EPUB
+- Le fichier passe la validation epubcheck
+
+=== US-DOC-05 — En tant qu'intégrateur, je veux que les documents soient consommables par runner-gradle N3
+
+*Priorité* : P2
+*EPIC* : DOC-6
+
+.Valeur
+Les documents générés et convertis sont indexés dans le composite-context
+du runner-gradle pour déploiement automatique.
+
+.Critères d'acceptation
+- `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
+- Le JSON contient : chemins des fichiers, formats, métadonnées de la source AsciiDoc
+- `runner-gradle assembleCompositeContext` ingère le JSON sans erreur
+
+=== US-DOC-06 — En tant que rédacteur technique, je veux générer de la documentation technique au format DocBook
+
+*Priorité* : P3
+*EPIC* : DOC-5
+
+.Valeur
+La documentation technique des plugins Gradle peut être publiée au format DocBook 5,
+standard pour la documentation d'API et les manuels de référence.
+
+.Critères d'acceptation
+- `convertDocumentToDocBook` produit un fichier DocBook 5 valide
+- Les éléments DocBook (sections, para, programlisting) sont correctement générés
+- Le fichier XML DocBook passe la validation RelaxNG
+
+=== US-DOC-07 — En tant que développeur, je veux une page de manuel UNIX depuis mon AsciiDoc
+
+*Priorité* : P3
+*EPIC* : DOC-5
+
+.Valeur
+Une tâche Gradle produit une page de manuel (format troff) directement
+depuis le document AsciiDoc source, pour intégration dans le système.
+
+.Critères d'acceptation
+- `convertDocumentToManPage` produit un fichier de page de manuel valide
+- La section (1-8) est configurable via l'extension
+- `man <fichier>` affiche correctement le contenu
+
+'''
+== Dette Technique
+
+[cols="1,5,2", options="header"]
+|===
+| ID | Description | Priorité
+| DT-01 | Aucune — projet neuf, zéro dette | -
+|===
+
+'''
+== Risques
+
+[cols="1,3,2,2", options="header"]
+|===
+| ID | Risque | Impact | Probabilité
+| R-01 | AsciidoctorJ version mismatch avec codex-gradle (compileOnly) | Bloquant | Faible
+| R-02 | Dépendance langchain4j pour l'IA — coût token LLM | Moyen | Moyen
+| R-03 | Asciidoctor PDF nécessite Ruby (rouge) ou bibliothèques natives | Bloquant | Moyen
+| R-04 | Les formats EPUB/DocBook/ManPage sont moins utilisés — bugs latents | Faible | Faible
+|===
+
+== Notes
+
+* AsciidoctorJ est déjà une dépendance partagée via codex-gradle — compileOnly évite le version mismatch
+* La génération IA peut être désactivée (fallback template) si le LLM n'est pas disponible
+* Le plugin complète codex-gradle : codex fait le pipeline documentaire lourd (PDF, slides),
+  document fait la conversion multi-format légère + génération IA
+* Priorité MVP0 : PDF stagiaire et HTML site statique > EPUB > DocBook > ManPage

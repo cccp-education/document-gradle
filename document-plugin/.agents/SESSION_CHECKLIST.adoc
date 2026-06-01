@@ -1,0 +1,35 @@
+= SESSION_CHECKLIST — document-gradle
+
+== Hook d'Ouverture — Avant de commencer une session
+
+. [ ] PROMPT_REPRISE injecté par opencode — ne pas lire localement
+. [ ] Lire `AGENT.adoc` — règles absolues
+. [ ] Lire `.agents/INDEX.adoc` — roadmap, état des EPICs, portefeuille
+. [ ] Vérifier l'état git (`git status` depuis `document-gradle/`)
+. [ ] Vérifier que le build compile (`./gradlew compileKotlin` depuis `document-plugin/`)
+
+== Pendant la session
+
+. [ ] Respecter Règle 1 — AUCUN commit sans permission
+. [ ] Respecter Règle 2 — AUCUN publish sans permission
+. [ ] Respecter Règle 7 — DOCUMENT CONSOMME ASCIIDOC sans modifier la source
+. [ ] Respecter Règle 6 — ZERO secret en dur
+. [ ] Vérifier que chaque modification compile
+
+== Hook de Fermeture — Procédure 6 étapes
+
+. [ ] 1. Rapport de session → `.agents/sessions/NNN-sujet.adoc`
+. [ ] 2. Mise à jour `PROMPT_REPRISE.adoc`
+. [ ] 3. Mise à jour `INDEX.adoc`
+. [ ] 4. Archivage `archives/COMPLETED_TASKS_ARCHIVE.adoc`
+. [ ] 5. Vérification — `git status`, absence de secrets, build compile
+. [ ] 6. Tests — `.agents/TEST_COVERAGE_ANALYSIS.adoc` (si tests modifiés)
+
+== Commandes de Vérification
+
+[source,shell]
+----
+git status
+grep -r "TOKEN\|SECRET\|PASSWORD\|API_KEY\|gho_\|ghp_" --include="*.kts" --include="*.properties" --include="*.yml"
+./gradlew :document:compileKotlin
+----

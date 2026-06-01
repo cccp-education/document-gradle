@@ -1,0 +1,20 @@
+= PROMPT_REPRISE — document-gradle (New Orleans 🟢)
+
+== Mission en cours
+
+Session 000 — Bootstrap gouvernance + cadrage architecture.
+
+== État actuel
+
+- Structure de projet créée : `document-gradle/` + `document-plugin/`
+- Gouvernance : AGENT.adoc, .agents/INDEX.adoc, SESSION_CHECKLIST, SESSION_PROCEDURE
+- AGENTS.adoc et PLAN_GLOBAL mis à jour (14ème borough New Orleans)
+- Prochaine étape : Session 001 — Implémentation plugin Gradle stub
+
+== Règles absolues
+
+1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
+2. PUBLISH — INTERDICTION FORMELLE sans permission
+3. DAG N2 — importable par N3, jamais importe N3
+4. ZERO secret/token/api key en dur
+5. DOCUMENT CONSOMME ASCIIDOC — lecture seule
