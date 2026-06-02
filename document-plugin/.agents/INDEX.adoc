@@ -5,9 +5,9 @@ _Règles absolues_ : voir `AGENT.adoc`
 _DAG_ : N2 — Plugin Gradle de transformation AsciiDoc multi-format (HTML/PDF/EPUB/DocBook/ManPage)
 _Dépendance N2_ : codex-gradle (compileOnly, AsciidoctorJ partagé)
 
-_Dernière mise à jour_ : 2026-06-01 (Session 000 — Bootstrap)
+_Dernière mise à jour_ : 2026-06-01 (Session 001 — Clôture 000)
 _Session terminée_ : 000 — Bootstrap gouvernance + cadrage architecture
-_Prochaine session_ : 001 — Implémentation plugin Gradle stub
+_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
 
 '''
 == RÈGLES ABSOLUES (résumé)
@@ -57,7 +57,7 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub
 |===
 
 '''
-== Portefeuille — 14 Boroughs
+== Portefeuille — 18 Boroughs
 
 |===
 | Borough | Projet | DAG | Sessions
@@ -76,7 +76,11 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub
 | Chiraq 🟤 | readme-gradle | N2 | 003
 | New Orleans 🟢 | document-gradle | N2 | 000
 | Atlanta | agile-gradle | N4 | 000
+| Harlem | ticket-gradle | N4 | 000
+| Baltimore | review-gradle | N4 | 000
+| Oakland | flow-gradle | N4 | 000
 |===
+
 
 '''
 == Fichiers Associés

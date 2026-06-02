@@ -1,0 +1,68 @@
+= Session 000 — Bootstrap DOC-0 (New Orleans 🟢)
+:date: 2026-06-01
+:type: bootstrap
+:score: 10/10
+:epic: DOC-0
+
+== Contexte
+
+Création du 14ème borough `document-gradle` (N2), identifié comme brique manquante
+du pipeline MVP0 : conversion AsciiDoc multi-format (HTML/PDF/EPUB/DocBook/ManPage)
++ génération de contenu assistée par IA via langchain4j.
+
+== Livrables
+
+=== Structure projet
+
+- `foundry/public/document-gradle/` — racine Gradle multi-projet
+- `document-plugin/` — plugin Gradle de documentation
+- `settings.gradle.kts`, `build.gradle.kts` — configuration Gradle 9.5
+- `.gitignore` — exclusion build/dist/.gradle
+- `LICENSE` — Apache 2.0
+
+=== Gouvernance agent
+
+- `AGENT.adoc` — 7 règles absolues, 7 tâches Gradle, stack technique, formats supportés
+- `BACKLOG.adoc` — vision produit, 7 user stories (US-DOC-01→07), roadmap DOC-1→DOC-7, risques
+- `.agents/INDEX.adoc` — dashboard, roadmap, portefeuille 15 boroughs, sessions
+- `.agents/SESSION_CHECKLIST.adoc` — checklist ouverture/fermeture
+- `.agents/SESSION_PROCEDURE.adoc` — procédure 6 étapes fin de session
+- `PROMPT_REPRISE.adoc` — mission session en cours
+- `.agents/SESSIONS_HISTORY.adoc` — historique des sessions
+- `.agents/TEST_COVERAGE_ANALYSIS.adoc` — couverture de tests
+
+=== Documentation transverse
+
+- `AGENTS.adoc` (racine workspace) — ajout New Orleans 14ème borough + portefeuille 18 boroughs
+- `PLAN_GLOBAL.adoc` (racine) — cadrage EPIC DOC-0→DOC-7
+
+=== Git + GitHub
+
+- `git init` + commit initial — 33 fichiers, 1421 lignes
+- Repo GitHub public : https://github.com/cheroliv/document-gradle
+- Licence Apache 2.0
+
+== Décisions architecturales
+
+- Dépendance codex-gradle en `compileOnly` — AsciidoctorJ partagé, pas de version mismatch
+- Dépendance planner-gradle en `compileOnly` — LLM bridge partagé (langchain4j)
+- Tâches isolées par format : `convertDocumentToHtml/Pdf/Epub/DocBook/ManPage`
+- Génération IA désactivable (fallback template)
+- Priorité MVP0 : PDF stagiaire + HTML site > EPUB > DocBook > ManPage
+
+== EPIC DOC-0 — Terminé
+
+[cols="1,3,2", options="header"]
+|===
+| Phase | Livrable | Statut
+| DOC-0a | Structure projet | ✅
+| DOC-0b | Gouvernance agent | ✅
+| DOC-0c | Mise à jour AGENTS.adoc | ✅
+| DOC-0d | Mise à jour PLAN_GLOBAL.adoc | ✅
+|===
+
+== Prochaine session
+
+Session 001 — DOC-1 : Plugin Gradle stub + build structure.
+Créer `build.gradle.kts` pour document-plugin/ avec java-gradle-plugin,
+Kotlin 2.3.20, AsciidoctorJ, langchain4j, compileOnly codex+planner.

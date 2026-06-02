@@ -2,19 +2,42 @@
 
 == Mission en cours
 
-Session 000 — Bootstrap gouvernance + cadrage architecture.
+Session 001 — Implémentation plugin Gradle stub (DOC-1).
 
-== État actuel
+== Dernière session
 
-- Structure de projet créée : `document-gradle/` + `document-plugin/`
-- Gouvernance : AGENT.adoc, .agents/INDEX.adoc, SESSION_CHECKLIST, SESSION_PROCEDURE
-- AGENTS.adoc et PLAN_GLOBAL mis à jour (14ème borough New Orleans)
-- Prochaine étape : Session 001 — Implémentation plugin Gradle stub
+Session 000 (2026-06-01) — Bootstrap DOC-0 TERMINÉ.
+Tous les livrables gouvernance + cadrage architecture + GitHub créés.
 
-== Règles absolues
+== Objectif session 001
 
-1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
-2. PUBLISH — INTERDICTION FORMELLE sans permission
-3. DAG N2 — importable par N3, jamais importe N3
-4. ZERO secret/token/api key en dur
-5. DOCUMENT CONSOMME ASCIIDOC — lecture seule
+- Créer `document-plugin/build.gradle.kts`
+- Dépendances : java-gradle-plugin, Kotlin 2.3.20, AsciidoctorJ 2.0.20
+- compileOnly : codex-gradle (AsciidoctorJ partagé), planner-gradle (LLM bridge)
+- Classes stub : DocumentPlugin, DocumentExtension, GenerateDocumentTask
+- Configuration `document { }` dans le DSL Gradle
+- `./gradlew :document-plugin:tasks` doit lister les 7 tâches
+- Tests JUnit5 + GradleTestKit (testkit-gradle)
+
+== Fichiers à créer
+
+- `document-plugin/build.gradle.kts`
+- `document-plugin/src/main/kotlin/education/cccp/document/DocumentPlugin.kt`
+- `document-plugin/src/main/kotlin/education/cccp/document/DocumentExtension.kt`
+- `document-plugin/src/test/kotlin/education/cccp/document/DocumentPluginTest.kt`
+
+== Règles absolues (rappel)
+
+. COMMITS/GIT — INTERDICTION FORMELLE sans permission
+. PUBLISH — INTERDICTION FORMELLE sans permission
+. DAG N2 — importable par N3 runner-gradle, jamais importe N3
+. ZERO secret/token/api key en dur
+. DOCUMENT CONSOMME ASCIIDOC — lecture seule
+. Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
+. Procédure fermeture : 6 étapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
+
+== Tests
+
+- `./gradlew :document-plugin:check` doit passer en fin de session
+- Test unitaire (JUnit5) sur DocumentPlugin.apply
+- Test fonctionnel (GradleTestKit) sur generateDocument — NOOP stub
