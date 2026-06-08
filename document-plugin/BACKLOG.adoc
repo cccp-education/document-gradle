@@ -180,3 +180,33 @@ _document a sa propre dependance AsciidoctorJ directe, pas de compileOnly sur co
   Voir `.agents/ARCHITECTURE_BOUNDARY.adoc`.
 * Le LLM bridge est partage avec planner-gradle en compileOnly pour eviter duplication.
 * Priorite MVP0 : PDF stagiaire et HTML site statique > EPUB > DocBook > ManPage.
+
+'''
+
+== EPIC PUB — Publication Maven Central + Plugin Portal
+
+_Source : configuration/EPIC_PUB.adoc (Session 096)_
+
+_Note_ : document-gradle n'est pas dans le plan de publication Maven Central pour l'instant.
+Seul le relocation comment est a mettre a jour pour coherence transverse.
+
+=== PUB-2.2 — Mettre a jour le commentaire relocation
+
+Dans le `build.gradle.kts`, remplacer :
+```kotlin
+// RELOCATION : prepare la migration du groupId education.cccp →
+// <futur-domaine>. Activer avec -Prem relocationGroup="io.github.cccp-education"
+// Effet : injecte <distributionManagement><relocation><groupId>...</groupId></relocation>
+// dans le POM publie. Les consommateurs existants seront rediriges automatiquement
+// vers le nouveau groupId lors de la prochaine maj de dependance.
+```
+Par :
+```kotlin
+// RELOCATION : garde comme echappatoire future.
+// Activable avec -Prem relocationGroup="<futur-namespace>"
+```
+
+=== PUB-5 — Verification que le relocation est bien cable
+
+Verifier que le bloc `maven-publish` + `signing` dans `build.gradle.kts` contient
+bien la section `<relocation>` conditionnelle via `-Prem relocationGroup=...`.
