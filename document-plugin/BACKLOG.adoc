@@ -1,125 +1,143 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date création_ : 2026-06-01
+_Date revision_ : 2026-06-08 (architecture boundary review)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
 == Vision Produit
 
-Un plugin Gradle N2 qui **génère du contenu AsciiDoc assisté par IA**
-et le **transforme dans tous les formats supportés par AsciidoctorJ**
+Un plugin Gradle N2 qui **cree du contenu AsciiDoc assiste par IA**
+et le **publie dans tous les formats supportes par AsciidoctorJ**
 (HTML5, PDF, EPUB3, DocBook 5, ManPage), sans sortir du pipeline Gradle.
 
-Le plugin couvre deux missions complémentaires :
+Le plugin couvre deux missions complementaires :
 
-1. **Génération IA** → un LLM (deepseek-v4-pro) assiste la rédaction
-   de documentation, specs, manuels, rapports en AsciiDoc structuré
-2. **Conversion multi-format** → chaque backend AsciidoctorJ est exposé
-   comme une tâche Gradle isolée avec configuration fine
+1. **Generation IA** → un LLM (deepseek-v4-pro) assiste la redaction
+   de documentation, specs, manuels, rapports en AsciiDoc structure
+2. **Publication multi-format** → chaque backend AsciidoctorJ est expose
+   comme une tache Gradle isolee avec configuration fine
+
+'''
+== Boundary Codex (Brooklyn)
+
+_Document = WRITE + PUBLISH. Codex = READ + RAG._
+
+Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
+
+[cols="2,5,5"]
+|===
+| | Document (ici) | Codex (Brooklyn)
+| Mission | Creer + publier | Ingerer + chercher
+| Entree | Prompt LLM ou AsciiDoc source | PDF, EPUB, AsciiDoc existant
+| Sortie | HTML, PDF, EPUB, DocBook, ManPage | Vecteurs pgvector, chunks, knowledge base
+| AsciidoctorJ | Implementation directe | Parsing AST + export KB
+| LLM | Oui (langchain4j) | Non
+| Base de donnees | Aucune | PostgreSQL + pgvector
+|===
 
 '''
 == User Stories
 
-=== US-DOC-01 — En tant que rédacteur technique, je veux générer un squelette AsciiDoc via IA
+=== US-DOC-01 — En tant que redacteur technique, je veux generer un squelette AsciiDoc via IA
 
-*Priorité* : P1
+*Priorite* : P1
 *EPIC* : DOC-2
 
 .Valeur
-Gagner du temps sur la rédaction de documentation technique : un prompt
-structuré produit un document AsciiDoc cohérent, que l'humain valide et enrichit.
+Gagner du temps sur la redaction de documentation technique : un prompt
+structure produit un document AsciiDoc coherent, que l'humain valide et enrichit.
 
-.Critères d'acceptation
-- La tâche `generateDocument` accepte un prompt (fichier ou inline)
-- Le LLM (deepseek-v4-pro via langchain4j) produit un document AsciiDoc structuré
+.Criteres d'acceptation
+- La tache `generateDocument` accepte un prompt (fichier ou inline)
+- Le LLM (deepseek-v4-pro via langchain4j) produit un document AsciiDoc structure
 - Le document respecte les conventions AsciiDoc du workspace (sectionnement, attributs, include)
-- Un fichier `.adoc` valide est écrit dans le répertoire de sortie
-- La source n'est jamais modifiée — seul le fichier généré est produit
+- Un fichier `.adoc` valide est ecrit dans le repertoire de sortie
+- La source n'est jamais modifiee — seul le fichier genere est produit
 
 === US-DOC-02 — En tant que formateur, je veux convertir un SPG AsciiDoc en PDF stagiaire
 
-*Priorité* : P1
+*Priorite* : P1
 *EPIC* : DOC-4
 
 .Valeur
-Un SPG/SPD rédigé en AsciiDoc devient un PDF imprimable pour le stagiaire,
+Un SPG/SPD redige en AsciiDoc devient un PDF imprimable pour le stagiaire,
 avec mise en page professionnelle (Asciidoctor PDF).
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `convertDocumentToPdf` produit un PDF depuis un fichier `.adoc` source
-- Le thème PDF est configurable (attributs Asciidoctor, fichier theme YML)
+- Le theme PDF est configurable (attributs Asciidoctor, fichier theme YML)
 - Les tableaux, listes, blocs de code et admonitions sont rendus correctement
 - Le PDF est consultable sur mobile et desktop
 
-=== US-DOC-03 — En tant que développeur, je veux convertir une spec AsciiDoc en HTML5
+=== US-DOC-03 — En tant que developpeur, je veux convertir une spec AsciiDoc en HTML5
 
-*Priorité* : P1
+*Priorite* : P1
 *EPIC* : DOC-3
 
 .Valeur
 Une documentation technique en AsciiDoc devient une page HTML navigable,
-idéale pour publication sur site statique ou GitHub Pages.
+ideale pour publication sur site statique ou GitHub Pages.
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `convertDocumentToHtml` produit un fichier HTML5 valide
-- Le rendu inclut la table des matières, les ancres, la syntaxe colorisée
-- Les includes AsciiDoc sont résolus correctement
+- Le rendu inclut la table des matieres, les ancres, la syntaxe colorisee
+- Les includes AsciiDoc sont resolus correctement
 - Le fichier HTML s'affiche correctement dans Chrome, Firefox, Safari
 
 === US-DOC-04 — En tant que lecteur mobile, je veux exporter une formation en EPUB
 
-*Priorité* : P2
+*Priorite* : P2
 *EPIC* : DOC-5
 
 .Valeur
 Les sessions de formation sont lisibles hors-ligne sur liseuse Kindle/Kobo
 ou application de lecture EPUB.
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `convertDocumentToEpub` produit un fichier `.epub` valide
-- La structure du document (chapitres, sections) est préservée dans la navigation
-- Les images sont intégrées au format EPUB
+- La structure du document (chapitres, sections) est preservee dans la navigation
+- Les images sont integrees au format EPUB
 - Le fichier passe la validation epubcheck
 
-=== US-DOC-05 — En tant qu'intégrateur, je veux que les documents soient consommables par runner-gradle N3
+=== US-DOC-05 — En tant qu'integrateur, je veux que les documents soient consommables par runner-gradle N3
 
-*Priorité* : P2
+*Priorite* : P2
 *EPIC* : DOC-6
 
 .Valeur
-Les documents générés et convertis sont indexés dans le composite-context
-du runner-gradle pour déploiement automatique.
+Les documents generes et convertis sont indexes dans le composite-context
+du runner-gradle pour deploiement automatique.
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
-- Le JSON contient : chemins des fichiers, formats, métadonnées de la source AsciiDoc
-- `runner-gradle assembleCompositeContext` ingère le JSON sans erreur
+- Le JSON contient : chemins des fichiers, formats, metadonnees de la source AsciiDoc
+- `runner-gradle assembleCompositeContext` ingere le JSON sans erreur
 
-=== US-DOC-06 — En tant que rédacteur technique, je veux générer de la documentation technique au format DocBook
+=== US-DOC-06 — En tant que redacteur technique, je veux generer de la documentation technique au format DocBook
 
-*Priorité* : P3
+*Priorite* : P3
 *EPIC* : DOC-5
 
 .Valeur
-La documentation technique des plugins Gradle peut être publiée au format DocBook 5,
-standard pour la documentation d'API et les manuels de référence.
+La documentation technique des plugins Gradle peut etre publiee au format DocBook 5,
+standard pour la documentation d'API et les manuels de reference.
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `convertDocumentToDocBook` produit un fichier DocBook 5 valide
-- Les éléments DocBook (sections, para, programlisting) sont correctement générés
+- Les elements DocBook (sections, para, programlisting) sont correctement generes
 - Le fichier XML DocBook passe la validation RelaxNG
 
-=== US-DOC-07 — En tant que développeur, je veux une page de manuel UNIX depuis mon AsciiDoc
+=== US-DOC-07 — En tant que developpeur, je veux une page de manuel UNIX depuis mon AsciiDoc
 
-*Priorité* : P3
+*Priorite* : P3
 *EPIC* : DOC-5
 
 .Valeur
-Une tâche Gradle produit une page de manuel (format troff) directement
-depuis le document AsciiDoc source, pour intégration dans le système.
+Une tache Gradle produit une page de manuel (format troff) directement
+depuis le document AsciiDoc source, pour integration dans le systeme.
 
-.Critères d'acceptation
+.Criteres d'acceptation
 - `convertDocumentToManPage` produit un fichier de page de manuel valide
 - La section (1-8) est configurable via l'extension
 - `man <fichier>` affiche correctement le contenu
@@ -129,8 +147,10 @@ depuis le document AsciiDoc source, pour intégration dans le système.
 
 [cols="1,5,2", options="header"]
 |===
-| ID | Description | Priorité
-| DT-01 | Aucune — projet neuf, zéro dette | -
+| ID | Description | Priorite
+| DT-01 | Aucune — projet neuf, zero dette | -
+| DT-02 | [ARCHI] Suppression dependance compileOnly codex-gradle dans build.gradle.kts | P0 — session 001
+| DT-03 | [ARCHI] AsciidoctorJ en implementation directe (version geree par workspace-bom) | P0 — session 001
 |===
 
 '''
@@ -138,17 +158,25 @@ depuis le document AsciiDoc source, pour intégration dans le système.
 
 [cols="1,3,2,2", options="header"]
 |===
-| ID | Risque | Impact | Probabilité
-| R-01 | AsciidoctorJ version mismatch avec codex-gradle (compileOnly) | Bloquant | Faible
-| R-02 | Dépendance langchain4j pour l'IA — coût token LLM | Moyen | Moyen
-| R-03 | Asciidoctor PDF nécessite Ruby (rouge) ou bibliothèques natives | Bloquant | Moyen
-| R-04 | Les formats EPUB/DocBook/ManPage sont moins utilisés — bugs latents | Faible | Faible
+| ID | Risque | Impact | Probabilite
+| R-02 | Dependance langchain4j pour l'IA — cout token LLM | Moyen | Moyen
+| R-03 | Asciidoctor PDF necessite Ruby (rouge) ou bibliotheques natives | Bloquant | Moyen
+| R-04 | Les formats EPUB/DocBook/ManPage sont moins utilises — bugs latents | Faible | Faible
+| BND-01 | Codex duplique une tache de conversion (ExportKnowledgeBase fait deja AsciiDoc→Markdown) | Moyen | Moyen
+| BND-02 | Deux versions d'AsciidoctorJ cohabitent (codex vs document) | Faible | Faible
 |===
 
+_Note : R-01 (AsciidoctorJ version mismatch avec codex-gradle) supprime —_
+_document a sa propre dependance AsciidoctorJ directe, pas de compileOnly sur codex._
+
+'''
 == Notes
 
-* AsciidoctorJ est déjà une dépendance partagée via codex-gradle — compileOnly évite le version mismatch
-* La génération IA peut être désactivée (fallback template) si le LLM n'est pas disponible
-* Le plugin complète codex-gradle : codex fait le pipeline documentaire lourd (PDF, slides),
-  document fait la conversion multi-format légère + génération IA
-* Priorité MVP0 : PDF stagiaire et HTML site statique > EPUB > DocBook > ManPage
+* AsciidoctorJ est une dependance directe (implementation) — pas via codex-gradle.
+  Les deux boroughs partagent la version via workspace-bom.
+* La generation IA peut etre desactivee (fallback template) si le LLM n'est pas disponible.
+* Boundary claire : Codex = READ + RAG (ingestion, vectorisation, recherche semantique).
+  Document = WRITE + PUBLISH (creation IA, conversion multi-format).
+  Voir `.agents/ARCHITECTURE_BOUNDARY.adoc`.
+* Le LLM bridge est partage avec planner-gradle en compileOnly pour eviter duplication.
+* Priorite MVP0 : PDF stagiaire et HTML site statique > EPUB > DocBook > ManPage.

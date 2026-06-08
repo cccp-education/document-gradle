@@ -1,24 +1,44 @@
 = INDEX — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Règles absolues_ : voir `AGENT.adoc`
-_DAG_ : N2 — Plugin Gradle de transformation AsciiDoc multi-format (HTML/PDF/EPUB/DocBook/ManPage)
-_Dépendance N2_ : codex-gradle (compileOnly, AsciidoctorJ partagé)
+_Regles absolues_ : voir `AGENT.adoc`
+_Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
+_DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
+_Dependances_ : AsciidoctorJ (implementation directe), planner-gradle (compileOnly, LLM bridge)
 
-_Dernière mise à jour_ : 2026-06-01 (Session 001 — Clôture 000)
-_Session terminée_ : 000 — Bootstrap gouvernance + cadrage architecture
-_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
+_Derniere mise a jour_ : 2026-06-08 (Architecture boundary review — suppression compileOnly codex)
+_Session terminee_ : 000 — Bootstrap gouvernance + cadrage architecture
+_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct
 
 '''
-== RÈGLES ABSOLUES (résumé)
+== REGLES ABSOLUES (resume)
 
 === 1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
 === 2. PUBLISH — INTERDICTION FORMELLE sans permission
 === 3. DAG N2 — importable par N3 runner-gradle, jamais importe N3
-=== 4. PROCÉDURE DE FIN DE SESSION — 6 ÉTAPES OBLIGATOIRES
+=== 4. PROCEDURE DE FIN DE SESSION — 6 ETAPES OBLIGATOIRES
 === 5. HOOK OUVERTURE — Checklist SESSION_CHECKLIST.adoc obligatoire
 === 6. ZERO secret/token/api key en dur dans le code source
 === 7. DOCUMENT CONSOMME ASCIIDOC — lecture seule
+=== 8. BOUNDARY CODEX — Codex READ + RAG, Document WRITE + PUBLISH (pas de dependance directe)
+
+'''
+== Boundary Codex (Brooklyn)
+
+*Document et Codex sont paralleles en N2, pas empiles.*
+Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
+
+[cols="2,5,5", options="header"]
+|===
+| | Document (New Orleans) | Codex (Brooklyn)
+| Mission | Creer + publier | Ingerer + chercher
+| Verbe DAG | GENERATE → TRANSFORM → DEPLOY | COLLECT → TRANSFORM → DEPLOY
+| Entree | Prompt LLM, AsciiDoc source | PDF, EPUB, AsciiDoc existant
+| Sortie | HTML, PDF, EPUB, DocBook, ManPage | Vecteurs pgvector, chunks, knowledge base
+| AsciidoctorJ | Implementation directe | Parsing AST + export KB
+| LLM | Oui | Non
+| Base de donnees | Aucune | PostgreSQL + pgvector
+|===
 
 '''
 == EPIC DOC-0 — Bootstrap Gouvernance + Cadrage Architecture
@@ -28,23 +48,24 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
 | Phase | Livrable | Statut
 | DOC-0a | Structure projet document-gradle/ (root + document-plugin/) | ✅ 2026-06-01
 | DOC-0b | Gouvernance agent (.agents/, AGENT.adoc, INDEX.adoc) | ✅ 2026-06-01
-| DOC-0c | Mise à jour AGENTS.adoc (New Orleans 14ème borough) | ✅ 2026-06-01
-| DOC-0d | Mise à jour PLAN_GLOBAL.adoc (EPIC DOC-x) | ✅ 2026-06-01
+| DOC-0c | Mise a jour AGENTS.adoc (New Orleans 14eme borough) | ✅ 2026-06-01
+| DOC-0d | Mise a jour PLAN_GLOBAL.adoc (EPIC DOC-x) | ✅ 2026-06-01
+| DOC-0e | Boundary architecture avec codex-gradle | ✅ 2026-06-08 (ARCHITECTURE_BOUNDARY.adoc)
 |===
 
 '''
-== Roadmap — État Actuel
+== Roadmap — Etat Actuel
 
 [cols="1,3,2,2", options="header"]
 |===
-| EPIC | Description | Statut | Priorité
-| DOC-0 | Bootstrap gouvernance + cadrage architecture | ✅ TERMINÉ (session 000) | P0
-| DOC-1 | Plugin Gradle stub + build structure (settings, build, plugin class, extension) | À faire | P0
-| DOC-2 | generateDocument — génération AsciiDoc assistée par IA via langchain4j (deepseek-v4-pro) | À faire | P1
+| EPIC | Description | Statut | Priorite
+| DOC-0 | Bootstrap gouvernance + cadrage architecture + boundary | ✅ TERMINE (session 000 + review 2026-06-08) | P0
+| DOC-1 | Plugin Gradle stub + build structure (AsciidoctorJ direct, pas de compileOnly codex) | À faire | P0
+| DOC-2 | generateDocument — generation AsciiDoc assistee par IA via langchain4j (deepseek-v4-pro) | À faire | P1
 | DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | À faire | P1
 | DOC-4 | convertDocumentToPdf — AsciiDoc → PDF (AsciidoctorJ pdf backend) | À faire | P1
-| DOC-5 | Tâches convertDocumentToEpub/DocBook/ManPage | À faire | P2
-| DOC-6 | Intégration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
+| DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | À faire | P2
+| DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
 |===
 
@@ -53,11 +74,12 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
 
 |===
 | # | Date | Type | Sujet | Score
-| 000 | 2026-06-01 | bootstrap | DOC-0 — Bootstrap gouvernance + cadrage architecture | ✅ TERMINÉ
+| 000 | 2026-06-01 | bootstrap | DOC-0 — Bootstrap gouvernance + cadrage architecture | ✅ TERMINE
+| — | 2026-06-08 | review | Architecture boundary review — suppression compileOnly codex, AsciidoctorJ direct | ✅ TERMINE
 |===
 
 '''
-== Portefeuille — 18 Boroughs
+== Portefeuille — 25 Boroughs
 
 |===
 | Borough | Projet | DAG | Sessions
@@ -69,7 +91,7 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
 | Staten Island | magic-stick | N2 | 004
 | New Jersey | runner-gradle | N3 | 011
 | Compton | waiter-gradle | N2 | 000
-| Détroit | capsule-gradle | N2 | 000
+| Detroit | capsule-gradle | N2 | 000
 | South Central | workspace-gradle | N4 | 001
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
@@ -79,21 +101,29 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1)
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000
 | Oakland | flow-gradle | N4 | 000
+| Philly | jhipster-gradle-plugins | N2 | 005
+| Bushwick 🟤 | bakery-gradle | N2 | 062
+| MIAMI 🌴 | slider-gradle | N2 | 007
+| MEMPHIS 🎸 | workspace-bom | N0 | 13 commits
+| HTOWN 🚀 | plantuml-gradle | N2 | 145
+| Grand Central 🟡 | graphify-gradle | N0 | 011
+| Liberty 🗽 | api-key-pool-gradle | N0 | 002
 |===
-
 
 '''
-== Fichiers Associés
+== Fichiers Associes
 
 |===
-| Fichier | Rôle | Type
-| `AGENT.adoc` | Directives complètes | EAGER
+| Fichier | Role | Type
+| `AGENT.adoc` | Directives completes | EAGER
+| `.agents/ARCHITECTURE_BOUNDARY.adoc` | Boundary Codex↔Document (READ vs WRITE) | EAGER
 | `.agents/INDEX.adoc` | Dashboard + roadmap + portefeuille | EAGER
 | `.agents/SESSION_CHECKLIST.adoc` | Checklist ouverture/fermeture session | EAGER
-| `.agents/SESSION_PROCEDURE.adoc` | Procédure 6 étapes fin de session | EAGER
+| `.agents/SESSION_PROCEDURE.adoc` | Procedure 6 etapes fin de session | EAGER
 | `PROMPT_REPRISE.adoc` | Mission session en cours | EAGER
+| `BACKLOG.adoc` | Vision produit + US + risques + dette technique | EAGER
 | `.agents/sessions/` | Archives par session | LAZY
-| `.agents/archives/` | Archives tâches terminées | LAZY
+| `.agents/archives/` | Archives taches terminees | LAZY
 |===
 
-Voir aussi : `TAXONOMIE_WORKSPACE.adoc` (racine workspace) pour l'ontologie complète.
+Voir aussi : `TAXONOMIE_WORKSPACE.adoc` (racine workspace) pour l'ontologie complete.

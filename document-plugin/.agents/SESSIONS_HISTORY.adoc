@@ -3,4 +3,5 @@
 |===
 | # | Date | Type | Sujet | Score
 | 000 | 2026-06-01 | bootstrap | DOC-0 — Bootstrap gouvernance + cadrage architecture | ✅ TERMINÉ
+| — | 2026-06-08 | review | Architecture boundary review — suppression compileOnly codex, AsciidoctorJ direct | ✅ TERMINÉ
 |===

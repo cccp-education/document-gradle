@@ -3,7 +3,8 @@
 == Hook d'Ouverture — Avant de commencer une session
 
 . [ ] PROMPT_REPRISE injecté par opencode — ne pas lire localement
-. [ ] Lire `AGENT.adoc` — règles absolues
+. [ ] Lire `AGENT.adoc` — règles absolues (dont Règle 8 Boundary Codex)
+. [ ] Lire `.agents/ARCHITECTURE_BOUNDARY.adoc` — boundary READ vs WRITE
 . [ ] Lire `.agents/INDEX.adoc` — roadmap, état des EPICs, portefeuille
 . [ ] Vérifier l'état git (`git status` depuis `document-gradle/`)
 . [ ] Vérifier que le build compile (`./gradlew compileKotlin` depuis `document-plugin/`)

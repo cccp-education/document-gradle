@@ -1,39 +1,45 @@
-= AGENT.adoc — Document Gradle
+= AGENT.adoc — Document Gradle (New Orleans 🟢)
 
-_Produit_ : Plugin Gradle de génération assistée par IA + conversion multi-format AsciiDoc
+_Produit_ : Plugin Gradle de creation et publication documentaire AsciiDoc (WRITE + PUBLISH)
 _Licence_ : Apache 2.0 (OSS)
-_DAG_ : N2 — Plugin Gradle de documentation
-_Dépendance_ : codex-gradle (compileOnly, AsciidoctorJ partagé), planner-gradle (LLM prompting)
+_DAG_ : N2 — Plugin Gradle de publication documentaire multi-format
+_Dependances_ : AsciidoctorJ (directe, implementation), planner-gradle (compileOnly, LLM bridge partage), workspace-bom (contrats N0)
+_Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc` — Codex READ + RAG, Document WRITE + PUBLISH
 
 == Principe
 
-Le plugin `document` a deux missions complémentaires :
+Le plugin `document` a deux missions complementaires, centrees sur la
+**creation** et la **publication** de contenu AsciiDoc :
 
-=== 1. Génération assistée par IA de contenu AsciiDoc
+=== 1. Generation assistee par IA de contenu AsciiDoc
 
-L'IA assiste la rédaction de contenu documentaire en AsciiDoc :
-génération de spécifications, rapports, documentation technique,
-manuels utilisateur, à partir d'un prompt structuré. La tâche
-`generateDocument` utilise un LLM (deepseek-v4-pro) via langchain4j
-pour produire le squelette AsciiDoc que l'humain valide et enrichit.
+L'IA assiste la redaction de contenu documentaire en AsciiDoc :
+specifications, rapports, documentation technique, manuels utilisateur,
+a partir d'un prompt structure. La tache `generateDocument` utilise un LLM
+(deepseek-v4-pro) via langchain4j pour produire le squelette AsciiDoc que
+l'humain valide et enrichit.
+
+Distinct de planner-gradle (Manhattan) qui genere des SPG/SPD pedagogiques.
+Ici, on genere de la documentation technique generaliste.
 
 === 2. Conversion multi-format via AsciidoctorJ
 
-Le plugin expose chaque convertisseur AsciidoctorJ comme une tâche
-Gradle isolée : HTML5, PDF, EPUB3, DocBook 5, ManPage. Configuration
-fine des attributs, des templates et des options de rendu.
+Le plugin expose chaque convertisseur AsciidoctorJ comme une tache Gradle
+isolee : HTML5, PDF, EPUB3, DocBook 5, ManPage. Configuration fine des
+attributs, des templates et des options de rendu.
 
 Pipeline complet :
-  Prompt ──→ IA (LLM) ──→ AsciiDoc généré ──→ validation humaine ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
+  Prompt ──→ IA (LLM) ──→ AsciiDoc genere ──→ validation humaine ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
 
 Cas d'usage MVP0 :
-- Génération de documentation technique des plugins (README, specs)
+- Generation de documentation technique des plugins (README, specs)
 - Conversion des SPG/SPD AsciiDoc en PDF stagiaire
 - Export EPUB des sessions de formation pour lecture hors-ligne
-- Génération de manuels utilisateur et documentation API
+- Generation de manuels utilisateur et documentation API
 - Documentation technique des plugins Gradle au format DocBook
 
-== Règles Absolues
+'''
+== Regles Absolues
 
 === 1. COMMITS/GIT — INTERDICTION FORMELLE sans permission
 === 2. PUBLISH — INTERDICTION FORMELLE sans permission
@@ -42,14 +48,17 @@ Cas d'usage MVP0 :
 === 5. HOOK OUVERTURE — Checklist `.agents/SESSION_CHECKLIST.adoc` obligatoire
 === 6. ZERO secret/token/api key en dur dans le code source
 === 7. DOCUMENT CONSOMME ASCIIDOC — lit + transforme, ne modifie jamais la source originale
+=== 8. BOUNDARY CODEX — Codex (Brooklyn) lit les documents existants et les rend cherchables.
+    Document cree et publie dans tous les formats. Pas de dependance directe document→codex.
+    Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail.
 
-== Tâches Principales
+== Taches Principales
 
-  ./gradlew generateDocument          → génération AsciiDoc assistée par IA (LLM)
+  ./gradlew generateDocument          → generation AsciiDoc assistee par IA (LLM)
   ./gradlew convertDocumentToHtml     → AsciiDoc → HTML (AsciidoctorJ html5)
   ./gradlew convertDocumentToPdf      → AsciiDoc → PDF (AsciidoctorJ pdf)
-  ./gradlew convertDocumentToEpub     → AsciiDoc → EPUB (AsciidoctorJ epub)
-  ./gradlew convertDocumentToDocBook  → AsciiDoc → DocBook (AsciidoctorJ docbook)
+  ./gradlew convertDocumentToEpub     → AsciiDoc → EPUB (AsciidoctorJ epub3)
+  ./gradlew convertDocumentToDocBook  → AsciiDoc → DocBook (AsciidoctorJ docbook5)
   ./gradlew convertDocumentToManPage  → AsciiDoc → ManPage (AsciidoctorJ manpage)
   ./gradlew check                     → tous les tests (unitaire + fonctionnel)
 
@@ -62,17 +71,17 @@ Toute modification de code source DOIT passer `./gradlew check`
 == Stack
 
 - Kotlin — DSL Gradle
+- AsciidoctorJ 2.x — conversion multi-format (implementation directe, pas via codex)
 - langchain4j — LLM prompting (deepseek-v4-pro)
-- AsciidoctorJ — parsing et conversion multi-format
-- planner-gradle — dépendance compileOnly, partage LLM bridge
-- codex-gradle — dépendance compileOnly, partage AsciidoctorJ
+- planner-gradle — dependance compileOnly, partage LLM bridge (evite duplication)
+- workspace-bom — contrats N0 partages (ContextChannel, CompositeContext)
 
-== Formats supportés (AsciidoctorJ)
+== Formats supportes (AsciidoctorJ)
 
 [cols="2,3"]
 |===
-| Format | Tâche Gradle
-| AsciiDoc (généré) | `generateDocument`
+| Format | Tache Gradle
+| AsciiDoc (genere) | `generateDocument`
 | HTML5 | `convertDocumentToHtml`
 | PDF | `convertDocumentToPdf`
 | EPUB3 | `convertDocumentToEpub`
@@ -80,8 +89,49 @@ Toute modification de code source DOIT passer `./gradlew check`
 | ManPage | `convertDocumentToManPage`
 |===
 
+== Relations Cross-Borough
+
+[cols="3,3,5"]
+|===
+| Borough | Relation | Nature
+| codex-gradle (Brooklyn)
+| *Parallel N2, pas de dependance directe*
+| Codex = READ pipeline (ingestion PDF/EPUB → vectorisation → RAG).
+  Document = WRITE pipeline (creation IA + publication multi-format).
+  Un meme AsciiDoc source est consommable par les deux.
+
+| planner-gradle (Manhattan)
+| compileOnly
+| Bridge LLM partage (langchain4j → deepseek-v4-pro) pour
+  eviter duplication du code de connexion.
+
+| runner-gradle (New Jersey)
+| Consumer N3
+| metadata.json → assembleCompositeContext.
+  Les documents generes/convertis sont indexes dans le composite context
+  pour deploiement automatique (gh-pages).
+
+| bakery-gradle (Bushwick)
+| Consumer N2/N3
+| Le site statique integre les artefacts (HTML/PDF/EPUB) produits
+  par document-gradle.
+|===
+
 == Ne remplace PAS opencode
 
-Le plugin est invoqué PAR opencode (via tool use).
-Il automatise la génération et la conversion documentaire, mais la
+Le plugin est invoque PAR opencode (via tool use).
+Il automatise la generation et la conversion documentaire, mais la
 validation humaine du contenu et du rendu final reste obligatoire.
+
+== Fichiers du Projet
+
+|===
+| AGENT.adoc | ✅ Revu 2026-06-08 (boundary codex, AsciidoctorJ direct)
+| BACKLOG.adoc | ✅ Revu 2026-06-08
+| .agents/ARCHITECTURE_BOUNDARY.adoc | ✅ Cree 2026-06-08
+| .agents/INDEX.adoc | ✅ Revu 2026-06-08
+| PROMPT_REPRISE.adoc | ✅ Revu 2026-06-08
+| .agents/SESSION_CHECKLIST.adoc | ✅
+| .agents/SESSION_PROCEDURE.adoc | ✅
+| .agents/SESSIONS_HISTORY.adoc | ✅
+|===

@@ -2,39 +2,54 @@
 
 == Mission en cours
 
-Session 001 — Implémentation plugin Gradle stub (DOC-1).
+Session 001 — Implementation plugin Gradle stub (DOC-1).
 
-== Dernière session
+== Derniere session
 
-Session 000 (2026-06-01) — Bootstrap DOC-0 TERMINÉ.
-Tous les livrables gouvernance + cadrage architecture + GitHub créés.
+Architecture Boundary Review (2026-06-08).
+Suppression de la dependance compileOnly document→codex.
+AsciidoctorJ devient une dependance directe (implementation).
+Boundary clarifiee : Codex = READ + RAG, Document = WRITE + PUBLISH.
+Voir `.agents/ARCHITECTURE_BOUNDARY.adoc`.
+
+Session 000 (2026-06-01) — Bootstrap DOC-0 TERMINE.
+Tous les livrables gouvernance + cadrage architecture + GitHub crees.
 
 == Objectif session 001
 
-- Créer `document-plugin/build.gradle.kts`
-- Dépendances : java-gradle-plugin, Kotlin 2.3.20, AsciidoctorJ 2.0.20
-- compileOnly : codex-gradle (AsciidoctorJ partagé), planner-gradle (LLM bridge)
+- Creer `document-plugin/build.gradle.kts`
+- Dependances : java-gradle-plugin, Kotlin 2.3.20, AsciidoctorJ 2.x en *implementation directe*
+- compileOnly : planner-gradle (LLM bridge partage) uniquement
+- *PAS* de compileOnly sur codex-gradle (supprime)
 - Classes stub : DocumentPlugin, DocumentExtension, GenerateDocumentTask
 - Configuration `document { }` dans le DSL Gradle
-- `./gradlew :document-plugin:tasks` doit lister les 7 tâches
+- `./gradlew :document-plugin:tasks` doit lister les 7 taches
 - Tests JUnit5 + GradleTestKit (testkit-gradle)
 
-== Fichiers à créer
+== Fichiers a creer
 
 - `document-plugin/build.gradle.kts`
 - `document-plugin/src/main/kotlin/education/cccp/document/DocumentPlugin.kt`
 - `document-plugin/src/main/kotlin/education/cccp/document/DocumentExtension.kt`
 - `document-plugin/src/test/kotlin/education/cccp/document/DocumentPluginTest.kt`
 
-== Règles absolues (rappel)
+== Regles absolues (rappel)
 
 . COMMITS/GIT — INTERDICTION FORMELLE sans permission
 . PUBLISH — INTERDICTION FORMELLE sans permission
 . DAG N2 — importable par N3 runner-gradle, jamais importe N3
 . ZERO secret/token/api key en dur
 . DOCUMENT CONSOMME ASCIIDOC — lecture seule
+. BOUNDARY CODEX — pas de dependance directe document→codex
 . Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
-. Procédure fermeture : 6 étapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
+. Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
+
+== Changements architecturaux par rapport a session 000
+
+- AsciidoctorJ → `implementation` directe, pas via codex
+- compileOnly sur codex-gradle → supprime
+- compileOnly sur planner-gradle → maintenu (bridge LLM partage)
+- Boundary READ/WRITE clarifiee dans ARCHITECTURE_BOUNDARY.adoc
 
 == Tests
 

@@ -61,8 +61,37 @@ du pipeline MVP0 : conversion AsciiDoc multi-format (HTML/PDF/EPUB/DocBook/ManPa
 | DOC-0d | Mise à jour PLAN_GLOBAL.adoc | ✅
 |===
 
+== Addendum — 2026-06-08 Architecture Boundary Review
+
+_Revue architecturale post-bootstrap. Ne pas confondre avec session 001._
+
+La décision initiale de mettre codex-gradle en `compileOnly` pour AsciidoctorJ
+a été révisée. Problèmes identifiés :
+
+. Chevauchement fonctionnel : codex a déjà `ExportKnowledgeBaseTask`,
+  ce qui crée une boundary floue pour les tâches de conversion HTML/PDF/EPUB.
+. Couplage fragile : document dépend de codex pour son coeur de conversion.
+. Sémantique floue : "codex = pipeline lourd, document = conversion légère"
+  est arbitraire et non maintenable.
+
+=== Nouvelle architecture
+
+- Boundary claire : *Codex = READ + RAG, Document = WRITE + PUBLISH*
+- AsciidoctorJ en `implementation` directe (pas via codex)
+- compileOnly sur codex-gradle supprimé
+- Les deux boroughs sont parallèles en N2, pas empilés
+- Documenté dans `.agents/ARCHITECTURE_BOUNDARY.adoc`
+
+=== Impact sur DOC-1 (session 001)
+
+Le `build.gradle.kts` de session 001 doit refléter :
+- AsciidoctorJ en `implementation` directe
+- `compileOnly` sur planner-gradle uniquement (LLM bridge)
+- PAS de `compileOnly` sur codex-gradle
+
 == Prochaine session
 
 Session 001 — DOC-1 : Plugin Gradle stub + build structure.
 Créer `build.gradle.kts` pour document-plugin/ avec java-gradle-plugin,
-Kotlin 2.3.20, AsciidoctorJ, langchain4j, compileOnly codex+planner.
+Kotlin 2.3.20, AsciidoctorJ en implementation directe, langchain4j,
+compileOnly planner-gradle (pas de compileOnly codex).

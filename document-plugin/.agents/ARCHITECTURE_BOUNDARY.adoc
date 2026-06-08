@@ -1,0 +1,189 @@
+= ARCHITECTURE_BOUNDARY — Document Gradle (New Orleans 🟢) ↔ Codex Gradle (Brooklyn)
+:toc:
+:date: 2026-06-08
+:status: [STRATEGIE] — decision validee, implementation en attente
+
+'''
+== Problème Identifié
+
+L'architecture initiale (session 000) documentait une dépendance
+`compileOnly` de document-gradle vers codex-gradle pour AsciidoctorJ.
+Ce couplage posait trois problèmes :
+
+. **Chevauchement fonctionnel** : codex a déjà `ExportKnowledgeBaseTask`
+  qui produit JSON-LD/Markdown/AsciiDoc. La conversion HTML/PDF/EPUB est
+  le prolongement naturel de cette pipeline, ce qui crée une boundary floue.
+. **Couplage fragile** : document dépend de codex pour son moteur de conversion
+  principal (AsciidoctorJ). Si codex change de version, document casse.
+  AsciidoctorJ n'est pas la propriété de codex.
+. **Sémantique floue** : "codex" (livre manuscrit) vs "document"
+  (document numérique) — les deux manipulent AsciiDoc, les deux parlent
+  de documents. La frontière "codex = pipeline lourd, document = conversion
+  légère" est arbitraire et non maintenable.
+
+'''
+== Boundary Claire — Codex READ, Document WRITE
+
+.Les deux boroughs sont parallèles (N2), pas empilés
+[cols="2,5,5"]
+|===
+| Aspect | Codex (Brooklyn) — READ + RAG | Document (New Orleans) — WRITE + PUBLISH
+
+| Mission
+| Ingérer des documents existants, en extraire la structure,
+  les vectoriser, les rendre cherchables sémantiquement.
+| Générer du contenu AsciiDoc assisté par IA, puis le convertir
+  dans tous les formats de publication (HTML, PDF, EPUB, etc.).
+
+| Verbe DAG
+| COLLECT → TRANSFORM → DEPLOY (knowledge base RAG)
+| GENERATE → TRANSFORM → DEPLOY (publication multi-format)
+
+| Entrée
+| PDF, EPUB, AsciiDoc *existants* (provenant de `books-collection/`
+  ou du pipeline de formation)
+| Prompt LLM → AsciiDoc *généré* OU AsciiDoc *source* écrit par l'humain
+
+| Sortie
+| Vecteurs pgvector, chunks sémantiques, knowledge base (JSON-LD),
+  composite-context.json pour runner-gradle (ContextChannel.Docs)
+| HTML5, PDF, EPUB3, DocBook 5, ManPage, metadata.json
+
+| AsciidoctorJ
+| Utilisé pour le *parsing AST* (AsciiDoc → LddNode)
+  et l'export knowledge base en AsciiDoc
+| Utilisé pour la *conversion backend* (AsciiDoc → HTML/PDF/EPUB/...).
+  *Dépendance directe*, pas via codex.
+
+| LLM
+| Non
+| Oui — deepseek-v4-pro via langchain4j
+
+| Vectorisation
+| Oui — ONNX AllMiniLmL6V2 + pgvector
+| Non
+
+| Base de données
+| PostgreSQL avec pgvector (R2DBC)
+| Aucune
+|===
+
+'''
+== DAG — Placement
+
+----
+N0 → graphify-gradle (knowledge graph)
+       │
+N1 → codebase-gradle (contrats partagés ContextChannel/CompositeContext)
+       │
+N2 → ┌─ codex-gradle (READ + RAG)
+     │    extract PDF/EPUB → chunk → vectorize → semantic search
+     │
+     └─ document-gradle (WRITE + PUBLISH)
+          prompt LLM → generate AsciiDoc → convert HTML/PDF/EPUB/DocBook/ManPage
+       │
+N3 → runner-gradle (assembleCompositeContext, orchestration, deploy gh-pages)
+----
+
+Codex et document sont *parallèles* en N2. Aucun lien de dépendance direct.
+Les deux exposent leur output via metadata.json que runner-gradle (N3) assemble.
+
+'''
+== Contrat Inter-Borough
+
+=== Ce qui est partagé (N0 via workspace-bom)
+
+- `codebase-contracts` : `ContextChannel`, `ChannelBudget`, `CompositeContext`
+- `llm-pool-contracts` : pool de clés API (pour la partie LLM de document)
+
+=== Ce qui est privé (pas de dépendance directe)
+
+- *AsciidoctorJ* : chaque plugin a sa propre dépendance. Aucun `compileOnly` croise.
+- *Langchain4j* : propre a document (pour la generation IA).
+  Codex ne fait pas de LLM.
+- *pgvector* : propre a codex. Document ne fait pas de RAG.
+
+=== Ce que chaque borough expose a runner-gradle (N3)
+
+[cols="3,5"]
+|===
+| Borough | Contrat N3
+| Codex
+| `composite-context.json` — résultats de recherche sémantique
+  (ContextChannel.Docs), chunks avec similarite cosine,
+  source documents, metadata provenance
+
+| Document
+| `metadata.json` — chemins des fichiers generes, formats de sortie,
+  metadonnees de la source AsciiDoc, provenance IA (modele, prompt, date)
+|===
+
+'''
+== Règle d'Or
+
+----
+CODEX lit les documents existants et les rend cherchables.
+DOCUMENT crée et publie des documents dans tous les formats de sortie.
+
+Quand un AsciiDoc est produit par planner-gradle (SPG/SPD), il est source
+pour les DEUX boroughs : codex le vectorise pour le RAG, document le
+convertit en HTML/PDF/EPUB/... pour le livrable stagiaire.
+----
+
+'''
+== Impact sur les Décisions Initiales (Session 000)
+
+[cols="2,3,3", options="header"]
+|===
+| Décision | Session 000 | Après Revue
+| Dépendance AsciidoctorJ
+| compileOnly sur codex-gradle
+| *Dépendance directe* dans `build.gradle.kts` de document-gradle.
+  AsciidoctorJ 2.x en `implementation`.
+
+| Dépendance LLM bridge
+| compileOnly sur planner-gradle
+| *Maintenu* — le bridge LLM de planner est partagé pour eviter
+  duplication du code de connexion langchain4j → deepseek-v4-pro
+
+| Rôle vs codex
+| "document fait la conversion multi-format legere + generation IA"
+| *Revisite* — document est le plugin de creation + publication,
+  codex est le plugin d'ingestion + RAG. Pas de "leger/lourd",
+  juste des missions differentes.
+
+| Boundary
+| Floue — deux plugins AsciiDoc qui se chevauchent
+| *Claire* — READ vs WRITE, pas de dependance directe, contrats N3
+|===
+
+'''
+== Risques Residuels
+
+[cols="1,3,2,2", options="header"]
+|===
+| ID | Risque | Impact | Mitigation
+| BND-01
+| Codex duplique une tache de conversion (ex: ExportKnowledgeBase
+  fait deja de l'AsciiDoc→Markdown)
+| Moyen
+| Codex garde l'export *knowledge base* (JSON-LD structure) mais les
+  conversions de *publication* (HTML/PDF/EPUB) restent dans document.
+  ExportKnowledgeBase ne produit pas de HTML/PDF/EPUB livrable stagiaire.
+
+| BND-02
+| Deux versions d'AsciidoctorJ cohabitent (codex vs document)
+| Faible
+| Les deux utilisent la meme version via le BOM workspace-bom.
+  Pas de version mismatch possible.
+|===
+
+'''
+== Prochaine étape
+
+Session 001 — DOC-1 : Plugin Gradle stub avec la nouvelle architecture.
+
+- AsciidoctorJ en `implementation` directe (pas compileOnly sur codex)
+- `DocumentPlugin.kt` + `DocumentExtension.kt` + `GenerateDocumentTask.kt`
+- Pas de dependance compileOnly sur codex-gradle
+- `planner-gradle` reste en `compileOnly` pour le bridge LLM partage
