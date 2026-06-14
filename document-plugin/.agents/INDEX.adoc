@@ -6,7 +6,7 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), planner-gradle (compileOnly, LLM bridge)
 
-_Derniere mise a jour_ : 2026-06-08 (Architecture boundary review — suppression compileOnly codex)
+_Derniere mise a jour_ : 2026-06-14 (Session 014 magic-stick → cadrage DOC-8 Release Notes Pipeline)
 _Session terminee_ : 000 — Bootstrap gouvernance + cadrage architecture
 _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct
 
@@ -67,6 +67,7 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 | DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | À faire | P2
 | DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
+| DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 📋 CADRAGE (voir EPIC_DOC-8_RELEASE_NOTES_PIPELINE.adoc) | P2
 |===
 
 '''

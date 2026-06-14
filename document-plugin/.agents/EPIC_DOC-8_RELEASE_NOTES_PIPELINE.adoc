@@ -1,0 +1,150 @@
+= EPIC DOC-8 — Release Notes Pipeline (Implémentation)
+:date: 2026-06-14
+:origin: Session 014 magic-stick — EPIC 7 → MEM-2 (workspace-bom)
+:priority: P2
+:estimation: 8 pts
+:borough: New Orleans 🟢 (document-gradle)
+:dependances: MEM-2 (pipeline-contracts N0 publié sur Maven Central)
+
+== Genèse — Dialectique Complète
+
+=== Contexte
+
+L'EPIC 7 de magic-stick (doc site) a été terminé le 2026-06-14. Un pipeline
+de génération de release notes a émergé :
+
+1. `git log` entre deux tags → parsing commits conventionnels
+2. Template AsciiDoc structuré → fichier `.adoc`
+3. Injection dans `jbake.properties` → site JBake
+
+L'implémentation actuelle est un script shell ad-hoc dans le repo ISO.
+La décision architecturale est d'extraire ce comportement en :
+- Contrat N0 : `pipeline-contracts` dans `workspace-bom` (MEMPHIS, EPIC MEM-2)
+- Implémentation N2 : `document-gradle` (New Orleans, EPIC DOC-8)
+
+=== Pourquoi document-gradle ?
+
+`document-gradle` est le borough N2 de création et publication AsciiDoc (WRITE + PUBLISH).
+Sa mission inclut déjà la conversion multi-format (HTML, PDF, EPUB…) via AsciidoctorJ.
+Ajouter la génération de release notes AsciiDoc est dans son scope naturel.
+
+Alternative rejetée : créer un nouveau borough N2 dédié.
+Raison : le parsing git log n'est pas une mission suffisante pour justifier
+un borough indépendant. C'est une capacité auxiliaire de document-gradle.
+
+=== Pourquoi pas bakery-gradle ?
+
+`bakery-gradle` (Bushwick) est le plugin de baking JBake. Il pourrait héberger
+la tâche `releaseNotesGenerate` et écrire directement dans `jbake.properties`.
+Mais bakery n'a pas de dépendance AsciidoctorJ — il bake du contenu déjà existant.
+Document-gradle, avec AsciidoctorJ en dépendance directe, est mieux placé
+pour produire du contenu AsciiDoc structuré.
+
+'''
+== Architecture
+
+```
+workspace-bom:pipeline-contracts (N0)
+        │  interface ReleaseNotesGenerator, GitLogParser, ReleaseNotesRenderer
+        │  data class ConventionalCommit, ReleaseNotesConfig
+        ▼
+document-gradle (N2)
+  ├─ GitReleaseNotesGenerator    implements ReleaseNotesGenerator
+  │    └─ ProcessBuilder("git", "log", "--format=%s", ...)
+  │    └─ regex parsing commits conventionnels
+  ├─ AsciidocReleaseNotesRenderer implements ReleaseNotesRenderer
+  │    └─ template AsciiDoc (titre, sections par catégorie, table download)
+  │    └─ format = "asciidoc"
+  └─ ReleaseNotesGenerateTask extends DefaultTask
+       └─ @TaskAction → generator.generate(config)
+       └─ DSL extension → document { releaseNotes { ... } }
+```
+
+'''
+== User Stories
+
+=== US-DOC-8.1 — Générer des release notes depuis l'historique git
+
+*Priorité* : P2
+*Estimation* : 3 pts
+
+.Valeur
+Tout borough avec des tags git peut générer des notes de version
+structurées en AsciiDoc, consommables par bakery-gradle ou tout autre
+pipeline de publication.
+
+.Critères d'acceptation
+- `releaseNotesGenerate` lit les tags git du projet
+- Les commits conventionnels sont parsés en catégories (feat/fix/chore/…)
+- Un fichier `.adoc` structuré est produit
+- La tâche fonctionne sans configuration (auto-détection VERSION + tags)
+- Test fonctionnel avec Gradle TestKit sur un repo git de test
+
+=== US-DOC-8.2 — Template AsciiDoc configurable
+
+*Priorité* : P2
+*Estimation* : 2 pts
+
+.Valeur
+Le format de sortie peut être adapté au style de chaque projet
+(sections, catégories, liens download).
+
+.Critères d'acceptation
+- Les catégories de commits sont configurables via l'extension DSL
+- La section "Téléchargement" est optionnelle (includeDownloads)
+- Le renderer est sélectionnable : `asciidoc` (par défaut)
+- Le fichier de sortie respecte la convention AsciiDoc du workspace
+
+=== US-DOC-8.3 — Intégration N3 runner-gradle
+
+*Priorité* : P3
+*Estimation* : 2 pts
+
+.Valeur
+Les release notes générées sont collectées par runner-gradle pour
+publication automatique.
+
+.Critères d'acceptation
+- `metadata.json` inclut le chemin du fichier release notes
+- Runner-gradle `assembleCompositeContext` ingère le fichier
+- Le déploiement automatique (gh-pages) inclut les release notes
+
+=== US-DOC-8.4 — Extension IA (Ollama) pour résumé humain
+
+*Priorité* : P3
+*Estimation* : 1 pt
+
+.Valeur
+Un LLM local (Ollama) produit un résumé en langage naturel des commits,
+ajouté en introduction des release notes.
+
+.Critères d'acceptation
+- Le renderer peut être configuré avec `rendererType = "ollama-asciidoc"`
+- Ollama est appelé avec le prompt : "Résume ces commits en français…"
+- Le résumé IA est ajouté en section "Résumé" avant les catégories
+- Fallback gracieux si Ollama n'est pas disponible
+
+'''
+== Plan d'Implémentation
+
+[cols="1,3,2,2"]
+|===
+| US | Description | Points | Dépendance
+| DOC-8.1 | Tâche Gradle releaseNotesGenerate + parser git log | 3 | MEM-2 publié
+| DOC-8.2 | Template AsciiDoc configurable + DSL extension | 2 | DOC-8.1
+| DOC-8.3 | Intégration metadata.json pour runner-gradle N3 | 2 | DOC-8.2
+| DOC-8.4 | Renderer IA Ollama (résumé humain) | 1 | DOC-8.2
+|===
+
+'''
+== Notes
+
+* Boundary respectée : codex-gradle (READ + RAG) n'est pas impacté.
+  Document-gradle (WRITE + PUBLISH) est le borough naturel.
+* Le script `scripts/generate-release-notes.sh` dans magic-stick devient
+  obsolète une fois DOC-8.1 terminé. Garder en fallback.
+* La tâche `releaseNotesGenerate` peut être appelée depuis n'importe
+  quel `build.gradle.kts` qui dépend de document-gradle en `classpath`.
+* Priorité P2 car l'EPIC MEM-2 doit être terminé d'abord (contrat N0).
+* Le renderer IA (US DOC-8.4) est le chaînon manquant de l'EPIC 7.2
+  original de magic-stick ("Générer notes de version via IA").
