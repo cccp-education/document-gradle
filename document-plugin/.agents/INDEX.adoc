@@ -4,9 +4,9 @@
 _Regles absolues_ : voir `AGENT.adoc`
 _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
-_Dependances_ : AsciidoctorJ (implementation directe), planner-gradle (compileOnly, LLM bridge)
+_Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-06-14 (Session 014 magic-stick → cadrage DOC-8 Release Notes Pipeline)
+_Derniere mise a jour_ : 2026-06-14 (Session 014 magic-stick → cadrage DOC-8 Release Notes Pipeline + cadrage pipeline livre Codex→Document)
 _Session terminee_ : 000 — Bootstrap gouvernance + cadrage architecture
 _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct
 
@@ -21,6 +21,7 @@ _Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec As
 === 6. ZERO secret/token/api key en dur dans le code source
 === 7. DOCUMENT CONSOMME ASCIIDOC — lecture seule
 === 8. BOUNDARY CODEX — Codex READ + RAG, Document WRITE + PUBLISH (pas de dependance directe)
+=== 9. BOUNDARY PLANTUML — plantuml-gradle = composition (contenant→contenu), pas pair N2. Dependance compileOnly legitime.
 
 '''
 == Boundary Codex (Brooklyn)
@@ -31,13 +32,29 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 [cols="2,5,5", options="header"]
 |===
 | | Document (New Orleans) | Codex (Brooklyn)
-| Mission | Creer + publier | Ingerer + chercher
+| Mission | Creer + enrichir + publier | Ingerer + OCR + chercher
 | Verbe DAG | GENERATE → TRANSFORM → DEPLOY | COLLECT → TRANSFORM → DEPLOY
-| Entree | Prompt LLM, AsciiDoc source | PDF, EPUB, AsciiDoc existant
+| Entree | Prompt LLM, AsciiDoc source | PDF, EPUB, photos, AsciiDoc existant
 | Sortie | HTML, PDF, EPUB, DocBook, ManPage | Vecteurs pgvector, chunks, knowledge base
 | AsciidoctorJ | Implementation directe | Parsing AST + export KB
-| LLM | Oui | Non
+| LLM | Oui (generation IA) | Oui (OCR photos → AsciiDoc)
 | Base de donnees | Aucune | PostgreSQL + pgvector
+|===
+
+'''
+== Boundary PlantUML (HTOWN)
+
+*plantuml-gradle est un composant, pas un pair.*
+Un diagramme est un constituant atomique du document (comme `<img>` en HTML).
+Relation contenant→contenu, pas parallelisme N2↔N2.
+
+[cols="2,5,5", options="header"]
+|===
+| | Document (New Orleans) | plantuml-gradle (HTOWN)
+| Relation | Contenant (incruste le PNG) | Contenu (genere le PNG)
+| Dependance | compileOnly (contrat generation) | Aucune vers Document
+| Flux | `enrichDocument` appelle plantumlGenerate → `image::diagram.png[]` | Genere PNG sur disque
+| Alternative | Extension Asciidoctor Diagram (inline, sans fichier intermediaire) | —
 |===
 
 '''
@@ -51,6 +68,7 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 | DOC-0c | Mise a jour AGENTS.adoc (New Orleans 14eme borough) | ✅ 2026-06-01
 | DOC-0d | Mise a jour PLAN_GLOBAL.adoc (EPIC DOC-x) | ✅ 2026-06-01
 | DOC-0e | Boundary architecture avec codex-gradle | ✅ 2026-06-08 (ARCHITECTURE_BOUNDARY.adoc)
+| DOC-0f | Cadrage pipeline livre Codex→Document (OCR + PlantUML + theme) | ✅ 2026-06-14
 |===
 
 '''
@@ -59,7 +77,7 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 [cols="1,3,2,2", options="header"]
 |===
 | EPIC | Description | Statut | Priorite
-| DOC-0 | Bootstrap gouvernance + cadrage architecture + boundary | ✅ TERMINE (session 000 + review 2026-06-08) | P0
+| DOC-0 | Bootstrap gouvernance + cadrage architecture + boundary | ✅ TERMINE (session 000 + review 2026-06-08 + cadrage 2026-06-14) | P0
 | DOC-1 | Plugin Gradle stub + build structure (AsciidoctorJ direct, pas de compileOnly codex) | À faire | P0
 | DOC-2 | generateDocument — generation AsciiDoc assistee par IA via langchain4j (deepseek-v4-pro) | À faire | P1
 | DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | À faire | P1
@@ -68,7 +86,36 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 | DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
 | DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 📋 CADRAGE (voir EPIC_DOC-8_RELEASE_NOTES_PIPELINE.adoc) | P2
+| DOC-9 | enrichDocument — incrustation PlantUML + HTML passthrough + images + resolution includes | 📋 CADRAGE (US-DOC-08, US-DOC-10) | P1
+| DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB | 📋 CADRAGE (US-DOC-09) | P1
+| DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1
+| DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | 📋 CADRAGE (US-DOC-12) | P2
 |===
+
+'''
+== Pipeline Livre — Vue d'ensemble
+
+----
+[CODEX N2] collectOcr ── photo → LLM → OcrResult.structuredText (AsciiDoc)
+                │
+                ├─▶ transformChunk → collectIngest → pgvector (RAG)
+                │
+                └─▶ AsciiDoc source (fichier disque, pont N2↔N2)
+                        │
+[DOCUMENT N2] ─────────┘
+    ├─ generateDocument (optionnel : regenerer/remixer via LLM)
+    ├─ enrichDocument (PlantUML via plantuml-gradle, images, includes, passthrough)
+    ├─ applyTheme (theme.yml PDF, talaria.css HTML)
+    ├─ convertDocumentToHtml → HTML5
+    ├─ convertDocumentToPdf  → PDF stagiaire
+    └─ convertDocumentToEpub → EPUB3
+            │
+[RUNNER N3] assembleCompositeContext → deploy gh-pages
+----
+
+*Codex gere l'OCR et le RAG. Document gere l'enrichissement et la publication.*
+*L'AsciiDoc sur disque est le seul pont entre les deux N2.*
+*Runner-gradle N3 orchestre l'ordre d'execution et le deploiement.*
 
 '''
 == Sessions

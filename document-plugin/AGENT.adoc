@@ -3,13 +3,13 @@
 _Produit_ : Plugin Gradle de creation et publication documentaire AsciiDoc (WRITE + PUBLISH)
 _Licence_ : Apache 2.0 (OSS)
 _DAG_ : N2 — Plugin Gradle de publication documentaire multi-format
-_Dependances_ : AsciidoctorJ (directe, implementation), planner-gradle (compileOnly, LLM bridge partage), workspace-bom (contrats N0)
+_Dependances_ : AsciidoctorJ (directe, implementation), planner-gradle (compileOnly, LLM bridge partage), plantuml-gradle (compileOnly, composition diagramme), workspace-bom (contrats N0)
 _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc` — Codex READ + RAG, Document WRITE + PUBLISH
 
 == Principe
 
-Le plugin `document` a deux missions complementaires, centrees sur la
-**creation** et la **publication** de contenu AsciiDoc :
+Le plugin `document` a trois missions complementaires, centrees sur la
+**creation**, l'**enrichissement** et la **publication** de contenu AsciiDoc :
 
 === 1. Generation assistee par IA de contenu AsciiDoc
 
@@ -22,14 +22,28 @@ l'humain valide et enrichit.
 Distinct de planner-gradle (Manhattan) qui genere des SPG/SPD pedagogiques.
 Ici, on genere de la documentation technique generaliste.
 
-=== 2. Conversion multi-format via AsciidoctorJ
+=== 2. Enrichissement — Incrustation HTML, PlantUML, images, theming
+
+Le document AsciiDoc est enrichi avant conversion :
+- *HTML brut* : passthrough `++++` pour injecter du HTML directement
+- *PlantUML* : diagrammes generes par plantuml-gradle (HTOWN), incrustes
+  via `image::diagram.png[]` ou extension Asciidoctor Diagram
+- *Images* : `image::photo.png[]` integrees dans tous les formats de sortie
+- *Includes* : `include::chapitre.adoc[]` resolus recursivement
+- *Theme* : fichier YML (PDF) ou CSS (HTML/EPUB) configurable via le DSL
+
+Relation plantuml-gradle : *composition*, pas parallelisme. Un diagramme
+est un constituant atomique du document (comme `<img>` dans HTML).
+Dependance compileOnly legitime, pas de cycle DAG.
+
+=== 3. Conversion multi-format via AsciidoctorJ
 
 Le plugin expose chaque convertisseur AsciidoctorJ comme une tache Gradle
 isolee : HTML5, PDF, EPUB3, DocBook 5, ManPage. Configuration fine des
 attributs, des templates et des options de rendu.
 
 Pipeline complet :
-  Prompt ──→ IA (LLM) ──→ AsciiDoc genere ──→ validation humaine ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
+  Source ──→ IA (LLM) ──→ AsciiDoc ──→ enrichissement (PlantUML/images/HTML) ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
 
 Cas d'usage MVP0 :
 - Generation de documentation technique des plugins (README, specs)
@@ -37,6 +51,33 @@ Cas d'usage MVP0 :
 - Export EPUB des sessions de formation pour lecture hors-ligne
 - Generation de manuels utilisateur et documentation API
 - Documentation technique des plugins Gradle au format DocBook
+
+=== Pipeline Livre depuis Photos (Codex → Document)
+
+Cas d'usage complet : produire un livre multi-format a partir de photos
+de pages d'un ouvrage existant.
+
+----
+[CODEX N2] collectOcr ── photo → LLM → OcrResult.structuredText (AsciiDoc)
+                │
+                ├─▶ transformChunk → collectIngest → pgvector (RAG)
+                │
+                └─▶ AsciiDoc source (fichier disque, pont N2↔N2)
+                        │
+[DOCUMENT N2] ─────────┘
+    ├─ generateDocument (optionnel : regenerer/remixer via LLM)
+    ├─ enrichissement PlantUML (plantuml-gradle → diagram.png)
+    ├─ enrichissement images (photos originales en illustration)
+    ├─ application theme (theme.yml PDF, talaria.css HTML)
+    ├─ convertDocumentToHtml → HTML5
+    ├─ convertDocumentToPdf  → PDF stagiaire
+    └─ convertDocumentToEpub → EPUB3
+            │
+[RUNNER N3] assembleCompositeContext → deploy gh-pages
+----
+
+Codex et Document sont *paralleles* en N2, sans dependance directe.
+L'AsciiDoc sur disque est le seul pont. Runner-gradle (N3) orchestre.
 
 '''
 == Regles Absolues
@@ -55,11 +96,13 @@ Cas d'usage MVP0 :
 == Taches Principales
 
   ./gradlew generateDocument          → generation AsciiDoc assistee par IA (LLM)
+  ./gradlew enrichDocument            → incrustation PlantUML/images/HTML + resolution includes
   ./gradlew convertDocumentToHtml     → AsciiDoc → HTML (AsciidoctorJ html5)
   ./gradlew convertDocumentToPdf      → AsciiDoc → PDF (AsciidoctorJ pdf)
   ./gradlew convertDocumentToEpub     → AsciiDoc → EPUB (AsciidoctorJ epub3)
   ./gradlew convertDocumentToDocBook  → AsciiDoc → DocBook (AsciidoctorJ docbook5)
   ./gradlew convertDocumentToManPage  → AsciiDoc → ManPage (AsciidoctorJ manpage)
+  ./gradlew collectDocumentRetrieve   → metadata.json pour N3 runner-gradle
   ./gradlew check                     → tous les tests (unitaire + fonctionnel)
 
 == Tests
@@ -72,8 +115,10 @@ Toute modification de code source DOIT passer `./gradlew check`
 
 - Kotlin — DSL Gradle
 - AsciidoctorJ 2.x — conversion multi-format (implementation directe, pas via codex)
+- Asciidoctor Diagram — extension PlantUML inline (implementation)
 - langchain4j — LLM prompting (deepseek-v4-pro)
 - planner-gradle — dependance compileOnly, partage LLM bridge (evite duplication)
+- plantuml-gradle — dependance compileOnly, contrat generation diagramme (composition)
 - workspace-bom — contrats N0 partages (ContextChannel, CompositeContext)
 
 == Formats supportes (AsciidoctorJ)
@@ -82,6 +127,7 @@ Toute modification de code source DOIT passer `./gradlew check`
 |===
 | Format | Tache Gradle
 | AsciiDoc (genere) | `generateDocument`
+| AsciiDoc (enrichi) | `enrichDocument`
 | HTML5 | `convertDocumentToHtml`
 | PDF | `convertDocumentToPdf`
 | EPUB3 | `convertDocumentToEpub`
@@ -96,14 +142,21 @@ Toute modification de code source DOIT passer `./gradlew check`
 | Borough | Relation | Nature
 | codex-gradle (Brooklyn)
 | *Parallel N2, pas de dependance directe*
-| Codex = READ pipeline (ingestion PDF/EPUB → vectorisation → RAG).
-  Document = WRITE pipeline (creation IA + publication multi-format).
+| Codex = READ pipeline (ingestion PDF/EPUB/OCR → vectorisation → RAG).
+  Document = WRITE pipeline (creation IA + enrichissement + publication multi-format).
   Un meme AsciiDoc source est consommable par les deux.
+  Pipeline livre : Codex OCRise les photos → AsciiDoc → Document publie.
 
 | planner-gradle (Manhattan)
 | compileOnly
 | Bridge LLM partage (langchain4j → deepseek-v4-pro) pour
   eviter duplication du code de connexion.
+
+| plantuml-gradle (HTOWN)
+| compileOnly (composition)
+| Les diagrammes sont des constituants atomiques du document.
+  plantuml-gradle genere le PNG, document l'incruste via `image::` ou
+  extension Asciidoctor Diagram. Relation contenant→contenu, pas pair N2.
 
 | runner-gradle (New Jersey)
 | Consumer N3

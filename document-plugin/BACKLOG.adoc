@@ -142,6 +142,122 @@ depuis le document AsciiDoc source, pour integration dans le systeme.
 - La section (1-8) est configurable via l'extension
 - `man <fichier>` affiche correctement le contenu
 
+=== US-DOC-08 — En tant qu'editeur, je veux incruster des diagrammes PlantUML dans mon document
+
+*Priorite* : P1
+*EPIC* : DOC-9
+
+.Valeur
+Les diagrammes d'architecture, de sequence, de classe generes par
+plantuml-gradle (HTOWN) sont automatiquement incrustes dans le document
+final (HTML/PDF/EPUB) sans manipulation manuelle.
+
+.Criteres d'acceptation
+- `enrichDocument` detecte les directives `plantuml::diagram.puml[]` dans l'AsciiDoc source
+- La tache appelle plantuml-gradle pour generer le PNG correspondant
+- Le PNG est incruste via `image::diagram.png[]` dans le document enrichi
+- Alternative : extension Asciidoctor Diagram pour rendu inline sans fichier intermediaire
+- Les diagrammes sont visibles dans tous les formats de sortie (HTML, PDF, EPUB)
+- Fallback : si plantuml-gradle n'est pas disponible, un placeholder texte est insere
+
+=== US-DOC-09 — En tant qu'editeur, je veux personnaliser le theme visuel de mon document
+
+*Priorite* : P1
+*EPIC* : DOC-10
+
+.Valeur
+Le document final (PDF, HTML, EPUB) respecte la charte graphique du projet
+(couleurs, polices, logos, en-tete/pied de page) via un systeme de theming
+configurable dans le DSL Gradle.
+
+.Criteres d'acceptation
+- Le DSL `document { }` expose une section `theme { }` avec :
+  * `pdfTheme = "talaria-theme.yml"` — fichier YML Asciidoctor PDF
+  * `htmlStylesheet = "talaria.css"` — feuille de style CSS
+  * `epubStylesheet = "epub.css"` — CSS embarque dans l'EPUB
+  * `logo = "logo.png"` — image titre pour PDF
+- Le theme YML PDF supporte : couleurs, polices, marges, en-tete/pied de page, filigrane
+- Le theme CSS HTML supporte : polices, couleurs, code highlighting, responsive
+- Fallback : theme par defaut integre si aucun fichier fourni
+- Le theme est reutilisable cross-projet (fichier YML/CSS versionne)
+
+=== US-DOC-10 — En tant qu'editeur, je veux injecter du HTML brut dans mon document AsciiDoc
+
+*Priorite* : P2
+*EPIC* : DOC-9
+
+.Valeur
+Des fragments HTML (iframes, widgets, scripts, styles inline) peuvent etre
+incrustes directement dans le document AsciiDoc via la syntaxe passthrough
+`++++`, et sont rendus correctement dans la sortie HTML5.
+
+.Criteres d'acceptation
+- `enrichDocument` preserve les blocs passthrough `++++` sans les echapper
+- Le HTML injecte est rendu tel quel dans `convertDocumentToHtml`
+- Pour PDF/EPUB : le HTML est converti en equivalent natif ou ignore
+  avec un avertissement
+- Les includes AsciiDoc contenant du passthrough sont resolus recursivement
+
+=== US-DOC-11 — En tant qu'auteur, je veux produire un livre complet depuis des photos de pages
+
+*Priorite* : P1
+*EPIC* : DOC-11 (Pipeline Livre Codex→Document)
+
+.Valeur
+Pipeline complet de bout en bout : photos de pages d'un livre existant
+→ OCR via Codex → AsciiDoc structure → enrichissement (PlantUML, images,
+theme) → publication multi-format (HTML/PDF/EPUB). Le tout orchestre
+par runner-gradle N3.
+
+.Criteres d'acceptation
+- Codex `collectOcr` produit un `OcrResult.structuredText` (AsciiDoc) par page
+- Les AsciiDoc OCRises sont assembles en un document unique (ordre des pages)
+- Document `enrichDocument` incruste les photos originales en illustration
+- Document `enrichDocument` incruste les diagrammes PlantUML references
+- Document applique le theme configure
+- `convertDocumentToHtml` produit un livre HTML navigable (TOC, ancres)
+- `convertDocumentToPdf` produit un PDF imprimeur (theme pro, pagination)
+- `convertDocumentToEpub` produit un EPUB3 valide (epubcheck)
+- Runner-gradle N3 `assembleCompositeContext` indexe tous les artefacts
+- Le pipeline est reproductible : `./gradlew bookPipeline` en une commande
+
+.Flux DAG
+----
+[CODEX] collectOcr ── photo → LLM → AsciiDoc
+    ├─ transformChunk → collectIngest → pgvector (RAG)
+    └─ AsciiDoc source (fichier disque, pont N2↔N2)
+            │
+[DOCUMENT] ─────────┘
+    ├─ enrichDocument (PlantUML, images, includes, passthrough)
+    ├─ applyTheme (theme.yml, talaria.css)
+    ├─ convertDocumentToHtml → HTML5
+    ├─ convertDocumentToPdf  → PDF
+    └─ convertDocumentToEpub → EPUB3
+            │
+[RUNNER N3] assembleCompositeContext → deploy gh-pages
+----
+
+=== US-DOC-12 — En tant qu'integrateur, je veux un DSL Gradle unifie pour le pipeline documentaire
+
+*Priorite* : P2
+*EPIC* : DOC-12
+
+.Valeur
+Un bloc de configuration unique `document { }` dans `build.gradle.kts`
+controle tout le pipeline : source, enrichissement, theme, formats de
+sortie, metadata N3.
+
+.Criteres d'acceptation
+- DSL `document { }` expose :
+  * `source = file("livre.adoc")` — document source
+  * `enrich { plantuml = true; images = true; passthrough = true }`
+  * `theme { pdf = "theme.yml"; html = "style.css"; epub = "epub.css" }`
+  * `outputs { html = true; pdf = true; epub = true }`
+  * `metadata { title = "..."; author = "..."; language = "fr" }`
+- La configuration est serialisable en `document-config.json`
+- Les valeurs par defaut sont documentees
+- Le DSL est extensible par les boroughs consommateurs (runner, bakery)
+
 '''
 == Dette Technique
 
@@ -151,6 +267,8 @@ depuis le document AsciiDoc source, pour integration dans le systeme.
 | DT-01 | Aucune — projet neuf, zero dette | -
 | DT-02 | [ARCHI] Suppression dependance compileOnly codex-gradle dans build.gradle.kts | P0 — session 001
 | DT-03 | [ARCHI] AsciidoctorJ en implementation directe (version geree par workspace-bom) | P0 — session 001
+| DT-04 | [ARCHI] Ajout dependance compileOnly plantuml-gradle (composition diagramme) | P1 — session DOC-9
+| DT-05 | [ARCHI] Ajout dependance implementation Asciidoctor Diagram (PlantUML inline) | P1 — session DOC-9
 |===
 
 '''
@@ -162,6 +280,9 @@ depuis le document AsciiDoc source, pour integration dans le systeme.
 | R-02 | Dependance langchain4j pour l'IA — cout token LLM | Moyen | Moyen
 | R-03 | Asciidoctor PDF necessite Ruby (rouge) ou bibliotheques natives | Bloquant | Moyen
 | R-04 | Les formats EPUB/DocBook/ManPage sont moins utilises — bugs latents | Faible | Faible
+| R-05 | plantuml-gradle non execute avant enrichDocument → diagrammes manquants | Moyen | Moyen
+| R-06 | Cout tokens OCR : 300 pages × deepseek-v4-pro → budget significatif | Moyen | Eleve
+| R-07 | Asciidoctor Diagram necessite Graphviz installe sur la machine | Moyen | Moyen
 | BND-01 | Codex duplique une tache de conversion (ExportKnowledgeBase fait deja AsciiDoc→Markdown) | Moyen | Moyen
 | BND-02 | Deux versions d'AsciidoctorJ cohabitent (codex vs document) | Faible | Faible
 |===
@@ -176,10 +297,16 @@ _document a sa propre dependance AsciidoctorJ directe, pas de compileOnly sur co
   Les deux boroughs partagent la version via workspace-bom.
 * La generation IA peut etre desactivee (fallback template) si le LLM n'est pas disponible.
 * Boundary claire : Codex = READ + RAG (ingestion, vectorisation, recherche semantique).
-  Document = WRITE + PUBLISH (creation IA, conversion multi-format).
+  Document = WRITE + PUBLISH (creation IA, enrichissement, conversion multi-format).
   Voir `.agents/ARCHITECTURE_BOUNDARY.adoc`.
 * Le LLM bridge est partage avec planner-gradle en compileOnly pour eviter duplication.
+* plantuml-gradle est en compileOnly (composition) — un diagramme est un constituant
+  atomique du document, pas un pair N2. Relation contenant→contenu.
 * Priorite MVP0 : PDF stagiaire et HTML site statique > EPUB > DocBook > ManPage.
+* Pipeline livre (photos → OCR → AsciiDoc → livre multi-format) : voir US-DOC-11.
+  Codex gere l'OCR, Document gere la publication. Orchestration par runner-gradle N3.
+* Le theme YML PDF et le CSS HTML/EPUB sont des fichiers versionnes dans le projet,
+  pas generes par le plugin. Document les applique, ne les cree pas.
 
 '''
 

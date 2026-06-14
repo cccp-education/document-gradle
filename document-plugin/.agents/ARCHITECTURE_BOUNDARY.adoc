@@ -1,6 +1,6 @@
-= ARCHITECTURE_BOUNDARY — Document Gradle (New Orleans 🟢) ↔ Codex Gradle (Brooklyn)
+= ARCHITECTURE_BOUNDARY — Document Gradle (New Orleans 🟢) ↔ Codex Gradle (Brooklyn) + plantuml-gradle (HTOWN)
 :toc:
-:date: 2026-06-08
+:date: 2026-06-14
 :status: [STRATEGIE] — decision validee, implementation en attente
 
 '''
@@ -41,8 +41,9 @@ Ce couplage posait trois problèmes :
 
 | Entrée
 | PDF, EPUB, AsciiDoc *existants* (provenant de `books-collection/`
-  ou du pipeline de formation)
+  ou du pipeline de formation) + *photos de pages* (OCR via LLM)
 | Prompt LLM → AsciiDoc *généré* OU AsciiDoc *source* écrit par l'humain
+  OU AsciiDoc *OCRisé* produit par codex (fichier disque, pont N2↔N2)
 
 | Sortie
 | Vecteurs pgvector, chunks sémantiques, knowledge base (JSON-LD),
@@ -56,8 +57,10 @@ Ce couplage posait trois problèmes :
   *Dépendance directe*, pas via codex.
 
 | LLM
-| Non
-| Oui — deepseek-v4-pro via langchain4j
+| Oui — deepseek-v4-pro pour OCR photos → AsciiDoc structuré
+  (tâche `collectOcr`, contrats `codex.ocr.OcrRequest/Result/Config`)
+| Oui — deepseek-v4-pro via langchain4j pour
+  generation de contenu AsciiDoc (tâche `generateDocument`)
 
 | Vectorisation
 | Oui — ONNX AllMiniLmL6V2 + pgvector
@@ -78,15 +81,85 @@ N1 → codebase-gradle (contrats partagés ContextChannel/CompositeContext)
        │
 N2 → ┌─ codex-gradle (READ + RAG)
      │    extract PDF/EPUB → chunk → vectorize → semantic search
+     │    + OCR photos → AsciiDoc structuré (collectOcr)
+     │
+     ├─ plantuml-gradle (HTOWN) — génération diagrammes
+     │    prompt LLM → PlantUML → PNG/SVG
+     │    *Composition* : constituant atomique du document
      │
      └─ document-gradle (WRITE + PUBLISH)
-          prompt LLM → generate AsciiDoc → convert HTML/PDF/EPUB/DocBook/ManPage
+          prompt LLM → generate AsciiDoc → enrich (PlantUML/images/HTML) → convert HTML/PDF/EPUB/DocBook/ManPage
        │
 N3 → runner-gradle (assembleCompositeContext, orchestration, deploy gh-pages)
 ----
 
 Codex et document sont *parallèles* en N2. Aucun lien de dépendance direct.
 Les deux exposent leur output via metadata.json que runner-gradle (N3) assemble.
+
+plantuml-gradle est en *composition* avec document-gradle (contenant→contenu).
+Un diagramme est un constituant atomique du document, pas un pair N2.
+Dépendance compileOnly légitime, pas de cycle DAG.
+
+'''
+== Boundary PlantUML (HTOWN) — Composition, pas Parallelisme
+
+*plantuml-gradle est un composant du document, pas un pair.*
+
+Contrairement a la relation Codex↔Document (parallele N2, missions orthogonales),
+la relation Document→PlantUML est une relation de *composition* :
+un diagramme est un element constitutif du document, au meme titre qu'une
+image ou un bloc de code. C'est la meme relation qu'un `<img>` dans du HTML.
+
+[cols="2,5,5", options="header"]
+|===
+| Aspect | Document (New Orleans) — Contenant | plantuml-gradle (HTOWN) — Contenu
+| Relation | Contenant — incruste le PNG dans le document final | Contenu — genere le PNG sur disque
+| Dependance | compileOnly (contrat de generation) | Aucune vers Document
+| Flux | `enrichDocument` → `plantumlGenerate` → `image::diagram.png[]` | Prompt LLM → PlantUML → PNG/SVG
+| Alternative | Extension Asciidoctor Diagram (inline, sans fichier intermediaire) | —
+| Ordre N3 | runner-gradle execute plantumlGenerate avant enrichDocument | —
+|===
+
+*Regle* : plantuml-gradle est deja publie sur Maven Central (0.0.1), stable (380/380 PASS).
+Document peut le referencer en compileOnly sans risque de cycle DAG.
+La seule contrainte est l'ordre d'execution dans runner-gradle N3,
+ce qui est le job de l'orchestrateur, pas une raison d'interdire la dependance.
+
+'''
+== Pipeline Livre — Codex OCR → Document Publication
+
+Cas d'usage complet : produire un livre multi-format (HTML/PDF/EPUB)
+a partir de photos de pages d'un ouvrage existant.
+
+----
+[CODEX N2] collectOcr ── photo PNG/JPEG → LLM deepseek-v4-pro → OcrResult.structuredText (AsciiDoc)
+                │
+                ├─▶ transformChunk → collectIngest → pgvector (RAG)
+                │
+                └─▶ AsciiDoc source (fichier disque, pont N2↔N2)
+                        │
+[DOCUMENT N2] ─────────┘
+    ├─ generateDocument (optionnel : regenerer/remixer via LLM)
+    ├─ enrichDocument
+    │    ├─ PlantUML (plantuml-gradle → diagram.png → image::[])
+    │    ├─ Images (photos originales en illustration)
+    │    ├─ HTML passthrough (++++...++++)
+    │    └─ Includes (include::chapitre.adoc[])
+    ├─ applyTheme (theme.yml PDF, talaria.css HTML, epub.css)
+    ├─ convertDocumentToHtml → HTML5 navigable (TOC, ancres)
+    ├─ convertDocumentToPdf  → PDF imprimeur (theme pro, pagination)
+    └─ convertDocumentToEpub → EPUB3 valide (epubcheck)
+            │
+[RUNNER N3] assembleCompositeContext → deploy gh-pages
+----
+
+*Contrats OCR* : `codex.ocr.OcrRequest` (image bytes + format + langue + prompt),
+`codex.ocr.OcrResult` (structuredText AsciiDoc + confidence + metadata),
+`codex.ocr.OcrConfig` (provider/model/maxTokens/temperature).
+Implementes dans codex-gradle (session 027), tests en cours (CDX-15, session 030).
+
+*Pont N2↔N2* : l'AsciiDoc sur disque. Codex ecrit, Document lit.
+Aucune dependance Gradle directe entre les deux plugins.
 
 '''
 == Contrat Inter-Borough
@@ -123,11 +196,18 @@ Les deux exposent leur output via metadata.json que runner-gradle (N3) assemble.
 
 ----
 CODEX lit les documents existants et les rend cherchables.
-DOCUMENT crée et publie des documents dans tous les formats de sortie.
+  → OCR photos, extraction PDF/EPUB, vectorisation, RAG.
+DOCUMENT crée, enrichit et publie des documents dans tous les formats.
+  → Generation IA, incrustation PlantUML/images/HTML, theming,
+    conversion HTML/PDF/EPUB/DocBook/ManPage.
 
-Quand un AsciiDoc est produit par planner-gradle (SPG/SPD), il est source
-pour les DEUX boroughs : codex le vectorise pour le RAG, document le
-convertit en HTML/PDF/EPUB/... pour le livrable stagiaire.
+Quand un AsciiDoc est produit (par planner, codex OCR, ou humain),
+il est source pour les DEUX boroughs : codex le vectorise pour le RAG,
+document le convertit en livrable multi-format.
+
+PLANTUML est un constituant du document, pas un pair.
+  → plantuml-gradle genere le diagramme, document l'incruste.
+  → Relation contenant→contenu, dependance compileOnly legitime.
 ----
 
 '''
@@ -176,6 +256,26 @@ convertit en HTML/PDF/EPUB/... pour le livrable stagiaire.
 | Faible
 | Les deux utilisent la meme version via le BOM workspace-bom.
   Pas de version mismatch possible.
+
+| BND-03
+| plantuml-gradle non execute avant enrichDocument → diagrammes manquants
+| Moyen
+| Runner-gradle N3 garantit l'ordre : plantumlGenerate avant enrichDocument.
+  Fallback : placeholder texte si PNG absent.
+
+| BND-04
+| Cout tokens OCR — 300 pages × deepseek-v4-pro
+| Moyen
+| OcrConfig.maxTokens controle le budget par page.
+  Temperature 0.0 pour resultats deterministes.
+  Pool de cles API (api-key-pool-gradle) pour rotation.
+
+| BND-05
+| Asciidoctor Diagram necessite Graphviz natif (dot)
+| Moyen
+| Alternative : plantuml-gradle genere le PNG en amont,
+  Document incruste via image::[]. Pas de dependance Graphviz
+  si le mode fichier intermediaire est utilise.
 |===
 
 '''
@@ -184,6 +284,17 @@ convertit en HTML/PDF/EPUB/... pour le livrable stagiaire.
 Session 001 — DOC-1 : Plugin Gradle stub avec la nouvelle architecture.
 
 - AsciidoctorJ en `implementation` directe (pas compileOnly sur codex)
+- plantuml-gradle en `compileOnly` (composition diagramme)
+- Asciidoctor Diagram en `implementation` (PlantUML inline, DOC-9)
 - `DocumentPlugin.kt` + `DocumentExtension.kt` + `GenerateDocumentTask.kt`
 - Pas de dependance compileOnly sur codex-gradle
 - `planner-gradle` reste en `compileOnly` pour le bridge LLM partage
+
+== Historique des Revisions
+
+[cols="2,3"]
+|===
+| Date | Modification
+| 2026-06-08 | Creation — Boundary Codex↔Document (READ vs WRITE), suppression compileOnly codex
+| 2026-06-14 | Ajout Boundary PlantUML (composition), pipeline livre Codex→Document, OCR photos, risques BND-03/04/05
+|===

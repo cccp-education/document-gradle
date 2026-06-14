@@ -1,0 +1,24 @@
+= COMPLETED_TASKS_ARCHIVE — document-gradle (New Orleans 🟢)
+:date: 2026-06-14
+
+== Session 001 — Cadrage Pipeline Livre Codex→Document
+
+*Date* : 2026-06-14
+*Type* : cadrage
+*Score* : 5 fichiers gouvernance mis a jour
+
+*Detail* : Cadrage complet du pipeline livre (photos → OCR Codex → AsciiDoc → enrichissement PlantUML/images/HTML/theme → publication multi-format HTML/PDF/EPUB).
+
+Fichiers modifies :
+- `AGENT.adoc` — 3 missions, pipeline livre, stack enrichi, 9 taches
+- `BACKLOG.adoc` — 5 US (DOC-08→DOC-12), dette +4, risques +3
+- `INDEX.adoc` — 12 EPICs, boundary PlantUML, pipeline visuel
+- `PROMPT_REPRISE.adoc` — Vision complete, roadmap prioritaire
+- `ARCHITECTURE_BOUNDARY.adoc` — Boundary PlantUML (composition), pipeline livre, risques BND-03/04/05
+
+Decisions cles :
+- PlantUML = composition (contenant→contenu), compileOnly legitime
+- Codex fait aussi du LLM (OCR photos)
+- Document = 3 missions (creation, enrichissement, publication)
+- Theme = fichiers versionnes, Document applique
+- Pont N2↔N2 = AsciiDoc sur disque
