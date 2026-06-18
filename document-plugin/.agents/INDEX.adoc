@@ -127,7 +127,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 |===
 
 '''
-== Portefeuille — 25 Boroughs
+== Portefeuille — 26 Boroughs
 
 |===
 | Borough | Projet | DAG | Sessions
@@ -156,6 +156,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | HTOWN 🚀 | plantuml-gradle | N2 | 145
 | Grand Central 🟡 | graphify-gradle | N0 | 011
 | Liberty 🗽 | api-key-pool-gradle | N0 | 002
+| ALGER 🟡 | dashboard-gradle | N3 | 000
 |===
 
 '''
