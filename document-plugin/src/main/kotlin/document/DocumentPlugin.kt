@@ -1,0 +1,86 @@
+package document
+
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+/**
+ * Plugin Gradle `education.cccp.document` — creation et publication
+ * documentaire AsciiDoc multi-format via AsciidoctorJ.
+ *
+ * DOC-1 (stub) : enregistre l'extension `document { }` et les 8 taches
+ * du pipeline. Les conversions (HTML/PDF/EPUB/DocBook/ManPage) sont
+ * des stubs no-op ; l'implementation arrive dans DOC-2 -> DOC-5.
+ *
+ * Ordre de precedent des parametres (pattern planner/codebase) :
+ *   CLI (-Pdocument.xxx) > DSL (block document { }) > convention (defaut)
+ *
+ * Boundary :
+ * - Codex (Brooklyn) = READ + RAG — pas de dependance vers codex.
+ * - plantuml-gradle (HTOWN) = composition — compileOnly legitime.
+ * - planner-gradle (Manhattan) = LLM bridge partage — compileOnly.
+ */
+class DocumentPlugin : Plugin<Project> {
+
+    override fun apply(project: Project) {
+        val ext = project.extensions.create("document", DocumentExtension::class.java)
+
+        // Conventions (defauts)
+        ext.source.convention(project.layout.projectDirectory.file("src/docs/document.adoc"))
+        ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
+        ext.formats.convention(listOf(DocumentFormat.HTML))
+        ext.enrichPlantUml.convention(false)
+        ext.enrichImages.convention(false)
+        ext.enrichPassthrough.convention(false)
+
+        registerGenerateDocument(project, ext)
+        registerEnrichDocument(project, ext)
+        registerConvertTasks(project, ext)
+        registerCollectDocumentRetrieve(project, ext)
+    }
+
+    private fun cliProp(project: Project, key: String) =
+        project.providers.gradleProperty("document.$key")
+
+    private fun registerGenerateDocument(project: Project, ext: DocumentExtension) {
+        project.tasks.register("generateDocument", GenerateDocumentTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Genere un document AsciiDoc (stub — DOC-2 ajoutera la generation IA via langchain4j)."
+            task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+            task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
+            task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.adoc"))
+        }
+    }
+
+    private fun registerEnrichDocument(project: Project, ext: DocumentExtension) {
+        project.tasks.register("enrichDocument") { task ->
+            task.group = "document"
+            task.description = "Enrichit le document AsciiDoc (PlantUML, images, includes, passthrough) — stub DOC-9."
+        }
+    }
+
+    private fun registerConvertTasks(project: Project, ext: DocumentExtension) {
+        val conversions = listOf(
+            "convertDocumentToHtml" to DocumentFormat.HTML,
+            "convertDocumentToPdf" to DocumentFormat.PDF,
+            "convertDocumentToEpub" to DocumentFormat.EPUB,
+            "convertDocumentToDocBook" to DocumentFormat.DOCBOOK,
+            "convertDocumentToManPage" to DocumentFormat.MANPAGE,
+        )
+        conversions.forEach { (name, format) ->
+            project.tasks.register(name, ConvertDocumentTask::class.java) { task ->
+                task.description = "Convertit l'AsciiDoc en ${format.name} (AsciidoctorJ ${format.backend}). — stub DOC-${if (format == DocumentFormat.HTML) 3 else if (format == DocumentFormat.PDF) 4 else 5}"
+                task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+                task.format.set(format)
+                task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
+                task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
+            }
+        }
+    }
+
+    private fun registerCollectDocumentRetrieve(project: Project, ext: DocumentExtension) {
+        project.tasks.register("collectDocumentRetrieve") { task ->
+            task.group = "document"
+            task.description = "Produit metadata.json pour l'integration N3 runner-gradle (assembleCompositeContext)."
+        }
+    }
+}

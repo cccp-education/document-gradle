@@ -1,3 +1,84 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
+:date: 2026-06-29
+:session: 002
 
-Aucun test pour l'instant — session 000 bootstrap uniquement.
+== Pyramide de tests — Session 002 (DOC-1)
+
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+
+| Unit (domaine)
+| 9
+| ✅ PASS
+| `src/test/kotlin/document/DocumentPluginTest.kt`
+
+| Functional (GradleTestKit)
+| 5
+| ✅ PASS
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
+
+| Cucumber BDD (acceptance)
+| 4
+| ✅ PASS
+| `src/test/resources/features/document.feature`
+|===
+
+**Total : 18 tests, 0 échec.**
+
+== Détail unit (9)
+
+[cols="2,3,1"]
+|===
+| Classe | Test | Status
+
+| DocumentSourceTest | DocumentSource extrait le nom sans extension | ✅
+| DocumentSourceTest | DocumentSource refuse un fichier non adoc | ✅
+| DocumentFormatTest | DocumentFormat HTML a backend html5 et extension html | ✅
+| DocumentFormatTest | DocumentFormat PDF a backend pdf et extension pdf | ✅
+| DocumentFormatTest | DocumentFormat ALL contient les 5 formats | ✅
+| DocumentConfigTest | DocumentConfig outputFor genere le bon nom de fichier | ✅
+| DocumentConfigTest | DocumentConfig par defaut demande HTML uniquement | ✅
+| DocumentConfigTest | DocumentConfig requiresEnrichment faux par defaut | ✅
+| DocumentConfigTest | DocumentConfig requiresEnrichment vrai si PlantUML active | ✅
+|===
+
+== Détail functional (5)
+
+[cols="3,1"]
+|===
+| Test | Status
+
+| plugin s'applique et enregistre les 8 taches documentaires | ✅
+| plugin applique l'extension document via DSL | ✅
+| convention source par defaut est src docs document adoc | ✅
+| DSL override la convention source | ✅
+| CLI -Pdocument source surcharge la convention | ✅
+|===
+
+== Détail cucumber BDD (4)
+
+Feature: `document.feature` — Document plugin stub (DOC-1)
+
+[cols="3,1"]
+|===
+| Scénario | Status
+
+| Le plugin s'applique sur un projet vierge | ✅
+| Le plugin enregistre la tache generateDocument | ✅
+| Le plugin enregistre la tache convertDocumentToPdf | ✅
+| Le plugin enregistre 8 taches documentaires | ✅
+|===
+
+== Couverture code
+
+Coverage non mesuré (Kover non configuré en DOC-1).
+Classes de production : 7 (DocumentPlugin, DocumentExtension, DocumentConfig,
+DocumentFormat, DocumentSource, GenerateDocumentTask, ConvertDocumentTask).
+
+== Notes
+
+- `@TempDir` JUnit remplacé par `Files.createTempDirectory()` — conflit
+  cucumber-junit-platform-engine sur ParameterResolver.
+- Pattern surcharge : `providers.gradleProperty().orElse(ext)` (pattern planner/codebase).
+- Dogfood conventions plugins : gradle-plugin + publishing + functional-test + cucumber.

@@ -1,0 +1,83 @@
+= Session 002 — DOC-1 Plugin Stub (TDD/BDD baby-step)
+:date: 2026-06-29
+:type: implementation
+:status: ✅ TERMINÉ
+
+== Objectif
+
+Implémenter DOC-1 — Plugin Gradle stub pour le pipeline documentaire AsciiDoc.
+Dogfood les conventions plugins publiées (CNV-6) + baby-step DDD/TDD/BDD.
+
+== Méthode
+
+Baby-step DDD/TDD/BDD en pyramide de tests :
+1. **DDD** — ubiquitous language : `DocumentSource`, `DocumentFormat`, `DocumentConfig`
+2. **TDD** — Red → Green → Refactor, 1 test à la fois
+3. **BDD** — Cucumber `.feature` en amont (scénarios acceptance)
+4. **Pyramide** — unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
+
+== Pattern de surcharge
+
+Pattern or planner/codebase (le plus élégant du workspace) :
+```
+CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
+```
+Via `project.providers.gradleProperty("document.xxx").orElse(ext.xxx)` — lazy, déclaratif, zéro ConfigMerger.
+
+Étude comparative menée sur 14 boroughs :
+- Pattern A (legacy manual merger) : bakery, plantuml, capsule — 300-400 lignes ConfigMerger
+- Pattern B (modern lazy providers) : planner, codebase, codex — zéro ConfigMerger, cascade déclarative
+- Pattern C (var mutable / vestige) : container-provision, slider, notebook — anti-pattern
+
+Choix : Pattern B (planner/codebase) — élimine ~700 lignes de ConfigMerger par borough.
+
+== Livrables
+
+=== Build
+- `settings.gradle.kts` — include `:document-plugin` + pluginManagement (mavenLocal/portal/central)
+- `gradle/libs.versions.toml` — catalog document (kotlin, asciidoctorj, junit, cucumber, mockito, assertj)
+- `document-plugin/build.gradle.kts` — dogfood 4 conventions plugins + AsciidoctorJ implementation + planner/plantuml compileOnly
+
+=== Domaine DDD (ubiquitous language)
+- `document/DocumentSource.kt` — source AsciiDoc lecture seule (Règle 7)
+- `document/DocumentFormat.kt` — enum 5 formats (HTML/PDF/EPUB/DocBook/ManPage) + backend AsciidoctorJ
+- `document/DocumentConfig.kt` — configuration pipeline immuable (source, outputDir, formats, theme, enrichissement)
+
+=== Plugin
+- `document/DocumentExtension.kt` — abstract class + Property<T> lazy + .convention() (pattern planner)
+- `document/DocumentPlugin.kt` — 8 tâches + cascade providers.gradleProperty().orElse(ext)
+- `document/GenerateDocumentTask.kt` — stub copie source→sortie (DOC-2 ajoutera LLM), économie d'encre
+- `document/ConvertDocumentTask.kt` — stub conversion AsciiDoc→format (DOC-3/4/5 implémenteront AsciidoctorJ)
+
+=== Tests (18 tests, 0 échec)
+- **Unit (9)** — `DocumentPluginTest.kt` : DocumentSource (2), DocumentFormat (3), DocumentConfig (4)
+- **Functional (5)** — `DocumentPluginFunctionalTest.kt` : plugin s'applique, 8 tâches, DSL override, CLI surcharge
+- **Cucumber BDD (4)** — `document.feature` : 4 scénarios acceptance plugin stub
+
+== Décisions clés
+
+. **Package `document`** (pas `education.cccp.document`) — ID plugin `education.cccp.document` inchangé
+. **Boundary Codex respectée** — AsciidoctorJ en implementation directe, pas de compileOnly codex
+. **Boundary PlantUML respectée** — compileOnly plantuml-gradle (composition contenant→contenu)
+. **LLM bridge** — compileOnly planner-gradle (partage langchain4j, évite duplication)
+. **Convention plugins dogfood** — gradle-plugin + publishing + functional-test + cucumber (CNV-6)
+. **`@TempDir` JUnit** — remplacé par `Files.createTempDirectory()` (conflit cucumber-junit-platform-engine sur ParameterResolver)
+
+== Build
+
+[source,shell]
+----
+./gradlew :document-plugin:check
+BUILD SUCCESSFUL
+----
+
+Pyramide :
+- `:test` → 9 unitaires PASS
+- `:functionalTest` → 5 GradleTestKit PASS
+- `:cucumberTest` → 4 BDD PASS
+
+== Prochaine session (DOC-2)
+
+- `generateDocument` — génération AsciiDoc assistée par IA via langchain4j (deepseek-v4-pro)
+- Intégration planner-gradle LLM bridge (compileOnly → implementation pour la tâche)
+- US-DOC-01 (critères d'acceptation : prompt → LLM → AsciiDoc structuré)

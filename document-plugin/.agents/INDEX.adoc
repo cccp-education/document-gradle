@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-06-29 (Conventions plugins publiées sur Maven Central — DOC-1 utilisera dogfood)
-_Session terminee_ : 000 — Bootstrap gouvernance + cadrage architecture
-_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct + conventions plugins
+_Derniere mise a jour_ : 2026-06-29 (DOC-1 Plugin stub TERMINÉ — 18 tests PASS, dogfood CNV-6)
+_Session terminee_ : 002 — DOC-1 Plugin stub + build structure + TDD/BDD pyramide
+_Prochaine session_ : 003 — DOC-2 generateDocument (génération AsciiDoc IA via langchain4j)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -78,7 +78,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 |===
 | EPIC | Description | Statut | Priorite
 | DOC-0 | Bootstrap gouvernance + cadrage architecture + boundary | ✅ TERMINE (session 000 + review 2026-06-08 + cadrage 2026-06-14) | P0
-| DOC-1 | Plugin Gradle stub + build structure (AsciidoctorJ direct, pas de compileOnly codex) | À faire | P0
+| DOC-1 | Plugin Gradle stub + build structure (AsciidoctorJ direct, pas de compileOnly codex) | ✅ TERMINÉ (session 002) | P0
 | DOC-2 | generateDocument — generation AsciiDoc assistee par IA via langchain4j (deepseek-v4-pro) | À faire | P1
 | DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | À faire | P1
 | DOC-4 | convertDocumentToPdf — AsciiDoc → PDF (AsciidoctorJ pdf backend) | À faire | P1
@@ -124,6 +124,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | # | Date | Type | Sujet | Score
 | 000 | 2026-06-01 | bootstrap | DOC-0 — Bootstrap gouvernance + cadrage architecture | ✅ TERMINE
 | — | 2026-06-08 | review | Architecture boundary review — suppression compileOnly codex, AsciidoctorJ direct | ✅ TERMINE
+| — | 2026-06-14 | cadrage | Pipeline livre Codex→Document — OCR, PlantUML, theme, 5 fichiers gouvernance | ✅ TERMINE
+| 002 | 2026-06-29 | implementation | DOC-1 Plugin stub — dogfood CNV-6, 18 tests (9 unit + 5 functional + 4 cucumber) | ✅ TERMINE
 |===
 
 '''

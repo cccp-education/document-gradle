@@ -22,3 +22,31 @@ Decisions cles :
 - Document = 3 missions (creation, enrichissement, publication)
 - Theme = fichiers versionnes, Document applique
 - Pont N2↔N2 = AsciiDoc sur disque
+
+== Session 002 — DOC-1 Plugin Stub (TDD/BDD baby-step)
+
+*Date* : 2026-06-29
+*Type* : implementation
+*Score* : 18 tests (9 unit + 5 functional + 4 cucumber), BUILD SUCCESSFUL
+
+*Detail* : Implémentation du plugin Gradle stub DOC-1 en baby-step DDD/TDD/BDD.
+Dogfood des conventions plugins publiées (CNV-6). Pattern de surcharge
+planner/codebase (CLI > DSL > convention via providers.gradleProperty).
+
+Fichiers crees :
+- `settings.gradle.kts` — include :document-plugin + pluginManagement
+- `gradle/libs.versions.toml` — catalog document
+- `document-plugin/build.gradle.kts` — dogfood 4 conventions + AsciidoctorJ implementation
+- `document-plugin/src/main/kotlin/document/` — 7 classes (Plugin, Extension, Config, Format, Source, 2 Tasks)
+- `document-plugin/src/test/kotlin/document/DocumentPluginTest.kt` — 9 unit
+- `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 5 functional
+- `document-plugin/src/test/resources/features/document.feature` — 4 scénarios BDD
+- `document-plugin/src/test/scenarios/document/scenarios/` — CucumberTestRunner, DocumentSteps, DocumentWorld
+
+Decisions cles :
+- Package `document` (ID plugin `education.cccp.document` inchangé)
+- Pattern surcharge or : providers.gradleProperty().orElse(ext) — zéro ConfigMerger
+- AsciidoctorJ implementation directe (boundary Codex respectée)
+- planner-gradle compileOnly (LLM bridge partagé)
+- plantuml-gradle compileOnly (composition contenant→contenu)
+- @TempDir remplacé par Files.createTempDirectory() (conflit cucumber engine)
