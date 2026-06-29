@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-06-14 (Session 014 magic-stick → cadrage DOC-8 Release Notes Pipeline + cadrage pipeline livre Codex→Document)
+_Derniere mise a jour_ : 2026-06-29 (Conventions plugins publiées sur Maven Central — DOC-1 utilisera dogfood)
 _Session terminee_ : 000 — Bootstrap gouvernance + cadrage architecture
-_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct
+_Prochaine session_ : 001 — Implémentation plugin Gradle stub (DOC-1) avec AsciidoctorJ direct + conventions plugins
 
 '''
 == REGLES ABSOLUES (resume)

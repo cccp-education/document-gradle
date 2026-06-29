@@ -1,8 +1,8 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 001
-:date: 2026-06-14
-:status: PRET — Vision pipeline livre cadree, backlog enrichi
-:max-lines: 50
+:date: 2026-06-29
+:status: PRET — Vision pipeline livre cadree, backlog enrichi, conventions plugins publiées
+:max-lines: 70
 
 == Quick Start
 
@@ -16,29 +16,17 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle
 
 Session 000 (2026-06-01) — Bootstrap DOC-0 TERMINE.
 Architecture Boundary Review (2026-06-08) — Boundary Codex↔Document clarifiee.
-Cadrage pipeline livre (2026-06-14) — Vision complete Codex→Document pour
-produire un livre multi-format depuis des photos de pages.
-
-== Vision Pipeline Livre (rappel)
-
-```
-[CODEX N2] collectOcr ── photo → LLM → AsciiDoc
-    └─ AsciiDoc source (fichier disque, pont N2↔N2)
-            │
-[DOCUMENT N2] ─────────┘
-    ├─ enrichDocument (PlantUML, images, includes, passthrough)
-    ├─ applyTheme (theme.yml, talaria.css)
-    ├─ convertDocumentToHtml → HTML5
-    ├─ convertDocumentToPdf  → PDF
-    └─ convertDocumentToEpub → EPUB3
-            │
-[RUNNER N3] assembleCompositeContext → deploy gh-pages
-```
+Cadrage pipeline livre (2026-06-14) — Vision complete Codex→Document.
+Conventions plugins publiées (2026-06-29) — gradle-plugin + publishing 0.0.1 sur Maven Central.
 
 == Objectif session 001 — DOC-1 Plugin Stub
 
-- Creer `document-plugin/build.gradle.kts`
-- Dependances : java-gradle-plugin, Kotlin 2.3.20, AsciidoctorJ 2.x en *implementation directe*
+- Creer `document-plugin/build.gradle.kts` avec conventions plugins (dogfood CNV-6)
+  * `id("education.cccp.build.gradle-plugin") version "0.0.1"`
+  * `id("education.cccp.build.publishing") version "0.0.1"`
+  * `id("education.cccp.build.functional-test") version "0.0.1"`
+  * `id("education.cccp.build.cucumber") version "0.0.1"`
+- Dependances : AsciidoctorJ 2.x en *implementation directe*
 - compileOnly : planner-gradle (LLM bridge partage) + plantuml-gradle (composition diagramme)
 - *PAS* de compileOnly sur codex-gradle (supprime)
 - Classes stub : DocumentPlugin, DocumentExtension, GenerateDocumentTask
@@ -82,18 +70,9 @@ produire un livre multi-format depuis des photos de pages.
 . Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
 . Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
 
-== Changements architecturaux par rapport a session 000
+== Methode baby-step TDD/BDD
 
-- AsciidoctorJ → `implementation` directe, pas via codex
-- compileOnly sur codex-gradle → supprime
-- compileOnly sur planner-gradle → maintenu (bridge LLM partage)
-- compileOnly sur plantuml-gradle → ajoute (composition diagramme)
-- implementation Asciidoctor Diagram → ajoute (PlantUML inline, DOC-9)
-- Boundary READ/WRITE clarifiee dans ARCHITECTURE_BOUNDARY.adoc
-- Pipeline livre Codex→Document cadré (US-DOC-11, DOC-11)
-
-== Tests
-
-- `./gradlew :document-plugin:check` doit passer en fin de session
-- Test unitaire (JUnit5) sur DocumentPlugin.apply
-- Test fonctionnel (GradleTestKit) sur generateDocument — NOOP stub
+. DDD : ubiquitous language document (DocumentConfig, DocumentFormat, DocumentSource)
+. TDD : Red → Green → Refactor, 1 test à la fois
+. BDD : Cucumber .feature en amont (scénarios métier) → step definitions
+. Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
