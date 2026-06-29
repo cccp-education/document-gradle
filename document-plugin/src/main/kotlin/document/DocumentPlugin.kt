@@ -25,12 +25,12 @@ class DocumentPlugin : Plugin<Project> {
         val ext = project.extensions.create("document", DocumentExtension::class.java)
 
         // Conventions (defauts)
-        ext.source.convention(project.layout.projectDirectory.file("src/docs/document.adoc"))
         ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
         ext.formats.convention(listOf(DocumentFormat.HTML))
         ext.enrichPlantUml.convention(false)
         ext.enrichImages.convention(false)
         ext.enrichPassthrough.convention(false)
+        ext.llmMode.convention("ollama")
 
         registerGenerateDocument(project, ext)
         registerEnrichDocument(project, ext)
@@ -44,9 +44,13 @@ class DocumentPlugin : Plugin<Project> {
     private fun registerGenerateDocument(project: Project, ext: DocumentExtension) {
         project.tasks.register("generateDocument", GenerateDocumentTask::class.java) { task ->
             task.group = "document"
-            task.description = "Genere un document AsciiDoc (stub — DOC-2 ajoutera la generation IA via langchain4j)."
-            task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+            task.description = "Genere un document AsciiDoc (IA via koog+langchain4j si prompt set, sinon copie source)."
+            val cliSource = cliProp(project, "source").map { project.layout.projectDirectory.file(it) }
+            task.sourceFile.set(cliSource.orElse(ext.source))
             task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
+            task.prompt.set(cliProp(project, "prompt").orElse(ext.prompt))
+            task.llmMode.set(cliProp(project, "llmMode").orElse(ext.llmMode))
+            task.systemPrompt.set(cliProp(project, "systemPrompt").orElse(ext.systemPrompt))
             task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.adoc"))
         }
     }

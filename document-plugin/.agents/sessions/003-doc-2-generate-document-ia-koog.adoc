@@ -1,0 +1,90 @@
+= Session 003 — DOC-2 : generateDocument (IA via koog+langchain4j)
+:date: 2026-06-29
+:type: feat
+:score: 9/10
+
+== Contexte
+
+Session 003 — EPIC DOC-2 : génération AsciiDoc assistée par IA.
+Pivot stack : langchain4j seul → **koog (orchestrateur) + langchain4j (exécution LLM)**,
+aligné sur codebase-gradle (Queens) et le document de référence
+`office/pilotage/codebase/KOOG_AGENTIC_PATTERNS.adoc`.
+
+== Réalisations
+
+=== DOC-2 — Génération AsciiDoc assistée par IA
+
+==== Stack koog+langchain4j (EPIC L)
+
+- `libs.versions.toml` : +koog 1.0.0, +langchain4j-ollama 1.16.3, +bundle koog
+- `build.gradle.kts` : `implementation(libs.bundles.koog)` + `implementation(libs.langchain4j.ollama)`
+- BOM 0.0.4 (déjà publiée) contient koog-agents 1.0.0 + langchain4j-ollama 1.16.3
+
+==== DDD ubiquitous language (package `document.generation`)
+
+- `DocumentLlmProvider` — fun interface `suspend fun call(prompt): String` (miroir `codebase.koog.llm.LlmProvider`)
+- `DocumentGenerationState` — data class koog immutable (prompt, systemPrompt, rawOutput, document, error)
+- `DocumentGenerationGraph` — strategy koog `buildPrompt → callLlm → validateAsciiDoc → finish|error`
+- `AsciiDocValidator` — validateur pur (regex titre niveau 0 `= ...`)
+- `OllamaDocumentLlmProvider` — provider production (OllamaChatModel langchain4j, port 11437, modèle gemma4:31b-cloud)
+- `FakeDocumentLlmProvider` — provider test (réponse AsciiDoc prédefine, zéro réseau)
+- `DocumentLlmProviderFactory` — factory mode "ollama"|"fake"
+
+==== Baby-step TDD/BDD (pyramide unit → functional → cucumber)
+
+- **Unit (17)** : AsciiDocValidatorTest (4) + DocumentGenerationGraphTest (4) + 9 tests DOC-1 existants
+  - Red : graphe koog sans LLM, FakeLlmProvider mocké
+  - Green : validation AsciiDoc (titre niveau 0), gestion erreurs (sortie vide, invalide)
+- **Functional (8)** : 5 tests DOC-1 + 3 tests DOC-2 (IA fake, skip économie d'encre, copie source fallback)
+- **Cucumber BDD (6)** : 4 scénarios DOC-1 + 2 scénarios DOC-2 (US-DOC-01 génération + skip)
+
+==== GenerateDocumentTask (DOC-2 réel)
+
+Deux modes :
+1. **Mode IA** (si `prompt` set) : graphe koog → LLM → AsciiDoc validé → fichier `.adoc`
+   - Économie d'encre : hash SHA-256 du prompt stocké en metadata du fichier généré.
+     Skip si sortie existante avec même hash (pas de re-invocation LLM).
+2. **Mode copie** (sinon) : fallback DOC-1 (copie source vers sortie).
+
+Extension `document { }` : +prompt, +llmMode ("ollama"|"fake"), +systemPrompt.
+Convention `source` retirée (la source n'est requise qu'en mode copie, pas en mode IA).
+
+== Fichiers impactés
+
+- `gradle/libs.versions.toml` : +koog, +langchain4j-ollama, +bundle koog
+- `document-plugin/build.gradle.kts` : +koog, +langchain4j-ollama
+- `src/main/kotlin/document/generation/` : 7 nouveaux fichiers
+  - DocumentLlmProvider.kt, DocumentGenerationState.kt, DocumentGenerationGraph.kt
+  - AsciiDocValidator.kt, OllamaDocumentLlmProvider.kt
+  - FakeDocumentLlmProvider.kt, DocumentLlmProviderFactory.kt
+- `src/main/kotlin/document/DocumentExtension.kt` : +prompt, +llmMode, +systemPrompt
+- `src/main/kotlin/document/DocumentPlugin.kt` : câblage prompt/llmMode/systemPrompt, convention source retirée
+- `src/main/kotlin/document/GenerateDocumentTask.kt` : réécrit (mode IA + économie d'encre)
+- `src/test/kotlin/document/generation/` : DocumentGenerationGraphTest.kt (8 tests)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` : +3 tests DOC-2
+- `src/test/resources/features/document.feature` : +2 scénarios DOC-2
+- `src/test/scenarios/document/scenarios/` : DocumentSteps.kt + DocumentWorld.kt (fake LLM)
+
+== Vérification
+
+[source,shell]
+----
+./gradlew :document-plugin:check
+# BUILD SUCCESSFUL — 31 tests (17 unit + 8 functional + 6 cucumber), 0 échec
+----
+
+== Décisions techniques
+
+. **koog sur langchain4j** : aligné sur codebase-gradle et KOOG_AGENTIC_PATTERNS.adoc.
+   koog orchestre (strategy, node, edge, onCondition), langchain4j exécute (OllamaChatModel).
+. **FakeDocumentLlmProvider dans src/main** : le plugin expose `llmMode = "fake"` au build script,
+   donc le fake doit être dans le classpath main (pas seulement test). Permet tests
+   GradleTestKit/Cucumber sans Ollama ni clé API.
+. **Convention source retirée** : en mode IA, la source n'est pas une input. `@InputFile @Optional`
+   sans convention évite la validation Gradle d'un fichier inexistant.
+. **Économie d'encre** : hash SHA-256 du prompt stocké en commentaire dans le fichier généré.
+   Skip si hash identique → pas de re-invocation LLM metered.
+
+== Prochaine session
+
+Session 004 — DOC-3 convertDocumentToHtml (AsciidoctorJ html5 backend).

@@ -1,51 +1,55 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 002
-:date: 2026-06-29
-:status: DOC-1 TERMINÉ — plugin stub 18 tests PASS, prêt DOC-2
+:session: 005
+:date: 2026-06-30
+:status: DOC-3 + DOC-4 TERMINÉS — HTML5 + PDF via AsciidoctorJ, 50 tests PASS, prêt DOC-5
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle
-./gradlew :document-plugin:tasks --group document   # 8 taches listees
-./gradlew :document-plugin:check                     # 18 tests (9 unit + 5 functional + 4 cucumber)
+./gradlew :document-plugin:tasks --group document   # 8 taches
+./gradlew :document-plugin:check                     # 50 tests (28 unit + 12 functional + 10 cucumber)
 ```
 
 == Contexte
 
-Session 000 (2026-06-01) — Bootstrap DOC-0 TERMINE.
-Session 001 (2026-06-14) — Cadrage pipeline livre Codex→Document.
 Session 002 (2026-06-29) — DOC-1 Plugin stub TERMINÉ (18 tests, dogfood CNV-6).
+Session 003 (2026-06-29) — DOC-2 generateDocument IA TERMINÉ (31 tests, koog+langchain4j).
+Session 004 (2026-06-30) — DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf TERMINÉS (50 tests).
 
-== Objectif session 003 — DOC-2 generateDocument (IA)
+== Objectif session 005 — DOC-5 (EPUB + DocBook + ManPage)
 
-- Implémenter la génération AsciiDoc assistée par IA via langchain4j (deepseek-v4-pro)
-- Intégrer planner-gradle LLM bridge (compileOnly → implementation pour la tâche)
-- US-DOC-01 : prompt → LLM → AsciiDoc structuré → fichier .adoc valide
-- Économie d'encre : vérifier existence artefact avant re-générer (hash comparison)
-- TDD/BDD baby-step : Red → Green, 1 test à la fois, Cucumber feature en amont
+- Implémenter `convertDocumentToEpub` (backend epub3, binaire, sidecar `.sourcehash` comme PDF)
+- Implémenter `convertDocumentToDocBook` (backend docbook5, texte, header comme HTML)
+- Implémenter `convertDocumentToManPage` (backend manpage, texte, header comme HTML)
+- ConvertDocumentTask : câbler les 3 backends restants (EPUB via convertBinary, DocBook/ManPage via convert texte)
+- TDD/BDD baby-step : Red → Green, Cucumber features en amont
+- Vérifier validation epubcheck pour EPUB3 (si disponible)
+
+== Stack DOC-3/DOC-4 (rappel — AsciidoctorJ direct)
+
+- **AsciidoctorJ 3.0.0** : html5 (texte, standalone=true, toFile=false), pdf (binaire, toFile=output)
+- **asciidoctorj-pdf 2.3.23** : backend pdf (module séparé, dans bundle asciidoctor)
+- **DocumentConverter** : convertisseur domaine (convert, convertToFile, shouldSkip, shouldSkipBinary, metadata)
+- Distinction texte (hash dans fichier) vs binaire (fichier sidecar `.sourcehash`)
+- `ConvertDocumentTask.when(fmt)` : HTML → convertToHtml, PDF → convertBinary, autres → stub no-op
 
 == Pattern de surcharge (rappel)
 
-Pattern or planner/codebase :
 ```
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
-Via `project.providers.gradleProperty("document.xxx").orElse(ext.xxx)` — lazy, déclaratif.
 
-== Roadmap Prioritaire (post DOC-2)
+== Roadmap Prioritaire (post DOC-5)
 
-[cols="1,3,2"]
+[cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-2 | generateDocument (LLM → AsciiDoc) | P0 — session 003
-| DOC-3 | convertDocumentToHtml (AsciidoctorJ html5) | P1
-| DOC-4 | convertDocumentToPdf (AsciidoctorJ pdf) | P1
+| DOC-5 | EPUB/DocBook/ManPage (3 backends restants) | P0 — session 005
 | DOC-9 | enrichDocument (PlantUML, HTML, images, includes) | P1
 | DOC-10 | Theme DSL (YML PDF + CSS HTML/EPUB) | P1
 | DOC-11 | Pipeline livre Codex→Document (integration) | P1
-| DOC-5 | EPUB/DocBook/ManPage | P2
 | DOC-6 | Integration N3 runner-gradle | P2
 | DOC-12 | DSL unifie `document { }` | P2
 |===
@@ -64,15 +68,15 @@ Via `project.providers.gradleProperty("document.xxx").orElse(ext.xxx)` — lazy,
 
 == Méthode baby-step TDD/BDD
 
-. DDD : ubiquitous language document (DocumentConfig, DocumentFormat, DocumentSource)
+. DDD : ubiquitous language document (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter)
 . TDD : Red → Green → Refactor, 1 test à la fois
 . BDD : Cucumber .feature en amont (scénarios métier) → step definitions
 . Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
 
 == Fichiers clés
 
-- `document-plugin/src/main/kotlin/document/` — 7 classes (Plugin, Extension, Config, Format, Source, 2 Tasks)
-- `document-plugin/src/test/kotlin/document/DocumentPluginTest.kt` — 9 unit
-- `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 5 functional
-- `document-plugin/src/test/resources/features/document.feature` — 4 scénarios BDD
-- `document-plugin/src/test/scenarios/document/scenarios/` — CucumberTestRunner, DocumentSteps, DocumentWorld
+- `document-plugin/src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (html5, pdf, skip, metadata)
+- `document-plugin/src/main/kotlin/document/ConvertDocumentTask.kt` — task (HTML réel, PDF réel, stubs DOC-5)
+- `document-plugin/src/test/kotlin/document/DocumentConverterTest.kt` — 15 tests unit (9 HTML + 6 PDF)
+- `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 12 tests functional
+- `document-plugin/src/test/resources/features/document.feature` — 10 scénarios BDD

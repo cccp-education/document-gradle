@@ -2,9 +2,13 @@
 document = "0.0.1"
 kotlin = "2.3.20"
 plugin-publish = "2.1.0"
+workspace-bom = "0.0.6"
 asciidoctorj = "3.0.0"
 asciidoctorj-diagram = "3.2.0"
 asciidoctorj-diagram-plantuml = "1.2025.3"
+asciidoctorj-pdf = "2.3.23"
+koog = "1.0.0"
+langchain4j-ollama = "1.16.3"
 junit-platform-launcher = "1.14.3"
 assertj = "3.25.3"
 mockito-kotlin = "6.2.3"
@@ -20,8 +24,11 @@ plantuml-plugin = "0.0.1"
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
 asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram-plantuml", version.ref = "asciidoctorj-diagram-plantuml" }
+asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj-pdf" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
+langchain4j-ollama = { module = "dev.langchain4j:langchain4j-ollama", version.ref = "langchain4j-ollama" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito-jupiter" }
@@ -35,12 +42,8 @@ junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", ver
 planner-plugin = { module = "education.cccp:planner-plugin", version.ref = "planner" }
 plantuml-plugin = { module = "education.cccp:plantuml-plugin", version.ref = "plantuml-plugin" }
 
-[plugins]
-document = { id = "education.cccp.document", version.ref = "document" }
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
-
 [bundles]
+koog = ["koog-agents"]
 cucumber = [
     "cucumber-java",
     "cucumber-junit-platform-engine",
@@ -51,4 +54,10 @@ asciidoctor = [
     "asciidoctorj",
     "asciidoctorj-diagram",
     "asciidoctorj-diagram-plantuml",
+    "asciidoctorj-pdf",
 ]
+
+[plugins]
+document = { id = "education.cccp.document", version.ref = "document" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }

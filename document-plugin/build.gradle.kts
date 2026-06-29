@@ -18,6 +18,12 @@ dependencies {
     // AsciidoctorJ — implementation directe (boundary Codex : pas de compileOnly codex)
     implementation(libs.bundles.asciidoctor)
 
+    // koog — orchestrateur de graphe agentique (EPIC L : koog orchestre, langchain4j execute)
+    implementation(libs.bundles.koog)
+
+    // langchain4j — execution LLM (Ollama local, port 11437-11465)
+    implementation(libs.langchain4j.ollama)
+
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
     compileOnly(libs.planner.plugin)
 

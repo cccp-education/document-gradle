@@ -39,6 +39,15 @@ abstract class DocumentExtension {
     abstract val enrichImages: Property<Boolean>
     abstract val enrichPassthrough: Property<Boolean>
 
+    /** Prompt de generation IA (DOC-2). Si set, generateDocument invoque le LLM. */
+    abstract val prompt: Property<String>
+
+    /** Mode LLM : "ollama" (defaut, production) ou "fake" (tests, sans reseau). */
+    abstract val llmMode: Property<String>
+
+    /** System prompt optionnel (conventions AsciiDoc du workspace). */
+    abstract val systemPrompt: Property<String>
+
     fun formats(vararg formats: DocumentFormat) {
         this.formats.set(formats.toList())
     }

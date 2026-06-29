@@ -1,0 +1,114 @@
+= Session 004 — DOC-3 + DOC-4 : convertDocumentToHtml + convertDocumentToPdf (AsciidoctorJ)
+:date: 2026-06-30
+:type: feat
+:score: 9/10
+
+== Contexte
+
+Session 004 — EPICs DOC-3 (HTML5) + DOC-4 (PDF). Deux backends AsciidoctorJ
+implémentés en baby-step DDD/TDD/BDD : html5 (texte) et pdf (binaire).
+Loi de l'Économie d'Encre appliquée aux deux formats, avec distinction
+texte (hash inséré dans le fichier) vs binaire (fichier sidecar `.sourcehash`).
+
+== Réalisations
+
+=== DOC-3 — convertDocumentToHtml (AsciidoctorJ html5 backend)
+
+==== DDD ubiquitous language
+
+- `DocumentConverter` — objet domaine convertisseur (lecture seule source → livrable)
+- `convertToHtml(source)` — conversion texte (retour String, `standalone(true)` pour doctype)
+- `shouldSkipConversion(source, output)` — skip texte (hash lu dans les 3 premières lignes)
+- `buildMetadataHeader(source)` — en-tête `<!-- document-gradle — source hash: XXX -->`
+
+==== TDD baby-step (Red → Green)
+
+- **Unit (9)** : DocumentConverterTest
+  - doctype présent, sections préservées, code source colorisé, includes résolus
+  - source absente lève exception, skip par hash (vrai/faux), metadata header
+- **Functional (2)** : génération HTML valide + skip si sortie existe
+- **Cucumber BDD (2)** : scénarios US-DOC-03 (génération + skip)
+
+==== Décision technique
+
+- `Options.builder().standalone(true)` nécessaire pour le `<!DOCTYPE html>` (sinon fragment seul)
+- `toFile(false)` pour récupérer le contenu en String (sinon écrit sur disque)
+
+=== DOC-4 — convertDocumentToPdf (AsciidoctorJ pdf backend)
+
+==== DDD ubiquitous language — formats binaires
+
+- `convertToPdf(source, output)` — délègue à `convertToFile` (écrit directement dans un fichier)
+- `convertToFile(source, backend, output)` — backend binaire générique (pdf, epub3)
+- `shouldSkipBinaryConversion(source, output)` — skip binaire (fichier sidecar `.sourcehash`)
+- `writeBinaryMetadataHeader(source, output)` — écrit le hash dans `<output>.sourcehash`
+
+==== Distinction texte vs binaire
+
+[cols="2,5,5"]
+|===
+| | Format texte (HTML, DocBook, ManPage) | Format binaire (PDF, EPUB)
+
+| Conversion | `convert()` retourne String | `convertToFile()` écrit dans File
+| Hash source | Inséré dans le fichier (commentaire HTML) | Fichier sidecar `.sourcehash`
+| Skip | `shouldSkipConversion` (lit 3 lignes) | `shouldSkipBinaryConversion` (lit sidecar)
+| Metadata | `buildMetadataHeader` | `writeBinaryMetadataHeader`
+|===
+
+==== TDD baby-step (Red → Green)
+
+- **Unit (6)** : DocumentConverterTest (PDF)
+  - signature `%PDF-`, sections préservées, skip binaire (vrai/faux par sidecar), write sidecar
+- **Functional (2)** : génération PDF valide + skip si sortie existe
+- **Cucumber BDD (2)** : scénarios US-DOC-02 (génération + skip)
+
+==== Dépendance
+
+- `asciidoctorj-pdf 2.3.23` ajouté au bundle asciidoctor dans `libs.versions.toml`
+- Le backend pdf n'est pas inclus dans asciidoctorj core — module séparé requis
+
+==== ConvertDocumentTask refactor
+
+- `when (fmt)` : HTML → `convertToHtml` (texte), PDF → `convertBinary` (binaire)
+- `convertBinary` méthode privée : skip par sidecar, puis `convertToFile` + `writeBinaryMetadataHeader`
+- PDF/EPUB/DocBook/ManPage stubs no-op conservés pour DOC-5
+
+== Fichiers impactés
+
+- `gradle/libs.versions.toml` : +asciidoctorj-pdf 2.3.23 dans bundle asciidoctor
+- `src/main/kotlin/document/DocumentConverter.kt` : **nouveau** — convertisseur AsciidoctorJ (html5, pdf, skip texte/binaire, metadata)
+- `src/main/kotlin/document/ConvertDocumentTask.kt` : réécrit (HTML réel, PDF réel via convertBinary, stubs DOC-5)
+- `src/test/kotlin/document/DocumentConverterTest.kt` : **nouveau** — 15 tests (9 HTML + 6 PDF)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` : +4 tests (2 HTML + 2 PDF)
+- `src/test/resources/features/document.feature` : +4 scénarios (2 DOC-3 + 2 DOC-4)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` : +createAsciiDocSource (HTML + PDF existing), +convertedPdfFile
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` : +steps DOC-3 + DOC-4
+
+== Vérification
+
+[source,shell]
+----
+./gradlew :document-plugin:test          # 28 unit PASS
+./gradlew :document-plugin:functionalTest  # 12 functional PASS
+./gradlew :document-plugin:cucumberTest   # 10 cucumber PASS
+# Total : 50 tests, 0 échec
+----
+
+== Décisions techniques
+
+. **standalone(true)** : requis pour le `<!DOCTYPE html>` complet (header + footer).
+   Sans cette option, AsciidoctorJ produit un fragment HTML sans doctype.
+. **toFile(false)** : récupère le contenu HTML en String. Pour PDF, `toFile(output)`
+   écrit directement le binaire dans le fichier (pas de retour String possible).
+. **Sidecar `.sourcehash`** : le PDF étant binaire, le hash source ne peut pas
+   être inséré dans le fichier. Un fichier sidecar `<output>.sourcehash` stocke
+   le hash pour l'invalidation (économice d'encre). Pattern DDD distinct du HTML.
+. **asciidoctorj-pdf 2.3.23** : module séparé (non inclus dans asciidoctorj core).
+   Dernière stable compatible avec AsciidoctorJ 3.0.0.
+. **convertBinary méthode privée** : factorise skip + conversion + metadata
+   pour les formats binaires (PDF maintenant, EPUB en DOC-5).
+
+== Prochaine session
+
+Session 005 — DOC-5 : convertDocumentToEpub + convertDocumentToDocBook + convertDocumentToManPage.
+Les 3 backends restants. EPUB = binaire (sidecar comme PDF), DocBook/ManPage = texte (header comme HTML).

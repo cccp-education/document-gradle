@@ -6,4 +6,6 @@
 | — | 2026-06-08 | review | Architecture boundary review — suppression compileOnly codex, AsciidoctorJ direct | ✅ TERMINÉ
 | 001 | 2026-06-14 | cadrage | Pipeline livre Codex→Document — OCR, PlantUML, theme, 5 fichiers gouvernance | ✅ TERMINÉ
 | 002 | 2026-06-29 | implementation | DOC-1 Plugin stub — dogfood CNV-6, 18 tests, pattern surcharge planner | ✅ TERMINÉ
+| 003 | 2026-06-29 | feat | DOC-2 generateDocument IA — koog+langchain4j, 31 tests, économie d'encre | ✅ TERMINÉ
+| 004 | 2026-06-30 | feat | DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf — AsciidoctorJ, 50 tests | ✅ TERMINÉ
 |===

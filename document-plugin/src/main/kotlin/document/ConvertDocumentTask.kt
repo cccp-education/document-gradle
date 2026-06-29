@@ -11,12 +11,16 @@ import org.gradle.api.tasks.TaskAction
 import org.slf4j.LoggerFactory
 
 /**
- * Tache de conversion AsciiDoc -> format (stub DOC-1).
+ * Tache de conversion AsciiDoc -> format (AsciidoctorJ).
  *
- * DOC-3/DOC-4/DOC-5 implementeront la conversion AsciidoctorJ reelle.
- * Pour DOC-1, la tache valide que la source existe et logge le format cible.
+ * DOC-3 : conversion HTML5 (backend html5) reelle.
+ * DOC-4 : conversion PDF (backend pdf) — a venir.
+ * DOC-5 : conversions EPUB3, DocBook 5, ManPage — a venir.
+ *
+ * Loi de l'Economie d'Encre : si la sortie existe et que le hash de la source
+ * correspond au hash stocke en metadata du fichier genere, on ne re-convertit pas.
  */
-abstract class ConvertDocumentTask : DefaultTask() {
+abstract class ConvertDocumentTask() : DefaultTask() {
 
     @get:InputFile
     abstract val sourceFile: RegularFileProperty
@@ -47,6 +51,53 @@ abstract class ConvertDocumentTask : DefaultTask() {
             return
         }
 
-        logger.info("{} — stub : {} -> {} ({} backend)", name, source.name, output.name, fmt.backend)
+        val docSource = DocumentSource(source)
+
+        val content = when (fmt) {
+            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource)
+            DocumentFormat.PDF -> {
+                convertBinary(docSource, output, logger, "pdf", "4")
+                return
+            }
+            else -> {
+                logger.warn("{} — backend {} pas encore implemente (DOC-{}), stub no-op", name, fmt.backend, stubEpic(fmt))
+                return
+            }
+        }
+
+        if (DocumentConverter.shouldSkipConversion(docSource, output)) {
+            logger.info("{} skip — sortie existante pour source inchangee : {}", name, output.absolutePath)
+            return
+        }
+
+        output.parentFile.mkdirs()
+        output.writeText(DocumentConverter.buildMetadataHeader(docSource) + content)
+        logger.info("{} — converti -> {} ({} octets)", name, output.absolutePath, output.length())
     }
+
+    private fun convertBinary(
+        docSource: DocumentSource,
+        output: java.io.File,
+        logger: org.slf4j.Logger,
+        backend: String,
+        epicId: String,
+    ) {
+        if (DocumentConverter.shouldSkipBinaryConversion(docSource, output)) {
+            logger.info("{} skip — sortie {} existante pour source inchangee : {}", name, backend, output.absolutePath)
+            return
+        }
+        logger.info("{} — {} -> {} ({} backend)", name, docSource.file.name, output.name, backend)
+        DocumentConverter.convertToFile(docSource, backend, output)
+        DocumentConverter.writeBinaryMetadataHeader(docSource, output)
+        logger.info("{} — converti -> {} ({} octets)", name, output.absolutePath, output.length())
+    }
+
+    private fun stubEpic(fmt: DocumentFormat): String =
+        when (fmt) {
+            DocumentFormat.PDF -> "4"
+            DocumentFormat.EPUB -> "5"
+            DocumentFormat.DOCBOOK -> "5"
+            DocumentFormat.MANPAGE -> "5"
+            DocumentFormat.HTML -> "3"
+        }
 }

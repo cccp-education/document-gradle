@@ -50,3 +50,63 @@ Decisions cles :
 - planner-gradle compileOnly (LLM bridge partagé)
 - plantuml-gradle compileOnly (composition contenant→contenu)
 - @TempDir remplacé par Files.createTempDirectory() (conflit cucumber engine)
+
+== Session 003 — DOC-2 generateDocument IA (koog+langchain4j)
+
+*Date* : 2026-06-29
+*Type* : feat
+*Score* : 31 tests (17 unit + 8 functional + 6 cucumber), BUILD SUCCESSFUL
+
+*Detail* : Implémentation de la génération AsciiDoc assistée par IA (EPIC DOC-2).
+Pivot stack : langchain4j seul → koog (orchestrateur) + langchain4j (exécution LLM),
+aligné sur codebase-gradle et KOOG_AGENTIC_PATTERNS.adoc. Économie d'encre (hash SHA-256).
+
+Fichiers créés :
+- `src/main/kotlin/document/generation/` — 7 classes (LlmProvider, GenerationState, GenerationGraph, AsciiDocValidator, OllamaDocumentLlmProvider, FakeDocumentLlmProvider, DocumentLlmProviderFactory)
+- `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` — 8 tests (4 validator + 4 graph)
+
+Fichiers modifiés :
+- `gradle/libs.versions.toml` — +koog 1.0.0, +langchain4j-ollama 1.16.3, +bundle koog
+- `document-plugin/build.gradle.kts` — +koog-agents, +langchain4j-ollama
+- `src/main/kotlin/document/DocumentExtension.kt` — +prompt, +llmMode, +systemPrompt
+- `src/main/kotlin/document/DocumentPlugin.kt` — câblage IA, convention source retirée
+- `src/main/kotlin/document/GenerateDocumentTask.kt` — réécrit (mode IA + économie d'encre)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +3 tests DOC-2
+- `src/test/resources/features/document.feature` — +2 scénarios DOC-2
+- `src/test/scenarios/document/scenarios/` — DocumentSteps + DocumentWorld (fake LLM)
+
+Décisions clés :
+- koog sur langchain4j (aligné codebase + KOOG_AGENTIC_PATTERNS.adoc)
+- FakeDocumentLlmProvider dans src/main (plugin expose llmMode au build script)
+- Convention source retirée (source non requise en mode IA)
+- Économie d'encre : hash SHA-256 du prompt en metadata du fichier généré → skip si identique
+- BOM 0.0.4 contient déjà koog 1.0.0 + langchain4j-ollama 1.16.3
+
+== Session 004 — DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf (AsciidoctorJ)
+
+*Date* : 2026-06-30
+*Type* : feat
+*Score* : 50 tests (28 unit + 12 functional + 10 cucumber), BUILD SUCCESSFUL
+
+*Detail* : Implémentation des conversions HTML5 (texte) et PDF (binaire) via AsciidoctorJ.
+Loi de l'Économie d'Encre appliquée aux deux formats avec distinction texte vs binaire.
+HTML : hash inséré dans le fichier (commentaire). PDF : fichier sidecar `.sourcehash`.
+
+Fichiers créés :
+- `src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (html5, pdf, skip texte/binaire, metadata)
+- `src/test/kotlin/document/DocumentConverterTest.kt` — 15 tests unit (9 HTML + 6 PDF)
+
+Fichiers modifiés :
+- `gradle/libs.versions.toml` — +asciidoctorj-pdf 2.3.23 dans bundle asciidoctor
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — réécrit (HTML réel, PDF réel via convertBinary, stubs DOC-5)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +4 tests (2 HTML + 2 PDF)
+- `src/test/resources/features/document.feature` — +4 scénarios (2 DOC-3 + 2 DOC-4)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +createAsciiDocSource, +convertedPdfFile
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +steps DOC-3 + DOC-4
+
+Décisions clés :
+- standalone(true) requis pour doctype HTML complet (sinon fragment seul)
+- toFile(false) pour récupérer HTML en String ; toFile(output) pour PDF binaire
+- Fichier sidecar `.sourcehash` pour skip binaire (hash ne peut pas être inséré dans un PDF)
+- asciidoctorj-pdf 2.3.23 : module séparé (non inclus dans asciidoctorj core)
+- convertBinary méthode privée factorise skip + conversion + metadata pour formats binaires
