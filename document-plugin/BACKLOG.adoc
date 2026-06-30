@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-06-30 (DOC-5 terminé, DOC-9 décision Asciidoctor Diagram inline)
+_Date revision_ : 2026-06-30 (session 006 — architecture Plugin Indépendant + Racine Consommateur, Gradle 9.6.1)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''

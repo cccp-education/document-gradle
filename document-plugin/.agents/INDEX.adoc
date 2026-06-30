@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-06-30 (DOC-5 EPUB3 + DocBook 5 + ManPage TERMINÉS — AsciidoctorJ, 69 tests PASS)
-_Session terminee_ : 005 — DOC-5 EPUB + DocBook + ManPage (AsciidoctorJ, 5 formats complets)
-_Prochaine session_ : 006 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes, images)
+_Derniere mise a jour_ : 2026-06-30 (session 006 — Architecture Plugin Indépendant + Racine Consommateur, Gradle 9.6.1)
+_Session terminee_ : 006 — Régularisation architecture (Pattern article #0124, Gradle 9.3.0→9.6.1, @DisableCachingByDefault)
+_Prochaine session_ : 007 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes, images)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -129,6 +129,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 003 | 2026-06-29 | feat | DOC-2 generateDocument IA — koog+langchain4j, 31 tests, économie d'encre | ✅ TERMINE
 | 004 | 2026-06-30 | feat | DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf — AsciidoctorJ, 50 tests | ✅ TERMINE
 | 005 | 2026-06-30 | feat | DOC-5 convertDocumentToEpub + DocBook + ManPage — AsciidoctorJ, 69 tests, 5 formats complets | ✅ TERMINE
+| 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1, @DisableCachingByDefault | ✅ TERMINE
 |===
 
 '''

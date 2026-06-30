@@ -14,4 +14,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "document-gradle"
+rootProject.name = "document-plugin"

@@ -10,7 +10,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 
@@ -28,10 +31,12 @@ import java.security.MessageDigest
  * correspond au hash stocke en metadata du fichier genere, on ne regenere pas.
  * L'IA est un service metered — ne pas re-invoquer pour un resultat identique.
  */
+@DisableCachingByDefault(because = "Idempotence is applicative — source/prompt hash is stored in generated file metadata")
 abstract class GenerateDocumentTask : DefaultTask() {
 
     @get:InputFile
     @get:Optional
+    @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty
 
     @get:Input

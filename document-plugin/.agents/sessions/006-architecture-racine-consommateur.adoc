@@ -1,0 +1,158 @@
+= Session 006 — Architecture « Plugin Indépendant + Racine Consommateur » (Gradle 9.6.1)
+:date: 2026-06-30
+:type: architecture
+:score: 9/10
+
+== Contexte
+
+Session 006 — régularisation architecturale. Le borough New Orleans n'était pas
+conforme au pattern « Plugin Indépendant + Racine Consommateur » décrit dans
+l'article #0124. `document-plugin/` n'avait ni `settings.gradle.kts`, ni `gradlew`,
+ni `gradle/libs.versions.toml` — il partageait le wrapper et le catalogue de la
+racine. La racine n'était pas un consommateur dogfood (build.gradle.kts vide, 3
+commentaires). Aucun `include()` ne légitimisait `:document-plugin:` comme
+sous-projet Gradle — le build fonctionnait par auto-détection fragile du daemon.
+
+L'utilisateur a demandé l'application du pattern + upgrade Gradle 9.3.0 → 9.6.1
+dans les deux builds.
+
+== Réalisations
+
+=== 1. document-plugin/ — build Gradle autonome
+
+- `document-plugin/settings.gradle.kts` créé — `rootProject.name = "document-plugin"`,
+  pluginManagement + dependencyResolutionManagement (mavenLocal/portal/central).
+- `gradle/libs.versions.toml` déplacé de la racine vers `document-plugin/gradle/`
+  (catalogue complet 66 lignes : AsciidoctorJ, koog, langchain4j, cucumber, etc.).
+- Wrapper Gradle 9.6.1 installé dans `document-plugin/` (`gradlew`, `gradlew.bat`,
+  `gradle/wrapper/gradle-wrapper.{jar,properties}`).
+- `document-plugin/build.gradle.kts` inchangé (référence `libs.*` → désormais
+  résolu via le catalogue local du plugin).
+
+=== 2. Racine document-gradle/ — consommateur dogfood minimal
+
+- `build.gradle.kts` racine réécrit : `plugins { alias(libs.plugins.document) }`
+  + `repositories { mavenLocal(); mavenCentral() }`. 6 lignes, zéro logique build.
+- `gradle/libs.versions.toml` racine réduit à 2 entrées (juste la version du plugin
+  `document` consommé depuis mavenLocal). Catalogue volontairement minimal.
+- `settings.gradle.kts` racine inchangé (déjà conforme : pluginManagement +
+  dependencyResolutionManagement, zéro `include()`).
+- Wrapper racine upgradé à Gradle 9.6.1.
+
+=== 3. Validation plugin Gradle 9.6.1 satisfaite
+
+Gradle 9.6.1 a renforcé la validation des plugins (`validatePlugins` en erreur
+bloquante). 4 problèmes corrigés sur les 2 tasks :
+
+- `GenerateDocumentTask` : `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)`
+  sur `sourceFile` (@InputFile).
+- `ConvertDocumentTask` : `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)`
+  sur `sourceFile` (@InputFile).
+
+`@DisableCachingByDefault` est cohérent avec l'idempotence applicative gérée par
+hash source/prompt en metadata (Loi de l'Économie d'Encre) — Gradle build cache
+désactivé car l'invalidation est domaine, pas fichier.
+
+Les `because` sont en anglais (règle : anglais = langue du développement, code sans
+commentaires français).
+
+== Fichiers impactés
+
+Créés :
+- `document-plugin/settings.gradle.kts` — build indépendant
+- `document-plugin/gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.{jar,properties}` — wrapper 9.6.1
+
+Déplacés :
+- `gradle/libs.versions.toml` → `document-plugin/gradle/libs.versions.toml` (catalogue complet)
+
+Modifiés :
+- `build.gradle.kts` racine — consommateur dogfood (6 lignes)
+- `gradle/libs.versions.toml` racine — catalogue minimal (2 entrées)
+- `gradle/wrapper/gradle-wrapper.properties` racine — 9.3.0 → 9.6.1
+- `gradle/wrapper/gradle-wrapper.jar` racine — régénéré
+- `gradlew`, `gradlew.bat` racine — régénérés
+- `document-plugin/src/main/kotlin/document/GenerateDocumentTask.kt` — +`@DisableCachingByDefault`, +`@PathSensitive(PathSensitivity.NONE)`
+- `document-plugin/src/main/kotlin/document/ConvertDocumentTask.kt` — +`@DisableCachingByDefault`, +`@PathSensitive(PathSensitivity.NONE)`
+
+== Vérification
+
+[source,shell]
+----
+# 1. Build plugin indépendant (69 tests, Gradle 9.6.1)
+cd document-plugin && ./gradlew check
+# BUILD SUCCESSFUL in 6m 52s — 39 unit + 16 functional + 14 cucumber = 69 tests, 0 échec
+
+# 2. Publication en mavenLocal (contrat DAG racine consommateur)
+cd document-plugin && ./gradlew publishToMavenLocal
+# BUILD SUCCESSFUL in 8s
+
+# 3. Racine consommateur dogfood (plugin consommé via mavenLocal)
+./gradlew tasks --group=document
+# 8 tâches documentaires visibles depuis la racine, Gradle 9.6.1
+----
+
+== Décisions techniques
+
+. **Pattern « Plugin Indépendant + Racine Consommateur »** (article #0124) appliqué :
+  `document-plugin/` est un build Gradle *complet et autonome* (son wrapper, son
+  settings, son catalogue). La racine ne fait qu'appliquer le plugin comme un
+  client externe — via mavenLocal. Zéro `include()`, zéro `includeBuild()`.
+. **Gradle 9.3.0 → 9.6.1** sur les deux wrappers (plugin + racine consommateur).
+. **`@DisableCachingByDefault`** : Gradle build cache désactivé car l'idempotence
+  est applicative (hash source/prompt stocké en metadata du fichier généré). Le
+  domaine gère l'invalidation, pas Gradle. `because` en anglais.
+. **`@PathSensitive(PathSensitivity.NONE)`** : le contenu du fichier source prime,
+  pas son chemin (relocation-safe pour le build cache si réactivé un jour).
+. **Catalogue racine minimal** : 2 entrées (version plugin `document`).
+  Catalogue plugin complet : 66 lignes (AsciidoctorJ, koog, langchain4j, cucumber).
+  Séparation des responsabilités appliquée au système de build.
+. **Contrat DAG** : la racine ne build pas le plugin. `publishToMavenLocal` est
+  l'étape entre le build du plugin et l'exercice du consommateur — friction minimale
+  mais bonne contrainte (le plugin doit être publiable pour être consommé).
+
+== Architecture finale
+
+[source,text]
+----
+document-gradle/
+├── settings.gradle.kts          ← racine consommateur (pluginManagement)
+├── build.gradle.kts             ← 6 lignes : plugins { alias(libs.plugins.document) } + repositories
+├── gradle/
+│   ├── libs.versions.toml       ← catalogue minimal (2 entrées : document plugin version)
+│   └── wrapper/                 ← Gradle 9.6.1
+├── document-plugin/             ← BUILD INDÉPENDANT (Gradle 9.6.1)
+│   ├── settings.gradle.kts      ← rootProject.name = "document-plugin"
+│   ├── build.gradle.kts         ← java-gradle-plugin + AsciidoctorJ + koog + langchain4j + tests
+│   ├── gradle/
+│   │   ├── libs.versions.toml   ← catalogue complet (66 lignes)
+│   │   └── wrapper/             ← Gradle 9.6.1
+│   ├── src/                     ← sources du plugin
+│   └── .agents/                 ← gouvernance agent
+----
+
+== Pyramide de tests
+
+[cols="2,1,1]
+|===
+| Couche | Avant | Après
+| Unit | 39 | 39 (inchangé)
+| Functional | 16 | 16 (inchangé)
+| Cucumber | 14 | 14 (inchangé)
+| Total | 69 | 69 (inchangé — régularisation architecture, pas de code métier)
+|===
+
+Aucun test modifié — seule la structure de build et les annotations task
+(cacheabilité) ont bougé. Les 69 tests existants passent à l'identique sous
+Gradle 9.6.1.
+
+== Prochaine session
+
+Session 007 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough HTML,
+résolution includes, images). Décision déjà arrêtée : Asciidoctor Diagram inline
+(déjà bundlé `asciidoctorj-diagram 3.2.0`), zéro dépendance compileOnly plantuml-gradle.
+Méthode baby-step DDD/TDD/BDD : Cucumber `@doc9 @enrich` en amont, puis
+`DocumentEnricher` + `EnrichDocumentTask` en Red → Green → Refactor.
+
+La fondation architecture est saine : `cd document-plugin && ./gradlew check`
+et `./gradlew tasks --group=document` (racine consommateur) sont les deux
+commandes de smoke test.

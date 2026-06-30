@@ -7,7 +7,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
 
 /**
@@ -20,9 +23,11 @@ import org.slf4j.LoggerFactory
  * Loi de l'Economie d'Encre : si la sortie existe et que le hash de la source
  * correspond au hash stocke en metadata du fichier genere, on ne re-convertit pas.
  */
+@DisableCachingByDefault(because = "Idempotence is applicative — source hash is stored in generated file metadata")
 abstract class ConvertDocumentTask() : DefaultTask() {
 
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty
 
     @get:Input

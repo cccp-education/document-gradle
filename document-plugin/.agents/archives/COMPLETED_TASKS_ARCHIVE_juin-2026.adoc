@@ -139,3 +139,42 @@ Décisions clés :
 - convertBinary refactor : paramètre epicId retiré, factorise PDF + EPUB
 - 5 formats complets : HTML/PDF (texte/binaire), EPUB (binaire), DocBook/ManPage (texte)
 - DOC-9 prochaine : Asciidoctor Diagram inline (zéro compileOnly plantuml-gradle)
+
+== Session 006 — Architecture « Plugin Indépendant + Racine Consommateur » (Gradle 9.6.1)
+
+*Date* : 2026-06-30
+*Type* : architecture
+*Score* : 9/10 — régularisation structurelle, 69 tests inchangés
+
+*Detail* : Application du pattern « Plugin Indépendant + Racine Consommateur »
+(article #0124). `document-plugin/` devient un build Gradle autonome (son
+settings, son wrapper 9.6.1, son catalogue complet). La racine devient un
+consommateur dogfood minimal (build.gradle.kts 6 lignes, catalogue 2 entrées,
+zéro `include()`). Upgrade Gradle 9.3.0 → 9.6.1 sur les deux wrappers.
+Validation plugin Gradle 9.6.1 satisfaite (@DisableCachingByDefault +
+@PathSensitive sur les 2 tasks).
+
+Fichiers créés :
+- `document-plugin/settings.gradle.kts` — build indépendant
+- `document-plugin/gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.{jar,properties}` — wrapper 9.6.1
+
+Fichiers déplacés :
+- `gradle/libs.versions.toml` → `document-plugin/gradle/libs.versions.toml` (catalogue complet 66 lignes)
+
+Fichiers modifiés :
+- `build.gradle.kts` racine — consommateur dogfood (6 lignes)
+- `gradle/libs.versions.toml` racine — catalogue minimal (2 entrées)
+- `gradle/wrapper/gradle-wrapper.properties` racine — 9.3.0 → 9.6.1
+- `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar` racine — régénérés
+- `document-plugin/src/main/kotlin/document/GenerateDocumentTask.kt` — +@DisableCachingByDefault, +@PathSensitive(PathSensitivity.NONE)
+- `document-plugin/src/main/kotlin/document/ConvertDocumentTask.kt` — +@DisableCachingByDefault, +@PathSensitive(PathSensitivity.NONE)
+
+Décisions clés :
+- Pattern article #0124 appliqué : `document-plugin/` build autonome, racine consommateur
+- Gradle 9.3.0 → 9.6.1 (deux wrappers)
+- @DisableCachingByDefault : idempotence applicative (hash source/prompt en metadata), Gradle build cache désactivé
+- @PathSensitive(PathSensitivity.NONE) : contenu prime sur chemin (relocation-safe)
+- Catalogue racine minimal (2 entrées) vs catalogue plugin complet (66 lignes) — séparation des responsabilités
+- Contrat DAG : racine ne build pas le plugin, `publishToMavenLocal` est l'étape intermédiaire
+- `because` en anglais (règle : anglais = langue du développement)
+- Aucun test modifié — 69 tests passent à l'identique sous Gradle 9.6.1
