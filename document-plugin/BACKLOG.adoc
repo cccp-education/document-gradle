@@ -13,7 +13,7 @@ et le **publie dans tous les formats supportes par AsciidoctorJ**
 
 Le plugin couvre deux missions complementaires :
 
-1. **Generation IA** → un LLM (deepseek-v4-pro) assiste la redaction
+1. **Generation IA** → un LLM (gpt-oss:120b-cloud) assiste la redaction
    de documentation, specs, manuels, rapports en AsciiDoc structure
 2. **Publication multi-format** → chaque backend AsciidoctorJ est expose
    comme une tache Gradle isolee avec configuration fine
@@ -50,7 +50,7 @@ structure produit un document AsciiDoc coherent, que l'humain valide et enrichit
 
 .Criteres d'acceptation
 - La tache `generateDocument` accepte un prompt (fichier ou inline)
-- Le LLM (deepseek-v4-pro via langchain4j) produit un document AsciiDoc structure
+- Le LLM (gpt-oss:120b-cloud via langchain4j) produit un document AsciiDoc structure
 - Le document respecte les conventions AsciiDoc du workspace (sectionnement, attributs, include)
 - Un fichier `.adoc` valide est ecrit dans le repertoire de sortie
 - La source n'est jamais modifiee — seul le fichier genere est produit
@@ -287,7 +287,7 @@ sortie, metadata N3.
 | R-03 | Asciidoctor PDF necessite Ruby (rouge) ou bibliotheques natives | Bloquant | Moyen
 | R-04 | Les formats EPUB/DocBook/ManPage sont moins utilises — bugs latents | Faible | Faible
 | R-05 | plantuml-gradle non execute avant enrichDocument → diagrammes manquants | Moyen | Moyen
-| R-06 | Cout tokens OCR : 300 pages × deepseek-v4-pro → budget significatif | Moyen | Eleve
+| R-06 | Cout tokens OCR : 300 pages × gpt-oss:120b-cloud → budget significatif | Moyen | Eleve
 | R-07 | Asciidoctor Diagram necessite Graphviz installe sur la machine | Moyen | Moyen
 | BND-01 | Codex duplique une tache de conversion (ExportKnowledgeBase fait deja AsciiDoc→Markdown) | Moyen | Moyen
 | BND-02 | Deux versions d'AsciidoctorJ cohabitent (codex vs document) | Faible | Faible

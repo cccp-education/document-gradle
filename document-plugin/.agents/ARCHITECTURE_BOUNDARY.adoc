@@ -57,9 +57,9 @@ Ce couplage posait trois problèmes :
   *Dépendance directe*, pas via codex.
 
 | LLM
-| Oui — deepseek-v4-pro pour OCR photos → AsciiDoc structuré
+| Oui — gpt-oss:120b-cloud pour OCR photos → AsciiDoc structuré
   (tâche `collectOcr`, contrats `codex.ocr.OcrRequest/Result/Config`)
-| Oui — deepseek-v4-pro via langchain4j pour
+| Oui — gpt-oss:120b-cloud via langchain4j pour
   generation de contenu AsciiDoc (tâche `generateDocument`)
 
 | Vectorisation
@@ -132,7 +132,7 @@ Cas d'usage complet : produire un livre multi-format (HTML/PDF/EPUB)
 a partir de photos de pages d'un ouvrage existant.
 
 ----
-[CODEX N2] collectOcr ── photo PNG/JPEG → LLM deepseek-v4-pro → OcrResult.structuredText (AsciiDoc)
+[CODEX N2] collectOcr ── photo PNG/JPEG → LLM gpt-oss:120b-cloud → OcrResult.structuredText (AsciiDoc)
                 │
                 ├─▶ transformChunk → collectIngest → pgvector (RAG)
                 │
@@ -224,7 +224,7 @@ PLANTUML est un constituant du document, pas un pair.
 | Dépendance LLM bridge
 | compileOnly sur planner-gradle
 | *Maintenu* — le bridge LLM de planner est partagé pour eviter
-  duplication du code de connexion langchain4j → deepseek-v4-pro
+  duplication du code de connexion langchain4j → gpt-oss:120b-cloud
 
 | Rôle vs codex
 | "document fait la conversion multi-format legere + generation IA"
@@ -264,7 +264,7 @@ PLANTUML est un constituant du document, pas un pair.
   Fallback : placeholder texte si PNG absent.
 
 | BND-04
-| Cout tokens OCR — 300 pages × deepseek-v4-pro
+| Cout tokens OCR — 300 pages × gpt-oss:120b-cloud
 | Moyen
 | OcrConfig.maxTokens controle le budget par page.
   Temperature 0.0 pour resultats deterministes.

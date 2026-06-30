@@ -16,7 +16,7 @@ Le plugin `document` a trois missions complementaires, centrees sur la
 L'IA assiste la redaction de contenu documentaire en AsciiDoc :
 specifications, rapports, documentation technique, manuels utilisateur,
 a partir d'un prompt structure. La tache `generateDocument` utilise un LLM
-(deepseek-v4-pro) via langchain4j pour produire le squelette AsciiDoc que
+(gpt-oss:120b-cloud) via langchain4j pour produire le squelette AsciiDoc que
 l'humain valide et enrichit.
 
 Distinct de planner-gradle (Manhattan) qui genere des SPG/SPD pedagogiques.
@@ -139,7 +139,7 @@ Toute modification de code source DOIT passer `./gradlew check`
 - Kotlin — DSL Gradle
 - AsciidoctorJ 2.x — conversion multi-format (implementation directe, pas via codex)
 - Asciidoctor Diagram — extension PlantUML inline (implementation)
-- langchain4j — LLM prompting (deepseek-v4-pro)
+- langchain4j — LLM prompting (gpt-oss:120b-cloud)
 - planner-gradle — dependance compileOnly, partage LLM bridge (evite duplication)
 - plantuml-gradle — dependance compileOnly, contrat generation diagramme (composition)
 - workspace-bom — contrats N0 partages (ContextChannel, CompositeContext)
@@ -172,7 +172,7 @@ Toute modification de code source DOIT passer `./gradlew check`
 
 | planner-gradle (Manhattan)
 | compileOnly
-| Bridge LLM partage (langchain4j → deepseek-v4-pro) pour
+| Bridge LLM partage (langchain4j → gpt-oss:120b-cloud) pour
   eviter duplication du code de connexion.
 
 | plantuml-gradle (HTOWN)
