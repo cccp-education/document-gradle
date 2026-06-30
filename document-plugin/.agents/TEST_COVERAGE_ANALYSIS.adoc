@@ -1,32 +1,32 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-06-30
-:session: 004
+:session: 005
 
-== Pyramide de tests — Session 004 (DOC-3 + DOC-4)
+== Pyramide de tests — Session 005 (DOC-5)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
 | Unit (domaine + génération IA + conversion)
-| 28
+| 39
 | ✅ PASS
 | `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt`
 
 | Functional (GradleTestKit)
-| 12
+| 16
 | ✅ PASS
 | `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 10
+| 14
 | ✅ PASS
 | `src/test/resources/features/document.feature`
 |===
 
-**Total : 50 tests, 0 échec.**
+**Total : 69 tests, 0 échec.** (was 50 session 004, +19)
 
-== Détail unit (28)
+== Détail unit (39)
 
 [cols="2,3,1"]
 |===
@@ -64,11 +64,18 @@
 | DocumentConverterTest | shouldSkipPdf retourne faux si le fichier hash sidecar n existe pas | ✅
 | DocumentConverterTest | shouldSkipPdf retourne faux si le hash dans le sidecar ne correspond pas | ✅
 | DocumentConverterTest | writeBinaryMetadataHeader ecrit le hash de la source dans un fichier sidecar | ✅
+| DocumentConverterTest | convertToEpub ecrit un fichier EPUB3 valide dans le fichier de sortie | ✅
+| DocumentConverterTest | shouldSkipEpub retourne vrai si l'EPUB et le fichier hash sidecar existent et correspondent | ✅
+| DocumentConverterTest | shouldSkipEpub retourne faux si le fichier hash sidecar n existe pas | ✅
+| DocumentConverterTest | convertToDocBook produit un DocBook 5 valide avec namespace XML depuis un AsciiDoc valide | ✅
+| DocumentConverterTest | convertToDocBook preserve les sections du document source | ✅
+| DocumentConverterTest | convertToManPage produit une page de manuel troff valide depuis un AsciiDoc manpage | ✅
+| DocumentConverterTest | convertToManPage leve une exception si la source est absente | ✅
 |===
 
-== Détail functional (12)
+== Détail functional (16)
 
-[cols="3,1"]
+[cols="3,1]
 |===
 | Test | Status
 
@@ -84,11 +91,15 @@
 | convertDocumentToHtml skip si la sortie existe et la source est inchangee | ✅
 | convertDocumentToPdf produit un fichier PDF valide depuis la source | ✅
 | convertDocumentToPdf skip si la sortie existe et la source est inchangee | ✅
+| convertDocumentToEpub produit un fichier EPUB3 valide depuis la source | ✅
+| convertDocumentToEpub skip si la sortie existe et la source est inchangee | ✅
+| convertDocumentToDocBook produit un fichier DocBook 5 valide depuis la source | ✅
+| convertDocumentToManPage produit une page de manuel valide depuis la source | ✅
 |===
 
-== Détail cucumber BDD (10)
+== Détail cucumber BDD (14)
 
-Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF)
+Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF + DOC-5 EPUB/DocBook/ManPage)
 
 [cols="3,1]
 |===
@@ -104,22 +115,42 @@ Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation I
 | convertDocumentToHtml skip si la sortie existe et la source est inchangee | ✅
 | convertDocumentToPdf produit un fichier PDF valide depuis un AsciiDoc source | ✅
 | convertDocumentToPdf skip si la sortie existe et la source est inchangee | ✅
+| convertDocumentToEpub produit un fichier EPUB3 valide depuis un AsciiDoc source | ✅
+| convertDocumentToEpub skip si la sortie existe et la source est inchangee | ✅
+| convertDocumentToDocBook produit un fichier DocBook 5 valide depuis un AsciiDoc source | ✅
+| convertDocumentToManPage produit une page de manuel valide depuis un AsciiDoc source | ✅
 |===
 
 == Couverture code
 
 Coverage non mesuré (Kover non configuré).
-Classes de production : 15 (7 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter).
+Classes de production : 16 (8 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter).
 Package `document` : DocumentPlugin, DocumentExtension, DocumentConfig, DocumentFormat,
 DocumentSource, GenerateDocumentTask, ConvertDocumentTask, DocumentConverter.
 Package `document.generation` : DocumentLlmProvider, DocumentGenerationState,
 DocumentGenerationGraph, AsciiDocValidator, OllamaDocumentLlmProvider,
 FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 
+== Évolution par session
+
+[cols="2,1,1,1,1]
+|===
+| Session | Unit | Functional | Cucumber | Total
+
+| 002 (DOC-1) | 9 | 5 | 4 | 18
+| 003 (DOC-2) | 17 | 8 | 6 | 31
+| 004 (DOC-3+4) | 28 | 12 | 10 | 50
+| 005 (DOC-5) | 39 | 16 | 14 | 69
+|===
+
 == Notes
 
-- DocumentConverter : objet domaine convertisseur (html5 texte, pdf binaire).
+- DocumentConverter : objet domaine convertisseur (5 formats — html5/pdf/epub3/docbook5/manpage).
 - Distinction texte (hash dans fichier, shouldSkipConversion) vs binaire (sidecar .sourcehash, shouldSkipBinaryConversion).
-- standalone(true) requis pour doctype HTML complet.
-- asciidoctorj-pdf 2.3.23 : module séparé (non inclus dans asciidoctorj core).
+- standalone(true) requis pour doctype HTML/DocBook/ManPage complet.
+- asciidoctorj-pdf 2.3.23 : module séparé (backend pdf, non inclus dans core).
+- asciidoctorj-epub3 2.2.0 : module séparé (backend epub3, non inclus dans core).
+- DocBook5 + ManPage : natifs à asciidoctorj core (aucune extension requise).
+- ManPage requiert `:doctype: manpage` + section NAME + SYNOPSIS dans la source.
 - Économie d'encre : skip si output existe et hash source correspond (texte ou binaire).
+- convertBinary factorise PDF + EPUB (skip par sidecar, convertToFile, writeBinaryMetadataHeader).

@@ -72,7 +72,12 @@ class DocumentPlugin : Plugin<Project> {
         )
         conversions.forEach { (name, format) ->
             project.tasks.register(name, ConvertDocumentTask::class.java) { task ->
-                task.description = "Convertit l'AsciiDoc en ${format.name} (AsciidoctorJ ${format.backend}). — stub DOC-${if (format == DocumentFormat.HTML) 3 else if (format == DocumentFormat.PDF) 4 else 5}"
+                val epicLabel = when (format) {
+                    DocumentFormat.HTML -> "DOC-3"
+                    DocumentFormat.PDF -> "DOC-4"
+                    else -> "DOC-5"
+                }
+                task.description = "Convertit l'AsciiDoc en ${format.name} (AsciidoctorJ ${format.backend}). — $epicLabel"
                 task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
                 task.format.set(format)
                 task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))

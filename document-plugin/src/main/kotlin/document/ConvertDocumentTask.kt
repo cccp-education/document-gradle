@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory
  * Tache de conversion AsciiDoc -> format (AsciidoctorJ).
  *
  * DOC-3 : conversion HTML5 (backend html5) reelle.
- * DOC-4 : conversion PDF (backend pdf) — a venir.
- * DOC-5 : conversions EPUB3, DocBook 5, ManPage — a venir.
+ * DOC-4 : conversion PDF (backend pdf) — binaire, sidecar .sourcehash.
+ * DOC-5 : conversions EPUB3 (binaire, sidecar), DocBook 5 / ManPage (texte, header metadata).
  *
  * Loi de l'Economie d'Encre : si la sortie existe et que le hash de la source
  * correspond au hash stocke en metadata du fichier genere, on ne re-convertit pas.
@@ -56,13 +56,15 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         val content = when (fmt) {
             DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource)
             DocumentFormat.PDF -> {
-                convertBinary(docSource, output, logger, "pdf", "4")
+                convertBinary(docSource, output, logger, "pdf")
                 return
             }
-            else -> {
-                logger.warn("{} — backend {} pas encore implemente (DOC-{}), stub no-op", name, fmt.backend, stubEpic(fmt))
+            DocumentFormat.EPUB -> {
+                convertBinary(docSource, output, logger, "epub3")
                 return
             }
+            DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource)
+            DocumentFormat.MANPAGE -> DocumentConverter.convertToManPage(docSource)
         }
 
         if (DocumentConverter.shouldSkipConversion(docSource, output)) {
@@ -80,7 +82,6 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         output: java.io.File,
         logger: org.slf4j.Logger,
         backend: String,
-        epicId: String,
     ) {
         if (DocumentConverter.shouldSkipBinaryConversion(docSource, output)) {
             logger.info("{} skip — sortie {} existante pour source inchangee : {}", name, backend, output.absolutePath)
@@ -91,13 +92,4 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         DocumentConverter.writeBinaryMetadataHeader(docSource, output)
         logger.info("{} — converti -> {} ({} octets)", name, output.absolutePath, output.length())
     }
-
-    private fun stubEpic(fmt: DocumentFormat): String =
-        when (fmt) {
-            DocumentFormat.PDF -> "4"
-            DocumentFormat.EPUB -> "5"
-            DocumentFormat.DOCBOOK -> "5"
-            DocumentFormat.MANPAGE -> "5"
-            DocumentFormat.HTML -> "3"
-        }
 }

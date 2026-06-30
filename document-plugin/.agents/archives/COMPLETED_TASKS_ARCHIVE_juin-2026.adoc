@@ -110,3 +110,32 @@ Décisions clés :
 - Fichier sidecar `.sourcehash` pour skip binaire (hash ne peut pas être inséré dans un PDF)
 - asciidoctorj-pdf 2.3.23 : module séparé (non inclus dans asciidoctorj core)
 - convertBinary méthode privée factorise skip + conversion + metadata pour formats binaires
+
+== Session 005 — DOC-5 convertDocumentToEpub + convertDocumentToDocBook + convertDocumentToManPage (AsciidoctorJ)
+
+*Date* : 2026-06-30
+*Type* : feat
+*Score* : 69 tests (39 unit + 16 functional + 14 cucumber), BUILD SUCCESSFUL
+
+*Detail* : Implémentation des 3 backends AsciidoctorJ restants : epub3 (binaire, sidecar),
+docbook5 (texte, header), manpage (texte, header). Les 5 formats de publication sont complets.
+Loi de l'Économie d'Encre étendue aux 5 formats. asciidoctorj-epub3 2.2.0 ajouté au bundle.
+
+Fichiers modifiés :
+- `gradle/libs.versions.toml` — +asciidoctorj-epub3 2.2.0 dans bundle asciidoctor
+- `src/main/kotlin/document/DocumentConverter.kt` — +3 méthodes (convertToEpub, convertToDocBook, convertToManPage)
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — câblage EPUB binaire + DocBook/ManPage texte, suppression stub
+- `src/main/kotlin/document/DocumentPlugin.kt` — descriptions task (DOC-5 au lieu de stub)
+- `src/test/kotlin/document/DocumentConverterTest.kt` — +11 tests unit DOC-5
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +4 tests functional
+- `src/test/resources/features/document.feature` — +4 scénarios BDD
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +3 Given + 5 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +2 factory projects + 3 file accessors
+
+Décisions clés :
+- asciidoctorj-epub3 2.2.0 : module séparé (comme pdf), EPUB = zip (signature PK)
+- DocBook5 + ManPage : natifs à asciidoctorj core (aucune extension requise)
+- ManPage requiert `:doctype: manpage` + section NAME + SYNOPSIS dans la source AsciiDoc
+- convertBinary refactor : paramètre epicId retiré, factorise PDF + EPUB
+- 5 formats complets : HTML/PDF (texte/binaire), EPUB (binaire), DocBook/ManPage (texte)
+- DOC-9 prochaine : Asciidoctor Diagram inline (zéro compileOnly plantuml-gradle)

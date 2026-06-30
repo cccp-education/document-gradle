@@ -7,6 +7,7 @@ asciidoctorj = "3.0.0"
 asciidoctorj-diagram = "3.2.0"
 asciidoctorj-diagram-plantuml = "1.2025.3"
 asciidoctorj-pdf = "2.3.23"
+asciidoctorj-epub3 = "2.2.0"
 koog = "1.0.0"
 langchain4j-ollama = "1.16.3"
 junit-platform-launcher = "1.14.3"
@@ -25,6 +26,7 @@ asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciido
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
 asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram-plantuml", version.ref = "asciidoctorj-diagram-plantuml" }
 asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj-pdf" }
+asciidoctorj-epub3 = { module = "org.asciidoctor:asciidoctorj-epub3", version.ref = "asciidoctorj-epub3" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
@@ -55,6 +57,7 @@ asciidoctor = [
     "asciidoctorj-diagram",
     "asciidoctorj-diagram-plantuml",
     "asciidoctorj-pdf",
+    "asciidoctorj-epub3",
 ]
 
 [plugins]

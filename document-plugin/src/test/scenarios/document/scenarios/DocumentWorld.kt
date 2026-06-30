@@ -92,6 +92,87 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceAndExistingEpub(): File {
+        val dir = Files.createTempDirectory("doc-bdd-epub").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Ceci est un paragraphe de test pour la conversion AsciiDoc vers EPUB3.
+            """.trimIndent()
+        )
+        val outDir = dir.resolve("build/docs/document")
+        outDir.mkdirs()
+        // EPUB est un zip — signature PK\x03\x04
+        dir.resolve("build/docs/document/document.epub").writeBytes(
+            byteArrayOf(0x50, 0x4B, 0x03, 0x04)
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocManpageSource(): File {
+        val dir = Files.createTempDirectory("doc-bdd-man").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        // AsciiDoc manpage — doctype manpage + section 1
+        dir.resolve("source.adoc").writeText(
+            """
+            = document(1)
+            :doctype: manpage
+            :manmanual: Document Gradle Manual
+            :mansource: Document Gradle
+
+            == NAME
+
+            document - Gradle plugin for AsciiDoc document creation and publication
+
+            == SYNOPSIS
+
+            *document* ['OPTION']...
+
+            == DESCRIPTION
+
+            The *document* plugin converts AsciiDoc to multiple formats.
+
+            == OPTIONS
+
+            *-h, --help*::
+            Print help message.
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
     fun createGradleProjectWithAsciiDocSourceAndExistingPdf(): File {
         val dir = Files.createTempDirectory("doc-bdd-pdf").toFile()
         dir.resolve("settings.gradle.kts").writeText(
@@ -132,6 +213,21 @@ class DocumentWorld {
     fun convertedPdfFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/document.pdf")
+    }
+
+    fun convertedEpubFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/document.epub")
+    }
+
+    fun convertedDocBookFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/document.xml")
+    }
+
+    fun convertedManPageFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/document.man")
     }
 
     fun executeGradle(vararg tasks: String): BuildResult {

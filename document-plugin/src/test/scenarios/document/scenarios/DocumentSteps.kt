@@ -41,8 +41,20 @@ class DocumentSteps(private val world: DocumentWorld) {
     }
 
     @Given("a new document project with an AsciiDoc source and an existing PDF output")
-    fun createNewDocumentProjectWithAsciiDocSourceAndExistingPdfOutput() {
+    fun createNewDocumentProjectWithAsciiDocSourceAndExistingPdf() {
         world.createGradleProjectWithAsciiDocSourceAndExistingPdf()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc source and an existing EPUB output")
+    fun createNewDocumentProjectWithAsciiDocSourceAndExistingEpub() {
+        world.createGradleProjectWithAsciiDocSourceAndExistingEpub()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc manpage source")
+    fun createNewDocumentProjectWithAsciiDocManpageSource() {
+        world.createGradleProjectWithAsciiDocManpageSource()
         assertThat(world.projectDir).exists()
     }
 
@@ -115,6 +127,54 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(bytes.size).isGreaterThan(100)
         val header = String(bytes.copyOfRange(0, minOf(5, bytes.size)))
         assertThat(header).startsWith("%PDF")
+    }
+
+    @Then("the converted EPUB file should exist")
+    fun convertedEpubFileShouldExist() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+    }
+
+    @Then("the converted EPUB should be a valid EPUB document")
+    fun convertedEpubShouldBeValidEpubDocument() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val bytes = epub!!.readBytes()
+        assertThat(bytes.size).isGreaterThan(100)
+        // EPUB est un zip — signature PK\x03\x04
+        val header = String(bytes.copyOfRange(0, minOf(4, bytes.size)))
+        assertThat(header).startsWith("PK")
+    }
+
+    @Then("the converted DocBook file should exist")
+    fun convertedDocBookFileShouldExist() {
+        val docbook = world.convertedDocBookFile()
+        assertThat(docbook).exists()
+    }
+
+    @Then("the converted DocBook should be a valid DocBook document")
+    fun convertedDocBookShouldBeValidDocBookDocument() {
+        val docbook = world.convertedDocBookFile()
+        assertThat(docbook).exists()
+        val content = docbook!!.readText()
+        // DocBook 5 — namespace XML + racine <book> ou <article>
+        assertThat(content).containsIgnoringCase("xmlns")
+        assertThat(content).containsAnyOf("<book", "<article")
+    }
+
+    @Then("the converted ManPage file should exist")
+    fun convertedManPageFileShouldExist() {
+        val manpage = world.convertedManPageFile()
+        assertThat(manpage).exists()
+    }
+
+    @Then("the converted ManPage should be a valid manpage document")
+    fun convertedManPageShouldBeValidManpageDocument() {
+        val manpage = world.convertedManPageFile()
+        assertThat(manpage).exists()
+        val content = manpage!!.readText()
+        // Format troff — commence par .TH ou .ds
+        assertThat(content).containsAnyOf(".TH", ".ds", ".SH")
     }
 
     @After

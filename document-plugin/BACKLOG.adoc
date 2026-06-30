@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-06-08 (architecture boundary review)
+_Date revision_ : 2026-06-30 (DOC-5 terminé, DOC-9 décision Asciidoctor Diagram inline)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
@@ -152,13 +152,19 @@ Les diagrammes d'architecture, de sequence, de classe generes par
 plantuml-gradle (HTOWN) sont automatiquement incrustes dans le document
 final (HTML/PDF/EPUB) sans manipulation manuelle.
 
+.Decision architecture (session 005) — Asciidoctor Diagram inline
+- **Option 1 retenue** : Asciidoctor Diagram inline (déjà bundlé — `asciidoctorj-diagram 3.2.0` + `asciidoctorj-diagram-plantuml 1.2025.3`)
+- L'auteur écrit `[plantuml]` dans son `.adoc`, le rendu se fait à la conversion
+- Zéro dépendance cross-borough, zéro appel à plantumlGenerate
+- La génération LLM des `.puml` reste en amont chez HTOWN (orchestré par runner-gradle N3)
+- DT-04 (compileOnly plantuml-gradle) devient optionnel — non requis pour DOC-9
+
 .Criteres d'acceptation
-- `enrichDocument` detecte les directives `plantuml::diagram.puml[]` dans l'AsciiDoc source
-- La tache appelle plantuml-gradle pour generer le PNG correspondant
-- Le PNG est incruste via `image::diagram.png[]` dans le document enrichi
-- Alternative : extension Asciidoctor Diagram pour rendu inline sans fichier intermediaire
+- `enrichDocument` detecte les blocs `[plantuml]` inline dans l'AsciiDoc source
+- Le rendu PNG/SVG est produit à la conversion par Asciidoctor Diagram (déjà bundlé)
 - Les diagrammes sont visibles dans tous les formats de sortie (HTML, PDF, EPUB)
-- Fallback : si plantuml-gradle n'est pas disponible, un placeholder texte est insere
+- Les blocs `[plantuml]` sont préservés dans l'AsciiDoc enrichi (pas d'échappement)
+- Alternative : si un fichier `.puml` externe est référencé, il est résolu depuis le classpath
 
 === US-DOC-09 — En tant qu'editeur, je veux personnaliser le theme visuel de mon document
 
@@ -267,8 +273,8 @@ sortie, metadata N3.
 | DT-01 | Aucune — projet neuf, zero dette | -
 | DT-02 | [ARCHI] Suppression dependance compileOnly codex-gradle dans build.gradle.kts | P0 — session 001
 | DT-03 | [ARCHI] AsciidoctorJ en implementation directe (version geree par workspace-bom) | P0 — session 001
-| DT-04 | [ARCHI] Ajout dependance compileOnly plantuml-gradle (composition diagramme) | P1 — session DOC-9
-| DT-05 | [ARCHI] Ajout dependance implementation Asciidoctor Diagram (PlantUML inline) | P1 — session DOC-9
+| DT-04 | [ARCHI] Dépendance compileOnly plantuml-gradle — *OPTIONNEL* (Asciidoctor Diagram inline suffit pour DOC-9) | P3 — reporté
+| DT-05 | [ARCHI] Ajout dependance implementation Asciidoctor Diagram (PlantUML inline) — *DÉJÀ BUNDLÉ* (asciidoctorj-diagram 3.2.0) | ✅ TERMINÉ
 |===
 
 '''

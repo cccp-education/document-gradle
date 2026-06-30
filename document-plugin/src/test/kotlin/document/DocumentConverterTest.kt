@@ -215,4 +215,120 @@ class DocumentConverterTest {
         assertTrue(sidecar.exists(), "le fichier sidecar .sourcehash doit etre cree")
         assertEquals(DocumentConverter.sourceHash(source), sidecar.readText().trim())
     }
+
+    // --- DOC-5 : convertToEpub ---
+
+    @Test
+    fun `convertToEpub ecrit un fichier EPUB3 valide dans le fichier de sortie`() {
+        val dir = tempDir()
+        val source = adocSource(dir)
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        assertTrue(output.length() > 100, "l'EPUB ne doit pas etre vide")
+        val bytes = output.readBytes()
+        // EPUB est un zip — signature PK\x03\x04
+        val header = String(bytes.copyOfRange(0, minOf(4, bytes.size)))
+        assertEquals("PK", header.take(2), "le fichier doit commencer par la signature zip PK")
+    }
+
+    @Test
+    fun `shouldSkipEpub retourne vrai si l'EPUB et le fichier hash sidecar existent et correspondent`() {
+        val dir = tempDir()
+        val source = adocSource(dir)
+        val epubOutput = File(dir, "output.epub").apply { writeBytes(byteArrayOf(0x50, 0x4B, 0x03, 0x04)) }
+        File(dir, "output.epub.sourcehash").apply {
+            writeText(DocumentConverter.sourceHash(source))
+        }
+
+        assertTrue(DocumentConverter.shouldSkipBinaryConversion(source, epubOutput))
+    }
+
+    @Test
+    fun `shouldSkipEpub retourne faux si le fichier hash sidecar n existe pas`() {
+        val dir = tempDir()
+        val source = adocSource(dir)
+        val epubOutput = File(dir, "output.epub").apply { writeBytes(byteArrayOf(0x50, 0x4B, 0x03, 0x04)) }
+
+        assertFalse(DocumentConverter.shouldSkipBinaryConversion(source, epubOutput))
+    }
+
+    // --- DOC-5 : convertToDocBook ---
+
+    @Test
+    fun `convertToDocBook produit un DocBook 5 valide avec namespace XML depuis un AsciiDoc valide`() {
+        val dir = tempDir()
+        val source = adocSource(dir)
+
+        val docbook = DocumentConverter.convertToDocBook(source)
+
+        assertNotNull(docbook)
+        assertTrue(docbook.contains("xmlns", ignoreCase = true), "le DocBook doit contenir un namespace XML")
+        assertTrue(
+            docbook.contains("<book", ignoreCase = true) || docbook.contains("<article", ignoreCase = true),
+            "le DocBook doit contenir une racine <book> ou <article>"
+        )
+    }
+
+    @Test
+    fun `convertToDocBook preserve les sections du document source`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = "= Livre de Formation\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
+        )
+
+        val docbook = DocumentConverter.convertToDocBook(source)
+
+        assertTrue(docbook.contains("Chapitre 1"), "le DocBook doit contenir la section Chapitre 1")
+        assertTrue(docbook.contains("Chapitre 2"), "le DocBook doit contenir la section Chapitre 2")
+    }
+
+    // --- DOC-5 : convertToManPage ---
+
+    @Test
+    fun `convertToManPage produit une page de manuel troff valide depuis un AsciiDoc manpage`() {
+        val dir = tempDir()
+        val source = DocumentSource(File(dir, "man.adoc").apply {
+            writeText(
+                """
+                = document(1)
+                :doctype: manpage
+
+                == NAME
+
+                document - Gradle plugin for AsciiDoc publication
+
+                == SYNOPSIS
+
+                *document* ['OPTION']...
+
+                == DESCRIPTION
+
+                The *document* plugin converts AsciiDoc to multiple formats.
+                """.trimIndent()
+            )
+        })
+
+        val manpage = DocumentConverter.convertToManPage(source)
+
+        assertNotNull(manpage)
+        // Format troff — commence par .TH ou contient .SH
+        assertTrue(
+            manpage.contains(".TH") || manpage.contains(".SH") || manpage.contains(".ds"),
+            "le manpage doit contenir des directives troff (.TH, .SH ou .ds)"
+        )
+    }
+
+    @Test
+    fun `convertToManPage leve une exception si la source est absente`() {
+        val dir = tempDir()
+        val source = DocumentSource(File(dir, "absent.adoc"))
+
+        org.junit.jupiter.api.assertThrows<Exception> {
+            DocumentConverter.convertToManPage(source)
+        }
+    }
 }

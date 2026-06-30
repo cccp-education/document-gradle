@@ -73,3 +73,34 @@ Feature: Document plugin (DOC-1 stub + DOC-2 generation IA)
     When I am executing the task 'convertDocumentToPdf'
     Then the build should succeed
     And the converted PDF file should exist
+
+  @doc5 @conversion
+  Scenario: convertDocumentToEpub produit un fichier EPUB3 valide depuis un AsciiDoc source
+    Given a new document project with an AsciiDoc source
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should be a valid EPUB document
+
+  @doc5 @conversion
+  Scenario: convertDocumentToEpub skip si la sortie existe et la source est inchangee
+    Given a new document project with an AsciiDoc source and an existing EPUB output
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+
+  @doc5 @conversion
+  Scenario: convertDocumentToDocBook produit un fichier DocBook 5 valide depuis un AsciiDoc source
+    Given a new document project with an AsciiDoc source
+    When I am executing the task 'convertDocumentToDocBook'
+    Then the build should succeed
+    And the converted DocBook file should exist
+    And the converted DocBook should be a valid DocBook document
+
+  @doc5 @conversion
+  Scenario: convertDocumentToManPage produit une page de manuel valide depuis un AsciiDoc source
+    Given a new document project with an AsciiDoc manpage source
+    When I am executing the task 'convertDocumentToManPage'
+    Then the build should succeed
+    And the converted ManPage file should exist
+    And the converted ManPage should be a valid manpage document

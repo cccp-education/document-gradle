@@ -1,0 +1,126 @@
+= Session 005 — DOC-5 : convertDocumentToEpub + convertDocumentToDocBook + convertDocumentToManPage (AsciidoctorJ)
+:date: 2026-06-30
+:type: feat
+:score: 9/10
+
+== Contexte
+
+Session 005 — EPIC DOC-5. Les 3 backends AsciidoctorJ restants implémentés
+en baby-step DDD/TDD/BDD : epub3 (binaire, sidecar comme PDF), docbook5
+(texte, header comme HTML), manpage (texte, header comme HTML).
+Loi de l'Économie d'Encre étendue aux 5 formats.
+
+== Réalisations
+
+=== BDD en amont — scénarios Cucumber (Red)
+
+4 scénarios ajoutés dans `document.feature` :
+- convertDocumentToEpub produit un fichier EPUB3 valide
+- convertDocumentToEpub skip si la sortie existe et la source est inchangée
+- convertDocumentToDocBook produit un fichier DocBook 5 valide
+- convertDocumentToManPage produit une page de manuel valide
+
+3 Given steps + 5 Then steps ajoutés dans DocumentSteps/DocumentWorld.
+Source manpage dédiée (doctype manpage + section NAME + SYNOPSIS).
+
+=== TDD unit Red — DocumentConverterTest (11 tests)
+
+- `convertToEpub` écrit un fichier EPUB3 valide (signature zip PK)
+- `shouldSkipEpub` vrai/faux par sidecar (2 tests)
+- `convertToDocBook` produit un DocBook 5 avec namespace XML + racine book/article
+- `convertToDocBook` préserve les sections
+- `convertToManPage` produit du troff (.TH/.SH/.ds)
+- `convertToManPage` lève une exception si la source est absente
+
+=== Green — DocumentConverter + asciidoctorj-epub3
+
+3 méthodes ajoutées :
+- `convertToEpub(source, output)` — délègue à `convertToFile` (backend epub3, binaire)
+- `convertToDocBook(source)` — délègue à `convert` (backend docbook5, texte, standalone)
+- `convertToManPage(source)` — délègue à `convert` (backend manpage, texte, standalone)
+
+Dépendance `asciidoctorj-epub3 2.2.0` ajoutée au bundle asciidoctor
+(module séparé, non inclus dans asciidoctorj core — comme pdf).
+DocBook5 et ManPage sont natifs à AsciidoctorJ (aucune extension requise).
+
+=== Câblage ConvertDocumentTask
+
+- `when (fmt)` étendu : EPUB → `convertBinary` (sidecar `.sourcehash`),
+  DOCBOOK/MANPAGE → branche texte (header metadata)
+- Stub `else` supprimé, méthode `stubEpic` retirée
+- `convertBinary` factorisé (paramètre `epicId` retiré, signature simplifiée)
+
+=== Functional tests (4)
+
+- convertDocumentToEpub produit un EPUB3 valide (signature PK)
+- convertDocumentToEpub skip si sortie existe
+- convertDocumentToDocBook produit un DocBook 5 valide (namespace + racine)
+- convertDocumentToManPage produit une page de manuel valide (source doctype manpage)
+
+== Fichiers impactés
+
+- `gradle/libs.versions.toml` : +asciidoctorj-epub3 2.2.0 dans bundle asciidoctor
+- `src/main/kotlin/document/DocumentConverter.kt` : +3 méthodes (convertToEpub, convertToDocBook, convertToManPage)
+- `src/main/kotlin/document/ConvertDocumentTask.kt` : câblage EPUB binaire + DocBook/ManPage texte, suppression stub
+- `src/main/kotlin/document/DocumentPlugin.kt` : descriptions task (DOC-5 au lieu de stub)
+- `src/test/kotlin/document/DocumentConverterTest.kt` : +11 tests unit DOC-5
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` : +4 tests functional
+- `src/test/resources/features/document.feature` : +4 scénarios BDD
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` : +3 Given + 5 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` : +2 factory projects + 3 file accessors
+
+== Vérification
+
+[source,shell]
+----
+./gradlew :document-plugin:check --rerun-tasks
+# 39 unit + 16 functional + 14 cucumber = 69 tests, 0 échec
+# BUILD SUCCESSFUL in 8m 2s
+----
+
+== Pyramide de tests
+
+[cols="2,1,1"]
+|===
+| Couche | Avant | Après
+| Unit | 28 | 39 (+11)
+| Functional | 12 | 16 (+4)
+| Cucumber | 10 | 14 (+4)
+| Total | 50 | 69 (+19)
+|===
+
+== Décisions techniques
+
+. **asciidoctorj-epub3 2.2.0** : module séparé (non inclus dans asciidoctorj core).
+   Dernière stable compatible avec AsciidoctorJ 3.0.0. L'EPUB est un zip (signature PK\x03\x04).
+. **DocBook5 natif** : backend `docbook5` inclus dans asciidoctorj core, aucune extension requise.
+   Produit du XML avec namespace `http://docbook.org/ns/docbook`.
+. **ManPage natif** : backend `manpage` inclus dans asciidoctorj core.
+   La source AsciiDoc doit avoir `:doctype: manpage` + section NAME + SYNOPSIS.
+   Produit du troff (directives .TH, .SH, .ds).
+. **EPUB binaire (sidecar)** : comme PDF, l'EPUB étant binaire, le hash source est stocké
+   dans un fichier sidecar `.sourcehash`. `convertBinary` factorise skip + conversion + metadata.
+. **DocBook/ManPage texte (header)** : comme HTML, le hash est inséré dans le fichier
+   de sortie via `buildMetadataHeader`. `shouldSkipConversion` lit les 3 premières lignes.
+. **convertBinary refactor** : paramètre `epicId` retiré (plus de stub), signature simplifiée
+   à `(docSource, output, logger, backend)`. Factorise PDF + EPUB.
+
+== Architecture — 5 formats complets
+
+[cols="2,2,2,3"]
+|===
+| Format | Backend | Type | Skip
+
+| HTML | html5 | texte | header metadata (3 lignes)
+| PDF | pdf | binaire | sidecar .sourcehash
+| EPUB | epub3 | binaire | sidecar .sourcehash
+| DocBook | docbook5 | texte | header metadata (3 lignes)
+| ManPage | manpage | texte | header metadata (3 lignes)
+|===
+
+== Prochaine session
+
+Session 006 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough HTML,
+résolution includes, images). Décision : Asciidoctor Diagram inline (déjà bundlé),
+zéro dépendance compileOnly plantuml-gradle. La génération LLM des .puml reste
+en amont chez HTOWN (orchestré par runner-gradle N3).

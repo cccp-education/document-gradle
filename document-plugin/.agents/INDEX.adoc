@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-06-30 (DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf TERMINÉS — AsciidoctorJ, 50 tests PASS)
-_Session terminee_ : 004 — DOC-3 + DOC-4 conversion HTML5 + PDF (AsciidoctorJ, économie d'encre texte/binaire)
-_Prochaine session_ : 005 — DOC-5 convertDocumentToEpub + DocBook + ManPage
+_Derniere mise a jour_ : 2026-06-30 (DOC-5 EPUB3 + DocBook 5 + ManPage TERMINÉS — AsciidoctorJ, 69 tests PASS)
+_Session terminee_ : 005 — DOC-5 EPUB + DocBook + ManPage (AsciidoctorJ, 5 formats complets)
+_Prochaine session_ : 006 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes, images)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -82,11 +82,11 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-2 | generateDocument — generation AsciiDoc assistee par IA via koog+langchain4j (gemma4:31b-cloud) | ✅ TERMINÉ (session 003) | P1
 | DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | ✅ TERMINÉ (session 004) | P1
 | DOC-4 | convertDocumentToPdf — AsciiDoc → PDF (AsciidoctorJ pdf backend) | ✅ TERMINÉ (session 004) | P1
-| DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | À faire | P2
+| DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | ✅ TERMINÉ (session 005) | P2
 | DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
 | DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 📋 CADRAGE (voir EPIC_DOC-8_RELEASE_NOTES_PIPELINE.adoc) | P2
-| DOC-9 | enrichDocument — incrustation PlantUML + HTML passthrough + images + resolution includes | 📋 CADRAGE (US-DOC-08, US-DOC-10) | P1
+| DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, images, resolution includes | 📋 CADRAGE — Asciidoctor Diagram inline (zéro compileOnly plantuml) | P0 — session 006
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB | 📋 CADRAGE (US-DOC-09) | P1
 | DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1
 | DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | 📋 CADRAGE (US-DOC-12) | P2
@@ -128,6 +128,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 002 | 2026-06-29 | implementation | DOC-1 Plugin stub — dogfood CNV-6, 18 tests (9 unit + 5 functional + 4 cucumber) | ✅ TERMINE
 | 003 | 2026-06-29 | feat | DOC-2 generateDocument IA — koog+langchain4j, 31 tests, économie d'encre | ✅ TERMINE
 | 004 | 2026-06-30 | feat | DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf — AsciidoctorJ, 50 tests | ✅ TERMINE
+| 005 | 2026-06-30 | feat | DOC-5 convertDocumentToEpub + DocBook + ManPage — AsciidoctorJ, 69 tests, 5 formats complets | ✅ TERMINE
 |===
 
 '''

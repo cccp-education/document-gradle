@@ -297,6 +297,148 @@ class DocumentPluginFunctionalTest {
         assertEquals(firstSize, output.length(), "le PDF ne doit pas changer apres skip")
     }
 
+    @Test
+    fun `convertDocumentToEpub produit un fichier EPUB3 valide depuis la source`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        File(projectDir, "mon-livre.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Ceci est un paragraphe de test pour la conversion AsciiDoc vers EPUB3.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "le fichier EPUB doit etre genere")
+        assertTrue(output.length() > 100, "l'EPUB ne doit pas etre vide")
+        val bytes = output.readBytes()
+        val header = String(bytes.copyOfRange(0, minOf(4, bytes.size)))
+        assertTrue(header.startsWith("PK"), "le fichier doit commencer par la signature zip PK")
+    }
+
+    @Test
+    fun `convertDocumentToEpub skip si la sortie existe et la source est inchangee`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu.")
+
+        val firstResult = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists())
+        val firstSize = output.length()
+
+        val secondResult = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":convertDocumentToEpub")?.outcome)
+        assertEquals(firstSize, output.length(), "l'EPUB ne doit pas changer apres skip")
+    }
+
+    @Test
+    fun `convertDocumentToDocBook produit un fichier DocBook 5 valide depuis la source`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        File(projectDir, "mon-livre.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Ceci est un paragraphe de test pour la conversion AsciiDoc vers DocBook 5.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToDocBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToDocBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.xml")
+        assertTrue(output.exists(), "le fichier DocBook doit etre genere")
+        val content = output.readText()
+        assertTrue(content.contains("xmlns", ignoreCase = true), "le DocBook doit contenir un namespace XML")
+        assertTrue(
+            content.contains("<book", ignoreCase = true) || content.contains("<article", ignoreCase = true),
+            "le DocBook doit contenir une racine <book> ou <article>"
+        )
+    }
+
+    @Test
+    fun `convertDocumentToManPage produit une page de manuel valide depuis la source`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-manpage\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("man.adoc"))
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("man.adoc").writeText(
+            """
+            = document(1)
+            :doctype: manpage
+            :manmanual: Document Gradle Manual
+            :mansource: Document Gradle
+
+            == NAME
+
+            document - Gradle plugin for AsciiDoc document creation and publication
+
+            == SYNOPSIS
+
+            *document* ['OPTION']...
+
+            == DESCRIPTION
+
+            The *document* plugin converts AsciiDoc to multiple formats.
+
+            == OPTIONS
+
+            *-h, --help*::
+            Print help message.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToManPage")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToManPage")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.man")
+        assertTrue(output.exists(), "le fichier manpage doit etre genere")
+        val content = output.readText()
+        assertTrue(
+            content.contains(".TH") || content.contains(".SH") || content.contains(".ds"),
+            "le manpage doit contenir des directives troff"
+        )
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

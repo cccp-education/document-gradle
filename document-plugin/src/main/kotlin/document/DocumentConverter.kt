@@ -49,6 +49,45 @@ object DocumentConverter {
     }
 
     /**
+     * Convertit un [DocumentSource] en EPUB3 (backend epub3 d'AsciidoctorJ) et ecrit
+     * le resultat binaire dans [output].
+     *
+     * DOC-5 : AsciidoctorJ EPUB3 ecrit directement dans un fichier (pas de retour String).
+     * L'EPUB est un zip (signature PK\x03\x04).
+     *
+     * @param source le fichier AsciiDoc source (lecture seule)
+     * @param output le fichier EPUB de sortie a ecrire
+     */
+    fun convertToEpub(source: DocumentSource, output: java.io.File) {
+        convertToFile(source, "epub3", output)
+    }
+
+    /**
+     * Convertit un [DocumentSource] en DocBook 5 (backend docbook5 d'AsciidoctorJ).
+     *
+     * DOC-5 : DocBook 5 est un format texte XML (retour String, standalone true).
+     *
+     * @param source le fichier AsciiDoc source (lecture seule)
+     * @return le contenu DocBook 5 produit
+     */
+    fun convertToDocBook(source: DocumentSource): String {
+        return convert(source, "docbook5")
+    }
+
+    /**
+     * Convertit un [DocumentSource] en page de manuel UNIX (backend manpage d'AsciidoctorJ).
+     *
+     * DOC-5 : Le format manpage produit du troff (retour String, standalone true).
+     * La source AsciiDoc doit avoir `:doctype: manpage` et une section NAME.
+     *
+     * @param source le fichier AsciiDoc source (lecture seule, doctype manpage)
+     * @return le contenu troff produit
+     */
+    fun convertToManPage(source: DocumentSource): String {
+        return convert(source, "manpage")
+    }
+
+    /**
      * Convertit un [DocumentSource] vers le backend AsciidoctorJ demande.
      *
      * @param source le fichier AsciiDoc source (lecture seule)
