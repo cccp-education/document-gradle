@@ -128,3 +128,26 @@ Feature: Document plugin (DOC-1 stub + DOC-2 generation IA)
     Then the build should succeed
     And the enriched document should exist
     And the enriched document should contain the included content
+
+  @doc10 @theme
+  Scenario: Le DSL document accepte un block theme avec pdfTheme et htmlStylesheet
+    Given a new document project with an AsciiDoc source and a custom theme
+    When I am executing the task 'convertDocumentToHtml'
+    Then the build should succeed
+    And the converted HTML file should exist
+    And the converted HTML should contain the custom stylesheet link
+
+  @doc10 @theme
+  Scenario: convertDocumentToPdf applique le theme YML configure
+    Given a new document project with an AsciiDoc source and a custom theme
+    When I am executing the task 'convertDocumentToPdf'
+    Then the build should succeed
+    And the converted PDF file should exist
+
+  @doc10 @theme
+  Scenario: convertDocumentToHtml reussit sans theme configure (fallback defaut)
+    Given a new document project with an AsciiDoc source
+    When I am executing the task 'convertDocumentToHtml'
+    Then the build should succeed
+    And the converted HTML file should exist
+    And the converted HTML should contain a doctype declaration

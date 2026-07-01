@@ -1,14 +1,14 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 008
+:session: 009
 :date: 2026-07-01
-:status: DOC-9 terminé (enrichDocument, 79 tests) — prêt DOC-10
+:status: DOC-10 terminé (DocumentTheme, 103 tests) — prêt DOC-11 ou DOC-6
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 79 tests (44 unit + 17 cucumber + 18 functional), Gradle 9.6.1
+./gradlew check                        # 103 tests (62 unit + 20 cucumber + 21 functional), Gradle 9.6.1
 ./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
 cd ..
 ./gradlew tasks --group=document       # 8 tâches visibles depuis la racine consommateur dogfood
@@ -19,7 +19,7 @@ cd ..
 Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
 - `document-plugin/` — build Gradle autonome (settings, wrapper 9.6.1, catalogue 66 lignes)
 - Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
-- `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les 3 tasks
+- `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les tasks
 
 == Contexte
 
@@ -29,29 +29,37 @@ Session 004 (2026-06-30) — DOC-3 + DOC-4 HTML + PDF TERMINÉS (50 tests).
 Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests).
 Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur (Gradle 9.6.1).
 Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests, +10).
+Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests, +24).
 
-== Objectif session 008 — DOC-10 (Theme DSL)
+== Objectif session 009 — DOC-11 (Pipeline Livre Codex→Document) ou DOC-6 (N3)
 
-- Implémenter le theming documentaire (US-DOC-09, P1)
-- DSL `document { theme { } }` avec :
-  * `pdfTheme = "talaria-theme.yml"` — fichier YML Asciidoctor PDF
-  * `htmlStylesheet = "talaria.css"` — CSS HTML
-  * `epubStylesheet = "epub.css"` — CSS EPUB
-  * `logo = "logo.png"` — image titre PDF
-- Fallback : thème par défaut intégré si aucun fichier fourni
-- Application : passer les attributs Asciidoctor (`:stylesheet:`, `:pdf-theme:`)
-  au moment de la conversion (pas une tâche séparée — câblage dans ConvertDocumentTask)
-- TDD/BDD baby-step : Cucumber `@doc10 @theme` en amont, puis `DocumentTheme`
-  + câblage task en Red → Green → Refactor
+=== Option A — DOC-11 Pipeline Livre (P1)
 
-== Stack (rappel — 5 formats + enrichissement)
+Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publication.
+- Assembler les AsciiDoc OCRisés en un document unique (ordre des pages)
+- enrichDocument incruste les photos originales + diagrammes PlantUML
+- Appliquer le thème (DOC-10 livré)
+- convertDocumentToHtml/Pdf/Epub → livrables
+- Runner-gradle N3 `assembleCompositeContext` indexe les artefacts
+- Tâche composite `bookPipeline` reproductible en une commande
+- US-DOC-11 critères : voir BACKLOG
+
+=== Option B — DOC-6 Integration N3 runner-gradle (P2)
+
+- `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
+- JSON : chemins des fichiers, formats, métadonnees de la source AsciiDoc
+- `runner-gradle assembleCompositeContext` ingere le JSON sans erreur
+- US-DOC-05 critères : voir BACKLOG
+
+== Stack (rappel — 5 formats + enrichissement + theme)
 
 - **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
 - **asciidoctorj-pdf 2.3.23** : backend pdf
 - **asciidoctorj-epub3 2.2.0** : backend epub3
 - **asciidoctorj-diagram 3.2.0** + **plantuml 1.2025.3** : rendu inline PlantUML
-- **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata)
+- **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata, theme)
 - **DocumentEnricher** : résolution includes récursive, préservation plantuml/passthrough
+- **DocumentTheme** : value object (pdfTheme, htmlStylesheet, epubStylesheet, logo) + toAttributes
 
 == Pattern de surcharge (rappel)
 
@@ -64,8 +72,7 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 [cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-10 | Theme DSL (YML PDF + CSS HTML/EPUB) | P0 — session 008
-| DOC-11 | Pipeline livre Codex→Document (integration) | P1
+| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 009
 | DOC-6 | Integration N3 runner-gradle | P2
 | DOC-12 | DSL unifie `document { }` | P2
 |===
@@ -92,11 +99,13 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 
 == Fichiers clés
 
-- `src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (5 formats)
+- `src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (5 formats + theme)
 - `src/main/kotlin/document/DocumentEnricher.kt` — enrichisseur (includes, plantuml, passthrough)
+- `src/main/kotlin/document/DocumentTheme.kt` — value object theme (DOC-10)
 - `src/main/kotlin/document/EnrichDocumentTask.kt` — task enrichissement (DOC-9)
-- `src/main/kotlin/document/ConvertDocumentTask.kt` — task conversion (5 formats réels)
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — task conversion (5 formats + theme)
 - `src/test/kotlin/document/DocumentConverterTest.kt` — 24 tests unit
 - `src/test/kotlin/document/DocumentEnricherTest.kt` — 5 tests unit (DOC-9)
-- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 18 tests functional
-- `src/test/resources/features/document.feature` — 17 scénarios BDD
+- `src/test/kotlin/document/DocumentThemeTest.kt` — 16 tests unit (DOC-10)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 21 tests functional
+- `src/test/resources/features/document.feature` — 20 scénarios BDD

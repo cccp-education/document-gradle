@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-01 (session 007 — DOC-9 enrichDocument, 79 tests)
-_Session terminee_ : 007 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes récursifs)
-_Prochaine session_ : 008 — DOC-10 Theme DSL (YML PDF + CSS HTML/EPUB, US-DOC-09)
+_Derniere mise a jour_ : 2026-07-01 (session 008 — DOC-10 Theme DSL, 103 tests)
+_Session terminee_ : 008 — DOC-10 Theme DSL (DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo)
+_Prochaine session_ : 009 — DOC-11 Pipeline Livre Codex→Document (P1) ou DOC-6 Integration N3 (P2)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -87,8 +87,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
 | DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 📋 CADRAGE (voir EPIC_DOC-8_RELEASE_NOTES_PIPELINE.adoc) | P2
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
-| DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB | 📋 CADRAGE (US-DOC-09) | P0 — session 008
-| DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1
+| DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
+| DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1 — session 009
 | DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | 📋 CADRAGE (US-DOC-12) | P2
 |===
 
@@ -131,6 +131,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 005 | 2026-06-30 | feat | DOC-5 convertDocumentToEpub + DocBook + ManPage — AsciidoctorJ, 69 tests, 5 formats complets | ✅ TERMINE
 | 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1, @DisableCachingByDefault | ✅ TERMINE
 | 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests | ✅ TERMINE
+| 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests | ✅ TERMINE
 |===
 
 '''
@@ -151,7 +152,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
 | Chiraq 🟤 | readme-gradle | N2 | 003
-| New Orleans 🟢 | document-gradle | N2 | 000
+| New Orleans 🟢 | document-gradle | N2 | 008
 | Atlanta | agile-gradle | N4 | 000
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000

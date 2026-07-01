@@ -104,4 +104,24 @@ class DocumentConfigTest {
 
         assertTrue(config.requiresEnrichment())
     }
+
+    @Test
+    fun `DocumentConfig theme defaults to empty DocumentTheme`() {
+        val dir = tempDir()
+        val source = newSource(dir)
+        val config = DocumentConfig(source, dir)
+
+        assertTrue(config.theme.isEmpty())
+    }
+
+    @Test
+    fun `DocumentConfig theme stores the provided DocumentTheme`() {
+        val dir = tempDir()
+        val source = newSource(dir)
+        val css = File(dir, "talaria.css").apply { writeText("body {}") }
+        val theme = DocumentTheme(htmlStylesheet = css)
+        val config = DocumentConfig(source, dir, theme = theme)
+
+        assertEquals(css, config.theme.htmlStylesheet)
+    }
 }

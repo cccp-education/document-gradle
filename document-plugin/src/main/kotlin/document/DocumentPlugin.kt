@@ -41,6 +41,9 @@ class DocumentPlugin : Plugin<Project> {
     private fun cliProp(project: Project, key: String) =
         project.providers.gradleProperty("document.$key")
 
+    private fun cliFile(project: Project, key: String) =
+        cliProp(project, key).map { project.layout.projectDirectory.file(it) }
+
     private fun registerGenerateDocument(project: Project, ext: DocumentExtension) {
         project.tasks.register("generateDocument", GenerateDocumentTask::class.java) { task ->
             task.group = "document"
@@ -87,6 +90,10 @@ class DocumentPlugin : Plugin<Project> {
                 task.format.set(format)
                 task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
                 task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
+                task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
+                task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))
+                task.epubStylesheetFile.set(cliFile(project, "epubStylesheet").orElse(ext.epubStylesheet))
+                task.logoFile.set(cliFile(project, "logo").orElse(ext.logo))
             }
         }
     }

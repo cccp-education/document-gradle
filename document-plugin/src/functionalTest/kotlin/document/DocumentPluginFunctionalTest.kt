@@ -529,6 +529,125 @@ class DocumentPluginFunctionalTest {
         assertEquals(firstContent, output.readText(), "the enriched content must not change after skip")
     }
 
+    @Test
+    fun `convertDocumentToHtml applies the custom stylesheet from the theme DSL`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-theme-html\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                theme {
+                    htmlStylesheet.set(file("talaria.css"))
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("source.adoc").writeText(
+            """
+            = Themed Document
+
+            == Introduction
+
+            Content with custom theme.
+            """.trimIndent()
+        )
+        projectDir.resolve("talaria.css").writeText("body { font-family: serif; color: #333; }")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.html")
+        assertTrue(output.exists(), "the HTML file must be generated")
+        val content = output.readText()
+        assertTrue(content.contains("font-family"), "the HTML must embed the custom stylesheet CSS")
+    }
+
+    @Test
+    fun `convertDocumentToPdf applies the custom pdf theme from the theme DSL`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-theme-pdf\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                theme {
+                    pdfTheme.set(file("talaria-theme.yml"))
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("source.adoc").writeText(
+            """
+            = Themed PDF Document
+
+            == Introduction
+
+            Content with custom PDF theme.
+            """.trimIndent()
+        )
+        projectDir.resolve("talaria-theme.yml").writeText(
+            """
+            extends: default
+            page:
+              size: A4
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToPdf")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.pdf")
+        assertTrue(output.exists(), "the PDF file must be generated")
+        assertTrue(output.length() > 100, "the PDF must not be empty")
+        val bytes = output.readBytes()
+        val header = String(bytes.copyOfRange(0, minOf(5, bytes.size)))
+        assertTrue(header.startsWith("%PDF"), "the file must start with PDF signature")
+    }
+
+    @Test
+    fun `convertDocumentToHtml succeeds without theme configured (default fallback)`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        File(projectDir, "mon-livre.adoc").writeText(
+            """
+            = Default Theme Document
+
+            == Introduction
+
+            Content without custom theme.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.html")
+        assertTrue(output.exists(), "the HTML file must be generated")
+        val content = output.readText()
+        assertTrue(content.contains("<!DOCTYPE html", ignoreCase = true), "the HTML must contain a doctype")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

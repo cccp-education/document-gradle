@@ -271,6 +271,52 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceAndCustomTheme(): File {
+        val dir = Files.createTempDirectory("doc-bdd-theme").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                theme {
+                    pdfTheme.set(file("talaria-theme.yml"))
+                    htmlStylesheet.set(file("talaria.css"))
+                    epubStylesheet.set(file("epub.css"))
+                    logo.set(file("logo.png"))
+                }
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document Themed
+
+            == Introduction
+
+            Document avec theme custom pour la conversion multi-format.
+            """.trimIndent()
+        )
+        // Fichiers theme fournis (vides — AsciidoctorJ ignore les absents avec warning)
+        dir.resolve("talaria-theme.yml").writeText(
+            """
+            extends: default
+            page:
+              size: A4
+            """.trimIndent()
+        )
+        dir.resolve("talaria.css").writeText("body { font-family: serif; }")
+        dir.resolve("epub.css").writeText("body { margin: 0; }")
+        dir.resolve("logo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        projectDir = dir
+        return dir
+    }
+
     fun createGradleProjectWithAsciiDocSourceAndExistingPdf(): File {
         val dir = Files.createTempDirectory("doc-bdd-pdf").toFile()
         dir.resolve("settings.gradle.kts").writeText(

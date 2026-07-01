@@ -1,6 +1,7 @@
 package document
 
 import org.asciidoctor.Asciidoctor
+import org.asciidoctor.Attributes
 import org.asciidoctor.Options
 import org.asciidoctor.SafeMode
 import java.io.File
@@ -16,6 +17,7 @@ import java.security.MessageDigest
  * DOC-3 : conversion HTML5 (backend html5).
  * DOC-4 : conversion PDF (backend pdf).
  * DOC-5 : conversions EPUB3, DocBook 5, ManPage.
+ * DOC-10 : injection du theme (DocumentTheme) via attributs AsciidoctorJ.
  *
  * Loi de l'Economie d'Encre : avant toute conversion, verifier qu'un fichier
  * de sortie existe et que le hash de la source correspond au hash stocke en
@@ -29,10 +31,11 @@ object DocumentConverter {
      * Convertit un [DocumentSource] en HTML5 (backend html5 d'AsciidoctorJ).
      *
      * @param source le fichier AsciiDoc source (lecture seule)
+     * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      * @return le contenu HTML5 produit
      */
-    fun convertToHtml(source: DocumentSource): String {
-        return convert(source, "html5")
+    fun convertToHtml(source: DocumentSource, theme: DocumentTheme = DocumentTheme()): String {
+        return convert(source, "html5", theme)
     }
 
     /**
@@ -40,12 +43,14 @@ object DocumentConverter {
      * le resultat binaire dans [output].
      *
      * DOC-4 : AsciidoctorJ PDF ecrit directement dans un fichier (pas de retour String).
+     * DOC-10 : le theme YML et le logo sont injectes via attributs AsciidoctorJ.
      *
      * @param source le fichier AsciiDoc source (lecture seule)
      * @param output le fichier PDF de sortie a ecrire
+     * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToPdf(source: DocumentSource, output: java.io.File) {
-        convertToFile(source, "pdf", output)
+    fun convertToPdf(source: DocumentSource, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
+        convertToFile(source, "pdf", output, theme)
     }
 
     /**
@@ -54,12 +59,14 @@ object DocumentConverter {
      *
      * DOC-5 : AsciidoctorJ EPUB3 ecrit directement dans un fichier (pas de retour String).
      * L'EPUB est un zip (signature PK\x03\x04).
+     * DOC-10 : la feuille de style EPUB est injectee via attribut AsciidoctorJ.
      *
      * @param source le fichier AsciiDoc source (lecture seule)
      * @param output le fichier EPUB de sortie a ecrire
+     * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToEpub(source: DocumentSource, output: java.io.File) {
-        convertToFile(source, "epub3", output)
+    fun convertToEpub(source: DocumentSource, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
+        convertToFile(source, "epub3", output, theme)
     }
 
     /**
@@ -92,17 +99,13 @@ object DocumentConverter {
      *
      * @param source le fichier AsciiDoc source (lecture seule)
      * @param backend le backend AsciidoctorJ ("html5", "pdf", "epub3", "docbook5", "manpage")
+     * @param theme le theme visuel a appliquer (DOC-10, optionnel — ignoré pour DocBook/ManPage)
      * @return le contenu du fichier de sortie
      */
-    fun convert(source: DocumentSource, backend: String): String {
+    fun convert(source: DocumentSource, backend: String, theme: DocumentTheme = DocumentTheme()): String {
         Asciidoctor.Factory.create().use { asciidoctor ->
-            val options = Options.builder()
-                .backend(backend)
-                .safe(SafeMode.UNSAFE)
-                .standalone(true)
-                .option("sourcemap", "true")
-                .toFile(false)
-                .build()
+            val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
+            val options = buildOptions(backend, theme, format, outputFile = null)
             return asciidoctor.convertFile(source.file, options)
                 ?: throw IllegalStateException("AsciidoctorJ a produit une sortie nulle pour ${source.file.name} (backend=$backend)")
         }
@@ -113,21 +116,57 @@ object DocumentConverter {
      * le resultat directement dans [output].
      *
      * AsciidoctorJ ecrit les formats binaires dans un fichier (pas de retour String).
+     * DOC-10 : le theme est injecte via attributs AsciidoctorJ.
      *
      * @param source le fichier AsciiDoc source (lecture seule)
      * @param backend le backend AsciidoctorJ ("pdf", "epub3")
      * @param output le fichier de sortie a ecrire
+     * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToFile(source: DocumentSource, backend: String, output: java.io.File) {
+    fun convertToFile(source: DocumentSource, backend: String, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
         output.parentFile.mkdirs()
         Asciidoctor.Factory.create().use { asciidoctor ->
-            val options = Options.builder()
-                .backend(backend)
-                .safe(SafeMode.UNSAFE)
-                .toFile(output)
-                .build()
+            val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
+            val options = buildOptions(backend, theme, format, outputFile = output)
             asciidoctor.convertFile(source.file, options)
         }
+    }
+
+    /**
+     * Builds AsciidoctorJ [Options] for the given backend, injecting theme attributes (DOC-10).
+     *
+     * @param backend the AsciidoctorJ backend ("html5", "pdf", "epub3", "docbook5", "manpage")
+     * @param theme the visual theme to apply (attributes injected per format)
+     * @param format the [DocumentFormat] (null -> no theme attributes injected)
+     * @param outputFile the output file (null -> in-memory String conversion)
+     */
+    private fun buildOptions(
+        backend: String,
+        theme: DocumentTheme,
+        format: DocumentFormat?,
+        outputFile: java.io.File?,
+    ): Options {
+        val builder = Options.builder()
+            .backend(backend)
+            .safe(SafeMode.UNSAFE)
+            .standalone(true)
+            .option("sourcemap", "true")
+
+        if (outputFile != null) {
+            builder.toFile(outputFile)
+        } else {
+            builder.toFile(false)
+        }
+
+        if (format != null && !theme.isEmpty()) {
+            val attrs = Attributes.builder()
+            theme.toAttributes(format).forEach { (key, value) ->
+                attrs.attribute(key, value)
+            }
+            builder.attributes(attrs.build())
+        }
+
+        return builder.build()
     }
 
     /**

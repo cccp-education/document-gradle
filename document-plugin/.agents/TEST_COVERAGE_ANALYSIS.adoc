@@ -1,32 +1,32 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-07-01
-:session: 007
+:session: 008
 
-== Pyramide de tests — Session 007 (DOC-9 enrichDocument)
+== Pyramide de tests — Session 008 (DOC-10 Theme DSL)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement)
-| 44
+| Unit (domaine + génération IA + conversion + enrichissement + theme)
+| 62
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt`
 
 | Functional (GradleTestKit)
-| 18
+| 21
 | ✅ PASS
 | `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 17
+| 20
 | ✅ PASS
 | `src/test/resources/features/document.feature`
 |===
 
-**Total : 79 tests, 0 échec.** (+10 par rapport à session 006 — DOC-9 enrichDocument)
+**Total : 103 tests, 0 échec.** (+24 par rapport à session 007 — DOC-10 Theme DSL)
 
-== Détail unit (39)
+== Détail unit (62)
 
 [cols="2,3,1"]
 |===
@@ -41,6 +41,8 @@
 | DocumentConfigTest | DocumentConfig par defaut demande HTML uniquement | ✅
 | DocumentConfigTest | DocumentConfig requiresEnrichment faux par defaut | ✅
 | DocumentConfigTest | DocumentConfig requiresEnrichment vrai si PlantUML active | ✅
+| DocumentConfigTest | DocumentConfig theme defaults to empty DocumentTheme | ✅
+| DocumentConfigTest | DocumentConfig theme stores the provided DocumentTheme | ✅
 | AsciiDocValidatorTest | AsciiDoc valide avec titre de niveau 0 | ✅
 | AsciiDocValidatorTest | AsciiDoc invalide sans titre de niveau 0 | ✅
 | AsciiDocValidatorTest | AsciiDoc invalide si vide | ✅
@@ -76,9 +78,25 @@
 | DocumentEnricherTest | enrich recursively resolves AsciiDoc includes | ✅
 | DocumentEnricherTest | enrich preserves the title and sections of the source document | ✅
 | DocumentEnricherTest | enrich does not mutate the source file | ✅
+| DocumentThemeTest | DocumentTheme default has no theme files configured | ✅
+| DocumentThemeTest | DocumentTheme stores pdfTheme file when provided | ✅
+| DocumentThemeTest | DocumentTheme stores htmlStylesheet file when provided | ✅
+| DocumentThemeTest | DocumentTheme stores epubStylesheet file when provided | ✅
+| DocumentThemeTest | DocumentTheme stores logo file when provided | ✅
+| DocumentThemeTest | DocumentTheme isEmpty is true when no theme files are set | ✅
+| DocumentThemeTest | DocumentTheme isEmpty is false when at least one theme file is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes injects stylesheet for HTML when htmlStylesheet is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes injects pdf-theme for PDF when pdfTheme is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes injects epub-stylesheet for EPUB when epubStylesheet is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes injects pdf-theme and logo for PDF when both are set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes is empty for HTML when no theme is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes is empty for PDF when no theme is set | ✅
+| DocumentThemeTest | DocumentTheme toAttributes ignores htmlStylesheet for PDF format | ✅
+| DocumentThemeTest | DocumentTheme toAttributes ignores pdfTheme for HTML format | ✅
+| DocumentThemeTest | DocumentTheme equals and hashCode are based on theme files | ✅
 |===
 
-== Détail functional (16)
+== Détail functional (21)
 
 [cols="3,1]
 |===
@@ -102,11 +120,14 @@
 | convertDocumentToManPage produit une page de manuel valide depuis la source | ✅
 | enrichDocument produces a resolved AsciiDoc file from a source with includes | ✅
 | enrichDocument is skipped when the output exists and the source is unchanged | ✅
+| convertDocumentToHtml applies the custom stylesheet from the theme DSL | ✅
+| convertDocumentToPdf applies the custom pdf theme from the theme DSL | ✅
+| convertDocumentToHtml succeeds without theme configured (default fallback) | ✅
 |===
 
-== Détail cucumber BDD (14)
+== Détail cucumber BDD (20)
 
-Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF + DOC-5 EPUB/DocBook/ManPage)
+Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF + DOC-5 EPUB/DocBook/ManPage + DOC-9 enrich + DOC-10 theme)
 
 [cols="3,1]
 |===
@@ -129,15 +150,18 @@ Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation I
 | enrichDocument preserva les blocs plantuml inline sans les echapper | ✅
 | enrichDocument preserva les blocs passthrough HTML brut sans les echapper | ✅
 | enrichDocument resout recursivement les includes AsciiDoc | ✅
+| Le DSL document accepte un block theme avec pdfTheme et htmlStylesheet | ✅
+| convertDocumentToPdf applique le theme YML configure | ✅
+| convertDocumentToHtml reussit sans theme configure (fallback defaut) | ✅
 |===
 
 == Couverture code
 
 Coverage non mesuré (Kover non configuré).
-Classes de production : 18 (8 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter + 2 DOC-9 enrich).
+Classes de production : 19 (8 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter + 2 DOC-9 enrich + 1 DocumentTheme).
 Package `document` : DocumentPlugin, DocumentExtension, DocumentConfig, DocumentFormat,
 DocumentSource, GenerateDocumentTask, ConvertDocumentTask, DocumentConverter,
-DocumentEnricher, EnrichDocumentTask.
+DocumentEnricher, EnrichDocumentTask, DocumentTheme.
 Package `document.generation` : DocumentLlmProvider, DocumentGenerationState,
 DocumentGenerationGraph, AsciiDocValidator, OllamaDocumentLlmProvider,
 FakeDocumentLlmProvider, DocumentLlmProviderFactory.
@@ -154,6 +178,7 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 | 005 (DOC-5) | 39 | 16 | 14 | 69
 | 006 (archi) | 39 | 16 | 14 | 69 (inchangé — Gradle 9.6.1, @DisableCachingByDefault)
 | 007 (DOC-9) | 44 | 18 | 17 | 79 (+10 — DocumentEnricher + EnrichDocumentTask)
+| 008 (DOC-10) | 62 | 21 | 20 | 103 (+24 — DocumentTheme + DocumentConfig.theme)
 |===
 
 == Notes
@@ -172,3 +197,12 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
   la syntaxe AsciiDoc, il résout uniquement les includes).
 - EnrichDocumentTask : @DisableCachingByDefault + shouldSkipConversion (hash source en metadata).
 - Asciidoctor Diagram inline : rendu des blocs [plantuml] à la conversion par le bundle déjà présent.
+- DocumentTheme (DOC-10) : value object immutable (pdfTheme, htmlStylesheet, epubStylesheet, logo).
+  toAttributes(format) mappe vers les attributs AsciidoctorJ par backend (stylesheet, pdf-theme,
+  epub-stylesheet, pdf-front-cover-image). DocBook/ManPage non supportés (map vide).
+- AsciidoctorJ inline le CSS HTML dans <style> (pas de <link> ni mot "stylesheet" dans le HTML).
+  Le test BDD vérifie `font-family` (contenu du CSS) plutôt que le mot "stylesheet".
+- buildOptions centralise la construction des Options + injection Attributes par backend.
+- DSL nested theme { } via fun interface Action (SAM) — pattern planner/codebase respecté.
+- Pattern surcharge : CLI (-Pdocument.pdfTheme) > DSL (theme { }) > convention (vide).
+- @PathSensitive(NONE) + @Optional sur les 4 propriétés thème (validation Gradle OK).

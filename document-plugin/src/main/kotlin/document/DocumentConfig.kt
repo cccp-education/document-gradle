@@ -11,11 +11,12 @@ import java.io.File
  * - [source] : le fichier AsciiDoc en entree (lecture seule)
  * - [outputDir] : le repertoire de sortie des fichiers generes
  * - [formats] : les formats de publication demandes (HTML, PDF, EPUB, ...)
- * - [pdfTheme] : fichier YML de theme Asciidoctor PDF (optionnel)
- * - [htmlStylesheet] : feuille de style CSS pour la sortie HTML (optionnel)
+ * - [pdfTheme] : fichier YML de theme Asciidoctor PDF (optionnel, DOC-10)
+ * - [htmlStylesheet] : feuille de style CSS pour la sortie HTML (optionnel, DOC-10)
  * - [enrichPlantUml] : activer l'incrustation des diagrammes PlantUML
  * - [enrichImages] : activer l'incrustation des images
  * - [enrichPassthrough] : preserver les blocs HTML passthrough
+ * - [theme] : theme visuel applique lors de la conversion (DOC-10)
  */
 data class DocumentConfig(
     val source: DocumentSource,
@@ -26,6 +27,7 @@ data class DocumentConfig(
     val enrichPlantUml: Boolean = false,
     val enrichImages: Boolean = false,
     val enrichPassthrough: Boolean = false,
+    val theme: DocumentTheme = DocumentTheme(),
 ) {
 
     fun outputFor(format: DocumentFormat): File =

@@ -1,6 +1,48 @@
 = COMPLETED_TASKS_ARCHIVE — document-gradle (New Orleans 🟢)
 :date: 2026-07-01
 
+== Session 008 — DOC-10 Theme DSL
+
+*Date* : 2026-07-01
+*Type* : feat
+*Score* : 103 tests (+24), BUILD SUCCESSFUL
+
+*Detail* : Implémentation du thème visuel documentaire via DSL Gradle imbriqué
+`document { theme { } }`. Quatre propriétés : `pdfTheme` (YML Asciidoctor PDF),
+`htmlStylesheet` (CSS), `epubStylesheet` (CSS), `logo` (image cover PDF).
+Injection au moment de la conversion par attributs AsciidoctorJ (`:stylesheet:`,
+`:pdf-theme:`, `:epub-stylesheet:`, `:pdf-front-cover-image:`). Fallback thème
+vide = défauts AsciidoctorJ.
+
+Baby-step DDD/TDD/BDD : Cucumber Red en amont, TDD unit Red → Green, functional.
+
+Fichiers créés :
+- `src/main/kotlin/document/DocumentTheme.kt` — value object (4 fichiers + toAttributes)
+- `src/test/kotlin/document/DocumentThemeTest.kt` — 16 tests unit
+
+Fichiers modifiés :
+- `src/main/kotlin/document/DocumentConfig.kt` — champ `theme: DocumentTheme`
+- `src/main/kotlin/document/DocumentExtension.kt` — nested DSL `theme { }` + epubStylesheet/logo
+- `src/main/kotlin/document/DocumentPlugin.kt` — câblage 4 propriétés + cliFile helper
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — 4 @InputFile thème + @Internal theme
+- `src/main/kotlin/document/DocumentConverter.kt` — buildOptions + Attributes injection
+- `src/test/kotlin/document/DocumentPluginTest.kt` — +2 tests DocumentConfig.theme
+- `src/test/resources/features/document.feature` — +3 scénarios @doc10 @theme
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +1 Given + 1 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +1 factory custom theme
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +3 tests functional
+
+Décisions clés :
+- Theme = value object, pas task séparée (injection attributs à la conversion)
+- AsciidoctorJ inline le CSS HTML dans <style> (test vérifie font-family, pas "stylesheet")
+- toAttributes par format : stylesheet (HTML), pdf-theme + pdf-front-cover-image (PDF), epub-stylesheet (EPUB)
+- DocBook/ManPage ignorés (non supporté par AsciidoctorJ)
+- @PathSensitive(NONE) + @Optional sur les 4 propriétés (validation Gradle OK)
+- Pattern surcharge : CLI > DSL > convention respecté via cliFile()
+- Économie d'encre : thème = @Input, donc hash build Gradle inclut le thème
+- Code en anglais, commentaires KDoc en anglais
+- US-DOC-09 (P1) couverte
+
 == Session 001 — Cadrage Pipeline Livre Codex→Document
 
 *Date* : 2026-06-14

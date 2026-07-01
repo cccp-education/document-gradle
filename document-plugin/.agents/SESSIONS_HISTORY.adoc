@@ -11,4 +11,5 @@
 | 005 | 2026-06-30 | feat | DOC-5 convertDocumentToEpub + DocBook + ManPage — AsciidoctorJ, 69 tests, 5 formats complets | ✅ TERMINÉ
 | 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1 | ✅ TERMINÉ
 | 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests (+10) | ✅ TERMINÉ
+| 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests (+24) | ✅ TERMINÉ
 |===

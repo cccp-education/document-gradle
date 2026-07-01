@@ -76,6 +76,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with an AsciiDoc source and a custom theme")
+    fun createNewDocumentProjectWithAsciiDocSourceAndCustomTheme() {
+        world.createGradleProjectWithAsciiDocSourceAndCustomTheme()
+        assertThat(world.projectDir).exists()
+    }
+
     @When("I am executing the task {string}")
     fun executeTask(taskName: String) {
         world.executeGradle(taskName)
@@ -121,6 +127,14 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(html).exists()
         val content = html!!.readText()
         assertThat(content).containsIgnoringCase("<!DOCTYPE html")
+    }
+
+    @Then("the converted HTML should contain the custom stylesheet link")
+    fun convertedHtmlShouldContainCustomStylesheetLink() {
+        val html = world.convertedHtmlFile()
+        assertThat(html).exists()
+        val content = html!!.readText()
+        assertThat(content).containsIgnoringCase("font-family")
     }
 
     @Then("the converted HTML should contain the source title")

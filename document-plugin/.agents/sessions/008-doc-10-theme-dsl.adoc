@@ -1,0 +1,199 @@
+= Session 008 — DOC-10 Theme DSL (YML PDF + CSS HTML/EPUB + logo)
+:date: 2026-07-01
+:type: feat
+:score: 9/10
+
+== Contexte
+
+Session 008 — implémentation de l'EPIC DOC-10 (`theme { }` DSL). Le document
+AsciiDoc converti peut recevoir un thème visuel personnalisé : feuille de
+style CSS pour HTML, thème YML pour PDF, CSS pour EPUB, et image logo pour
+la couverture PDF. Le thème est configurable via un block DSL imbriqué
+`document { theme { } }` et injecté au moment de la conversion par attributs
+AsciidoctorJ (`:stylesheet:`, `:pdf-theme:`, `:epub-stylesheet:`,
+`:pdf-front-cover-image:`). Fallback : thème vide = défauts AsciidoctorJ.
+
+Méthode baby-step DDD/TDD/BDD respectée : BDD Cucumber en amont (Red),
+TDD unit Red → Green, functional GradleTestKit, refactor.
+
+== Réalisations
+
+=== 1. DDD — Ubiquitous language
+
+Nouveau value object `DocumentTheme` — porte les 4 fichiers de thème
+(pdfTheme YML, htmlStylesheet CSS, epubStylesheet CSS, logo image).
+Méthode `toAttributes(format: DocumentFormat): Map<String, String>` mappe
+vers les attributs AsciidoctorJ par backend :
+- HTML → `stylesheet`
+- PDF → `pdf-theme` + `pdf-front-cover-image`
+- EPUB → `epub-stylesheet`
+- DocBook/ManPage → vide (non supporté)
+
+`DocumentConfig` étendu avec champ `theme: DocumentTheme = DocumentTheme()`.
+
+=== 2. BDD Cucumber (Red → Green)
+
+3 scénarios `@doc10 @theme` ajoutés à `document.feature` :
+
+- `Le DSL document accepte un block theme avec pdfTheme et htmlStylesheet`
+  (vérifie CSS appliqué au HTML — `font-family` inline)
+- `convertDocumentToPdf applique le theme YML configure` (PDF généré)
+- `convertDocumentToHtml reussit sans theme configure (fallback defaut)`
+  (doctype présent, aucun thème requis)
+
+Steps Cucumber : 1 `@Given` (factory custom theme) + 1 `@Then`
+(custom stylesheet link → `font-family`) dans `DocumentSteps.kt`
+et `DocumentWorld.kt` (fixture `createGradleProjectWithAsciiDocSourceAndCustomTheme`).
+
+=== 3. TDD Unit — DocumentTheme (Red → Green)
+
+`DocumentThemeTest.kt` créé — 16 tests unit :
+
+- default (4 fichiers null), setters (pdfTheme, htmlStylesheet, epubStylesheet, logo)
+- isEmpty (true par défaut, false si au moins 1 fichier)
+- toAttributes par format (HTML stylesheet, PDF pdf-theme + logo, EPUB epub-stylesheet)
+- toAttributes ignore les attributs non pertinents pour le format
+- toAttributes vide si isEmpty
+- equals/hashCode basés sur les 4 fichiers
+
+`DocumentTheme.kt` créé — value object immutable. `toAttributes` est
+déterministe : un format donné produit toujours le même map d'attributs.
+
+`DocumentConfigTest` étendu — 2 tests supplémentaires :
+- `DocumentConfig theme defaults to empty DocumentTheme`
+- `DocumentConfig theme stores the provided DocumentTheme`
+
+=== 4. DSL Gradle — DocumentExtension nested theme { }
+
+`DocumentExtension.kt` modifié — ajout :
+- `epubStylesheet: RegularFileProperty`
+- `logo: RegularFileProperty`
+- méthode `fun theme(action: Action)` avec `fun interface Action` (SAM)
+  pour le block imbriqué `document { theme { } }`
+
+Usage DSL :
+```
+document {
+    theme {
+        pdfTheme.set(file("talaria-theme.yml"))
+        htmlStylesheet.set(file("talaria.css"))
+        epubStylesheet.set(file("epub.css"))
+        logo.set(file("logo.png"))
+    }
+}
+```
+
+=== 5. ConvertDocumentTask — injection thème
+
+`ConvertDocumentTask.kt` modifié — 4 nouvelles propriétés `@InputFile`
+avec `@PathSensitive(PathSensitivity.NONE)` + `@Optional` :
+- `pdfThemeFile`, `htmlStylesheetFile`, `epubStylesheetFile`, `logoFile`
+Propriété `@Internal val theme: DocumentTheme` reconstruit le value object
+depuis les 4 RegularFileProperty. Le thème est passé au `DocumentConverter`.
+
+=== 6. DocumentConverter — attributs AsciidoctorJ
+
+`DocumentConverter.kt` modifié :
+- `convertToHtml`, `convertToPdf`, `convertToEpub`, `convert`, `convertToFile`
+  acceptent un paramètre `theme: DocumentTheme = DocumentTheme()`
+- Méthode privée `buildOptions(backend, theme, format, outputFile)` centralise
+  la construction des `Options` et injecte `Attributes.builder().attribute(key, value)`
+  pour chaque entrée de `theme.toAttributes(format)`
+- `DocBook` et `ManPage` ne reçoivent pas de thème (non supporté par AsciidoctorJ)
+
+=== 7. DocumentPlugin — câblage
+
+`DocumentPlugin.kt` modifié — helper `cliFile(project, key)` pour résoudre
+les propriétés CLI en `RegularFileProperty`. Câblage des 4 propriétés thème
+via `cliFile(...).orElse(ext.xxx)` sur chaque task de conversion.
+
+Pattern surcharge respecté :
+`CLI (-Pdocument.pdfTheme) > DSL (block document { theme { } }) > convention (vide)`.
+
+=== 8. Functional tests (GradleTestKit)
+
+3 tests ajoutés à `DocumentPluginFunctionalTest.kt` :
+
+- `convertDocumentToHtml applies the custom stylesheet from the theme DSL`
+  (vérifie `font-family` inline dans le HTML produit)
+- `convertDocumentToPdf applies the custom pdf theme from the theme DSL`
+  (vérifie PDF valide + signature `%PDF`)
+- `convertDocumentToHtml succeeds without theme configured (default fallback)`
+  (vérifie doctype sans thème configuré)
+
+== Fichiers impactés
+
+Créés :
+- `src/main/kotlin/document/DocumentTheme.kt` — value object (4 fichiers thème + toAttributes)
+- `src/test/kotlin/document/DocumentThemeTest.kt` — 16 tests unit
+
+Modifiés :
+- `src/main/kotlin/document/DocumentConfig.kt` — champ `theme: DocumentTheme`
+- `src/main/kotlin/document/DocumentExtension.kt` — nested DSL `theme { }` + epubStylesheet/logo
+- `src/main/kotlin/document/DocumentPlugin.kt` — câblage 4 propriétés thème + cliFile helper
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — 4 @InputFile thème + @Internal theme
+- `src/main/kotlin/document/DocumentConverter.kt` — buildOptions + Attributes injection
+- `src/test/kotlin/document/DocumentPluginTest.kt` — +2 tests DocumentConfig.theme
+- `src/test/resources/features/document.feature` — +3 scénarios @doc10 @theme
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +1 Given + 1 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +1 factory custom theme
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +3 tests functional
+
+== Vérification
+
+[source,shell]
+----
+cd document-plugin && ./gradlew check
+# BUILD SUCCESSFUL in 9m 52s
+# 103 tests : 62 unit + 20 cucumber + 21 functional, 0 échec
+----
+
+== Pyramide de tests
+
+[cols="2,1,1,1"]
+|===
+| Couche | Avant | Après | Delta
+| Unit | 44 | 62 | +18 (16 DocumentThemeTest + 2 DocumentConfig.theme)
+| Functional | 18 | 21 | +3 (HTML theme + PDF theme + fallback)
+| Cucumber | 17 | 20 | +3 (@doc10 @theme)
+| Total | 79 | 103 | +24
+|===
+
+== Décisions techniques
+
+. **Theme = value object, pas task séparée** — le thème est appliqué au
+  moment de la conversion (attributs AsciidoctorJ injectés dans les Options),
+  pas par une tâche `applyTheme` distincte. Moins de tâches, moins de I/O.
+. **AsciidoctorJ inline le CSS HTML** — l'attribut `stylesheet` fait qu'AsciidoctorJ
+  lit le fichier CSS et l'incorpore dans une balise `<style>` (pas de `<link>`.
+  Le test vérifie donc `font-family` (contenu du CSS) plutôt que le mot
+  "stylesheet" (absent du HTML produit).
+. **toAttributes par format** — chaque backend a ses propres attributs.
+  `stylesheet` pour HTML, `pdf-theme` + `pdf-front-cover-image` pour PDF,
+  `epub-stylesheet` pour EPUB. DocBook/ManPage ignorés (non supporté).
+. **@PathSensitive(NONE) + @Optional** — les 4 propriétés thème sont
+  optionnelles (fallback vide) et normalisées (validation Gradle OK).
+. **Pattern surcharge** — `CLI > DSL > convention` respecté via `cliFile()`.
+. **Économie d'Encre** — le thème est un `@Input` de la task, donc le hash
+  de build Gradle inclut le thème. Si le thème change, la task re-exécute.
+  Si la source + thème sont identiques, `shouldSkipConversion` s'applique.
+. **Code en anglais** — DocumentTheme, toAttributes, isEmpty, buildOptions.
+  Commentaires KDoc en anglais. Aucun français dans le code source.
+
+== US couvertes
+
+- **US-DOC-09** (P1) — DSL `document { theme { } }` avec `pdfTheme`,
+  `htmlStylesheet`, `epubStylesheet`, `logo`. Fallback thème par défaut.
+  Theme réutilisable cross-projet (fichiers YML/CSS versionnés). ✅
+
+== Prochaine session
+
+Session 009 — DOC-11 Pipeline Livre Codex→Document (P1) ou DOC-6
+Integration N3 runner-gradle (P2) selon priorité.
+
+DOC-11 : photos → OCR Codex → AsciiDoc → enrichissement (PlantUML, images,
+theme) → publication multi-format (HTML/PDF/EPUB). Orchestration runner-gradle N3.
+
+DOC-6 : `collectDocumentRetrieve` produit `metadata.json` conforme au contrat
+N3. Le JSON contient chemins, formats, métadonnées. `runner-gradle
+assembleCompositeContext` ingère le JSON sans erreur.

@@ -18,6 +18,12 @@ import org.gradle.api.provider.Property
  *     outputDir.set(layout.buildDirectory.dir("docs/document"))
  *     formats.set(listOf(DocumentFormat.HTML, DocumentFormat.PDF))
  *     enrichPlantUml.set(true)
+ *     theme {
+ *         pdfTheme.set(file("talaria-theme.yml"))
+ *         htmlStylesheet.set(file("talaria.css"))
+ *         epubStylesheet.set(file("epub.css"))
+ *         logo.set(file("logo.png"))
+ *     }
  * }
  * ```
  *
@@ -47,6 +53,35 @@ abstract class DocumentExtension {
 
     /** System prompt optionnel (conventions AsciiDoc du workspace). */
     abstract val systemPrompt: Property<String>
+
+    /** Theme visuel (DOC-10) — feuille de style EPUB. */
+    abstract val epubStylesheet: RegularFileProperty
+
+    /** Theme visuel (DOC-10) — image logo pour le PDF (cover image). */
+    abstract val logo: RegularFileProperty
+
+    /**
+     * Nested DSL block `theme { }` for visual theming (DOC-10).
+     *
+     * Usage:
+     * ```
+     * document {
+     *     theme {
+     *         pdfTheme.set(file("talaria-theme.yml"))
+     *         htmlStylesheet.set(file("talaria.css"))
+     *         epubStylesheet.set(file("epub.css"))
+     *         logo.set(file("logo.png"))
+     *     }
+     * }
+     * ```
+     */
+    fun theme(action: Action) {
+        action.execute(this)
+    }
+
+    fun interface Action {
+        fun execute(ext: DocumentExtension)
+    }
 
     fun formats(vararg formats: DocumentFormat) {
         this.formats.set(formats.toList())

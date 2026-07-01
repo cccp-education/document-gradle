@@ -5,6 +5,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory
  * DOC-3 : conversion HTML5 (backend html5) reelle.
  * DOC-4 : conversion PDF (backend pdf) — binaire, sidecar .sourcehash.
  * DOC-5 : conversions EPUB3 (binaire, sidecar), DocBook 5 / ManPage (texte, header metadata).
+ * DOC-10 : injection du theme (DocumentTheme) via attributs AsciidoctorJ.
  *
  * Loi de l'Economie d'Encre : si la sortie existe et que le hash de la source
  * correspond au hash stocke en metadata du fichier genere, on ne re-convertit pas.
@@ -40,9 +42,38 @@ abstract class ConvertDocumentTask() : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    @get:Optional
+    abstract val pdfThemeFile: RegularFileProperty
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    @get:Optional
+    abstract val htmlStylesheetFile: RegularFileProperty
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    @get:Optional
+    abstract val epubStylesheetFile: RegularFileProperty
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    @get:Optional
+    abstract val logoFile: RegularFileProperty
+
     init {
         group = "document"
     }
+
+    @get:Internal
+    val theme: DocumentTheme
+        get() = DocumentTheme(
+            pdfTheme = pdfThemeFile.orNull?.asFile,
+            htmlStylesheet = htmlStylesheetFile.orNull?.asFile,
+            epubStylesheet = epubStylesheetFile.orNull?.asFile,
+            logo = logoFile.orNull?.asFile,
+        )
 
     @TaskAction
     fun convert() {
@@ -50,6 +81,7 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         val fmt = format.get()
         val output = outputFile.get().asFile
         val logger = LoggerFactory.getLogger(ConvertDocumentTask::class.java)
+        val docTheme = theme
 
         if (!source.exists()) {
             logger.warn("{} — source absente : {}", name, source.absolutePath)
@@ -59,13 +91,13 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         val docSource = DocumentSource(source)
 
         val content = when (fmt) {
-            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource)
+            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme)
             DocumentFormat.PDF -> {
-                convertBinary(docSource, output, logger, "pdf")
+                convertBinary(docSource, output, logger, "pdf", docTheme)
                 return
             }
             DocumentFormat.EPUB -> {
-                convertBinary(docSource, output, logger, "epub3")
+                convertBinary(docSource, output, logger, "epub3", docTheme)
                 return
             }
             DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource)
@@ -87,13 +119,14 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         output: java.io.File,
         logger: org.slf4j.Logger,
         backend: String,
+        docTheme: DocumentTheme,
     ) {
         if (DocumentConverter.shouldSkipBinaryConversion(docSource, output)) {
             logger.info("{} skip — sortie {} existante pour source inchangee : {}", name, backend, output.absolutePath)
             return
         }
         logger.info("{} — {} -> {} ({} backend)", name, docSource.file.name, output.name, backend)
-        DocumentConverter.convertToFile(docSource, backend, output)
+        DocumentConverter.convertToFile(docSource, backend, output, docTheme)
         DocumentConverter.writeBinaryMetadataHeader(docSource, output)
         logger.info("{} — converti -> {} ({} octets)", name, output.absolutePath, output.length())
     }
