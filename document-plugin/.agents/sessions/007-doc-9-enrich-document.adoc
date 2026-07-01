@@ -1,0 +1,141 @@
+= Session 007 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes)
+:date: 2026-07-01
+:type: feat
+:score: 9/10
+
+== Contexte
+
+Session 007 — implémentation de l'EPIC DOC-9 (`enrichDocument`). L'auteur
+AsciiDoc peut incrustérer des blocs `[plantuml]` inline, du HTML brut via
+passthrough `++++`, et des directives `include::` résolues récursivement.
+Décision arrêtée en session 006 : Asciidoctor Diagram inline (déjà bundlé
+`asciidoctorj-diagram 3.2.0` + `asciidoctorj-diagram-plantuml 1.2025.3`),
+zéro dépendance `compileOnly plantuml-gradle` (DT-04 reste optionnel).
+
+Méthode baby-step DDD/TDD/BDD respectée : BDD Cucumber en amont (Red),
+TDD unit Red → Green, functional GradleTestKit, refactor.
+
+== Réalisations
+
+=== 1. BDD Cucumber (Red → Green)
+
+3 scénarios `@doc9 @enrichment` ajoutés à `document.feature` :
+
+- `enrichDocument preserva les blocs plantuml inline sans les echapper` (US-DOC-08)
+- `enrichDocument preserva les blocs passthrough HTML brut sans les echapper` (US-DOC-10)
+- `enrichDocument resout recursivement les includes AsciiDoc`
+
+Steps Cucumber : 3 `@Given` (factory projects) + 4 `@Then` (enriched file
+accessor + assertions plantuml/passthrough/include) dans `DocumentSteps.kt`
+et `DocumentWorld.kt`.
+
+=== 2. TDD Unit — DocumentEnricher (Red → Green)
+
+`DocumentEnricherTest.kt` créé — 5 tests unit :
+
+- `enrich preserves inline plantuml blocks without escaping`
+- `enrich preserves raw HTML passthrough blocks without escaping`
+- `enrich recursively resolves AsciiDoc includes`
+- `enrich preserves the title and sections of the source document`
+- `enrich does not mutate the source file` (Règle 7 — lecture seule)
+
+`DocumentEnricher.kt` créé — objet domaine enrichisseur :
+- `enrich(source: DocumentSource): String` — point d'entrée
+- `resolveIncludes(file, depth)` — récursion avec garde anti-boucle
+  (`MAX_INCLUDE_DEPTH = 10`)
+- Préservation native des blocs `[plantuml]` et `++++` (AsciiDoc valide,
+  pas d'échappement — l'enrichisseur ne touche pas la syntaxe AsciiDoc,
+  il résout uniquement les `include::`)
+
+=== 3. Tâche Gradle — EnrichDocumentTask
+
+`EnrichDocumentTask.kt` créé — task Gradle avec :
+- `@InputFile sourceFile` + `@PathSensitive(PathSensitivity.NONE)`
+- `@Input enrichPlantUml`, `enrichPassthrough` (Optional)
+- `@OutputFile outputFile` → `build/docs/document/document-enriched.adoc`
+- `@DisableCachingByDefault` (idempotence applicative, hash source en metadata)
+- Loi de l'Économie d'Encre : `shouldSkipConversion` réutilisé (hash source
+  dans le header du fichier enrichi)
+
+`DocumentPlugin.kt` modifié — câblage de `EnrichDocumentTask` (remplace
+le stub no-op). Pattern surcharge respecté :
+`CLI (-Pdocument.enrichPlantUml) > DSL (block document { }) > convention`.
+
+=== 4. Functional tests (GradleTestKit)
+
+2 tests ajoutés à `DocumentPluginFunctionalTest.kt` :
+
+- `enrichDocument produces a resolved AsciiDoc file from a source with includes`
+  (vérifie include résolu + plantuml préservé + passthrough préservé)
+- `enrichDocument is skipped when the output exists and the source is unchanged`
+  (économie d'encre — `UP_TO_DATE` au second run)
+
+== Fichiers impactés
+
+Créés :
+- `src/main/kotlin/document/DocumentEnricher.kt` — enrichisseur domaine (includes récursifs)
+- `src/main/kotlin/document/EnrichDocumentTask.kt` — task Gradle (économie d'encre)
+- `src/test/kotlin/document/DocumentEnricherTest.kt` — 5 tests unit
+
+Modifiés :
+- `src/main/kotlin/document/DocumentPlugin.kt` — câblage EnrichDocumentTask (stub → tâche réelle)
+- `src/test/resources/features/document.feature` — +3 scénarios `@doc9 @enrichment`
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +3 Given + 4 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +3 factory projects + enrichedDocumentFile accessor
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +2 tests functional
+
+== Vérification
+
+[source,shell]
+----
+cd document-plugin && ./gradlew check
+# BUILD SUCCESSFUL in 55s
+# 79 tests : 44 unit + 17 cucumber + 18 functional, 0 échec
+----
+
+== Pyramide de tests
+
+[cols="2,1,1,1]
+|===
+| Couche | Avant | Après | Delta
+| Unit | 39 | 44 | +5 (DocumentEnricherTest)
+| Functional | 16 | 18 | +2 (enrichDocument + skip)
+| Cucumber | 14 | 17 | +3 (US-DOC-08, US-DOC-10, includes)
+| Total | 69 | 79 | +10
+|===
+
+== Décisions techniques
+
+. **Asciidoctor Diagram inline** (Option 1) — les blocs `[plantuml]` sont
+  préservés tels quels dans l'AsciiDoc enrichi, le rendu PNG/SVG se fait à
+  la conversion par le bundle déjà présent. Zéro `compileOnly plantuml-gradle`.
+. **Résolution récursive des `include::`** — `DocumentEnricher` matérialise
+  le contenu des fichiers inclus pour audit (AsciidoctorJ le fait aussi
+  nativement à la conversion, mais l'enrichissement rend le contenu explicite).
+  Garde anti-boucle : `MAX_INCLUDE_DEPTH = 10`.
+. **Préservation des blocs `[plantuml]` et `++++`** — l'enrichisseur ne
+  touche pas la syntaxe AsciiDoc, il n'échappe rien. Ces blocs sont
+  déjà valides AsciiDoc.
+. **Économie d'Encre** — `shouldSkipConversion` réutilisé (hash source
+  SHA-256 en metadata du fichier enrichi). `@DisableCachingByDefault` cohérent.
+. **Ubiquitous language DDD** — `DocumentEnricher` (domaine),
+  `EnrichDocumentTask` (task). Code en anglais, commentaires en anglais.
+. **Source jamais modifiée** (Règle 7) — test unit explicite
+  `enrich does not mutate the source file`.
+
+== US couvertes
+
+- **US-DOC-08** (P1) — blocs `[plantuml]` inline préservés, rendu à la
+  conversion par Asciidoctor Diagram. ✅
+- **US-DOC-10** (P2) — passthrough `++++` (HTML brut) préservé sans
+  échappement. ✅
+- **Bonus** — résolution récursive des `include::` (matérialisation pour
+  audit, max depth 10). ✅
+
+== Prochaine session
+
+Session 008 — DOC-10 Theme DSL (YML PDF + CSS HTML/EPUB). US-DOC-09 (P1).
+Le DSL `document { theme { } }` exposera `pdfTheme`, `htmlStylesheet`,
+`epubStylesheet`, `logo`. Fallback thème par défaut intégré si aucun
+fichier fourni. Méthode baby-step DDD/TDD/BDD : Cucumber `@doc10 @theme`
+en amont, puis `DocumentTheme` + `ApplyThemeTask` en Red → Green → Refactor.

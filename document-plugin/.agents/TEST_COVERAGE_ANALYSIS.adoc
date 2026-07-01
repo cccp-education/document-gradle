@@ -1,31 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-06-30
-:session: 006
+:date: 2026-07-01
+:session: 007
 
-== Pyramide de tests — Session 006 (Architecture — inchangée)
+== Pyramide de tests — Session 007 (DOC-9 enrichDocument)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion)
-| 39
+| Unit (domaine + génération IA + conversion + enrichissement)
+| 44
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt`
 
 | Functional (GradleTestKit)
-| 16
+| 18
 | ✅ PASS
 | `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 14
+| 17
 | ✅ PASS
 | `src/test/resources/features/document.feature`
 |===
 
-**Total : 69 tests, 0 échec.** (inchangé — session 006 = régularisation architecture,
-aucun test modifié. Les 69 tests de la session 005 passent à l'identique sous Gradle 9.6.1.)
+**Total : 79 tests, 0 échec.** (+10 par rapport à session 006 — DOC-9 enrichDocument)
 
 == Détail unit (39)
 
@@ -72,6 +71,11 @@ aucun test modifié. Les 69 tests de la session 005 passent à l'identique sous 
 | DocumentConverterTest | convertToDocBook preserve les sections du document source | ✅
 | DocumentConverterTest | convertToManPage produit une page de manuel troff valide depuis un AsciiDoc manpage | ✅
 | DocumentConverterTest | convertToManPage leve une exception si la source est absente | ✅
+| DocumentEnricherTest | enrich preserves inline plantuml blocks without escaping | ✅
+| DocumentEnricherTest | enrich preserves raw HTML passthrough blocks without escaping | ✅
+| DocumentEnricherTest | enrich recursively resolves AsciiDoc includes | ✅
+| DocumentEnricherTest | enrich preserves the title and sections of the source document | ✅
+| DocumentEnricherTest | enrich does not mutate the source file | ✅
 |===
 
 == Détail functional (16)
@@ -96,6 +100,8 @@ aucun test modifié. Les 69 tests de la session 005 passent à l'identique sous 
 | convertDocumentToEpub skip si la sortie existe et la source est inchangee | ✅
 | convertDocumentToDocBook produit un fichier DocBook 5 valide depuis la source | ✅
 | convertDocumentToManPage produit une page de manuel valide depuis la source | ✅
+| enrichDocument produces a resolved AsciiDoc file from a source with includes | ✅
+| enrichDocument is skipped when the output exists and the source is unchanged | ✅
 |===
 
 == Détail cucumber BDD (14)
@@ -120,14 +126,18 @@ Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation I
 | convertDocumentToEpub skip si la sortie existe et la source est inchangee | ✅
 | convertDocumentToDocBook produit un fichier DocBook 5 valide depuis un AsciiDoc source | ✅
 | convertDocumentToManPage produit une page de manuel valide depuis un AsciiDoc source | ✅
+| enrichDocument preserva les blocs plantuml inline sans les echapper | ✅
+| enrichDocument preserva les blocs passthrough HTML brut sans les echapper | ✅
+| enrichDocument resout recursivement les includes AsciiDoc | ✅
 |===
 
 == Couverture code
 
 Coverage non mesuré (Kover non configuré).
-Classes de production : 16 (8 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter).
+Classes de production : 18 (8 DOC-1 + 7 DOC-2 generation + 1 DocumentConverter + 2 DOC-9 enrich).
 Package `document` : DocumentPlugin, DocumentExtension, DocumentConfig, DocumentFormat,
-DocumentSource, GenerateDocumentTask, ConvertDocumentTask, DocumentConverter.
+DocumentSource, GenerateDocumentTask, ConvertDocumentTask, DocumentConverter,
+DocumentEnricher, EnrichDocumentTask.
 Package `document.generation` : DocumentLlmProvider, DocumentGenerationState,
 DocumentGenerationGraph, AsciiDocValidator, OllamaDocumentLlmProvider,
 FakeDocumentLlmProvider, DocumentLlmProviderFactory.
@@ -143,6 +153,7 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 | 004 (DOC-3+4) | 28 | 12 | 10 | 50
 | 005 (DOC-5) | 39 | 16 | 14 | 69
 | 006 (archi) | 39 | 16 | 14 | 69 (inchangé — Gradle 9.6.1, @DisableCachingByDefault)
+| 007 (DOC-9) | 44 | 18 | 17 | 79 (+10 — DocumentEnricher + EnrichDocumentTask)
 |===
 
 == Notes
@@ -156,3 +167,8 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 - ManPage requiert `:doctype: manpage` + section NAME + SYNOPSIS dans la source.
 - Économie d'encre : skip si output existe et hash source correspond (texte ou binaire).
 - convertBinary factorise PDF + EPUB (skip par sidecar, convertToFile, writeBinaryMetadataHeader).
+- DocumentEnricher (DOC-9) : résolution récursive des include:: (max depth 10), préservation
+  native des blocs [plantuml] et ++++ (pas d'échappement — l'enrichisseur ne touche pas
+  la syntaxe AsciiDoc, il résout uniquement les includes).
+- EnrichDocumentTask : @DisableCachingByDefault + shouldSkipConversion (hash source en metadata).
+- Asciidoctor Diagram inline : rendu des blocs [plantuml] à la conversion par le bundle déjà présent.

@@ -439,6 +439,96 @@ class DocumentPluginFunctionalTest {
         )
     }
 
+    @Test
+    fun `enrichDocument produces a resolved AsciiDoc file from a source with includes`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-enrich\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                enrichPlantUml.set(true)
+                enrichPassthrough.set(true)
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("chapter.adoc").writeText("== Included Chapter\n\nText of the included chapter.")
+        projectDir.resolve("source.adoc").writeText(
+            """
+            = Document to Enrich
+
+            == Introduction
+
+            include::chapter.adoc[]
+
+            [plantuml]
+            ----
+            @startuml
+            Alice -> Bob: hello
+            @enduml
+            ----
+
+            ++++
+            <iframe src="https://example.com"></iframe>
+            ++++
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("enrichDocument")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":enrichDocument")?.outcome)
+        val output = File(projectDir, "build/docs/document/document-enriched.adoc")
+        assertTrue(output.exists(), "the enriched document must be generated")
+        val content = output.readText()
+        assertTrue(content.contains("Included Chapter"), "the enriched document must contain resolved include content")
+        assertTrue(content.contains("[plantuml]"), "the enriched document must preserve the plantuml block")
+        assertTrue(content.contains("<iframe"), "the enriched document must preserve the passthrough block")
+    }
+
+    @Test
+    fun `enrichDocument is skipped when the output exists and the source is unchanged`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-enrich-skip\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("source.adoc").writeText("= Document to Enrich\n\nContent.")
+
+        val firstResult = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("enrichDocument")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":enrichDocument")?.outcome)
+        val output = File(projectDir, "build/docs/document/document-enriched.adoc")
+        assertTrue(output.exists())
+        val firstContent = output.readText()
+
+        val secondResult = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("enrichDocument")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":enrichDocument")?.outcome)
+        assertEquals(firstContent, output.readText(), "the enriched content must not change after skip")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

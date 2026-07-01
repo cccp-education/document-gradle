@@ -104,3 +104,27 @@ Feature: Document plugin (DOC-1 stub + DOC-2 generation IA)
     Then the build should succeed
     And the converted ManPage file should exist
     And the converted ManPage should be a valid manpage document
+
+  @doc9 @enrichment
+  Scenario: enrichDocument preserva les blocs plantuml inline sans les echapper
+    Given a new document project with an AsciiDoc source containing a plantuml block
+    When I am executing the task 'enrichDocument'
+    Then the build should succeed
+    And the enriched document should exist
+    And the enriched document should preserve the plantuml block
+
+  @doc9 @enrichment
+  Scenario: enrichDocument preserva les blocs passthrough HTML brut sans les echapper
+    Given a new document project with an AsciiDoc source containing a passthrough block
+    When I am executing the task 'enrichDocument'
+    Then the build should succeed
+    And the enriched document should exist
+    And the enriched document should preserve the passthrough block
+
+  @doc9 @enrichment
+  Scenario: enrichDocument resout recursivement les includes AsciiDoc
+    Given a new document project with an AsciiDoc source containing an include directive
+    When I am executing the task 'enrichDocument'
+    Then the build should succeed
+    And the enriched document should exist
+    And the enriched document should contain the included content

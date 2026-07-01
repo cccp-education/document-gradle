@@ -1,5 +1,5 @@
 = COMPLETED_TASKS_ARCHIVE — document-gradle (New Orleans 🟢)
-:date: 2026-06-14
+:date: 2026-07-01
 
 == Session 001 — Cadrage Pipeline Livre Codex→Document
 
@@ -178,3 +178,36 @@ Décisions clés :
 - Contrat DAG : racine ne build pas le plugin, `publishToMavenLocal` est l'étape intermédiaire
 - `because` en anglais (règle : anglais = langue du développement)
 - Aucun test modifié — 69 tests passent à l'identique sous Gradle 9.6.1
+
+== Session 007 — DOC-9 enrichDocument (Asciidoctor Diagram inline, passthrough, includes)
+
+*Date* : 2026-07-01
+*Type* : feat
+*Score* : 9/10 — 79 tests (+10), BUILD SUCCESSFUL
+
+*Detail* : Implémentation de l'EPIC DOC-9 `enrichDocument`. L'auteur AsciiDoc
+incruste des blocs `[plantuml]` inline (rendu à la conversion par Asciidoctor
+Diagram déjà bundlé), du HTML brut via passthrough `++++`, et des directives
+`include::` résolues récursivement. Méthode baby-step DDD/TDD/BDD respectée.
+
+Fichiers créés :
+- `src/main/kotlin/document/DocumentEnricher.kt` — enrichisseur domaine (includes récursifs, max depth 10)
+- `src/main/kotlin/document/EnrichDocumentTask.kt` — task Gradle (économie d'encre, @DisableCachingByDefault)
+- `src/test/kotlin/document/DocumentEnricherTest.kt` — 5 tests unit
+
+Fichiers modifiés :
+- `src/main/kotlin/document/DocumentPlugin.kt` — câblage EnrichDocumentTask (stub → tâche réelle)
+- `src/test/resources/features/document.feature` — +3 scénarios `@doc9 @enrichment`
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +3 Given + 4 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +3 factory projects + enrichedDocumentFile
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +2 tests functional
+
+Décisions clés :
+- Asciidoctor Diagram inline (Option 1) — zéro compileOnly plantuml-gradle (DT-04 optionnel)
+- Résolution récursive des include:: avec garde anti-boucle (MAX_INCLUDE_DEPTH = 10)
+- Préservation native des blocs [plantuml] et ++++ (pas d'échappement, l'enrichisseur ne touche pas la syntaxe)
+- Économie d'encre : shouldSkipConversion réutilisé (hash source en metadata du fichier enrichi)
+- Ubiquitous language DDD : DocumentEnricher (domaine), EnrichDocumentTask (task)
+- Code en anglais, commentaires en anglais
+- Source jamais modifiée (Règle 7) — test unit explicite
+- US-DOC-08 (P1) + US-DOC-10 (P2) couvertes + bonus résolution includes

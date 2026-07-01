@@ -173,6 +173,104 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceContainingPlantuml(): File {
+        val dir = Files.createTempDirectory("doc-bdd-puml").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                enrichPlantUml.set(true)
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document avec Diagramme
+
+            == Architecture
+
+            [plantuml]
+            ----
+            @startuml
+            Alice -> Bob: hello
+            Bob -> Alice: hi
+            @enduml
+            ----
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceContainingPassthrough(): File {
+        val dir = Files.createTempDirectory("doc-bdd-pass").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                enrichPassthrough.set(true)
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document avec HTML brut
+
+            == Introduction
+
+            ++++
+            <iframe src="https://example.com" width="600" height="400"></iframe>
+            ++++
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceContainingInclude(): File {
+        val dir = Files.createTempDirectory("doc-bdd-inc").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("chapter.adoc").writeText("== Chapitre Inclu\n\nTexte du chapitre inclus.")
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document avec Include
+
+            include::chapter.adoc[]
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
     fun createGradleProjectWithAsciiDocSourceAndExistingPdf(): File {
         val dir = Files.createTempDirectory("doc-bdd-pdf").toFile()
         dir.resolve("settings.gradle.kts").writeText(
@@ -228,6 +326,11 @@ class DocumentWorld {
     fun convertedManPageFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/document.man")
+    }
+
+    fun enrichedDocumentFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/document-enriched.adoc")
     }
 
     fun executeGradle(vararg tasks: String): BuildResult {

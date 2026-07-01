@@ -58,6 +58,24 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with an AsciiDoc source containing a plantuml block")
+    fun createNewDocumentProjectWithAsciiDocSourceContainingPlantuml() {
+        world.createGradleProjectWithAsciiDocSourceContainingPlantuml()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc source containing a passthrough block")
+    fun createNewDocumentProjectWithAsciiDocSourceContainingPassthrough() {
+        world.createGradleProjectWithAsciiDocSourceContainingPassthrough()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc source containing an include directive")
+    fun createNewDocumentProjectWithAsciiDocSourceContainingInclude() {
+        world.createGradleProjectWithAsciiDocSourceContainingInclude()
+        assertThat(world.projectDir).exists()
+    }
+
     @When("I am executing the task {string}")
     fun executeTask(taskName: String) {
         world.executeGradle(taskName)
@@ -175,6 +193,39 @@ class DocumentSteps(private val world: DocumentWorld) {
         val content = manpage!!.readText()
         // Format troff — commence par .TH ou .ds
         assertThat(content).containsAnyOf(".TH", ".ds", ".SH")
+    }
+
+    @Then("the enriched document should exist")
+    fun enrichedDocumentShouldExist() {
+        val enriched = world.enrichedDocumentFile()
+        assertThat(enriched).exists()
+    }
+
+    @Then("the enriched document should preserve the plantuml block")
+    fun enrichedDocumentShouldPreservePlantumlBlock() {
+        val enriched = world.enrichedDocumentFile()
+        assertThat(enriched).exists()
+        val content = enriched!!.readText()
+        assertThat(content).contains("[plantuml]")
+        assertThat(content).contains("@startuml")
+        assertThat(content).contains("@enduml")
+    }
+
+    @Then("the enriched document should preserve the passthrough block")
+    fun enrichedDocumentShouldPreservePassthroughBlock() {
+        val enriched = world.enrichedDocumentFile()
+        assertThat(enriched).exists()
+        val content = enriched!!.readText()
+        assertThat(content).contains("++++")
+        assertThat(content).contains("<iframe")
+    }
+
+    @Then("the enriched document should contain the included content")
+    fun enrichedDocumentShouldContainIncludedContent() {
+        val enriched = world.enrichedDocumentFile()
+        assertThat(enriched).exists()
+        val content = enriched!!.readText()
+        assertThat(content).contains("Chapitre Inclu")
     }
 
     @After

@@ -1,67 +1,57 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 007
-:date: 2026-06-30
-:status: Architecture régularisée (Plugin Indépendant + Racine Consommateur, Gradle 9.6.1) — prêt DOC-9
+:session: 008
+:date: 2026-07-01
+:status: DOC-9 terminé (enrichDocument, 79 tests) — prêt DOC-10
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 69 tests (39 unit + 16 functional + 14 cucumber), Gradle 9.6.1
+./gradlew check                        # 79 tests (44 unit + 17 cucumber + 18 functional), Gradle 9.6.1
 ./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
 cd ..
 ./gradlew tasks --group=document       # 8 tâches visibles depuis la racine consommateur dogfood
 ```
 
-== Architecture (session 006)
+== Architecture (session 006, stable)
 
-Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) appliqué :
-
-- `document-plugin/` — build Gradle **autonome** (son `settings.gradle.kts`, son
-  `gradlew` 9.6.1, son `gradle/libs.versions.toml` complet 66 lignes).
-- Racine `document-gradle/` — **consommateur dogfood** minimal (build.gradle.kts
-  6 lignes, catalogue racine 2 entrées, zéro `include()`).
-- Gradle 9.3.0 → 9.6.1 sur les deux wrappers.
-- `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les 2 tasks
-  (idempotence applicative gérée par hash source/prompt en metadata).
+Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
+- `document-plugin/` — build Gradle autonome (settings, wrapper 9.6.1, catalogue 66 lignes)
+- Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
+- `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les 3 tasks
 
 == Contexte
 
-Session 002 (2026-06-29) — DOC-1 Plugin stub TERMINÉ (18 tests, dogfood CNV-6).
-Session 003 (2026-06-29) — DOC-2 generateDocument IA TERMINÉ (31 tests, koog+langchain4j).
-Session 004 (2026-06-30) — DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf TERMINÉS (50 tests).
-Session 005 (2026-06-30) — DOC-5 convertDocumentToEpub + DocBook + ManPage TERMINÉS (69 tests, 5 formats complets).
-Session 006 (2026-06-30) — Architecture régularisée (Plugin Indépendant + Racine Consommateur, Gradle 9.6.1).
+Session 002 (2026-06-29) — DOC-1 Plugin stub TERMINÉ (18 tests).
+Session 003 (2026-06-29) — DOC-2 generateDocument IA TERMINÉ (31 tests).
+Session 004 (2026-06-30) — DOC-3 + DOC-4 HTML + PDF TERMINÉS (50 tests).
+Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests).
+Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur (Gradle 9.6.1).
+Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests, +10).
 
-== Objectif session 007 — DOC-9 (enrichDocument)
+== Objectif session 008 — DOC-10 (Theme DSL)
 
-- Implémenter `enrichDocument` — enrichissement AsciiDoc avant conversion
-- **Option 1 retenue** : Asciidoctor Diagram inline (déjà bundlé), zéro dépendance compileOnly plantuml-gradle
-- Périmètre :
-  * Préserver/valider les blocs `[plantuml]` inline (rendu à la conversion par le bundle)
-  * HTML passthrough `++++` (US-DOC-10) — préserver sans échapper
-  * Résolution récursive des `include::` (asciidoctorJ le fait nativement, valider)
-  * Images `image::photo.png[]` intégrées dans tous les formats
-- Fallback : si plantuml-gradle n'est pas disponible, placeholder texte (option 1 → non requis)
-- TDD/BDD baby-step : Red → Green, Cucumber features en amont
+- Implémenter le theming documentaire (US-DOC-09, P1)
+- DSL `document { theme { } }` avec :
+  * `pdfTheme = "talaria-theme.yml"` — fichier YML Asciidoctor PDF
+  * `htmlStylesheet = "talaria.css"` — CSS HTML
+  * `epubStylesheet = "epub.css"` — CSS EPUB
+  * `logo = "logo.png"` — image titre PDF
+- Fallback : thème par défaut intégré si aucun fichier fourni
+- Application : passer les attributs Asciidoctor (`:stylesheet:`, `:pdf-theme:`)
+  au moment de la conversion (pas une tâche séparée — câblage dans ConvertDocumentTask)
+- TDD/BDD baby-step : Cucumber `@doc10 @theme` en amont, puis `DocumentTheme`
+  + câblage task en Red → Green → Refactor
 
-== Décision architecture DOC-9
+== Stack (rappel — 5 formats + enrichissement)
 
-**Asciidoctor Diagram inline** (déjà câblé dans le bundle asciidoctor) :
-- `asciidoctorj-diagram 3.2.0` + `asciidoctorj-diagram-plantuml 1.2025.3` présents
-- L'auteur écrit `[plantuml]` dans son `.adoc`, le rendu se fait à la conversion
-- Zéro dépendance cross-borough, zéro appel à plantumlGenerate
-- La génération LLM des `.puml` reste en amont chez HTOWN (orchestré par runner-gradle N3)
-- DT-04 (compileOnly plantuml-gradle) devient optionnel — retirer du backlog DOC-9
-
-== Stack DOC-5 (rappel — 5 formats complets)
-
-- **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (natifs core)
-- **asciidoctorj-pdf 2.3.23** : backend pdf (module séparé)
-- **asciidoctorj-epub3 2.2.0** : backend epub3 (module séparé)
-- **asciidoctorj-diagram 3.2.0** : rendu inline PlantUML/Diagrams.net (déjà bundlé)
-- **DocumentConverter** : convert (texte), convertToFile (binaire), shouldSkip, shouldSkipBinary, metadata
+- **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
+- **asciidoctorj-pdf 2.3.23** : backend pdf
+- **asciidoctorj-epub3 2.2.0** : backend epub3
+- **asciidoctorj-diagram 3.2.0** + **plantuml 1.2025.3** : rendu inline PlantUML
+- **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata)
+- **DocumentEnricher** : résolution includes récursive, préservation plantuml/passthrough
 
 == Pattern de surcharge (rappel)
 
@@ -69,13 +59,12 @@ Session 006 (2026-06-30) — Architecture régularisée (Plugin Indépendant + R
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
 
-== Roadmap Prioritaire (post DOC-9)
+== Roadmap prioritaire (post DOC-10)
 
 [cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-9 | enrichDocument (Asciidoctor Diagram inline, HTML, images, includes) | P0 — session 007
-| DOC-10 | Theme DSL (YML PDF + CSS HTML/EPUB) | P1
+| DOC-10 | Theme DSL (YML PDF + CSS HTML/EPUB) | P0 — session 008
 | DOC-11 | Pipeline livre Codex→Document (integration) | P1
 | DOC-6 | Integration N3 runner-gradle | P2
 | DOC-12 | DSL unifie `document { }` | P2
@@ -89,24 +78,25 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 . ZERO secret/token/api key en dur
 . DOCUMENT CONSOMME ASCIIDOC — lecture seule
 . BOUNDARY CODEX — pas de dependance directe document→codex
-. BOUNDARY PLANTUML — composition, Asciidoctor Diagram inline (zéro compileOnly pour DOC-9)
+. BOUNDARY PLANTUML — Asciidoctor Diagram inline (zéro compileOnly pour DOC-9)
 . Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
 . Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
 . CODE EN ANGLAIS — aucun commentaire/texte français dans le code source
 
 == Méthode baby-step TDD/BDD
 
-. DDD : ubiquitous language document (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher)
+. DDD : ubiquitous language (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme)
 . TDD : Red → Green → Refactor, 1 test à la fois
 . BDD : Cucumber .feature en amont (scénarios métier) → step definitions
 . Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
 
 == Fichiers clés
 
-- `document-plugin/src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (5 formats, skip, metadata)
-- `document-plugin/src/main/kotlin/document/ConvertDocumentTask.kt` — task (5 formats réels, + @DisableCachingByDefault)
-- `document-plugin/src/test/kotlin/document/DocumentConverterTest.kt` — 24 tests unit (9 HTML + 6 PDF + 9 DOC-5)
-- `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 16 tests functional
-- `document-plugin/src/test/resources/features/document.feature` — 14 scénarios BDD
-- `document-plugin/settings.gradle.kts` — build indépendant (Gradle 9.6.1)
-- `document-plugin/gradle/libs.versions.toml` — catalogue complet plugin (66 lignes)
+- `src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (5 formats)
+- `src/main/kotlin/document/DocumentEnricher.kt` — enrichisseur (includes, plantuml, passthrough)
+- `src/main/kotlin/document/EnrichDocumentTask.kt` — task enrichissement (DOC-9)
+- `src/main/kotlin/document/ConvertDocumentTask.kt` — task conversion (5 formats réels)
+- `src/test/kotlin/document/DocumentConverterTest.kt` — 24 tests unit
+- `src/test/kotlin/document/DocumentEnricherTest.kt` — 5 tests unit (DOC-9)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 18 tests functional
+- `src/test/resources/features/document.feature` — 17 scénarios BDD

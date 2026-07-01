@@ -56,9 +56,14 @@ class DocumentPlugin : Plugin<Project> {
     }
 
     private fun registerEnrichDocument(project: Project, ext: DocumentExtension) {
-        project.tasks.register("enrichDocument") { task ->
-            task.group = "document"
-            task.description = "Enrichit le document AsciiDoc (PlantUML, images, includes, passthrough) — stub DOC-9."
+        project.tasks.register("enrichDocument", EnrichDocumentTask::class.java) { task ->
+            task.description = "Enriches the AsciiDoc document (PlantUML, images, includes, passthrough) — DOC-9."
+            val cliSource = cliProp(project, "source").map { project.layout.projectDirectory.file(it) }
+            task.sourceFile.set(cliSource.orElse(ext.source))
+            task.enrichPlantUml.set(cliProp(project, "enrichPlantUml").map { it.toBoolean() }.orElse(ext.enrichPlantUml))
+            task.enrichPassthrough.set(cliProp(project, "enrichPassthrough").map { it.toBoolean() }.orElse(ext.enrichPassthrough))
+            task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
+            task.outputFile.set(project.layout.buildDirectory.file("docs/document/document-enriched.adoc"))
         }
     }
 

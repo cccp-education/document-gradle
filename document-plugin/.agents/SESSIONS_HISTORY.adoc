@@ -9,4 +9,6 @@
 | 003 | 2026-06-29 | feat | DOC-2 generateDocument IA — koog+langchain4j, 31 tests, économie d'encre | ✅ TERMINÉ
 | 004 | 2026-06-30 | feat | DOC-3 + DOC-4 convertDocumentToHtml + convertDocumentToPdf — AsciidoctorJ, 50 tests | ✅ TERMINÉ
 | 005 | 2026-06-30 | feat | DOC-5 convertDocumentToEpub + DocBook + ManPage — AsciidoctorJ, 69 tests, 5 formats complets | ✅ TERMINÉ
+| 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1 | ✅ TERMINÉ
+| 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests (+10) | ✅ TERMINÉ
 |===
