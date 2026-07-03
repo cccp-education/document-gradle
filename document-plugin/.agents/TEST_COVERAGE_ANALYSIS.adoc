@@ -1,30 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-07-01
-:session: 008
+:date: 2026-07-03
+:session: 010
 
-== Pyramide de tests — Session 008 (DOC-10 Theme DSL)
+== Pyramide de tests — Session 010 (DOC-6 N3 runner-gradle integration)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme)
-| 62
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve)
+| 90
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt`
 
 | Functional (GradleTestKit)
-| 21
+| 23
 | ✅ PASS
 | `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 20
+| 22
 | ✅ PASS
 | `src/test/resources/features/document.feature`
 |===
 
-**Total : 103 tests, 0 échec.** (+24 par rapport à session 007 — DOC-10 Theme DSL)
+**Total : 135 tests, 0 échec.** (+32 par rapport à session 008 — DOC-6 N3 runner-gradle integration)
 
 == Détail unit (62)
 
@@ -94,9 +94,37 @@
 | DocumentThemeTest | DocumentTheme toAttributes ignores htmlStylesheet for PDF format | ✅
 | DocumentThemeTest | DocumentTheme toAttributes ignores pdfTheme for HTML format | ✅
 | DocumentThemeTest | DocumentTheme equals and hashCode are based on theme files | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans sets source to new-orleans | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans defaults type to retrieve | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans defaults model to onnx-local | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans defaults version to 1_0 | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans defaults dependencies to brooklyn and htown | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans accepts custom sessions count | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans accepts custom type | ✅
+| DocumentMetadataTest | DocumentMetadata forNewOrleans generates an ISO-8601 timestamp | ✅
+| DocumentMetadataTest | DocumentMetadata writeTo creates a metadata_json file | ✅
+| DocumentMetadataTest | DocumentMetadata writeTo creates parent directories if missing | ✅
+| DocumentArtifactEntryTest | DocumentArtifactEntry stores path format and source adoc | ✅
+| DocumentArtifactEntryTest | DocumentArtifactEntry toMap produces N3-compatible entry | ✅
+| DocumentArtifactEntryTest | DocumentArtifactEntry toMap for PDF format produces correct fields | ✅
+| DocumentArtifactEntryTest | DocumentArtifactEntry marks non-existing file as exists false | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult defaults source to new-orleans | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult count matches entries size | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult count is zero for empty entries | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult toMap produces N3-compatible envelope | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult toMap includes timestamp | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult writeTo creates composite-context json | ✅
+| DocumentRetrieveResultTest | DocumentRetrieveResult writeTo creates parent directories if missing | ✅
+| DocumentArtifactCollectorTest | collect returns empty list when output dir does not exist | ✅
+| DocumentArtifactCollectorTest | collect detects an HTML artifact | ✅
+| DocumentArtifactCollectorTest | collect detects a PDF artifact | ✅
+| DocumentArtifactCollectorTest | collect detects all 5 format artifacts plus generated and enriched adoc | ✅
+| DocumentArtifactCollectorTest | collect skips non-existing artifacts and only returns files on disk | ✅
+| DocumentArtifactCollectorTest | collect includes the generated adoc as an entry | ✅
+| DocumentArtifactCollectorTest | collect includes the enriched adoc as an entry | ✅
 |===
 
-== Détail functional (21)
+== Détail functional (23)
 
 [cols="3,1]
 |===
@@ -123,11 +151,13 @@
 | convertDocumentToHtml applies the custom stylesheet from the theme DSL | ✅
 | convertDocumentToPdf applies the custom pdf theme from the theme DSL | ✅
 | convertDocumentToHtml succeeds without theme configured (default fallback) | ✅
+| collectDocumentRetrieve produces metadata_json and composite-context_json after conversion | ✅
+| collectDocumentRetrieve produces empty entries when no artifacts exist | ✅
 |===
 
-== Détail cucumber BDD (20)
+== Détail cucumber BDD (22)
 
-Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF + DOC-5 EPUB/DocBook/ManPage + DOC-9 enrich + DOC-10 theme)
+Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation IA + DOC-3 HTML + DOC-4 PDF + DOC-5 EPUB/DocBook/ManPage + DOC-9 enrich + DOC-10 theme + DOC-6 N3 retrieve)
 
 [cols="3,1]
 |===
@@ -153,6 +183,8 @@ Feature: `document.feature` — Document plugin (DOC-1 stub + DOC-2 generation I
 | Le DSL document accepte un block theme avec pdfTheme et htmlStylesheet | ✅
 | convertDocumentToPdf applique le theme YML configure | ✅
 | convertDocumentToHtml reussit sans theme configure (fallback defaut) | ✅
+| collectDocumentRetrieve produit metadata_json et composite-context_json apres conversion | ✅
+| collectDocumentRetrieve produit un count a zero sans artefact | ✅
 |===
 
 == Couverture code
@@ -179,6 +211,7 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 | 006 (archi) | 39 | 16 | 14 | 69 (inchangé — Gradle 9.6.1, @DisableCachingByDefault)
 | 007 (DOC-9) | 44 | 18 | 17 | 79 (+10 — DocumentEnricher + EnrichDocumentTask)
 | 008 (DOC-10) | 62 | 21 | 20 | 103 (+24 — DocumentTheme + DocumentConfig.theme)
+| 010 (DOC-6) | 90 | 23 | 22 | 135 (+32 — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask)
 |===
 
 == Notes
@@ -206,3 +239,16 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 - DSL nested theme { } via fun interface Action (SAM) — pattern planner/codebase respecté.
 - Pattern surcharge : CLI (-Pdocument.pdfTheme) > DSL (theme { }) > convention (vide).
 - @PathSensitive(NONE) + @Optional sur les 4 propriétés thème (validation Gradle OK).
+- DocumentMetadata (DOC-6) : provenance N3 conforme au contrat de facto (source, type, sessions,
+  generatedAt, model, version, dependencies). forNewOrleans() factory + writeTo() JSON.
+- DocumentArtifactEntry (DOC-6) : entry N3 (path, format, sourceAdoc, exists) + toMap() pour
+  la sérialisation dans l'array `entries` du composite-context.json.
+- DocumentRetrieveResult (DOC-6) : enveloppe N3 (source="new-orleans", entries, count, timestamp)
+  + writeTo() produit composite-context.json. Runner-gradle lit uniquement la clé `entries`.
+- DocumentArtifactCollector (DOC-6) : scan outputDir → list of DocumentArtifactEntry. Logique
+  extraite de la task pour être unit-testable sans Gradle runtime. Ne retourne que les fichiers
+  existants (pas de faux positives).
+- CollectDocumentRetrieveTask (DOC-6) : @DisableCachingByDefault, orchestre collector + result
+  + metadata. READ-only — n'invoque jamais le LLM (Loi de l'Économie d'Encre).
+- Contrat N3 de facto : pas de contrat N0 formel (workspace-bom pipeline-contracts MEM-2 non
+  implémenté). Chaque borough duplique une classe Metadata. Document suit le pattern hyperframes.

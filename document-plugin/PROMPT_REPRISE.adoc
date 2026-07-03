@@ -1,14 +1,14 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 009
-:date: 2026-07-01
-:status: DOC-10 terminé (DocumentTheme, 103 tests) — prêt DOC-11 ou DOC-6
+:session: 011
+:date: 2026-07-03
+:status: DOC-6 terminé (N3 runner integration, 135 tests) — prêt DOC-11 ou DOC-7
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 103 tests (62 unit + 20 cucumber + 21 functional), Gradle 9.6.1
+./gradlew check                        # 135 tests (90 unit + 22 cucumber + 23 functional), Gradle 9.6.1
 ./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
 cd ..
 ./gradlew tasks --group=document       # 8 tâches visibles depuis la racine consommateur dogfood
@@ -30,8 +30,10 @@ Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests)
 Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur (Gradle 9.6.1).
 Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests, +10).
 Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests, +24).
+Session 009 (2026-07-01) — CNV-6 + DOC-8 + i18n bridge (session intermédiaire).
+Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests, +32).
 
-== Objectif session 009 — DOC-11 (Pipeline Livre Codex→Document) ou DOC-6 (N3)
+== Objectif session 011 — DOC-11 (Pipeline Livre) ou DOC-7 (CI/Pub)
 
 === Option A — DOC-11 Pipeline Livre (P1)
 
@@ -40,18 +42,17 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 - enrichDocument incruste les photos originales + diagrammes PlantUML
 - Appliquer le thème (DOC-10 livré)
 - convertDocumentToHtml/Pdf/Epub → livrables
-- Runner-gradle N3 `assembleCompositeContext` indexe les artefacts
+- Runner-gradle N3 `assembleCompositeContext` indexe les artefacts (DOC-6 livré)
 - Tâche composite `bookPipeline` reproductible en une commande
 - US-DOC-11 critères : voir BACKLOG
 
-=== Option B — DOC-6 Integration N3 runner-gradle (P2)
+=== Option B — DOC-7 CI + Publication Maven Central / Plugin Portal (P3)
 
-- `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
-- JSON : chemins des fichiers, formats, métadonnees de la source AsciiDoc
-- `runner-gradle assembleCompositeContext` ingere le JSON sans erreur
-- US-DOC-05 critères : voir BACKLOG
+- Publication nmcp (bundle Maven Central) — méthode standard workspace
+- CI workflow GitHub Actions (test + publish)
+- Voir EPIC PUB dans BACKLOG
 
-== Stack (rappel — 5 formats + enrichissement + theme)
+== Stack (rappel — 5 formats + enrichissement + theme + N3)
 
 - **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
 - **asciidoctorj-pdf 2.3.23** : backend pdf
@@ -60,6 +61,11 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 - **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata, theme)
 - **DocumentEnricher** : résolution includes récursive, préservation plantuml/passthrough
 - **DocumentTheme** : value object (pdfTheme, htmlStylesheet, epubStylesheet, logo) + toAttributes
+- **DocumentMetadata** : provenance N3 (source, type, sessions, generatedAt, model, version, dependencies)
+- **DocumentArtifactEntry** : artefact N3 (path, format, sourceAdoc, exists) + toMap
+- **DocumentRetrieveResult** : enveloppe N3 (source, entries, count, timestamp) + writeTo
+- **DocumentArtifactCollector** : scan outputDir → entries
+- **CollectDocumentRetrieveTask** : task Gradle (composite-context.json + metadata.json)
 
 == Pattern de surcharge (rappel)
 
@@ -67,13 +73,13 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
 
-== Roadmap prioritaire (post DOC-10)
+== Roadmap prioritaire (post DOC-6)
 
 [cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 009
-| DOC-6 | Integration N3 runner-gradle | P2
+| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 011
+| DOC-7 | CI + publication Maven Central / Plugin Portal | P3
 | DOC-12 | DSL unifie `document { }` | P2
 |===
 
@@ -92,20 +98,7 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 
 == Méthode baby-step TDD/BDD
 
-. DDD : ubiquitous language (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme)
+. DDD : ubiquitous language (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme, DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector)
 . TDD : Red → Green → Refactor, 1 test à la fois
 . BDD : Cucumber .feature en amont (scénarios métier) → step definitions
 . Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
-
-== Fichiers clés
-
-- `src/main/kotlin/document/DocumentConverter.kt` — convertisseur AsciidoctorJ (5 formats + theme)
-- `src/main/kotlin/document/DocumentEnricher.kt` — enrichisseur (includes, plantuml, passthrough)
-- `src/main/kotlin/document/DocumentTheme.kt` — value object theme (DOC-10)
-- `src/main/kotlin/document/EnrichDocumentTask.kt` — task enrichissement (DOC-9)
-- `src/main/kotlin/document/ConvertDocumentTask.kt` — task conversion (5 formats + theme)
-- `src/test/kotlin/document/DocumentConverterTest.kt` — 24 tests unit
-- `src/test/kotlin/document/DocumentEnricherTest.kt` — 5 tests unit (DOC-9)
-- `src/test/kotlin/document/DocumentThemeTest.kt` — 16 tests unit (DOC-10)
-- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 21 tests functional
-- `src/test/resources/features/document.feature` — 20 scénarios BDD

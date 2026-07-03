@@ -82,6 +82,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with an AsciiDoc source and a converted HTML artifact")
+    fun createNewDocumentProjectWithAsciiDocSourceAndConvertedHtml() {
+        world.createGradleProjectWithAsciiDocSourceAndConvertedHtml()
+        assertThat(world.projectDir).exists()
+    }
+
     @When("I am executing the task {string}")
     fun executeTask(taskName: String) {
         world.executeGradle(taskName)
@@ -240,6 +246,43 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(enriched).exists()
         val content = enriched!!.readText()
         assertThat(content).contains("Chapitre Inclu")
+    }
+
+    @Then("the metadata json file should exist")
+    fun metadataJsonFileShouldExist() {
+        val metadata = world.metadataJsonFile()
+        assertThat(metadata).exists()
+    }
+
+    @Then("the composite context json file should exist")
+    fun compositeContextJsonFileShouldExist() {
+        val composite = world.compositeContextJsonFile()
+        assertThat(composite).exists()
+    }
+
+    @Then("the metadata json should contain source new-orleans")
+    fun metadataJsonShouldContainSourceNewOrleans() {
+        val metadata = world.metadataJsonFile()
+        assertThat(metadata).exists()
+        val content = metadata!!.readText()
+        assertThat(content).contains("new-orleans")
+    }
+
+    @Then("the composite context json should contain the HTML artifact entry")
+    fun compositeContextJsonShouldContainHtmlArtifactEntry() {
+        val composite = world.compositeContextJsonFile()
+        assertThat(composite).exists()
+        val content = composite!!.readText()
+        assertThat(content).contains(".html")
+        assertThat(content).contains("entries")
+    }
+
+    @Then("the composite context json should contain count zero")
+    fun compositeContextJsonShouldContainCountZero() {
+        val composite = world.compositeContextJsonFile()
+        assertThat(composite).exists()
+        val content = composite!!.readText()
+        assertThat(content).contains("\"count\" : 0")
     }
 
     @After

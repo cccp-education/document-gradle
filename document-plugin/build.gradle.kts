@@ -1,6 +1,4 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.publish)
     id("education.cccp.build.gradle-plugin") version "0.0.1"
     id("education.cccp.build.publishing") version "0.0.1"
     id("education.cccp.build.functional-test") version "0.0.1"
@@ -30,17 +28,18 @@ dependencies {
     // PlantUML — composition (contenant→contenu), compileOnly legitime
     compileOnly(libs.plantuml.plugin)
 
+    // N0 contracts — i18n (internationalisation documents) + opencode-session (traçabilité release notes)
+    implementation(libs.i18n.contracts)
+    implementation(libs.opencode.session.contracts)
+
     // Tests unitaires
     testImplementation(kotlin("test-junit5"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.slf4j.api)
     testRuntimeOnly(libs.logback.classic)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.junit.jupiter)
-    testImplementation(libs.kotlin.test.junit5)
 
     // Cucumber BDD
     testImplementation(libs.bundles.cucumber)

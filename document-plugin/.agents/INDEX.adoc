@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-01 (session 008 — DOC-10 Theme DSL, 103 tests)
-_Session terminee_ : 008 — DOC-10 Theme DSL (DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo)
-_Prochaine session_ : 009 — DOC-11 Pipeline Livre Codex→Document (P1) ou DOC-6 Integration N3 (P2)
+_Derniere mise a jour_ : 2026-07-03 (session 010 — DOC-6 N3 runner-gradle integration, 135 tests)
+_Session terminee_ : 010 — DOC-6 N3 runner-gradle integration (DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask — composite-context.json + metadata.json)
+_Prochaine session_ : 011 — DOC-11 Pipeline Livre Codex→Document (P1) ou DOC-7 CI+Publication (P3)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -83,9 +83,9 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-3 | convertDocumentToHtml — AsciiDoc → HTML5 (AsciidoctorJ html5 backend) | ✅ TERMINÉ (session 004) | P1
 | DOC-4 | convertDocumentToPdf — AsciiDoc → PDF (AsciidoctorJ pdf backend) | ✅ TERMINÉ (session 004) | P1
 | DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | ✅ TERMINÉ (session 005) | P2
-| DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | À faire | P2
+| DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | ✅ TERMINÉ (session 010) | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | À faire | P3
-| DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 📋 CADRAGE (voir EPIC_DOC-8_RELEASE_NOTES_PIPELINE.adoc) | P2
+| DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 🔄 EN COURS (i18n+session câblés session 009, pipeline-contracts TODO MEM-2) | P2
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
 | DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1 — session 009
@@ -132,6 +132,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1, @DisableCachingByDefault | ✅ TERMINE
 | 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests | ✅ TERMINE
 | 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests | ✅ TERMINE
+| 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule, -22 lignes build+catalog) + DOC-8 i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 câblés, DocumentI18nBridge créé, compile SUCCESS | ✅ TERMINE
+| 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINE
 |===
 
 '''

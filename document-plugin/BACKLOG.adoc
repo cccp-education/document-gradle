@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-01 (session 008 — DOC-10 Theme DSL, 103 tests)
+_Date revision_ : 2026-07-03 (session 010 — DOC-6 N3 runner-gradle integration, 135 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
@@ -104,15 +104,16 @@ ou application de lecture EPUB.
 
 *Priorite* : P2
 *EPIC* : DOC-6
+*Statut* : ✅ TERMINÉ (session 010)
 
 .Valeur
 Les documents generes et convertis sont indexes dans le composite-context
 du runner-gradle pour deploiement automatique.
 
 .Criteres d'acceptation
-- `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
-- Le JSON contient : chemins des fichiers, formats, metadonnees de la source AsciiDoc
-- `runner-gradle assembleCompositeContext` ingere le JSON sans erreur
+- ✅ `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
+- ✅ Le JSON contient : chemins des fichiers, formats, metadonnees de la source AsciiDoc
+- ✅ `runner-gradle assembleCompositeContext` ingere le JSON sans erreur (contrat de facto respecté — `{source, entries, count}` dans composite-context.json)
 
 === US-DOC-06 — En tant que redacteur technique, je veux generer de la documentation technique au format DocBook
 

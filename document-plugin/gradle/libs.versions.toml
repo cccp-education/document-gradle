@@ -1,7 +1,5 @@
 [versions]
 document = "0.0.1"
-kotlin = "2.3.20"
-plugin-publish = "2.1.0"
 workspace-bom = "0.0.6"
 asciidoctorj = "3.0.0"
 asciidoctorj-diagram = "3.2.0"
@@ -20,15 +18,18 @@ slf4j = "2.0.17"
 logback = "1.5.32"
 planner = "0.0.1"
 plantuml-plugin = "0.0.1"
+i18n-contracts = "0.0.2"
+opencode-session-contracts = "0.0.2"
 
 [libraries]
+i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
+opencode-session-contracts = { module = "education.cccp:opencode-session-contracts", version.ref = "opencode-session-contracts" }
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
 asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram-plantuml", version.ref = "asciidoctorj-diagram-plantuml" }
 asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj-pdf" }
 asciidoctorj-epub3 = { module = "org.asciidoctor:asciidoctorj-epub3", version.ref = "asciidoctorj-epub3" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 langchain4j-ollama = { module = "dev.langchain4j:langchain4j-ollama", version.ref = "langchain4j-ollama" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
@@ -62,5 +63,3 @@ asciidoctor = [
 
 [plugins]
 document = { id = "education.cccp.document", version.ref = "document" }
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }

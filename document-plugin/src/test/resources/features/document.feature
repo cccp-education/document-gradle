@@ -151,3 +151,21 @@ Feature: Document plugin (DOC-1 stub + DOC-2 generation IA)
     Then the build should succeed
     And the converted HTML file should exist
     And the converted HTML should contain a doctype declaration
+
+  @doc6 @n3
+  Scenario: collectDocumentRetrieve produit metadata_json et composite-context_json apres conversion
+    Given a new document project with an AsciiDoc source and a converted HTML artifact
+    When I am executing the task 'collectDocumentRetrieve'
+    Then the build should succeed
+    And the metadata json file should exist
+    And the composite context json file should exist
+    And the metadata json should contain source new-orleans
+    And the composite context json should contain the HTML artifact entry
+
+  @doc6 @n3
+  Scenario: collectDocumentRetrieve produit un count a zero sans artefact
+    Given a new document project with an AsciiDoc source
+    When I am executing the task 'collectDocumentRetrieve'
+    Then the build should succeed
+    And the composite context json file should exist
+    And the composite context json should contain count zero

@@ -648,6 +648,69 @@ class DocumentPluginFunctionalTest {
         assertTrue(content.contains("<!DOCTYPE html", ignoreCase = true), "the HTML must contain a doctype")
     }
 
+    @Test
+    fun `collectDocumentRetrieve produces metadata_json and composite-context_json after conversion`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Contenu pour le test N3 retrieve.
+            """.trimIndent()
+        )
+
+        GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml")
+            .withPluginClasspath()
+            .build()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataFile = File(projectDir, "build/docs/document/metadata.json")
+        val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
+        assertTrue(metadataFile.exists(), "metadata.json must be produced")
+        assertTrue(compositeFile.exists(), "composite-context.json must be produced")
+
+        val metadataContent = metadataFile.readText()
+        assertTrue(metadataContent.contains("\"new-orleans\""), "metadata source must be new-orleans")
+        assertTrue(metadataContent.contains("\"retrieve\""), "metadata type must be retrieve")
+        assertTrue(metadataContent.contains("\"version\" : \"1.0\""), "metadata version must be 1.0")
+
+        val compositeContent = compositeFile.readText()
+        assertTrue(compositeContent.contains("\"source\""), "composite-context must have source field")
+        assertTrue(compositeContent.contains("\"entries\""), "composite-context must have entries array")
+        assertTrue(compositeContent.contains("\"count\""), "composite-context must have count field")
+        assertTrue(compositeContent.contains(".html"), "entries must reference the produced HTML artifact")
+    }
+
+    @Test
+    fun `collectDocumentRetrieve produces empty entries when no artifacts exist`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText("= Empty Pipeline\n\nNo conversions run.")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
+        assertTrue(compositeFile.exists(), "composite-context.json must be produced even with no artifacts")
+        val content = compositeFile.readText()
+        assertTrue(content.contains("\"count\" : 0"), "count must be 0 when no artifacts exist")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

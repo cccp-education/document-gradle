@@ -1,0 +1,52 @@
+= COMPLETED_TASKS_ARCHIVE — Juillet 2026
+
+== Document-gradle (New Orleans 🟢)
+
+=== Session 009 (2026-07-03) — CNV-6 + DOC-8
+
+*CNV-6* : Migration vers 4 convention plugins v0.0.1 (pattern capsule).
+- build.gradle.kts 72→67 lignes, libs.versions.toml 66→49 lignes
+- 4 conventions : gradle-plugin + publishing + functional-test + cucumber
+- Suppression alias redondants + doublons JUnit5
+
+*DOC-8* : Câblage contrats N0 i18n + session.
+- i18n-contracts 0.0.2 (implementation) — SupportedLanguage, LanguageCatalog
+- opencode-session-contracts 0.0.2 (implementation) — AgentContext, SessionPrompt
+- DocumentI18nBridge.kt créé (bridge i18n → pipeline documentaire)
+- pipeline-contracts (MEM-2) TODO — pas implémenté dans workspace-bom
+
+*compileKotlin* : ✅ SUCCESS
+
+*EPICs* : CNV-6 ✅ (document migré), DOC-8 🔄 (i18n+session câblés, pipeline TODO)
+
+=== Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration
+
+*DOC-6* : Implémentation de `collectDocumentRetrieve` — tâche Gradle qui produit
+les fichiers JSON consommables par runner-gradle N3 (`assembleCompositeContext`).
+
+*Nouveaux fichiers main* (5) :
+- `DocumentMetadata.kt` — provenance N3 (source, type, sessions, generatedAt, model, version, dependencies)
+- `DocumentArtifactEntry.kt` — entry N3 (path, format, sourceAdoc, exists) + toMap
+- `DocumentRetrieveResult.kt` — enveloppe N3 (source, entries, count, timestamp) + writeTo
+- `DocumentArtifactCollector.kt` — scan outputDir → entries (logique testable sans Gradle)
+- `CollectDocumentRetrieveTask.kt` — task Gradle (@DisableCachingByDefault)
+
+*Nouveaux fichiers test* (6) :
+- `DocumentMetadataTest.kt` — 10 tests unit
+- `DocumentArtifactEntryTest.kt` — 4 + 7 tests unit
+- `DocumentArtifactCollectorTest.kt` — 7 tests unit
+- `DocumentPluginFunctionalTest.kt` — +2 tests functional
+- `document.feature` — +2 scénarios @doc6 @n3
+- `DocumentSteps.kt` + `DocumentWorld.kt` — +1 Given, +5 Then, +1 factory, +2 helpers
+
+*Fichiers modifiés* :
+- `DocumentPlugin.kt` — wiring CollectDocumentRetrieveTask (remplace stub no-op)
+
+*Contrat N3* : composite-context.json `{source, entries, count, timestamp}` + metadata.json
+`{source, type, sessions, generatedAt, model, version, dependencies}`. Runner lit `entries`.
+
+*Méthode* : 8 baby-steps Red→Green, pyramide unit→functional→cucumber. DDD ubiquitous language.
+
+*Tests* : 135 verts (90 unit + 23 functional + 22 cucumber), 0 failures (+32 vs session 008).
+
+*EPIC* : DOC-6 ✅ TERMINÉ

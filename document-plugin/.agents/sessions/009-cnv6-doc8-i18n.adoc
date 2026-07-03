@@ -1,0 +1,50 @@
+= Session 009 — CNV-6 Migration + DOC-8 i18n/session contracts
+:session: 009
+:date: 2026-07-03
+:type: dev
+:epic: CNV-6 + DOC-8
+
+== Objectif
+
+1. CNV-6 : Migrer document-plugin vers les convention plugins `education.cccp.build.*` v0.0.1
+2. DOC-8 : Câbler les contrats N0 (i18n-contracts, opencode-session-contracts) dans document-plugin
+
+== CNV-6 — Migration conventions plugins
+
+*Pattern* : capsule (4 conventions appliquées — gradle-plugin + publishing + functional-test + cucumber)
+
+*Modifications* :
+- `build.gradle.kts` (72→67 lignes, -5) : suppression `alias(libs.plugins.kotlin.jvm)` + `alias(libs.plugins.publish)` (redondants), suppression doublons JUnit5
+- `gradle/libs.versions.toml` (66→49 lignes, -17) : suppression versions/plugins redondants (kotlin, plugin-publish, kotlin-test-junit5)
+- 4 convention plugins appliqués : `education.cccp.build.gradle-plugin` + `.publishing` + `.functional-test` + `.cucumber`
+
+*Variantes gardées* :
+- functionalTest : convention appliquée tel quel (SourceSet + GradleTestKit standard)
+- cucumber : convention appliquée tel quel (featuresDir/scenariosDir par défaut correspondent)
+- BOM workspace-bom:0.0.4 gardé
+- Dependencies métier intactes (AsciidoctorJ, koog, langchain4j-ollama, planner/plantuml compileOnly)
+
+*compileKotlin* : ✅ SUCCESS
+
+== DOC-8 — Consommation contrats N0
+
+*Dépendances ajoutées* :
+- `education.cccp:i18n-contracts:0.0.2` (implementation) — SupportedLanguage, LanguageCatalog, I18nConfig, MessageBundle, TranslationService
+- `education.cccp:opencode-session-contracts:0.0.2` (implementation) — AgentContext, SessionPrompt, SessionResponse, TokenUsage
+
+*Classe créée* : `DocumentI18nBridge.kt`
+- Bridge entre i18n-contracts et le pipeline documentaire
+- `SupportedLanguage` résolu via `LanguageCatalog.findByCode("en")`
+- `resolveLocale()` → `language.localeTag`
+- `isDefault()` → true si EN + pas de messageBundlePath
+
+*TODO* : pipeline-contracts (MEM-2) pas encore implémenté dans workspace-bom (code pas créé, cadré seulement). DOC-8.1 (releaseNotesGenerate) reste en attente de publication MEM-2.
+
+*compileKotlin* : ✅ SUCCESS (avec DocumentI18nBridge)
+
+== Prochaine session (010)
+
+Priorités :
+1. DOC-11 (P1) : Pipeline Livre Codex→Document (photos → OCR → AsciiDoc → enrichissement → publication)
+2. DOC-6 (P2) : Intégration N3 runner-gradle (metadata.json, collectDocumentRetrieve)
+3. DOC-8.1 (P2) : releaseNotesGenerate — bloqué par MEM-2 (pipeline-contracts pas publié)

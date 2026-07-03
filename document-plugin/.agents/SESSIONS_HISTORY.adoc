@@ -12,4 +12,51 @@
 | 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1 | ✅ TERMINÉ
 | 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests (+10) | ✅ TERMINÉ
 | 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests (+24) | ✅ TERMINÉ
+| 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule) + DOC-8 i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 câblés, DocumentI18nBridge créé | ✅ TERMINÉ
+| 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINÉ
 |===
+
+---
+
+== Session 009 (2026-07-03) — CNV-6 + DOC-8 i18n/session contracts
+
+**CNV-6** : Migration vers les 4 convention plugins `education.cccp.build.*` v0.0.1 (pattern capsule).
+- build.gradle.kts 72→67 lignes (-5), libs.versions.toml 66→49 lignes (-17)
+- Suppression alias redondants (kotlin.jvm, publish) + doublons JUnit5
+- functionalTest + cucumber conventions appliquées tel quel (variantes standards)
+
+**DOC-8** : Câblage contrats N0.
+- i18n-contracts 0.0.2 (implementation) — SupportedLanguage, LanguageCatalog, I18nConfig
+- opencode-session-contracts 0.0.2 (implementation) — AgentContext, SessionPrompt, SessionResponse
+- DocumentI18nBridge.kt créé (bridge SupportedLanguage → pipeline documentaire)
+- pipeline-contracts (MEM-2) TODO — pas implémenté dans workspace-bom
+
+**compileKotlin** : ✅ SUCCESS (avec DocumentI18nBridge)
+
+---
+
+== Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration
+
+**DOC-6** : Implémentation de `collectDocumentRetrieve` — la tâche Gradle qui produit
+les fichiers JSON consommables par runner-gradle N3 (`assembleCompositeContext`).
+
+**Ubiquitous language (DDD)** :
+- `DocumentMetadata` — provenance (source="new-orleans", type, sessions, generatedAt, model, version, dependencies)
+- `DocumentArtifactEntry` — un artefact produit (path, format, sourceAdoc, exists) + toMap
+- `DocumentRetrieveResult` — enveloppe N3 (source, entries, count, timestamp) + writeTo
+- `DocumentArtifactCollector` — scan outputDir → entries (logique testable sans Gradle)
+- `CollectDocumentRetrieveTask` — task Gradle (orchestre collector + result + metadata)
+
+**Contrat N3 de facto** (pas de contrat N0 formel) :
+- `composite-context.json` : `{source, entries, count, timestamp}` — runner lit `entries`
+- `metadata.json` : `{source, type, sessions, generatedAt, model, version, dependencies}`
+
+**Méthode baby-step TDD/BDD** : 8 baby-steps Red→Green, pyramide unit→functional→cucumber.
+
+**Nouveaux fichiers** : 5 main + 6 test (DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask + tests associés)
+
+**Fichiers modifiés** : DocumentPlugin.kt (wiring remplace stub), DocumentPluginFunctionalTest.kt (+2), document.feature (+2 scénarios @doc6), DocumentSteps.kt (+1 Given +5 Then), DocumentWorld.kt (+1 factory +2 helpers)
+
+**Tests** : 135 verts (90 unit + 23 functional + 22 cucumber), 0 failures (+32 vs session 008)
+
+**Loi de l'Économie d'Encre** : `collectDocumentRetrieve` est READ-only — indexe les artefacts produits, n'invoque jamais le LLM.

@@ -349,6 +349,36 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceAndConvertedHtml(): File {
+        val dir = Files.createTempDirectory("doc-bdd-n3").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Contenu pour le test N3 retrieve.
+            """.trimIndent()
+        )
+        projectDir = dir
+        executeGradle("convertDocumentToHtml")
+        return dir
+    }
+
     fun convertedHtmlFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/document.html")
@@ -377,6 +407,16 @@ class DocumentWorld {
     fun enrichedDocumentFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/document-enriched.adoc")
+    }
+
+    fun metadataJsonFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/metadata.json")
+    }
+
+    fun compositeContextJsonFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/composite-context.json")
     }
 
     fun executeGradle(vararg tasks: String): BuildResult {

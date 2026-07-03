@@ -1,0 +1,122 @@
+= Session 010 — DOC-6 Intégration N3 runner-gradle
+:date: 2026-07-03
+:epic: DOC-6
+:status: ✅ TERMINÉ
+
+== Objectif
+
+Implémenter `collectDocumentRetrieve` — la tâche Gradle qui produit
+les fichiers JSON consommables par runner-gradle N3
+(`assembleCompositeContext`) :
+
+- `composite-context.json` — enveloppe N3 `{source, entries, count}`
+- `metadata.json` — provenance `{source, type, sessions, generatedAt, model, version, dependencies}`
+
+== Méthode — Baby-step DDD/TDD/BDD
+
+Pyramide de tests : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance).
+Red → Green → Refactor, 1 test à la fois.
+
+=== Ubiquitous language (DDD)
+
+- `DocumentMetadata` — value object provenance (source="new-orleans", type, sessions, ...)
+- `DocumentArtifactEntry` — un artefact produit (path, format, sourceAdoc, exists)
+- `DocumentRetrieveResult` — enveloppe N3 `{source, entries, count, timestamp}`
+- `DocumentArtifactCollector` — logique de scan du outputDir (testable sans Gradle)
+- `CollectDocumentRetrieveTask` — task Gradle qui orchestre collector + result + metadata
+
+=== Baby-steps
+
+. RED `DocumentMetadataTest` (10 tests) → GREEN `DocumentMetadata.kt`
+. RED `DocumentArtifactEntryTest` + `DocumentRetrieveResultTest` (11 tests) → GREEN `DocumentArtifactEntry.kt` + `DocumentRetrieveResult.kt`
+. RED `DocumentArtifactCollectorTest` (7 tests) → GREEN `DocumentArtifactCollector.kt`
+. GREEN `CollectDocumentRetrieveTask.kt` + wiring `DocumentPlugin.kt` (remplace stub)
+. RED→GREEN functional `collectDocumentRetrieve` (2 tests GradleRunner)
+. BDD Cucumber 2 scénarios `.feature` + steps (avec artefact HTML + count zéro)
+
+== Livrables
+
+=== Nouveaux fichiers (main)
+
+- `src/main/kotlin/document/DocumentMetadata.kt` — provenance N3
+- `src/main/kotlin/document/DocumentArtifactEntry.kt` — entry N3
+- `src/main/kotlin/document/DocumentRetrieveResult.kt` — enveloppe N3
+- `src/main/kotlin/document/DocumentArtifactCollector.kt` — scan outputDir
+- `src/main/kotlin/document/CollectDocumentRetrieveTask.kt` — task Gradle
+
+=== Nouveaux fichiers (test)
+
+- `src/test/kotlin/document/DocumentMetadataTest.kt` — 10 tests unit
+- `src/test/kotlin/document/DocumentArtifactEntryTest.kt` — 4 + 7 tests unit
+- `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` — 7 tests unit
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +2 tests
+- `src/test/resources/features/document.feature` — +2 scénarios @doc6 @n3
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +1 Given, +5 Then
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +1 factory, +2 helpers
+
+=== Fichiers modifiés
+
+- `src/main/kotlin/document/DocumentPlugin.kt` — wiring `CollectDocumentRetrieveTask` (remplace stub no-op)
+
+== Contrat N3 respecté
+
+Le contrat N3 de facto (pas de contrat N0 formel — chaque borough duplique
+une classe `Metadata`) :
+
+.`composite-context.json` (shape)
+[source,json]
+----
+{
+  "source" : "new-orleans",
+  "entries" : [
+    {
+      "source" : "document",
+      "path" : "/abs/path/document.html",
+      "format" : "html",
+      "backend" : "html5",
+      "sourceAdoc" : "source.adoc",
+      "exists" : true
+    }
+  ],
+  "count" : 1,
+  "timestamp" : 1751558400000
+}
+----
+
+.`metadata.json` (shape)
+[source,json]
+----
+{
+  "source" : "new-orleans",
+  "type" : "retrieve",
+  "sessions" : 1,
+  "generatedAt" : "2026-07-03T13:51:47.123Z",
+  "model" : "onnx-local",
+  "version" : "1.0",
+  "dependencies" : [ "brooklyn", "htown" ]
+}
+----
+
+Runner-gradle lit uniquement la clé `entries` du `composite-context.json`.
+Le `metadata.json` est la provenance (audit trail).
+
+== Tests — 135 verts (session 008 : 103 → session 010 : 135, +32)
+
+- Unitaires : 90 (62 + 28 nouveaux)
+- Functional : 23 (21 + 2 nouveaux)
+- Cucumber : 22 (20 + 2 nouveaux)
+- Failures : 0
+
+== Loi de l'Économie d'Encre
+
+`collectDocumentRetrieve` est READ-only : il indexe les artefacts produits
+par les autres tâches (generateDocument, enrichDocument, convertXxx).
+Il n'invoque jamais le LLM et ne régénère jamais un document — il snapshot
+ce qui existe sur disque.
+
+== Boundary respecté
+
+- Codex (Brooklyn) = READ + RAG — pas de dépendance document→codex ✅
+- plantuml-gradle (HTOWN) = composition — déclaré en `dependencies` du metadata ✅
+- runner-gradle (New Jersey) = consumer N3 — `composite-context.json` ingérable ✅
+- DAG N2 — document n'importe pas N3 ✅
