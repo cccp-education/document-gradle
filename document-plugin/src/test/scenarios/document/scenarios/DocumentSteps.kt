@@ -94,6 +94,24 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with OCR pages directory")
+    fun createNewDocumentProjectWithOcrPages() {
+        world.createGradleProjectWithOcrPages()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with OCR pages and photos directory")
+    fun createNewDocumentProjectWithOcrPagesAndPhotos() {
+        world.createGradleProjectWithOcrPages(photos = true)
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with OCR pages directory and book formats")
+    fun createNewDocumentProjectWithOcrPagesAndFormats() {
+        world.createGradleProjectWithOcrPages(formats = true)
+        assertThat(world.projectDir).exists()
+    }
+
     @When("I am executing the task {string}")
     fun executeTask(taskName: String) {
         world.executeGradle(taskName)
@@ -321,6 +339,40 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(pom).exists()
         val content = pom!!.readText()
         assertThat(content).contains("scm:git")
+    }
+
+    @Then("the assembled book file should exist")
+    fun assembledBookFileShouldExist() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+    }
+
+    @Then("the assembled book should contain the book title")
+    fun assembledBookShouldContainBookTitle() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains("= Test Book")
+    }
+
+    @Then("the assembled book should contain all page contents in order")
+    fun assembledBookShouldContainAllPageContentsInOrder() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        val firstIdx = content.indexOf("Chapter 1")
+        val secondIdx = content.indexOf("Chapter 2")
+        assertThat(firstIdx).isGreaterThan(0)
+        assertThat(secondIdx).isGreaterThan(firstIdx)
+    }
+
+    @Then("the assembled book should contain photo image directives")
+    fun assembledBookShouldContainPhotoImageDirectives() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains("image::001-page.png[]")
+        assertThat(content).contains("image::002-page.png[]")
     }
 
     @After

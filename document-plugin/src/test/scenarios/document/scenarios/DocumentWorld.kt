@@ -504,6 +504,45 @@ class DocumentWorld {
         return dir.resolve("build/docs/document/document.adoc")
     }
 
+    fun createGradleProjectWithOcrPages(photos: Boolean = false, formats: Boolean = false): File {
+        val dir = Files.createTempDirectory("doc-bdd-book").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        val dsl = buildString {
+            appendLine("plugins { id(\"education.cccp.document\") }")
+            appendLine()
+            appendLine("document {")
+            appendLine("    bookPagesDir.set(file(\"pages\"))")
+            if (photos) appendLine("    bookPhotosDir.set(file(\"photos\"))")
+            appendLine("    bookTitle.set(\"Test Book\")")
+            appendLine("    bookAuthor.set(\"Test Author\")")
+            if (formats) {
+                appendLine("    source.set(file(\"build/docs/document/book.adoc\"))")
+            }
+            appendLine("}")
+        }
+        dir.resolve("build.gradle.kts").writeText(dsl)
+
+        val pagesDir = dir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page content.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond page content.")
+
+        if (photos) {
+            val photosDir = dir.resolve("photos").apply { mkdirs() }
+            photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+            photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        }
+
+        projectDir = dir
+        return dir
+    }
+
+    fun assembledBookFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/book.adoc")
+    }
+
     fun cleanup() {
         projectDir?.deleteRecursively()
         projectDir = null

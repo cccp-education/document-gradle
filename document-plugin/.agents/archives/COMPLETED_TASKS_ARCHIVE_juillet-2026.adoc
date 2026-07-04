@@ -80,3 +80,47 @@ les fichiers JSON consommables par runner-gradle N3 (`assembleCompositeContext`)
 *Tests* : 137 verts (90 unit + 23 functional + 24 cucumber), 0 failures (+2 vs session 010).
 
 *EPIC* : DOC-7 ✅ TERMINÉ
+
+=== Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document
+
+*DOC-11* : Pipeline livre complet côté Document — assembler les pages AsciiDoc
+OCRisées (produites par codex-gradle) en un livre unique, incruster les photos
+originales, et exposer une tâche composite `bookPipeline` reproductible en une
+commande.
+
+*Boundary respectée* : l'OCR est dans Codex (Brooklyn). Document (New Orleans)
+lit l'AsciiDoc sur disque (pont N2 <-> N2), jamais de dépendance directe vers
+codex-gradle.
+
+*Nouveaux fichiers main* (5) :
+- `BookPage.kt` — value object page OCRisée (file, order, photo optionnelle)
+- `PageOrder.kt` — value class inline, ordre dérivé du préfixe numérique
+- `BookAssemblyResult.kt` — résultat d'assemblage (content, pages, photoCount) + writeTo
+- `BookAssembler.kt` — assembleur pages -> livre AsciiDoc (logique testable sans Gradle)
+- `AssembleBookTask.kt` — task Gradle (@DisableCachingByDefault, InputDirectory pages/photos)
+
+*Nouveaux fichiers test* (1) :
+- `BookAssemblerTest.kt` — 11 tests unit (merge, ordre, photos, immutabilité, filtre)
+
+*Fichiers modifiés* (6) :
+- `DocumentExtension.kt` — +4 propriétés book (bookPagesDir, bookPhotosDir, bookTitle, bookAuthor)
+- `DocumentPlugin.kt` — registerAssembleBook + registerBookPipeline + conventions book
+- `document.feature` — +5 scénarios @doc11 @book + traduction intégrale anglais
+- `DocumentSteps.kt` — +3 Given +4 Then (assembledBook, title, page order, photo directives)
+- `DocumentWorld.kt` — +1 factory createGradleProjectWithOcrPages +1 helper assembledBookFile
+- `DocumentPluginFunctionalTest.kt` — +3 tests (assembleBook merge, photos, bookPipeline registration)
+
+*Méthode* : 9 baby-steps DDD/TDD/BDD, pyramide unit -> functional -> cucumber.
+- BDD : 5 scénarios @doc11 @book en anglais (assembleBook, bookPipeline, assemblage, photos, pipeline complet)
+- DDD : 3 value objects (BookPage, PageOrder, BookAssemblyResult)
+- TDD : 11 tests unitaires BookAssembler (Red -> Green -> Refactor)
+
+*Décisions techniques* :
+- PageOrder par préfixe numérique (`001-page.adoc` -> 1), non-numérotées après (Int.MAX_VALUE)
+- Photos optionnelles (png/jpg/jpeg/webp, même baseName que la page)
+- bookPipeline = lifecycle task avec `mustRunAfter` pour l'ordre (assemble -> enrich -> conversions -> collect)
+- Gherkin traduit intégralement en anglais (règle code en anglais appliquée rétroactivement)
+
+*Tests* : 155 verts (100 unit + 27 functional + 28 cucumber), 0 failures (+18 vs session 011).
+
+*EPIC* : DOC-11 ✅ TERMINÉ

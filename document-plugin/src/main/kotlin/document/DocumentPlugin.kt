@@ -31,11 +31,15 @@ class DocumentPlugin : Plugin<Project> {
         ext.enrichImages.convention(false)
         ext.enrichPassthrough.convention(false)
         ext.llmMode.convention("ollama")
+        ext.bookTitle.convention("Untitled Book")
+        ext.bookAuthor.convention("Unknown Author")
 
         registerGenerateDocument(project, ext)
         registerEnrichDocument(project, ext)
         registerConvertTasks(project, ext)
         registerCollectDocumentRetrieve(project, ext)
+        registerAssembleBook(project, ext)
+        registerBookPipeline(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -105,5 +109,45 @@ class DocumentPlugin : Plugin<Project> {
             task.outputDir.set(project.layout.buildDirectory.dir("docs/document"))
             task.sourceAdoc.set(cliProp(project, "source").orElse(ext.source.map { it.asFile.name }).orElse("source.adoc"))
         }
+    }
+
+    private fun registerAssembleBook(project: Project, ext: DocumentExtension) {
+        project.tasks.register("assembleBook", AssembleBookTask::class.java) { task ->
+            task.description = "Assembles OCR-ed AsciiDoc pages (codex-gradle output) into a single book. — DOC-11"
+            task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
+            task.photosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPhotosDir))
+            task.title.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
+            task.author.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
+            task.outputFileName.set(cliProp(project, "outputFileName").orElse("book"))
+            task.outputFile.set(project.layout.buildDirectory.file("docs/document/book.adoc"))
+        }
+    }
+
+    private fun registerBookPipeline(project: Project, ext: DocumentExtension) {
+        project.tasks.register("bookPipeline") { task ->
+            task.group = "document"
+            task.description = "Composite book pipeline: assemble -> enrich -> HTML/PDF/EPUB -> collect. — DOC-11"
+        }
+        project.tasks.named("bookPipeline").configure { task ->
+            task.dependsOn(
+                "assembleBook",
+                "enrichDocument",
+                "convertDocumentToHtml",
+                "convertDocumentToPdf",
+                "convertDocumentToEpub",
+                "collectDocumentRetrieve",
+            )
+        }
+        val assembleBook = project.tasks.named("assembleBook")
+        val enrichDocument = project.tasks.named("enrichDocument")
+        val html = project.tasks.named("convertDocumentToHtml")
+        val pdf = project.tasks.named("convertDocumentToPdf")
+        val epub = project.tasks.named("convertDocumentToEpub")
+        val collect = project.tasks.named("collectDocumentRetrieve")
+        enrichDocument.configure { it.mustRunAfter(assembleBook) }
+        html.configure { it.mustRunAfter(enrichDocument) }
+        pdf.configure { it.mustRunAfter(enrichDocument) }
+        epub.configure { it.mustRunAfter(enrichDocument) }
+        collect.configure { it.mustRunAfter(listOf(html, pdf, epub)) }
     }
 }

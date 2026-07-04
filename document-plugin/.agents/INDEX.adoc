@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-04 (session 011 — DOC-7 CI + Publication Maven Central / Plugin Portal, 137 tests)
-_Session terminee_ : 011 — DOC-7 CI + Publication (nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM)
-_Prochaine session_ : 012 — DOC-11 Pipeline Livre Codex→Document (P1)
+_Derniere mise a jour_ : 2026-07-04 (session 012 — DOC-11 Book Pipeline Codex -> Document, 155 tests)
+_Session terminee_ : 012 — DOC-11 Book Pipeline (BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, +18 tests)
+_Prochaine session_ : 013 — DOC-12 DSL unifié `document { }`
 
 '''
 == REGLES ABSOLUES (resume)
@@ -88,7 +88,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 🔄 EN COURS (i18n+session câblés session 009, pipeline-contracts TODO MEM-2) | P2
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
-| DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | 📋 CADRAGE (US-DOC-11) | P1 — session 012
+| DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | ✅ TERMINÉ (session 012) | P1
 | DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | 📋 CADRAGE (US-DOC-12) | P2
 |===
 
@@ -135,6 +135,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule, -22 lignes build+catalog) + DOC-8 i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 câblés, DocumentI18nBridge créé, compile SUCCESS | ✅ TERMINE
 | 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINE
 | 011 | 2026-07-04 | feat | DOC-7 CI + Publication Maven Central / Plugin Portal — nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM, 137 tests (+2) | ✅ TERMINE
+| 012 | 2026-07-04 | feat | DOC-11 Book Pipeline Codex -> Document — BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, 155 tests (+18), baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''

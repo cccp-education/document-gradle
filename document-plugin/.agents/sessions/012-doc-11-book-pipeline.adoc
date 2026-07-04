@@ -1,0 +1,116 @@
+= Session 012 — DOC-11 Book Pipeline Codex -> Document
+:date: 2026-07-04
+:epic: DOC-11
+:status: ✅ TERMINÉ
+:tests: 155 (100 unit + 27 functional + 28 cucumber), +18 vs session 011
+
+== Objectif
+
+Pipeline complet : photos -> OCR Codex -> AsciiDoc -> enrichissement ->
+publication multi-format. Côté Document : assembler les pages OCR-isées en
+un livre unique, incruster les photos, appliquer le thème, convertir en
+HTML/PDF/EPUB, et exposer une tâche composite `bookPipeline` reproductible
+en une commande.
+
+Boundary respectée : l'OCR est dans Codex (Brooklyn). Document (New Orleans)
+lit l'AsciiDoc sur disque (pont N2 <-> N2), jamais de dépendance directe
+vers codex-gradle.
+
+== Méthode baby-step DDD/TDD/BDD
+
+. *BDD* : scénarios Cucumber `@doc11 @book` en amont (5 scénarios anglais)
+. *DDD* : value objects `BookPage`, `PageOrder`, `BookAssemblyResult`
+  (ubiquitous language, langage métier du livre)
+. *TDD* : `BookAssembler` Red -> Green -> Refactor, 1 test à la fois
+. *Pyramide* : unit (BookAssemblerTest, 11 tests) -> functional
+  (assembleBook + photos + bookPipeline registration, 3 tests) -> cucumber
+  (5 scénarios bookPipeline end-to-end)
+
+== Étapes réalisées
+
+. *Step 1 — BDD* : 5 scénarios `@doc11 @book` dans `document.feature`
+  (assembleBook registration, bookPipeline registration, assemblage pages,
+  incrustation photos, bookPipeline complet HTML/PDF/EPUB). Gherkin en
+  anglais (règle code en anglais).
+. *Step 2 — DDD value objects* :
+  * `BookPage` — une page OCRisée (file, order, photo optionnelle)
+  * `PageOrder` — value class inline, ordre dérivé du préfixe numérique
+  * `BookAssemblyResult` — résultat d'assemblage (content, pages, photoCount)
+. *Step 3 — TDD BookAssembler* : 7 tests unitaires
+  (merge pages ordonnées, ordre par préfixe numérique, pages non numérotées
+  après numérotées, attribut author, livre vide sans pages, immutabilité
+  source, filtre non-adoc).
+. *Step 4 — TDD photos* : 4 tests unitaires
+  (image:: directive si photo match, zero photos si pas de match,
+  extensions supportées png/jpg/jpeg/webp).
+. *Step 5 — AssembleBookTask* : task Gradle `@DisableCachingByDefault`,
+  inputs pagesDir/photosDir (InputDirectory RELATIVE), title/author (Input),
+  output book.adoc. Wiring dans DocumentPlugin avec CLI override
+  (-Pdocument.bookPagesDir, -Pdocument.bookTitle, -Pdocument.bookAuthor).
+. *Step 6 — bookPipeline composite* : task lifecycle `dependsOn` assembleBook
+  + enrichDocument + convertDocumentToHtml/Pdf/Epub + collectDocumentRetrieve.
+  `mustRunAfter` pour forcer l'ordre : assemble -> enrich -> conversions ->
+  collect. Convention bookTitle/bookAuthor (Untitled Book / Unknown Author).
+. *Step 7 — Extension DSL* : `bookPagesDir`, `bookPhotosDir`, `bookTitle`,
+  `bookAuthor` sur DocumentExtension. CLI > DSL > convention.
+. *Step 8 — BDD steps + functional* : 4 steps Cucumber (assembledBookFile,
+  book title, page contents in order, photo image directives) + 3 functional
+  tests (assembleBook merge, assembleBook photos, bookPipeline registration).
+. *Step 9 — check* : 155 tests PASS (100 unit + 27 functional + 28 cucumber),
+  +18 vs session 011, zéro régression.
+
+== Fichiers créés
+
+. `src/main/kotlin/document/BookPage.kt` — value object page OCRisée
+. `src/main/kotlin/document/PageOrder.kt` — value class ordre page
+. `src/main/kotlin/document/BookAssemblyResult.kt` — résultat assemblage
+. `src/main/kotlin/document/BookAssembler.kt` — assembleur pages -> livre
+. `src/main/kotlin/document/AssembleBookTask.kt` — task Gradle assembleBook
+. `src/test/kotlin/document/BookAssemblerTest.kt` — 11 tests unitaires
+
+== Fichiers modifiés
+
+. `src/main/kotlin/document/DocumentExtension.kt` — 4 propriétés book
+. `src/main/kotlin/document/DocumentPlugin.kt` — registerAssembleBook +
+  registerBookPipeline + conventions bookTitle/bookAuthor
+. `src/test/resources/features/document.feature` — 5 scénarios DOC-11 +
+  traduction intégrale en anglais (règle code en anglais)
+. `src/test/scenarios/document/scenarios/DocumentSteps.kt` — 4 steps DOC-11
+. `src/test/scenarios/document/scenarios/DocumentWorld.kt` — helper
+  createGradleProjectWithOcrPages + assembledBookFile
+. `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` —
+  3 tests assembleBook + bookPipeline registration
+
+== Décisions techniques
+
+. *Pas d'OCR côté Document* : boundary respectée, Codex produit l'AsciiDoc
+  sur disque, Document le consomme (Rule 7, lecture seule).
+. *Pont N2 <-> N2 = filesystem* : aucun lien Gradle direct entre codex et
+  document. `bookPagesDir` pointe vers l'output de Codex `collectOcr`.
+. *PageOrder par préfixe numérique* : `001-page.adoc` -> 1, `appendix.adoc`
+  -> Int.MAX_VALUE (après les numérotées). Déterministe, alphabétique
+  comme tiebreaker.
+. *Photos optionnelles* : `BookPage.fromFile` cherche png/jpg/jpeg/webp
+  dans `photosDir` avec le même baseName que la page.
+. *bookPipeline = lifecycle task* : `dependsOn` + `mustRunAfter` pour
+  l'ordre sans court-circuiter l'up-to-date check des sous-tasks.
+. *Gherkin en anglais* : traduction intégrale du `.feature` existant
+  (règle "code en anglais" appliquée rétroactivement).
+
+== Risques résiduels
+
+. *R-06 (coût tokens OCR)* : non adressé côté Document — c'est le job de
+  Codex (OcrConfig.maxTokens, pool de clés).
+. *BND-03 (plantuml-gradle non exécuté avant enrichDocument)* : bookPipeline
+  n'invoque pas plantumlGenerate. Runner-gradle N3 reste responsable de
+  l'orchestration cross-borough.
+. *bookPipeline ordre photos* : `mustRunAfter` garantit l'ordre seulement
+  si toutes les tasks sont dans le graph. Si l'utilisateur invoque
+  `convertDocumentToHtml` seul, assembleBook ne tourne pas. C'est le
+  comportement attendu (task isolée).
+
+== Prochaine session
+
+DOC-12 — DSL unifié `document { }` (source, enrich, theme, outputs,
+metadata). P2. Consolidation des blocs `book { }` et `theme { }` dans un
+DSL cohérent.

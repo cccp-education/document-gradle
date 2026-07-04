@@ -784,6 +784,97 @@ class DocumentPluginFunctionalTest {
         assertTrue(pomContent.contains("scm:git"), "POM must declare scm connection\n$pomContent")
     }
 
+    @Test
+    fun `assembleBook merges OCR-ed pages into a single book AsciiDoc`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                bookPagesDir.set(file("pages"))
+                bookTitle.set("Test Book")
+                bookAuthor.set("Test Author")
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page content.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond page content.")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/book.adoc")
+        assertTrue(output.exists(), "the assembled book must exist")
+        val content = output.readText()
+        assertTrue(content.contains("= Test Book"), "the book title must be present")
+        assertTrue(content.contains(":author: Test Author"), "the book author must be present")
+        assertTrue(content.contains("Chapter 1"), "page 1 content must be present")
+        assertTrue(content.contains("Chapter 2"), "page 2 content must be present")
+        val firstIdx = content.indexOf("Chapter 1")
+        val secondIdx = content.indexOf("Chapter 2")
+        assertTrue(firstIdx < secondIdx, "pages must be ordered by numeric prefix")
+    }
+
+    @Test
+    fun `assembleBook embeds original photos as image directives`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-photos\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                bookPagesDir.set(file("pages"))
+                bookPhotosDir.set(file("photos"))
+                bookTitle.set("Photo Book")
+                bookAuthor.set("Author")
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page.")
+        val photosDir = projectDir.resolve("photos").apply { mkdirs() }
+        photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/book.adoc")
+        assertTrue(output.exists(), "the assembled book must exist")
+        val content = output.readText()
+        assertTrue(content.contains("image::001-page.png[]"), "the photo image directive must be present")
+    }
+
+    @Test
+    fun `bookPipeline registers and exposes the assembleBook and bookPipeline tasks`() {
+        val projectDir = newTempDir()
+        setupTestProject(projectDir)
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("tasks", "--group", "document")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("assembleBook"), "assembleBook task must be registered")
+        assertTrue(result.output.contains("bookPipeline"), "bookPipeline task must be registered")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

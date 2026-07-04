@@ -1,17 +1,17 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 012
+:session: 013
 :date: 2026-07-04
-:status: DOC-7 terminé (CI + nmcp + POM, 137 tests) — prêt DOC-11
+:status: DOC-11 terminé (book pipeline, 155 tests) — prêt DOC-12
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 137 tests (90 unit + 24 cucumber + 23 functional), Gradle 9.6.1
+./gradlew check                        # 155 tests (100 unit + 27 functional + 28 cucumber), Gradle 9.6.1
 ./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
 cd ..
-./gradlew tasks --group=document       # 8 tâches visibles depuis la racine consommateur dogfood
+./gradlew tasks --group=document       # 10 tâches visibles (8 + assembleBook + bookPipeline)
 ```
 
 == Architecture (session 006, stable)
@@ -27,39 +27,37 @@ Session 002 (2026-06-29) — DOC-1 Plugin stub TERMINÉ (18 tests).
 Session 003 (2026-06-29) — DOC-2 generateDocument IA TERMINÉ (31 tests).
 Session 004 (2026-06-30) — DOC-3 + DOC-4 HTML + PDF TERMINÉS (50 tests).
 Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests).
-Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur (Gradle 9.6.1).
-Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests, +10).
-Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests, +24).
-Session 009 (2026-07-03) — CNV-6 + DOC-8 + i18n bridge (session intermédiaire).
-Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests, +32).
-Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests, +2).
+Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur.
+Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests).
+Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests).
+Session 009 (2026-07-03) — CNV-6 + DOC-8 i18n bridge (session intermédiaire).
+Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests).
+Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests).
+Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ (155 tests, +18).
 
-== Objectif session 012 — DOC-11 (Pipeline Livre)
+== Objectif session 013 — DOC-12 (DSL unifié)
 
-Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publication.
-- Assembler les AsciiDoc OCRisés en un document unique (ordre des pages)
-- enrichDocument incruste les photos originales + diagrammes PlantUML
-- Appliquer le thème (DOC-10 livré)
-- convertDocumentToHtml/Pdf/Epub → livrables
-- Runner-gradle N3 `assembleCompositeContext` indexe les artefacts (DOC-6 livré)
-- Tâche composite `bookPipeline` reproductible en une commande
-- US-DOC-11 critères : voir BACKLOG
+Consolider les blocs `book { }` et `theme { }` dans un DSL `document { }`
+cohérent avec source, enrich, theme, outputs, metadata.
+- `source = file("livre.adoc")` — document source
+- `enrich { plantuml = true; images = true; passthrough = true }`
+- `theme { pdf = "theme.yml"; html = "style.css"; epub = "epub.css" }`
+- `outputs { html = true; pdf = true; epub = true }`
+- `metadata { title = "..."; author = "..."; language = "fr" }`
+- Sérialisation `document-config.json` (contrat N3)
+- US-DOC-12 critères : voir BACKLOG
 
-== Stack (rappel — 5 formats + enrichissement + theme + N3 + publication)
+== Stack (rappel — 5 formats + enrichissement + theme + N3 + publication + book)
 
 - **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
 - **asciidoctorj-pdf 2.3.23** : backend pdf
 - **asciidoctorj-epub3 2.2.0** : backend epub3
 - **asciidoctorj-diagram 3.2.0** + **plantuml 1.2025.3** : rendu inline PlantUML
+- **BookAssembler** : pages OCRisées -> livre AsciiDoc (DOC-11)
 - **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata, theme)
 - **DocumentEnricher** : résolution includes récursive, préservation plantuml/passthrough
 - **DocumentTheme** : value object (pdfTheme, htmlStylesheet, epubStylesheet, logo) + toAttributes
-- **DocumentMetadata** : provenance N3 (source, type, sessions, generatedAt, model, version, dependencies)
-- **DocumentArtifactEntry** : artefact N3 (path, format, sourceAdoc, exists) + toMap
-- **DocumentRetrieveResult** : enveloppe N3 (source, entries, count, timestamp) + writeTo
-- **DocumentArtifactCollector** : scan outputDir → entries
-- **CollectDocumentRetrieveTask** : task Gradle (composite-context.json + metadata.json)
-- **nmcp 1.5.0** : publication Maven Central (publishAllPublicationsToCentralPortal)
+- **nmcp 1.5.0** : publication Maven Central
 
 == Pattern de surcharge (rappel)
 
@@ -67,13 +65,12 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
 
-== Roadmap prioritaire (post DOC-7)
+== Roadmap prioritaire (post DOC-11)
 
 [cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 012
-| DOC-12 | DSL unifie `document { }` | P2
+| DOC-12 | DSL unifie `document { }` | P2 — session 013
 | DOC-8 | Release notes — pipeline-contracts (MEM-2) à implémenter | P2
 |===
 
@@ -84,7 +81,7 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 . DAG N2 — importable par N3 runner-gradle, jamais importe N3
 . ZERO secret/token/api key en dur
 . DOCUMENT CONSOMME ASCIIDOC — lecture seule
-. BOUNDARY CODEX — pas de dependance directe document→codex
+. BOUNDARY CODEX — pas de dependance directe document->codex
 . BOUNDARY PLANTUML — Asciidoctor Diagram inline (zéro compileOnly pour DOC-9)
 . Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
 . Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
@@ -92,7 +89,7 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 
 == Méthode baby-step TDD/BDD
 
-. DDD : ubiquitous language (DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme, DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector)
+. DDD : ubiquitous language (BookPage, PageOrder, BookAssemblyResult, DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme, DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector)
 . TDD : Red → Green → Refactor, 1 test à la fois
 . BDD : Cucumber .feature en amont (scénarios métier) → step definitions
 . Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)

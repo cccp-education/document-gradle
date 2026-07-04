@@ -60,6 +60,18 @@ abstract class DocumentExtension {
     /** Theme visuel (DOC-10) — image logo pour le PDF (cover image). */
     abstract val logo: RegularFileProperty
 
+    /** Book pipeline (DOC-11) — directory of OCR-ed AsciiDoc pages. */
+    abstract val bookPagesDir: DirectoryProperty
+
+    /** Book pipeline (DOC-11) — directory of original page photos. */
+    abstract val bookPhotosDir: DirectoryProperty
+
+    /** Book pipeline (DOC-11) — book title. */
+    abstract val bookTitle: Property<String>
+
+    /** Book pipeline (DOC-11) — book author. */
+    abstract val bookAuthor: Property<String>
+
     /**
      * Nested DSL block `theme { }` for visual theming (DOC-10).
      *

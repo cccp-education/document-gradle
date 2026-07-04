@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-04 (session 011 — DOC-7 CI + Publication Maven Central / Plugin Portal, 137 tests)
+_Date revision_ : 2026-07-04 (session 012 — DOC-11 Book Pipeline Codex -> Document, 155 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
@@ -223,6 +223,7 @@ incrustes directement dans le document AsciiDoc via la syntaxe passthrough
 
 *Priorite* : P1
 *EPIC* : DOC-11 (Pipeline Livre Codex→Document)
+*Statut* : ✅ TERMINÉ (session 012)
 
 .Valeur
 Pipeline complet de bout en bout : photos de pages d'un livre existant
@@ -231,16 +232,16 @@ theme) → publication multi-format (HTML/PDF/EPUB). Le tout orchestre
 par runner-gradle N3.
 
 .Criteres d'acceptation
-- Codex `collectOcr` produit un `OcrResult.structuredText` (AsciiDoc) par page
-- Les AsciiDoc OCRises sont assembles en un document unique (ordre des pages)
-- Document `enrichDocument` incruste les photos originales en illustration
-- Document `enrichDocument` incruste les diagrammes PlantUML references
-- Document applique le theme configure
-- `convertDocumentToHtml` produit un livre HTML navigable (TOC, ancres)
-- `convertDocumentToPdf` produit un PDF imprimeur (theme pro, pagination)
-- `convertDocumentToEpub` produit un EPUB3 valide (epubcheck)
-- Runner-gradle N3 `assembleCompositeContext` indexe tous les artefacts
-- Le pipeline est reproductible : `./gradlew bookPipeline` en une commande
+- ✅ Codex `collectOcr` produit un `OcrResult.structuredText` (AsciiDoc) par page (côté Codex, déjà livré)
+- ✅ Les AsciiDoc OCRises sont assembles en un document unique (ordre des pages) — BookAssembler
+- ✅ Document `assembleBook` incruste les photos originales en illustration (image:: directives)
+- ✅ Document `enrichDocument` incruste les diagrammes PlantUML references (DOC-9 livré)
+- ✅ Document applique le theme configure (DOC-10 livré)
+- ✅ `convertDocumentToHtml` produit un livre HTML navigable (TOC, ancres) (DOC-3 livré)
+- ✅ `convertDocumentToPdf` produit un PDF imprimeur (theme pro, pagination) (DOC-4 livré)
+- ✅ `convertDocumentToEpub` produit un EPUB3 valide (epubcheck) (DOC-5 livré)
+- ✅ Runner-gradle N3 `assembleCompositeContext` indexe tous les artefacts (DOC-6 livré)
+- ✅ Le pipeline est reproductible : `./gradlew bookPipeline` en une commande — task composite lifecycle
 
 .Flux DAG
 ----
