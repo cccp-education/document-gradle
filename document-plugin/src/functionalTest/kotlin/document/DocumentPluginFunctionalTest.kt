@@ -711,6 +711,79 @@ class DocumentPluginFunctionalTest {
         assertTrue(content.contains("\"count\" : 0"), "count must be 0 when no artifacts exist")
     }
 
+    @Test
+    fun `generatePomFileForPluginMavenPublication produces a POM with name description license developers and scm`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-pom\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+                `java-gradle-plugin`
+                `maven-publish`
+            }
+
+            group = "education.cccp"
+            version = "0.0.1"
+
+            gradlePlugin {
+                plugins {
+                    create("document") {
+                        id = "education.ccp.document"
+                        implementationClass = "document.DocumentPlugin"
+                        displayName = "Document Gradle Plugin"
+                        description = "Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ."
+                    }
+                }
+                website.set("https://github.com/cccp-education/document-gradle/")
+                vcsUrl.set("https://github.com/cccp-education/document-gradle.git")
+            }
+
+            publishing {
+                publications.withType<MavenPublication> {
+                    pom {
+                        name.set("Document Gradle Plugin")
+                        description.set("Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ.")
+                        developers {
+                            developer {
+                                id.set("cccp-education")
+                                name.set("CCCP Education")
+                                email.set("cccp@cccp.education")
+                            }
+                        }
+                        licenses {
+                            license {
+                                name.set("Apache-2.0")
+                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                            }
+                        }
+                        scm {
+                            connection.set("scm:git:git://github.com/cccp-education/document-gradle.git")
+                            developerConnection.set("scm:git:ssh://github.com/cccp-education/document-gradle.git")
+                            url.set("https://github.com/cccp-education/document-gradle.git")
+                        }
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("generatePomFileForPluginMavenPublication")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generatePomFileForPluginMavenPublication")?.outcome)
+        val pomFile = File(projectDir, "build/publications/pluginMaven/pom-default.xml")
+        assertTrue(pomFile.exists(), "POM file must be generated at ${pomFile.absolutePath}")
+        val pomContent = pomFile.readText()
+        assertTrue(pomContent.contains("Document Gradle Plugin"), "POM name must be Document Gradle Plugin\n$pomContent")
+        assertTrue(pomContent.contains("Apache-2.0"), "POM must declare Apache-2.0 license\n$pomContent")
+        assertTrue(pomContent.contains("cccp-education"), "POM must declare cccp-education developer\n$pomContent")
+        assertTrue(pomContent.contains("scm:git"), "POM must declare scm connection\n$pomContent")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

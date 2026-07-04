@@ -9,7 +9,7 @@ group = "education.cccp"
 version = libs.plugins.document.get().version
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.4"))
+    implementation(platform("education.cccp:workspace-bom:0.0.6"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -65,6 +65,12 @@ publishingConventions {
 }
 
 publishing {
+    publications.withType<MavenPublication> {
+        pom {
+            name.set("Document Gradle Plugin")
+            description.set("Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ.")
+        }
+    }
     repositories {
         mavenCentral()
     }

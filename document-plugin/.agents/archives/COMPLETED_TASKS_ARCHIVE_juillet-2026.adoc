@@ -50,3 +50,33 @@ les fichiers JSON consommables par runner-gradle N3 (`assembleCompositeContext`)
 *Tests* : 135 verts (90 unit + 23 functional + 22 cucumber), 0 failures (+32 vs session 008).
 
 *EPIC* : DOC-6 ✅ TERMINÉ
+
+=== Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal
+
+*DOC-7* : Mise en place de la publication Maven Central (nmcp) + workflow CI GitHub Actions.
+
+*Étapes réalisées* (7 baby-steps) :
+. BOM alignment : workspace-bom 0.0.4 → 0.0.6 dans build.gradle.kts (pré-requis nmcp releases)
+. nmcp settings : plugin `com.gradleup.nmcp.settings` 1.5.0 + foojay-resolver + nmcpSettings centralPortal dans settings.gradle.kts
+. POM name/description : ajout `publications.withType<MavenPublication> { pom { name.set / description.set } }` (convention plugin gère developers/scm/license)
+. publishToMavenLocal : vérifié — artefact signé GPG + POM conforme (Apache-2.0, cccp-education, scm, BOM 0.0.6)
+. Workflow CI : `.github/workflows/test.yml` créé (JDK 24, build + publishToMavenLocal)
+. Tests BDD/functional : scénario Cucumber @doc7 + functional test generatePomFileForPluginMavenPublication
+. check : 137 tests PASS, zéro régression
+
+*Fichiers modifiés* (7) :
+- `document-plugin/settings.gradle.kts` — nmcp settings (foojay + nmcpSettings 1.5.0)
+- `document-plugin/build.gradle.kts` — BOM 0.0.6 + POM name/description
+- `.github/workflows/test.yml` — workflow CI (nouveau)
+- `document-plugin/src/test/resources/features/document.feature` — scénario DOC-7
+- `document-plugin/src/test/scenarios/document/scenarios/DocumentSteps.kt` — 4 steps POM
+- `document-plugin/src/test/scenarios/document/scenarios/DocumentWorld.kt` — helper publishable + generatedPomFile
+- `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — test POM
+
+*Pré-requis DAG vérifiés* : workspace-bom 0.0.6, i18n-contracts 0.0.2, opencode-session-contracts 0.0.2, planner-plugin 0.0.1, plantuml-plugin 0.0.1 — tous sur Central.
+
+*Publication effective* : NON exécutée (Règle 2). Commande prête : `./gradlew publishAllPublicationsToCentralPortal --no-daemon`
+
+*Tests* : 137 verts (90 unit + 23 functional + 24 cucumber), 0 failures (+2 vs session 010).
+
+*EPIC* : DOC-7 ✅ TERMINÉ

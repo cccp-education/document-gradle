@@ -1,14 +1,14 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 011
-:date: 2026-07-03
-:status: DOC-6 terminé (N3 runner integration, 135 tests) — prêt DOC-11 ou DOC-7
+:session: 012
+:date: 2026-07-04
+:status: DOC-7 terminé (CI + nmcp + POM, 137 tests) — prêt DOC-11
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 135 tests (90 unit + 22 cucumber + 23 functional), Gradle 9.6.1
+./gradlew check                        # 137 tests (90 unit + 24 cucumber + 23 functional), Gradle 9.6.1
 ./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
 cd ..
 ./gradlew tasks --group=document       # 8 tâches visibles depuis la racine consommateur dogfood
@@ -30,12 +30,11 @@ Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests)
 Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur (Gradle 9.6.1).
 Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests, +10).
 Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests, +24).
-Session 009 (2026-07-01) — CNV-6 + DOC-8 + i18n bridge (session intermédiaire).
+Session 009 (2026-07-03) — CNV-6 + DOC-8 + i18n bridge (session intermédiaire).
 Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests, +32).
+Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests, +2).
 
-== Objectif session 011 — DOC-11 (Pipeline Livre) ou DOC-7 (CI/Pub)
-
-=== Option A — DOC-11 Pipeline Livre (P1)
+== Objectif session 012 — DOC-11 (Pipeline Livre)
 
 Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publication.
 - Assembler les AsciiDoc OCRisés en un document unique (ordre des pages)
@@ -46,13 +45,7 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 - Tâche composite `bookPipeline` reproductible en une commande
 - US-DOC-11 critères : voir BACKLOG
 
-=== Option B — DOC-7 CI + Publication Maven Central / Plugin Portal (P3)
-
-- Publication nmcp (bundle Maven Central) — méthode standard workspace
-- CI workflow GitHub Actions (test + publish)
-- Voir EPIC PUB dans BACKLOG
-
-== Stack (rappel — 5 formats + enrichissement + theme + N3)
+== Stack (rappel — 5 formats + enrichissement + theme + N3 + publication)
 
 - **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
 - **asciidoctorj-pdf 2.3.23** : backend pdf
@@ -66,6 +59,7 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 - **DocumentRetrieveResult** : enveloppe N3 (source, entries, count, timestamp) + writeTo
 - **DocumentArtifactCollector** : scan outputDir → entries
 - **CollectDocumentRetrieveTask** : task Gradle (composite-context.json + metadata.json)
+- **nmcp 1.5.0** : publication Maven Central (publishAllPublicationsToCentralPortal)
 
 == Pattern de surcharge (rappel)
 
@@ -73,14 +67,14 @@ Pipeline complet : photos → OCR Codex → AsciiDoc → enrichissement → publ
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
 
-== Roadmap prioritaire (post DOC-6)
+== Roadmap prioritaire (post DOC-7)
 
 [cols="1,3,2]
 |===
 | EPIC | Description | Priorite
-| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 011
-| DOC-7 | CI + publication Maven Central / Plugin Portal | P3
+| DOC-11 | Pipeline livre Codex→Document (integration) | P1 — session 012
 | DOC-12 | DSL unifie `document { }` | P2
+| DOC-8 | Release notes — pipeline-contracts (MEM-2) à implémenter | P2
 |===
 
 == Règles absolues (rappel)

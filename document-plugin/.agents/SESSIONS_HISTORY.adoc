@@ -14,6 +14,7 @@
 | 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests (+24) | ✅ TERMINÉ
 | 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule) + DOC-8 i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 câblés, DocumentI18nBridge créé | ✅ TERMINÉ
 | 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINÉ
+| 011 | 2026-07-04 | feat | DOC-7 CI + Publication Maven Central / Plugin Portal — nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM, 137 tests (+2) | ✅ TERMINÉ
 |===
 
 ---

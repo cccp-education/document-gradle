@@ -16,6 +16,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new publishable document project")
+    fun createNewPublishableDocumentProject() {
+        world.createPublishableGradleProject()
+        assertThat(world.projectDir).exists()
+    }
+
     @Given("a new document project with fake LLM")
     fun createNewDocumentProjectWithFakeLlm() {
         world.createGradleProjectWithFakeLlm()
@@ -283,6 +289,38 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(composite).exists()
         val content = composite!!.readText()
         assertThat(content).contains("\"count\" : 0")
+    }
+
+    @Then("the generated POM should contain the Document Gradle Plugin name")
+    fun generatedPomShouldContainDocumentGradlePluginName() {
+        val pom = world.generatedPomFile()
+        assertThat(pom).exists()
+        val content = pom!!.readText()
+        assertThat(content).contains("Document Gradle Plugin")
+    }
+
+    @Then("the generated POM should contain the Apache-2.0 license")
+    fun generatedPomShouldContainApacheLicense() {
+        val pom = world.generatedPomFile()
+        assertThat(pom).exists()
+        val content = pom!!.readText()
+        assertThat(content).contains("Apache-2.0")
+    }
+
+    @Then("the generated POM should contain the cccp-education developer")
+    fun generatedPomShouldContainCccpEducationDeveloper() {
+        val pom = world.generatedPomFile()
+        assertThat(pom).exists()
+        val content = pom!!.readText()
+        assertThat(content).contains("cccp-education")
+    }
+
+    @Then("the generated POM should contain the scm connection")
+    fun generatedPomShouldContainScmConnection() {
+        val pom = world.generatedPomFile()
+        assertThat(pom).exists()
+        val content = pom!!.readText()
+        assertThat(content).contains("scm:git")
     }
 
     @After

@@ -169,3 +169,13 @@ Feature: Document plugin (DOC-1 stub + DOC-2 generation IA)
     Then the build should succeed
     And the composite context json file should exist
     And the composite context json should contain count zero
+
+  @doc7 @publishing
+  Scenario: generatePomFileForPluginMavenPublication produit un POM avec name description license et developers
+    Given a new publishable document project
+    When I am executing the task 'generatePomFileForPluginMavenPublication'
+    Then the build should succeed
+    And the generated POM should contain the Document Gradle Plugin name
+    And the generated POM should contain the Apache-2.0 license
+    And the generated POM should contain the cccp-education developer
+    And the generated POM should contain the scm connection

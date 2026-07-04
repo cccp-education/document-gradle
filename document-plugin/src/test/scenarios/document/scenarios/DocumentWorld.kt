@@ -27,6 +27,67 @@ class DocumentWorld {
         return dir
     }
 
+    fun createPublishableGradleProject(): File {
+        val dir = Files.createTempDirectory("doc-bdd-pub").toFile()
+        dir.resolve("settings.gradle.kts").writeText(
+            "rootProject.name = \"${dir.name}\"\n"
+        )
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+                `java-gradle-plugin`
+                `maven-publish`
+            }
+
+            group = "education.cccp"
+            version = "0.0.1"
+
+            gradlePlugin {
+                plugins {
+                    create("document") {
+                        id = "education.cccp.document"
+                        implementationClass = "document.DocumentPlugin"
+                        displayName = "Document Gradle Plugin"
+                        description = "Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ."
+                    }
+                }
+                website.set("https://github.com/cccp-education/document-gradle/")
+                vcsUrl.set("https://github.com/cccp-education/document-gradle.git")
+            }
+
+            publishing {
+                publications.withType<MavenPublication> {
+                    pom {
+                        name.set("Document Gradle Plugin")
+                        description.set("Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ.")
+                        developers {
+                            developer {
+                                id.set("cccp-education")
+                                name.set("CCCP Education")
+                                email.set("cccp@cccp.education")
+                            }
+                        }
+                        licenses {
+                            license {
+                                name.set("Apache-2.0")
+                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                            }
+                        }
+                        scm {
+                            connection.set("scm:git:git://github.com/cccp-education/document-gradle.git")
+                            developerConnection.set("scm:git:ssh://github.com/cccp-education/document-gradle.git")
+                            url.set("https://github.com/cccp-education/document-gradle.git")
+                        }
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
     fun createGradleProjectWithFakeLlm(existingOutput: Boolean = false): File {
         val dir = Files.createTempDirectory("doc-bdd-fake").toFile()
         dir.resolve("settings.gradle.kts").writeText(
@@ -417,6 +478,11 @@ class DocumentWorld {
     fun compositeContextJsonFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/composite-context.json")
+    }
+
+    fun generatedPomFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/publications/pluginMaven/pom-default.xml")
     }
 
     fun executeGradle(vararg tasks: String): BuildResult {

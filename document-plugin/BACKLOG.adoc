@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-03 (session 010 — DOC-6 N3 runner-gradle integration, 135 tests)
+_Date revision_ : 2026-07-04 (session 011 — DOC-7 CI + Publication Maven Central / Plugin Portal, 137 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''

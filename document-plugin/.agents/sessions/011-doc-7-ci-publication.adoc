@@ -1,0 +1,58 @@
+= Session 011 — DOC-7 CI + Publication Maven Central / Plugin Portal
+:date: 2026-07-04
+:epic: DOC-7
+:status: ✅ TERMINÉ
+:tests: 137 (90 unit + 23 functional + 24 cucumber), +2 vs session 010
+
+== Objectif
+
+Mettre en place la publication Maven Central (nmcp) + le workflow CI GitHub Actions
+pour document-gradle, selon la méthode standard workspace (bakery/plantuml pattern).
+
+== Méthode baby-step DDD/TDD/BDD
+
+DOC-7 est un EPIC de configuration/infra, pas un EPIC métier avec logique DDD.
+La pyramide de tests s'adapte :
+- BDD : scénario Cucumber validant le POM généré (name, license, developers, scm)
+- Functional : test GradleTestKit validant generatePomFileForPluginMavenPublication
+- Pas de TDD unit (pas de logique métier nouvelle)
+
+== Étapes réalisées
+
+. *Step 1 — BOM alignment* : workspace-bom 0.0.4 → 0.0.6 dans build.gradle.kts (pré-requis nmcp releases)
+. *Step 2 — nmcp settings* : plugin `com.gradleup.nmcp.settings` 1.5.0 + foojay-resolver + nmcpSettings centralPortal dans settings.gradle.kts
+. *Step 3 — POM name/description* : ajout `publications.withType<MavenPublication> { pom { name.set / description.set } }` dans build.gradle.kts (le convention plugin gère déjà developers/scm/license)
+. *Step 4 — publishToMavenLocal* : vérifié — artefact signé GPG + POM conforme (Apache-2.0, cccp-education developer, scm, BOM 0.0.6, dépendances releases)
+. *Step 5 — Workflow CI* : `.github/workflows/test.yml` créé (JDK 24, build + publishToMavenLocal)
+. *Step 6 — Tests BDD/functional* :
+  * Scénario Cucumber `@doc7 @publishing` : generatePomFileForPluginMavenPublication produit un POM avec name/license/developers/scm
+  * Test functional `generatePomFileForPluginMavenPublication produces a POM with name description license developers and scm`
+  * Helper `createPublishableGradleProject()` dans DocumentWorld (applique java-gradle-plugin + maven-publish + POM manuel)
+. *Step 7 — check* : 137 tests PASS, zéro régression
+
+== Fichiers modifiés
+
+. `document-plugin/settings.gradle.kts` — nmcp settings (foojay + nmcpSettings 1.5.0)
+. `document-plugin/build.gradle.kts` — BOM 0.0.6 + POM name/description
+. `.github/workflows/test.yml` — workflow CI (JDK 24, build + publishToMavenLocal)
+. `document-plugin/src/test/resources/features/document.feature` — scénario DOC-7
+. `document-plugin/src/test/scenarios/document/scenarios/DocumentSteps.kt` — 4 steps POM
+. `document-plugin/src/test/scenarios/document/scenarios/DocumentWorld.kt` — helper publishable + generatedPomFile
+. `document-plugin/src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — test POM
+
+== Pré-requis vérifiés (ordre DAG)
+
+. workspace-bom 0.0.6 ✅ sur Central
+. i18n-contracts 0.0.2 ✅ sur Central
+. opencode-session-contracts 0.0.2 ✅ sur Central
+. planner-plugin 0.0.1 ✅ sur Central (compileOnly)
+. plantuml-plugin 0.0.1 ✅ sur Central (compileOnly)
+
+== Publication effective
+
+La publication effective sur Maven Central n'a PAS été exécutée (Règle 2 — INTERDICTION FORMELLE sans permission).
+La commande prête : `./gradlew publishAllPublicationsToCentralPortal --no-daemon`
+
+== Prochaine session
+
+DOC-11 Pipeline Livre Codex→Document (P1) — photos → OCR → AsciiDoc → enrichissement → publication multi-format.

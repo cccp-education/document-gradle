@@ -1,10 +1,10 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-07-03
-:session: 010
+:date: 2026-07-04
+:session: 011
 
-== Pyramide de tests — Session 010 (DOC-6 N3 runner-gradle integration)
+== Pyramide de tests — Session 011 (DOC-7 CI + Publication Maven Central / Plugin Portal)
 
-[cols="2,1,1,3"]
+[cols="2,1,1,3]
 |===
 | Couche | Tests | Status | Fichier
 
@@ -16,15 +16,15 @@
 | Functional (GradleTestKit)
 | 23
 | ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt`
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+1 : generatePomFileForPluginMavenPublication POM conforme)
 
 | Cucumber BDD (acceptance)
-| 22
+| 24
 | ✅ PASS
-| `src/test/resources/features/document.feature`
+| `src/test/resources/features/document.feature` (+1 : @doc7 @publishing generatePomFileForPluginMavenPublication)
 |===
 
-**Total : 135 tests, 0 échec.** (+32 par rapport à session 008 — DOC-6 N3 runner-gradle integration)
+**Total : 137 tests, 0 échec.** (+2 par rapport à session 010 — DOC-7 CI + Publication)
 
 == Détail unit (62)
 
