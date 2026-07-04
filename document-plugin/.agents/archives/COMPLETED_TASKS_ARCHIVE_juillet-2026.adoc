@@ -124,3 +124,52 @@ codex-gradle.
 *Tests* : 155 verts (100 unit + 27 functional + 28 cucumber), 0 failures (+18 vs session 011).
 
 *EPIC* : DOC-11 ✅ TERMINÉ
+
+=== Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }`
+
+*DOC-12* : Consolidation des blocs `book { }` et `theme { }` dans un DSL
+`document { }` cohérent avec `source`, `enrich`, `theme`, `outputs`,
+`metadata`. Sérialisation de la configuration en `document-config.json`
+(contrat N3 runner-gradle).
+
+*Nouveaux fichiers main* (9) :
+- `DocumentEnrichConfig.kt` — value object 3 toggles enrichment (plantuml, images, passthrough)
+- `DocumentEnrichDsl.kt` — nested DSL block `enrich { }` (classe concrète, val Property)
+- `DocumentOutputs.kt` — value object 5 toggles formats + enabledFormats()
+- `DocumentOutputsDsl.kt` — nested DSL block `outputs { }`
+- `DocumentFrontMatter.kt` — value object title/author/language + toAsciiDocAttributes()
+- `DocumentMetadataDsl.kt` — nested DSL block `metadata { }`
+- `DocumentPipelineConfig.kt` — value object unifié (source + enrich + outputs + theme + frontMatter)
+- `DocumentConfigSerializer.kt` — sérialisation → document-config.json (Jackson)
+- `SerializeDocumentConfigTask.kt` — task Gradle `serializeDocumentConfig`
+
+*Nouveaux fichiers test* (4) :
+- `DocumentEnrichConfigTest.kt` — 6 tests unit
+- `DocumentOutputsTest.kt` — 4 tests unit
+- `DocumentFrontMatterTest.kt` — 5 tests unit
+- `DocumentConfigSerializerTest.kt` — 4 tests unit
+
+*Fichiers modifiés* (5) :
+- `DocumentExtension.kt` — +3 nested DSL blocks (enrich, outputs, metadata) + 4 methods `Action<T>` (org.gradle.api.Action)
+- `DocumentPlugin.kt` — initNested via ObjectFactory + conventions + task serializeDocumentConfig + miroir flat properties
+- `document.feature` — +6 scénarios @doc12 (enrich block, outputs block, metadata block, full DSL, serialize + defaults)
+- `DocumentSteps.kt` — +4 Given steps + 8 Then steps (document-config.json checks)
+- `DocumentWorld.kt` — +4 factory methods (unified DSL blocks) + documentConfigJsonFile helper
+
+*Méthode* : 7 baby-steps DDD/TDD/BDD, pyramide unit -> functional -> cucumber.
+- BDD : 6 scénarios @doc12 en anglais (enrich, outputs, metadata, full DSL, serialize, defaults)
+- DDD : 5 value objects (DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer)
+- TDD : Red -> Green pour chaque value object, 1 test à la fois
+
+*Décision technique* — Nested DSL via `org.gradle.api.Action<T>` :
+- Les `fun interface` SAM ne génèrent pas de lambdas à receiver en Kotlin DSL
+- `fun enrich(action: Action<DocumentEnrichDsl>)` (standard Gradle) fonctionne
+- Classes DSL concrètes (non-abstract) avec `val` initialisés via `project.objects.property()` dans le plugin
+- Rétro-compatibilité : flat properties `enrichPlantUml`, `formats` conservées, miroir des nested
+
+*Contrat N3* : `document-config.json` avec 5 clés top-level (source, enrich, outputs, theme, metadata).
+Sérialisation Jackson INDENT_OUTPUT, valeurs null pour theme files absents.
+
+*Tests* : 180 verts (119 unit + 27 functional + 34 cucumber), 0 failures (+25 vs session 012).
+
+*EPIC* : DOC-12 ✅ TERMINÉ

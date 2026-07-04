@@ -112,6 +112,30 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with a unified DSL enrich block")
+    fun createNewDocumentProjectWithUnifiedEnrichBlock() {
+        world.createGradleProjectWithUnifiedEnrichBlock()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a unified DSL outputs block")
+    fun createNewDocumentProjectWithUnifiedOutputsBlock() {
+        world.createGradleProjectWithUnifiedOutputsBlock()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a unified DSL metadata block")
+    fun createNewDocumentProjectWithUnifiedMetadataBlock() {
+        world.createGradleProjectWithUnifiedMetadataBlock()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a full unified DSL document block")
+    fun createNewDocumentProjectWithFullUnifiedDslBlock() {
+        world.createGradleProjectWithFullUnifiedDslBlock()
+        assertThat(world.projectDir).exists()
+    }
+
     @When("I am executing the task {string}")
     fun executeTask(taskName: String) {
         world.executeGradle(taskName)
@@ -373,6 +397,79 @@ class DocumentSteps(private val world: DocumentWorld) {
         val content = book!!.readText()
         assertThat(content).contains("image::001-page.png[]")
         assertThat(content).contains("image::002-page.png[]")
+    }
+
+    // --- DOC-12 unified DSL then steps ---
+
+    @Then("the document config json file should exist")
+    fun documentConfigJsonFileShouldExist() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+    }
+
+    @Then("the document config json should contain the source filename")
+    fun documentConfigJsonShouldContainSourceFilename() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("livre.adoc")
+    }
+
+    @Then("the document config json should contain the enrich flags")
+    fun documentConfigJsonShouldContainEnrichFlags() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"plantuml\" : true")
+        assertThat(content).contains("\"images\" : true")
+        assertThat(content).contains("\"passthrough\" : true")
+    }
+
+    @Then("the document config json should contain the outputs flags")
+    fun documentConfigJsonShouldContainOutputsFlags() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"html\" : true")
+        assertThat(content).contains("\"pdf\" : true")
+        assertThat(content).contains("\"epub\" : true")
+    }
+
+    @Then("the document config json should contain the metadata title")
+    fun documentConfigJsonShouldContainMetadataTitle() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("Mon Livre")
+        assertThat(content).contains("\"language\" : \"fr\"")
+    }
+
+    @Then("the document config json should contain default enrich flags all false")
+    fun documentConfigJsonShouldContainDefaultEnrichFlagsAllFalse() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"plantuml\" : false")
+        assertThat(content).contains("\"images\" : false")
+        assertThat(content).contains("\"passthrough\" : false")
+    }
+
+    @Then("the document config json should contain default outputs html only")
+    fun documentConfigJsonShouldContainDefaultOutputsHtmlOnly() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"html\" : true")
+        assertThat(content).contains("\"pdf\" : false")
+        assertThat(content).contains("\"epub\" : false")
+    }
+
+    @Then("the document config json should contain default metadata language fr")
+    fun documentConfigJsonShouldContainDefaultMetadataLanguageFr() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"language\" : \"fr\"")
     }
 
     @After

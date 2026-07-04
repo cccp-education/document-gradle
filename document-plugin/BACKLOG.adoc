@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-04 (session 012 — DOC-11 Book Pipeline Codex -> Document, 155 tests)
+_Date revision_ : 2026-07-04 (session 013 — DOC-12 DSL unifié `document { }`, 180 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
@@ -263,6 +263,7 @@ par runner-gradle N3.
 
 *Priorite* : P2
 *EPIC* : DOC-12
+*Statut* : ✅ TERMINÉ (session 013)
 
 .Valeur
 Un bloc de configuration unique `document { }` dans `build.gradle.kts`
@@ -270,15 +271,23 @@ controle tout le pipeline : source, enrichissement, theme, formats de
 sortie, metadata N3.
 
 .Criteres d'acceptation
-- DSL `document { }` expose :
-  * `source = file("livre.adoc")` — document source
-  * `enrich { plantuml = true; images = true; passthrough = true }`
-  * `theme { pdf = "theme.yml"; html = "style.css"; epub = "epub.css" }`
-  * `outputs { html = true; pdf = true; epub = true }`
-  * `metadata { title = "..."; author = "..."; language = "fr" }`
-- La configuration est serialisable en `document-config.json`
-- Les valeurs par defaut sont documentees
-- Le DSL est extensible par les boroughs consommateurs (runner, bakery)
+- ✅ DSL `document { }` expose :
+  * `source.set(file("livre.adoc"))` — document source
+  * `enrich { plantuml.set(true); images.set(true); passthrough.set(true) }`
+  * `theme { pdfTheme.set(file("theme.yml")); htmlStylesheet.set(file("style.css")); epubStylesheet.set(file("epub.css")) }`
+  * `outputs { html.set(true); pdf.set(true); epub.set(true) }`
+  * `metadata { title.set("..."); author.set("..."); language.set("fr") }`
+- ✅ La configuration est serialisable en `document-config.json` (task `serializeDocumentConfig`)
+- ✅ Les valeurs par defaut sont documentees (enrich false, outputs html only, language fr)
+- ✅ Le DSL est extensible par les boroughs consommateurs (runner, bakery)
+- ✅ Nested blocks via `fun enrich(action: Action<DocumentEnrichDsl>)` (org.gradle.api.Action)
+- ✅ Classes DSL concrètes avec `val` initialisés via `project.objects.property()`
+
+.Decision technique (session 013) — Nested DSL via `org.gradle.api.Action<T>`
+- **Option retenue** : `fun enrich(action: Action<DocumentEnrichDsl>)` (standard Gradle)
+- Les `fun interface` SAM ne génèrent pas de lambdas à receiver en Kotlin DSL
+- Classes DSL concrètes (non-abstract) avec `val` initialisés dans le plugin via ObjectFactory
+- Rétro-compatibilité : flat properties `enrichPlantUml`, `formats` conservées, miroir des nested
 
 '''
 == Dette Technique

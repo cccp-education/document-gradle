@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-04 (session 012 — DOC-11 Book Pipeline Codex -> Document, 155 tests)
-_Session terminee_ : 012 — DOC-11 Book Pipeline (BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, +18 tests)
-_Prochaine session_ : 013 — DOC-12 DSL unifié `document { }`
+_Derniere mise a jour_ : 2026-07-04 (session 013 — DOC-12 DSL unifié `document { }`, 180 tests)
+_Session terminee_ : 013 — DOC-12 DSL unifié (DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer, 3 nested DSL blocks, SerializeDocumentConfigTask, +25 tests)
+_Prochaine session_ : 014 — DOC-8 Release Notes (pipeline-contracts MEM-2) ou extension DOC-12 (block `book { }`)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -89,7 +89,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
 | DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | ✅ TERMINÉ (session 012) | P1
-| DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | 📋 CADRAGE (US-DOC-12) | P2
+| DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata | ✅ TERMINÉ (session 013) | P2
+| DOC-8 | Release Notes Pipeline — git log → AsciiDoc (MEM-2 pipeline-contracts à implémenter) | 🔄 EN COURS | P2
 |===
 
 '''
@@ -136,6 +137,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINE
 | 011 | 2026-07-04 | feat | DOC-7 CI + Publication Maven Central / Plugin Portal — nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM, 137 tests (+2) | ✅ TERMINE
 | 012 | 2026-07-04 | feat | DOC-11 Book Pipeline Codex -> Document — BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, 155 tests (+18), baby-step DDD/TDD/BDD | ✅ TERMINE
+| 013 | 2026-07-04 | feat | DOC-12 DSL unifié `document { }` — DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer, 3 nested DSL blocks (enrich/outputs/metadata), SerializeDocumentConfigTask, document-config.json N3 contract, 180 tests (+25), baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''
@@ -156,7 +158,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
 | Chiraq 🟤 | readme-gradle | N2 | 003
-| New Orleans 🟢 | document-gradle | N2 | 008
+| New Orleans 🟢 | document-gradle | N2 | 013
 | Atlanta | agile-gradle | N4 | 000
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000

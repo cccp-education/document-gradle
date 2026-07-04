@@ -1,37 +1,44 @@
 package document
 
+import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Nested
 
 /**
- * Extension Gradle `document { }` — point d'entree du DSL documentaire.
+ * Extension Gradle `document { }` — point d'entree du DSL documentaire (DOC-12 unified).
  *
  * Pattern : abstract class + Property<T> lazy (pattern planner/codebase).
  * Ordre de precedent : CLI (-P) > DSL (block document { }) > convention (defaut).
  *
- * Usage DSL :
+ * DOC-12 — Unified DSL adds three nested blocks on top of the legacy flat
+ * properties (kept for backward compatibility with DOC-9/DOC-10/DOC-11 wiring):
+ *
  * ```
  * document {
  *     source.set(file("src/docs/livre.adoc"))
- *     outputDir.set(layout.buildDirectory.dir("docs/document"))
- *     formats.set(listOf(DocumentFormat.HTML, DocumentFormat.PDF))
- *     enrichPlantUml.set(true)
+ *     enrich {
+ *         plantuml.set(true)
+ *         images.set(true)
+ *         passthrough.set(true)
+ *     }
+ *     outputs {
+ *         html.set(true)
+ *         pdf.set(true)
+ *         epub.set(true)
+ *     }
  *     theme {
- *         pdfTheme.set(file("talaria-theme.yml"))
- *         htmlStylesheet.set(file("talaria.css"))
- *         epubStylesheet.set(file("epub.css"))
- *         logo.set(file("logo.png"))
+ *         pdfTheme.set(file("theme.yml"))
+ *         htmlStylesheet.set(file("style.css"))
+ *     }
+ *     metadata {
+ *         title.set("Mon Livre")
+ *         author.set("Auteur")
+ *         language.set("fr")
  *     }
  * }
- * ```
- *
- * Usage CLI (priorite max) :
- * ```
- * ./gradlew generateDocument -Pdocument.source=src/docs/livre.adoc
- * ./gradlew convertDocumentToPdf -Pdocument.pdfTheme=theme.yml
- * ./gradlew enrichDocument -Pdocument.enrichPlantUml=true
  * ```
  */
 abstract class DocumentExtension {
@@ -73,26 +80,63 @@ abstract class DocumentExtension {
     abstract val bookAuthor: Property<String>
 
     /**
-     * Nested DSL block `theme { }` for visual theming (DOC-10).
-     *
-     * Usage:
-     * ```
-     * document {
-     *     theme {
-     *         pdfTheme.set(file("talaria-theme.yml"))
-     *         htmlStylesheet.set(file("talaria.css"))
-     *         epubStylesheet.set(file("epub.css"))
-     *         logo.set(file("logo.png"))
-     *     }
-     * }
-     * ```
+     * Nested DSL block `enrich { }` (DOC-12). Concrete val initialised in the
+     * plugin registration via the [org.gradle.api.model.ObjectFactory]. The
+     * concrete [DocumentEnrichDsl] exposes its properties as `val` so the
+     * Kotlin DSL resolves `plantuml`, `images`, `passthrough` inside the
+     * block without managed-type accessor generation.
      */
-    fun theme(action: Action) {
+    lateinit var enrich: DocumentEnrichDsl
+        private set
+
+    /**
+     * Nested DSL block `outputs { }` (DOC-12).
+     */
+    lateinit var outputs: DocumentOutputsDsl
+        private set
+
+    /**
+     * Nested DSL block `metadata { }` (DOC-12).
+     */
+    lateinit var metadata: DocumentMetadataDsl
+        private set
+
+    internal fun initNested(
+        enrich: DocumentEnrichDsl,
+        outputs: DocumentOutputsDsl,
+        metadata: DocumentMetadataDsl,
+    ) {
+        this.enrich = enrich
+        this.outputs = outputs
+        this.metadata = metadata
+    }
+
+    /**
+     * Nested DSL block `theme { }` for visual theming (DOC-10).
+     */
+    fun theme(action: Action<DocumentExtension>) {
         action.execute(this)
     }
 
-    fun interface Action {
-        fun execute(ext: DocumentExtension)
+    /**
+     * Nested DSL block `enrich { }` (DOC-12).
+     */
+    fun enrich(action: Action<DocumentEnrichDsl>) {
+        action.execute(enrich)
+    }
+
+    /**
+     * Nested DSL block `outputs { }` (DOC-12).
+     */
+    fun outputs(action: Action<DocumentOutputsDsl>) {
+        action.execute(outputs)
+    }
+
+    /**
+     * Nested DSL block `metadata { }` (DOC-12).
+     */
+    fun metadata(action: Action<DocumentMetadataDsl>) {
+        action.execute(metadata)
     }
 
     fun formats(vararg formats: DocumentFormat) {

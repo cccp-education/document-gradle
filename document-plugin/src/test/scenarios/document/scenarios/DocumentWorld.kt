@@ -543,6 +543,129 @@ class DocumentWorld {
         return dir.resolve("build/docs/document/book.adoc")
     }
 
+    // --- DOC-12 unified DSL helpers ---
+
+    fun createGradleProjectWithUnifiedEnrichBlock(): File {
+        val dir = Files.createTempDirectory("doc-bdd-enrich").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                enrich {
+                    plantuml.set(true)
+                    images.set(true)
+                    passthrough.set(true)
+                }
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText("= Document Enrich\n\nContenu.\n")
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithUnifiedOutputsBlock(): File {
+        val dir = Files.createTempDirectory("doc-bdd-out").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                outputs {
+                    html.set(true)
+                    pdf.set(true)
+                    epub.set(true)
+                }
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText("= Document Outputs\n\nContenu.\n")
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithUnifiedMetadataBlock(): File {
+        val dir = Files.createTempDirectory("doc-bdd-meta").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+                metadata {
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                    language.set("fr")
+                }
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText("= Document Metadata\n\nContenu.\n")
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithFullUnifiedDslBlock(): File {
+        val dir = Files.createTempDirectory("doc-bdd-full").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("livre.adoc"))
+                enrich {
+                    plantuml.set(true)
+                    images.set(true)
+                    passthrough.set(true)
+                }
+                outputs {
+                    html.set(true)
+                    pdf.set(true)
+                    epub.set(true)
+                }
+                theme {
+                    pdfTheme.set(file("theme.yml"))
+                    htmlStylesheet.set(file("style.css"))
+                    epubStylesheet.set(file("epub.css"))
+                    logo.set(file("logo.png"))
+                }
+                metadata {
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                    language.set("fr")
+                }
+            }
+            """.trimIndent()
+        )
+        dir.resolve("livre.adoc").writeText("= Mon Livre\n\nContenu.\n")
+        dir.resolve("theme.yml").writeText("extends: default\npage:\n  size: A4\n")
+        dir.resolve("style.css").writeText("body { font-family: serif; }")
+        dir.resolve("epub.css").writeText("body { margin: 0; }")
+        dir.resolve("logo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        projectDir = dir
+        return dir
+    }
+
+    fun documentConfigJsonFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document/document-config.json")
+    }
+
     fun cleanup() {
         projectDir?.deleteRecursively()
         projectDir = null

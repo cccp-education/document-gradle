@@ -1,0 +1,132 @@
+= Session 013 — DOC-12 DSL unifié `document { }`
+:session: 013
+:date: 2026-07-04
+:epic: DOC-12
+:status: ✅ TERMINÉ
+:tests: 180 (119 unit + 27 functional + 34 cucumber)
+
+== Objectif
+
+Consolider les blocs `book { }` et `theme { }` dans un DSL `document { }`
+cohérent avec `source`, `enrich`, `theme`, `outputs`, `metadata`. Sérialiser
+la configuration en `document-config.json` (contrat N3 runner-gradle).
+
+== Méthode — baby-step DDD/TDD/BDD
+
+. **BDD** : 7 nouveaux scénarios `@doc12` dans `document.feature`
+  (enrich block, outputs block, metadata block, full DSL, serialize + defaults)
+. **DDD** : 5 nouveaux value objects
+  `DocumentEnrichConfig`, `DocumentOutputs`, `DocumentFrontMatter`,
+  `DocumentPipelineConfig`, `DocumentConfigSerializer`
+. **TDD** : Red → Green pour chaque value object, 1 test à la fois
+. **Pyramide** : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)
+
+== Livrables
+
+=== Nouveaux fichiers main (10)
+
+|===
+| Fichier | Rôle
+| `DocumentEnrichConfig.kt` | Value object — 3 toggles enrichment
+| `DocumentEnrichDsl.kt` | Nested DSL block `enrich { }`
+| `DocumentOutputs.kt` | Value object — 5 toggles formats + enabledFormats()
+| `DocumentOutputsDsl.kt` | Nested DSL block `outputs { }`
+| `DocumentFrontMatter.kt` | Value object — title/author/language + toAsciiDocAttributes()
+| `DocumentMetadataDsl.kt` | Nested DSL block `metadata { }`
+| `DocumentPipelineConfig.kt` | Value object unifié — source + enrich + outputs + theme + frontMatter
+| `DocumentConfigSerializer.kt` | Sérialisation → `document-config.json` (Jackson)
+| `SerializeDocumentConfigTask.kt` | Task Gradle `serializeDocumentConfig`
+|===
+
+=== Nouveaux fichiers test (4)
+
+|===
+| Fichier | Tests
+| `DocumentEnrichConfigTest.kt` | 6
+| `DocumentOutputsTest.kt` | 4
+| `DocumentFrontMatterTest.kt` | 5
+| `DocumentConfigSerializerTest.kt` | 4
+|===
+
+=== Fichiers modifiés
+
+|===
+| Fichier | Modification
+| `DocumentExtension.kt` | +3 nested DSL blocks (`enrich`, `outputs`, `metadata`) + 4 methods `Action<T>`
+| `DocumentPlugin.kt` | Initialisation nested via ObjectFactory + conventions + task `serializeDocumentConfig`
+| `document.feature` | +7 scénarios `@doc12`
+| `DocumentWorld.kt` | +4 factory methods + documentConfigJsonFile()
+| `DocumentSteps.kt` | +4 Given steps + 8 Then steps
+|===
+
+== DSL unifié — exemple
+
+```kotlin
+document {
+    source.set(file("livre.adoc"))
+    enrich {
+        plantuml.set(true)
+        images.set(true)
+        passthrough.set(true)
+    }
+    outputs {
+        html.set(true)
+        pdf.set(true)
+        epub.set(true)
+    }
+    theme {
+        pdfTheme.set(file("theme.yml"))
+        htmlStylesheet.set(file("style.css"))
+    }
+    metadata {
+        title.set("Mon Livre")
+        author.set("Auteur")
+        language.set("fr")
+    }
+}
+```
+
+== Contrat N3 — document-config.json
+
+```json
+{
+  "source"  : "livre.adoc",
+  "enrich"  : { "plantuml": true, "images": true, "passthrough": true },
+  "outputs" : { "html": true, "pdf": true, "epub": true, "docbook": false, "manpage": false },
+  "theme"   : { "pdfTheme": "...", "htmlStylesheet": "...", "epubStylesheet": "...", "logo": "..." },
+  "metadata": { "title": "Mon Livre", "author": "Auteur", "language": "fr" }
+}
+```
+
+== Décision technique — Nested DSL via `org.gradle.api.Action<T>`
+
+Les nested blocks `enrich { }`, `outputs { }`, `metadata { }` utilisent
+`fun enrich(action: Action<DocumentEnrichDsl>)` (standard Gradle) plutôt que
+des `fun interface` SAM — c'est la signature que le Gradle Kotlin DSL attend
+pour générer les lambdas à receiver. Les classes DSL sont concrètes avec des
+`val` initialisés via `project.objects.property()` dans le plugin, pour
+permettre la résolution des propriétés (`plantuml.set(true)`) dans le block.
+
+== Tests — 180 (155 → 180, +25)
+
+- Unit : 100 → 119 (+19)
+- Functional : 27 (inchangé)
+- Cucumber : 28 → 34 (+6 scénarios)
+
+Tous les tests passent (`./gradlew check` BUILD SUCCESSFUL).
+
+== Règles absolues respectées
+
+. Aucun commit sans permission
+. Aucun publish sans permission
+. DAG N2 respecté
+. Zéro secret/token
+. DOCUMENT CONSOMME ASCIIDOC — lecture seule
+. BOUNDARY CODEX — pas de dépendance vers codex
+. Code en anglais
+
+== Prochaine session
+
+DOC-8 Release Notes — pipeline-contracts (MEM-2) à implémenter dans workspace-bom,
+puis câblage dans document-gradle. Alternativement, DOC-12 extension (DSL `book { }`
+intégré au block unifié).

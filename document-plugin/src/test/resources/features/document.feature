@@ -217,3 +217,48 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the converted HTML file should exist
     And the converted PDF file should exist
     And the converted EPUB file should exist
+
+  @doc12 @dsl
+  Scenario: The document DSL accepts an enrich block with plantuml images and passthrough flags
+    Given a new document project with a unified DSL enrich block
+    When I am executing the task 'tasks'
+    Then the build should succeed
+
+  @doc12 @dsl
+  Scenario: The document DSL accepts an outputs block with html pdf and epub flags
+    Given a new document project with a unified DSL outputs block
+    When I am executing the task 'tasks'
+    Then the build should succeed
+
+  @doc12 @dsl
+  Scenario: The document DSL accepts a metadata block with title author and language
+    Given a new document project with a unified DSL metadata block
+    When I am executing the task 'tasks'
+    Then the build should succeed
+
+  @doc12 @dsl
+  Scenario: The document DSL accepts the full unified document block
+    Given a new document project with a full unified DSL document block
+    When I am executing the task 'tasks'
+    Then the build should succeed
+
+  @doc12 @serialization
+  Scenario: The serializeDocumentConfig task produces a document-config json file
+    Given a new document project with a full unified DSL document block
+    When I am executing the task 'serializeDocumentConfig'
+    Then the build should succeed
+    And the document config json file should exist
+    And the document config json should contain the source filename
+    And the document config json should contain the enrich flags
+    And the document config json should contain the outputs flags
+    And the document config json should contain the metadata title
+
+  @doc12 @serialization
+  Scenario: The document config json contains default values when no DSL block is configured
+    Given a new document project
+    When I am executing the task 'serializeDocumentConfig'
+    Then the build should succeed
+    And the document config json file should exist
+    And the document config json should contain default enrich flags all false
+    And the document config json should contain default outputs html only
+    And the document config json should contain default metadata language fr
