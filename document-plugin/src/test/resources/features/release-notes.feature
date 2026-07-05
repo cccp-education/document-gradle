@@ -26,3 +26,25 @@ Feature: Release Notes Pipeline (DOC-8 — git log → AsciiDoc)
     When I am executing the task 'releaseNotesGenerate'
     Then the build should succeed
     And the release notes adoc should have the version 'SNAPSHOT' in its filename
+
+  Scenario: releaseNotesGenerate produces a Markdown file when rendererType is markdown
+    Given a new document project with a git repository and markdown renderer
+    And a conventional commit "feat: initial feature"
+    And a git tag "v1.0.0"
+    And a conventional commit "fix(api): correct bug"
+    When I am executing the task 'releaseNotesGenerate'
+    Then the build should succeed
+    And the release notes markdown file should exist
+    And the release notes markdown should contain '# Release Notes'
+    And the release notes markdown should contain '## Corrections'
+
+  Scenario: releaseNotesGenerate uses custom category labels from the DSL
+    Given a new document project with a git repository and custom categories
+    And a conventional commit "feat: initial feature"
+    And a git tag "v1.0.0"
+    And a conventional commit "fix: bug fix"
+    And a conventional commit "chore: maintenance"
+    When I am executing the task 'releaseNotesGenerate'
+    Then the build should succeed
+    And the release notes adoc should contain '== Bug fixes'
+    And the release notes adoc should contain '== Custom chores label'

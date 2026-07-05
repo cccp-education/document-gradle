@@ -478,6 +478,18 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with a git repository and markdown renderer")
+    fun createNewDocumentProjectWithGitRepoAndMarkdownRenderer() {
+        world.createGradleProjectWithGitRepoAndMarkdownRenderer()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a git repository and custom categories")
+    fun createNewDocumentProjectWithGitRepoAndCustomCategories() {
+        world.createGradleProjectWithGitRepoAndCustomCategories()
+        assertThat(world.projectDir).exists()
+    }
+
     @Given("a conventional commit {string}")
     fun addConventionalCommit(message: String) {
         world.gitCommit(message)
@@ -507,6 +519,19 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(dir).exists()
         val files = dir!!.listFiles { _, name -> name.endsWith(".adoc") } ?: emptyArray()
         assertThat(files.any { it.name.contains(version) }).isTrue()
+    }
+
+    @Then("the release notes markdown file should exist")
+    fun releaseNotesMarkdownFileShouldExist() {
+        val file = world.releaseNotesMarkdownFile()
+        assertThat(file).exists()
+    }
+
+    @Then("the release notes markdown should contain {string}")
+    fun releaseNotesMarkdownShouldContain(text: String) {
+        val file = world.releaseNotesMarkdownFile()
+        assertThat(file).exists()
+        assertThat(file!!.readText()).contains(text)
     }
 
     @After

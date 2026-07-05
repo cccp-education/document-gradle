@@ -16,6 +16,9 @@
 | 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINÉ
 | 011 | 2026-07-04 | feat | DOC-7 CI + Publication Maven Central / Plugin Portal — nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM, 137 tests (+2) | ✅ TERMINÉ
 | 012 | 2026-07-04 | feat | DOC-11 Book Pipeline Codex -> Document — BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, 155 tests (+18), baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 013 | 2026-07-04 | feat | DOC-12 DSL unifié `document { }` — DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer, 3 nested DSL blocks, 180 tests (+25), baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 014 | 2026-07-05 | feat | DOC-8.1 Release Notes Pipeline — pipeline-contracts 0.0.2, ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesGenerateTask, DSL releaseNotes { }, 186 tests (+35 unit +4 functional +3 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 015 | 2026-07-05 | feat | DOC-8.2 Template configurable — MarkdownReleaseNotesRenderer, JsonReleaseNotesRenderer, GitReleaseNotesGenerator.configDriven, ReleaseNotesDsl rendererType+categories, CLI override, 257 tests (+31 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 |===
 
 ---
@@ -138,3 +141,47 @@ directe vers codex-gradle.
 - DSL nested `releaseNotes { }` pattern DOC-12 (classe concrète, val Property, fun action(Action<T>))
 - CLI override : -Pdocument.releaseNotesFromTag, -Pdocument.releaseNotesToTag, -Pdocument.releaseNotesVersion, -Pdocument.releaseNotesIncludeDownloads
 - @DisableCachingByDefault sur ReleaseNotesGenerateTask (git log non-déterministe)
+
+---
+
+== Session 015 (2026-07-05) — DOC-8.2 Template configurable
+
+**DOC-8.2** : Rendre le renderer de release notes sélectionnable
+(asciidoc/markdown/json) et les catégories custom via DSL.
+
+**Ubiquitous language (DDD)** :
+- `MarkdownReleaseNotesRenderer` — implémente ReleaseNotesRenderer, format markdown (#, ##)
+- `JsonReleaseNotesRenderer` — implémente ReleaseNotesRenderer, format json (schema stable machine-readable)
+- `GitReleaseNotesGenerator.configDriven` — factory activant la sélection dynamique par rendererType
+
+**Méthode baby-step TDD/BDD** : 6 baby-steps Red→Green, pyramide unit→functional→cucumber.
+1. MarkdownReleaseNotesRenderer (11 tests unit)
+2. JsonReleaseNotesRenderer (10 tests unit)
+3. GitReleaseNotesGenerator.configDriven + sélection renderer (4 tests unit)
+4. ReleaseNotesDsl rendererType + categories (6 tests unit)
+5. Functional tests markdown/json/categories/CLI override (4 tests)
+6. Cucumber scenarios markdown + custom categories (2 scénarios)
+
+**Nouveaux fichiers** : 2 main + 3 test + 0 feature (extension release-notes.feature)
+- MarkdownReleaseNotesRenderer (# Release Notes, ## catégorie, - msg (scope))
+- JsonReleaseNotesRenderer ({version, commits[], categories{}, includeDownloads?})
+- MarkdownReleaseNotesRendererTest, JsonReleaseNotesRendererTest, ReleaseNotesDslTest
+
+**Fichiers modifiés** :
+- GitReleaseNotesGenerator.kt (refactor constructeur privé + configDriven factory + extension fichier par format)
+- ReleaseNotesDsl.kt (+rendererType Property, +categories MapProperty)
+- ReleaseNotesGenerateTask.kt (+@Input rendererType, +@Input categories, configDriven)
+- DocumentPlugin.kt (initNested + conventions + CLI props releaseNotesRendererType/Categories + parseCategoriesCli)
+- ReleaseNotesFunctionalTest.kt (+4 tests)
+- DocumentWorld.kt (+2 factories markdown/custom categories +releaseNotesMarkdownFile)
+- DocumentSteps.kt (+2 Given +2 Then)
+- release-notes.feature (+2 scénarios)
+
+**Tests** : 257 verts (183 unit + 35 functional + 39 cucumber), 0 failures
+
+**Décisions techniques** :
+- Contrat N0 `ReleaseNotesGenerator.renderer` non-null → refactor constructeur privé + 2 constructeurs publics (compat ascendante) + companion `configDriven()`
+- Extension fichier de sortie déduite de `renderer.format` (md/json/adoc)
+- Categories custom : fallback config default si MapProperty vide (évite duplication défauts dans DSL)
+- CLI override : -Pdocument.releaseNotesRendererType, -Pdocument.releaseNotesCategories (format key=label,key2=label2)
+- Parser Conventional Commit rejette types non standards → custom categories ne mappent que sur types reconnus

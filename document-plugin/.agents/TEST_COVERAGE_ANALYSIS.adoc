@@ -1,30 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-07-04
-:session: 013
+:date: 2026-07-05
+:session: 015
 
-== Pyramide de tests — Session 013 (DOC-12 DSL unifié `document { }`)
+== Pyramide de tests — Session 015 (DOC-8.2 Template configurable)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié)
-| 119
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 3 renderers)
+| 183
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
 
 | Functional (GradleTestKit)
-| 27
+| 35
 | ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (inchangé)
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 34
+| 39
 | ✅ PASS
-| `src/test/resources/features/document.feature` (+6 : @doc12 enrich block, outputs block, metadata block, full DSL, serialize + defaults)
+| `src/test/resources/features/document.feature` + `src/test/resources/features/release-notes.feature` (+2 : markdown renderer, custom categories)
 |===
 
-**Total : 180 tests, 0 échec.** (+25 par rapport à session 012 — DOC-12 DSL unifié)
+**Total : 257 tests, 0 échec.** (+71 par rapport à session 014 — DOC-8.2 Template configurable)
 
 == Détail unit (62)
 
@@ -332,3 +332,65 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
   cucumber custom (binary results), pas un échec de test. Tous scénarios PASSED dans le log.
 - `./gradlew test functionalTest` : 22s, succès. Cucumber via `./gradlew cucumberTest` séparé.
 - pipeline-contracts 0.0.2 dans ~/.m2 (MEMPHIS MEM-2 publié session 013 workspace-bom)
+
+---
+
+== Session 015 — DOC-8.2 Template configurable (+71 tests)
+
+**Nouveaux tests** : +31 unit + 4 functional + 2 cucumber = +37 tests (total 257)
+
+=== MarkdownReleaseNotesRenderer (11 unit)
+
+- Implémente `ReleaseNotesRenderer` (format = "markdown")
+- `render` : titre `# Release Notes {version}`, sections `## {label}` par catégorie (config order)
+- Scope entre parenthèses `- message (scope)`, catégories vides omises
+- Section "Téléchargement" optionnelle (includeDownloads)
+- `renderToFile` crée les répertoires parents
+- Miroir exact de AsciidocReleaseNotesRenderer avec `#`/`##` au lieu de `=`/`==`
+
+=== JsonReleaseNotesRenderer (10 unit)
+
+- Implémente `ReleaseNotesRenderer` (format = "json")
+- Schéma stable machine-readable : `{version, commits[], categories{}, includeDownloads?}`
+- Commits : tableau d'objets `{type, scope (nullable), message, hash, date}`
+- Categories : objet type→label (toutes les catégories de la config, pas seulement celles présentes)
+- `includeDownloads` omis du JSON quand false (optionnel)
+- Échappement `\\` et `\"` (escape helper)
+- `renderToFile` crée les répertoires parents
+
+=== GitReleaseNotesGenerator configDriven (4 unit, fake parser)
+
+- `configDriven(projectDir, parser)` factory — sélection renderer par `config.rendererType`
+- markdown → `.md` extension, json → `.json` extension, unknown → asciidoc fallback `.adoc`
+- Constructeur explicite (renderer injecté) ignore rendererType (escape hatch)
+- Compat ascendante : `GitReleaseNotesGenerator(projectDir, parser)` = asciidoc default
+
+=== ReleaseNotesDsl (6 unit)
+
+- `rendererType: Property<String>` — null par défaut (convention asciidoc)
+- `categories: MapProperty<String, String>` — empty par défaut (fallback config default)
+- Set markdown, set json, set custom map (3 types custom)
+- Coexistence avec props existantes (fromTag, toTag, version, includeDownloads)
+
+=== ReleaseNotesFunctionalTest (4 functional, GradleTestKit)
+
+- markdown via DSL `rendererType.set("markdown")` → produit .md
+- json via DSL `rendererType.set("json")` + `includeDownloads.set(false)` → produit .json
+- custom categories via DSL `categories.set(mapOf(...))` → labels custom dans AsciiDoc
+- CLI override `-Pdocument.releaseNotesRendererType=markdown` surcharge DSL asciidoc
+
+=== release-notes.feature (2 cucumber BDD)
+
+- `@doc8 @releasenotes` — 2 nouveaux scénarios (markdown file, custom categories)
+- Steps : Given git repo + markdown renderer / custom categories, Then markdown file exists, markdown contains
+- World : +2 factories (markdown renderer, custom categories) +releaseNotesMarkdownFile()
+
+=== Notes techniques
+
+- Refactor GitReleaseNotesGenerator : constructeur privé + 2 publics (compat) + companion configDriven
+- Contrat N0 `ReleaseNotesGenerator.renderer` non-null préservé (override impossible en nullable)
+- Extension fichier de sortie déduite de `renderer.format` (md/json/adoc)
+- Categories custom : fallback `ReleaseNotesConfig().categories` si MapProperty vide
+- CLI categories format : `key=label,key2=label2` (parseCategoriesCli helper)
+- Parser Conventional Commit regex stricte → custom categories ne mappent que sur types reconnus
+- `./gradlew test` : 38s, `./gradlew functionalTest` : 27s, `./gradlew cucumberTest` : 6m1s

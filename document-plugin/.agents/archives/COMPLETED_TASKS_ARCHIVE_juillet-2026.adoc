@@ -194,3 +194,30 @@ Sérialisation Jackson INDENT_OUTPUT, valeurs null pour theme files absents.
 *Tests* : 186 verts (145 unit + 4 functional + 37 cucumber), 0 failures (+35 unit + 4 functional + 3 cucumber vs session 013)
 
 *EPIC* : DOC-8.1 ✅ TERMINÉ (DOC-8.2/8.3/8.4 restants)
+
+---
+
+=== Session 015 — DOC-8.2 Template configurable (2026-07-05)
+
+*Tâche* : DOC-8.2 — Template AsciiDoc configurable (renderer sélectionnable + custom categories)
+
+*Livrables* :
+- MarkdownReleaseNotesRenderer : implémente ReleaseNotesRenderer (format markdown, # / ##, scope, downloads)
+- JsonReleaseNotesRenderer : implémente ReleaseNotesRenderer (format json, schema stable machine-readable {version, commits[], categories{}, includeDownloads?})
+- GitReleaseNotesGenerator.configDriven : factory sélection renderer par config.rendererType (markdown/json/asciidoc fallback), extension fichier adaptée (md/json/adoc)
+- ReleaseNotesDsl : +rendererType Property<String> +categories MapProperty<String,String>
+- ReleaseNotesGenerateTask : +@Input rendererType +@Input categories, configDriven
+- DocumentPlugin : CLI override -Pdocument.releaseNotesRendererType + -Pdocument.releaseNotesCategories
+- BDD : +2 scénarios @doc8 (markdown file, custom categories)
+
+*Fichiers* : 2 main + 3 test + 5 modifiés (GitReleaseNotesGenerator refactor, ReleaseNotesDsl, ReleaseNotesGenerateTask, DocumentPlugin, ReleaseNotesFunctionalTest +4, DocumentWorld +2 factories, DocumentSteps +4 steps, release-notes.feature +2)
+
+*Tests* : 257 verts (183 unit + 35 functional + 39 cucumber), 0 failures (+31 unit + 4 functional + 2 cucumber vs session 014)
+
+*Décisions techniques* :
+- Refactor GitReleaseNotesGenerator : constructeur privé + 2 publics (compat ascendante) + companion configDriven (contrat N0 renderer non-null préservé)
+- Categories custom : fallback ReleaseNotesConfig().categories si MapProperty vide
+- CLI categories format : key=label,key2=label2 (parseCategoriesCli helper)
+- Parser Conventional Commit regex stricte → custom categories ne mappent que sur types reconnus
+
+*EPIC* : DOC-8.2 ✅ TERMINÉ (DOC-8.3/8.4 restants)

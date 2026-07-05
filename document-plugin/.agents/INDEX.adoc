@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-05 (session 014 — DOC-8.1 Release Notes Pipeline, 186 tests)
-_Session terminee_ : 014 — DOC-8.1 Release Notes (ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesGenerateTask, DSL releaseNotes { }, pipeline-contracts 0.0.2, +35 unit + 4 functional + 3 cucumber)
-_Prochaine session_ : 015 — DOC-8.2 Template configurable / DOC-8.3 N3 metadata / extension DOC-12 book { }
+_Derniere mise a jour_ : 2026-07-05 (session 015 — DOC-8.2 Template configurable, 257 tests)
+_Session terminee_ : 015 — DOC-8.2 Template configurable (MarkdownReleaseNotesRenderer, JsonReleaseNotesRenderer, GitReleaseNotesGenerator.configDriven, ReleaseNotesDsl rendererType+categories, +31 unit +4 functional +2 cucumber)
+_Prochaine session_ : 016 — DOC-8.3 N3 metadata / DOC-8.4 IA résumé / extension DOC-12 book { }
 
 '''
 == REGLES ABSOLUES (resume)
@@ -85,7 +85,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-5 | Taches convertDocumentToEpub/DocBook/ManPage | ✅ TERMINÉ (session 005) | P2
 | DOC-6 | Integration N3 runner-gradle (metadata.json, collectDocumentRetrieve) | ✅ TERMINÉ (session 010) | P2
 | DOC-7 | CI + publication Maven Central / Gradle Plugin Portal | ✅ TERMINÉ (session 011) | P3
-| DOC-8 | Release Notes Pipeline — git log → AsciiDoc (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 🔄 EN COURS (DOC-8.1 ✅ session 014, DOC-8.2/8.3/8.4 restants) | P2
+| DOC-8 | Release Notes Pipeline — git log → AsciiDoc/Markdown/JSON (session 014 magic-stick EPIC 7 → MEM-2 cadrage 2026-06-14) | 🔄 EN COURS (DOC-8.1 ✅ session 014, DOC-8.2 ✅ session 015, DOC-8.3/8.4 restants) | P2
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
 | DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | ✅ TERMINÉ (session 012) | P1
@@ -138,6 +138,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 012 | 2026-07-04 | feat | DOC-11 Book Pipeline Codex -> Document — BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, 155 tests (+18), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 013 | 2026-07-04 | feat | DOC-12 DSL unifié `document { }` — DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer, 3 nested DSL blocks (enrich/outputs/metadata), SerializeDocumentConfigTask, document-config.json N3 contract, 180 tests (+25), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 014 | 2026-07-05 | feat | DOC-8.1 Release Notes Pipeline — pipeline-contracts 0.0.2 câblé, ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesGenerateTask, DSL releaseNotes { }, 186 tests (+35 unit + 4 functional + 3 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINE
+| 015 | 2026-07-05 | feat | DOC-8.2 Template configurable — MarkdownReleaseNotesRenderer, JsonReleaseNotesRenderer, GitReleaseNotesGenerator.configDriven factory (sélection renderer par rendererType), ReleaseNotesDsl rendererType+categories, CLI override, 257 tests (+31 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''

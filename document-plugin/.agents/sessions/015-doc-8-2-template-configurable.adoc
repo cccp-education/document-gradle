@@ -1,0 +1,93 @@
+= Session 015 — DOC-8.2 Template configurable (renderer markdown/json + custom categories)
+:session: 015
+:date: 2026-07-05
+:epic: DOC-8 (US-DOC-8.2)
+:status: ✅ TERMINÉ
+:tests: 183 unit + 35 functional + 39 cucumber = 257 verts (+31 unit +4 functional +2 cucumber)
+:method: baby-step DDD/TDD/BDD
+
+== Objectif
+
+US-DOC-8.2 — Template AsciiDoc configurable : rendre le renderer
+sélectionnable (asciidoc/markdown/json), les catégories custom via DSL, et
+respecter la convention de nommage du fichier de sortie par format.
+
+== Livrables
+
+=== Nouveaux fichiers main (2)
+
+- `src/main/kotlin/document/releasenotes/MarkdownReleaseNotesRenderer.kt` — implémente `ReleaseNotesRenderer`. Format `markdown`. Titre `# Release Notes {version}`, sections `## {label}` par catégorie (config order), scope entre parenthèses, section Téléchargement optionnelle.
+- `src/main/kotlin/document/releasenotes/JsonReleaseNotesRenderer.kt` — implémente `ReleaseNotesRenderer`. Format `json`. Schéma stable machine-readable : `{version, commits[], categories{}, includeDownloads?}`. Échappement `\\` et `\"`.
+
+=== Nouveaux fichiers test (3)
+
+- `src/test/kotlin/document/releasenotes/MarkdownReleaseNotesRendererTest.kt` — 11 tests (format, empty, titre version, SNAPSHOT, catégories ordre config, scope, catégories vides omises, downloads on/off, renderToFile + parent dirs)
+- `src/test/kotlin/document/releasenotes/JsonReleaseNotesRendererTest.kt` — 10 tests (format, empty, version, SNAPSHOT, commits array avec type/scope/message/hash/date, catégories groupées, downloads on/off, renderToFile + parent dirs)
+- `src/test/kotlin/document/ReleaseNotesDslTest.kt` — 6 tests (rendererType default null, set markdown/json, categories default empty, custom map, coexistence avec props existantes)
+
+=== Fichiers modifiés (5)
+
+- `src/main/kotlin/document/releasenotes/GitReleaseNotesGenerator.kt` — refactor constructeur privé + 2 constructeurs publics (compat ascendante) + companion `configDriven(projectDir, parser)`. Sélectionne renderer selon `config.rendererType` (markdown/json/asciidoc fallback). Extension fichier de sortie adaptée au format (`md`/`json`/`adoc`).
+- `src/main/kotlin/document/ReleaseNotesDsl.kt` — +`rendererType: Property<String>` +`categories: MapProperty<String, String>`. Convention : rendererType="asciidoc", categories=emptyMap (fallback config default).
+- `src/main/kotlin/document/ReleaseNotesGenerateTask.kt` — +`@Input rendererType` +`@Input categories: MapProperty`. Build `ReleaseNotesConfig` avec `rendererType` + custom categories (fallback default si vide). Utilise `GitReleaseNotesGenerator.configDriven`.
+- `src/main/kotlin/document/DocumentPlugin.kt` — initNested releaseNotes avec rendererType + categories (ObjectFactory). Conventions. registerReleaseNotesGenerate : CLI props `document.releaseNotesRendererType` + `document.releaseNotesCategories` (format `key=label,key2=label2`). `parseCategoriesCli` helper.
+- `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt` — +4 tests (markdown DSL, json DSL, custom categories DSL, CLI override rendererType)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +`createGradleProjectWithGitRepoAndMarkdownRenderer` +`createGradleProjectWithGitRepoAndCustomCategories` +`releaseNotesMarkdownFile()`
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +2 Given (markdown renderer, custom categories) +2 Then (markdown file exist, markdown contain)
+- `src/test/resources/features/release-notes.feature` — +2 scénarios BDD @doc8 (markdown file, custom categories)
+
+== Décisions techniques
+
+=== Refactor GitReleaseNotesGenerator — configDriven factory
+
+Le contrat N0 `ReleaseNotesGenerator.renderer` est non-null. Pour supporter
+la sélection par `rendererType` sans casser le contrat, le constructeur
+principal est privé, deux constructeurs publics assurent la compat
+ascendante (DOC-8.1), et une factory `configDriven()` active le mode
+sélection-dynamique. L'extension du fichier de sortie est déduite de
+`renderer.format` (`md`/`json`/`adoc`).
+
+=== Categories custom — fallback config default
+
+`ReleaseNotesDsl.categories` est une `MapProperty<String,String>` vide par
+défaut. La task passe `categories.get().takeIf { it.isNotEmpty() } ?:
+ReleaseNotesConfig().categories` — fallback sur les 7 catégories Conventional
+Commit par défaut du contrat N0. Évite de dupliquer les défauts dans le DSL.
+
+=== CLI override
+
+`-Pdocument.releaseNotesRendererType=markdown` et
+`-Pdocument.releaseNotesCategories=feat=New,fix=Bugs` surchargent le DSL.
+Pattern de précédence respecté : CLI > DSL > convention.
+
+== Tests
+
+- Unitaires : 152 → 183 (+31 : +11 Markdown +10 JSON +4 Generator +6 Dsl)
+- Fonctionnels : 31 → 35 (+4 markdown/json/categories/CLI)
+- Cucumber : 37 → 39 (+2 scénarios markdown + custom categories)
+- Total : 186 → 257 (+71)
+- Échecs : 0
+
+== Vérifications
+
+- `./gradlew test` — BUILD SUCCESSFUL, 183 tests
+- `./gradlew functionalTest` — BUILD SUCCESSFUL, 35 tests
+- `./gradlew cucumberTest` — BUILD SUCCESSFUL, 39 scénarios
+- `./gradlew tasks --group=document` (racine dogfood) — BUILD SUCCESSFUL, 12 tâches
+- compileKotlin — SUCCESS (zéro erreur)
+
+== Prochaines étapes
+
+- DOC-8.3 — Intégration N3 metadata.json (chemin release notes pour
+  runner-gradle `assembleCompositeContext`). Priorité P3.
+- DOC-8.4 — Extension IA (Ollama) pour résumé humain. Priorité P3.
+- Extension DOC-12 — Intégrer le block `book { }` (DOC-11) dans le DSL unifié.
+
+== Notes
+
+- Baby-step strict : chaque renderer a été écrit test-first (RED → GREEN).
+- Refactor generator après ajout des renderers (pas avant) — minimisation du
+  scope, compat ascendante préservée.
+- Le parser Conventional Commit rejette les types non standards (regex
+  stricte) — les custom categories ne peuvent mapper que sur des types
+  Conventional reconnus. Le test functional a été ajusté en conséquence.

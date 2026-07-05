@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-05 (session 014 — DOC-8.1 Release Notes Pipeline, 186 tests)
+_Date revision_ : 2026-07-05 (session 015 — DOC-8.2 Template configurable, 257 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''

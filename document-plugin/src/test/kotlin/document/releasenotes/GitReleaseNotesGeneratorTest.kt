@@ -88,4 +88,38 @@ class GitReleaseNotesGeneratorTest {
         val result = generator.generate(ReleaseNotesConfig(outputDir = "build/notes"))
         assertTrue(result.path.replace('\\', '/').endsWith("build/notes/release-notes-1.5.0.adoc"))
     }
+
+    @Test
+    fun `generate selects markdown renderer by config rendererType and produces md extension`() {
+        val generator = GitReleaseNotesGenerator.configDriven(projectDir, fakeParser)
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "markdown"))
+        assertTrue(result.isFile)
+        assertEquals("release-notes-1.5.0.md", result.name)
+        assertTrue(result.readText().contains("# Release Notes 1.5.0"))
+    }
+
+    @Test
+    fun `generate selects json renderer by config rendererType and produces json extension`() {
+        val generator = GitReleaseNotesGenerator.configDriven(projectDir, fakeParser)
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "json", includeDownloads = false))
+        assertTrue(result.isFile)
+        assertEquals("release-notes-1.5.0.json", result.name)
+        assertTrue(result.readText().contains("\"version\":\"1.5.0\""))
+    }
+
+    @Test
+    fun `generate falls back to asciidoc renderer for unknown rendererType`() {
+        val generator = GitReleaseNotesGenerator.configDriven(projectDir, fakeParser)
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "unknown-format"))
+        assertTrue(result.isFile)
+        assertEquals("release-notes-1.5.0.adoc", result.name)
+    }
+
+    @Test
+    fun `generate uses injected renderer when provided`() {
+        val generator = GitReleaseNotesGenerator(projectDir, fakeParser, stubRenderer)
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "markdown"))
+        assertEquals("release-notes-1.5.0.adoc", result.name)
+        assertTrue(result.readText().contains("RENDERED 2 commits version=1.5.0"))
+    }
 }

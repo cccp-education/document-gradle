@@ -683,6 +683,54 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithGitRepoAndMarkdownRenderer(): File {
+        val dir = Files.createTempDirectory("doc-bdd-rn-md").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("markdown")
+                }
+            }
+            """.trimIndent()
+        )
+        runGit(dir, "init")
+        runGit(dir, "config", "user.email", "bdd@example.com")
+        runGit(dir, "config", "user.name", "BDD")
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithGitRepoAndCustomCategories(): File {
+        val dir = Files.createTempDirectory("doc-bdd-rn-cat").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.ccp.document")
+            }
+            document {
+                releaseNotes {
+                    categories.set(mapOf(
+                        "feat" to "New features",
+                        "fix" to "Bug fixes",
+                        "chore" to "Custom chores label"
+                    ))
+                }
+            }
+            """.trimIndent().replace("education.ccp.document", "education.cccp.document")
+        )
+        runGit(dir, "init")
+        runGit(dir, "config", "user.email", "bdd@example.com")
+        runGit(dir, "config", "user.name", "BDD")
+        projectDir = dir
+        return dir
+    }
+
     fun gitCommit(message: String) {
         val dir = projectDir ?: return
         dir.resolve("README.md").appendText("# $message\n")
@@ -715,6 +763,11 @@ class DocumentWorld {
     fun releaseNotesAdocFile(): File? {
         val dir = releaseNotesOutputDir() ?: return null
         return dir.listFiles { _, name -> name.endsWith(".adoc") }?.firstOrNull()
+    }
+
+    fun releaseNotesMarkdownFile(): File? {
+        val dir = releaseNotesOutputDir() ?: return null
+        return dir.listFiles { _, name -> name.endsWith(".md") }?.firstOrNull()
     }
 
     private fun runGit(dir: File, vararg args: String): String {

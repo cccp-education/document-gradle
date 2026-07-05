@@ -132,4 +132,152 @@ class ReleaseNotesFunctionalTest {
         val adocFiles = outputDir.listFiles { _, name -> name.endsWith(".adoc") } ?: emptyArray()
         assertTrue(adocFiles.any { it.name.contains("2.1.0") })
     }
+
+    @Test
+    fun `releaseNotesGenerate produces markdown file when rendererType is markdown`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: first feature")
+        tag("v1.0.0")
+        commit("fix(api): bug fix")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("markdown")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
+        val outputDir = File(projectDir, "build/release-notes")
+        val mdFiles = outputDir.listFiles { _, name -> name.endsWith(".md") } ?: emptyArray()
+        assertTrue(mdFiles.isNotEmpty(), "a .md file should be generated")
+        val content = mdFiles.first().readText()
+        assertTrue(content.contains("# Release Notes"))
+        assertTrue(content.contains("## Nouveautés") || content.contains("## Corrections"))
+    }
+
+    @Test
+    fun `releaseNotesGenerate produces json file when rendererType is json`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: feature a")
+        tag("v1.0.0")
+        commit("fix: bug fix")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("json")
+                    includeDownloads.set(false)
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
+        val outputDir = File(projectDir, "build/release-notes")
+        val jsonFiles = outputDir.listFiles { _, name -> name.endsWith(".json") } ?: emptyArray()
+        assertTrue(jsonFiles.isNotEmpty(), "a .json file should be generated")
+        val content = jsonFiles.first().readText()
+        assertTrue(content.contains("\"version\""))
+        assertTrue(content.contains("\"commits\""))
+    }
+
+    @Test
+    fun `releaseNotesGenerate uses custom categories from DSL`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: new feature")
+        tag("v1.0.0")
+        commit("fix: bug fix")
+        commit("chore: maintenance task")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    categories.set(mapOf(
+                        "feat" to "New features",
+                        "fix" to "Bug fixes",
+                        "chore" to "Custom chores label"
+                    ))
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
+        val outputDir = File(projectDir, "build/release-notes")
+        val adocFiles = outputDir.listFiles { _, name -> name.endsWith(".adoc") } ?: emptyArray()
+        assertTrue(adocFiles.isNotEmpty())
+        val content = adocFiles.first().readText()
+        assertTrue(content.contains("== Bug fixes"))
+        assertTrue(content.contains("== Custom chores label"))
+        assertTrue(content.contains("- maintenance task"))
+    }
+
+    @Test
+    fun `releaseNotesGenerate rendererType via CLI property overrides DSL`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: feature a")
+        tag("v1.0.0")
+        commit("fix: bug fix")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("asciidoc")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate", "-Pdocument.releaseNotesRendererType=markdown")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
+        val outputDir = File(projectDir, "build/release-notes")
+        val mdFiles = outputDir.listFiles { _, name -> name.endsWith(".md") } ?: emptyArray()
+        assertTrue(mdFiles.isNotEmpty(), "CLI override should produce markdown")
+    }
 }

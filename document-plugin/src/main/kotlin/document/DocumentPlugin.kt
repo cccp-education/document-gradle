@@ -49,6 +49,8 @@ class DocumentPlugin : Plugin<Project> {
                 toTag = project.objects.property(String::class.java),
                 version = project.objects.property(String::class.java),
                 includeDownloads = project.objects.property(Boolean::class.java),
+                rendererType = project.objects.property(String::class.java),
+                categories = project.objects.mapProperty(String::class.java, String::class.java),
             ),
         )
 
@@ -77,6 +79,9 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-8 — releaseNotes DSL conventions
         ext.releaseNotes.toTag.convention("HEAD")
         ext.releaseNotes.includeDownloads.convention(true)
+        // DOC-8.2 — rendererType null by default (generator falls back to asciidoc)
+        ext.releaseNotes.rendererType.convention("asciidoc")
+        ext.releaseNotes.categories.convention(emptyMap())
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -250,7 +255,7 @@ class DocumentPlugin : Plugin<Project> {
     private fun registerReleaseNotesGenerate(project: Project, ext: DocumentExtension) {
         project.tasks.register("releaseNotesGenerate", ReleaseNotesGenerateTask::class.java) { task ->
             task.group = "document"
-            task.description = "Generates release notes AsciiDoc from git log between two tags (DOC-8)."
+            task.description = "Generates release notes AsciiDoc/Markdown/JSON from git log between two tags (DOC-8)."
             task.fromTag.set(cliProp(project, "releaseNotesFromTag").orElse(ext.releaseNotes.fromTag))
             task.toTag.set(cliProp(project, "releaseNotesToTag").orElse(ext.releaseNotes.toTag))
             task.version.set(cliProp(project, "releaseNotesVersion").orElse(ext.releaseNotes.version))
@@ -258,7 +263,19 @@ class DocumentPlugin : Plugin<Project> {
                 cliProp(project, "releaseNotesIncludeDownloads").map { it.toBoolean() }
                     .orElse(ext.releaseNotes.includeDownloads),
             )
+            task.rendererType.set(cliProp(project, "releaseNotesRendererType").orElse(ext.releaseNotes.rendererType))
+            task.categories.set(
+                cliProp(project, "releaseNotesCategories")
+                    .map { parseCategoriesCli(it) }
+                    .orElse(ext.releaseNotes.categories),
+            )
             task.outputDir.set(project.layout.buildDirectory.dir("release-notes"))
         }
     }
+
+    private fun parseCategoriesCli(raw: String): Map<String, String> =
+        raw.split(",").associate { entry ->
+            val (type, label) = entry.split("=", limit = 2)
+            type.trim() to label.trim()
+        }
 }

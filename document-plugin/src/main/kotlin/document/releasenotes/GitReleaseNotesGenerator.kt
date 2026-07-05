@@ -10,20 +10,47 @@ import java.io.File
  * Default [ReleaseNotesGenerator] — orchestrates a [GitLogParser] and a
  * [ReleaseNotesRenderer] to produce a release notes file on disk.
  *
+ * DOC-8.2 — Template configurable :
+ *   - If a non-null [renderer] is injected via the secondary constructor, it
+ *     is used as-is (escape hatch for custom renderers).
+ *   - If no renderer is injected (primary constructor), the generator picks
+ *     one of the built-in renderers based on [ReleaseNotesConfig.rendererType] :
+ *       "asciidoc" → [AsciidocReleaseNotesRenderer] (default)
+ *       "markdown" → [MarkdownReleaseNotesRenderer]
+ *       "json"     → [JsonReleaseNotesRenderer]
+ *     Unknown values fall back to the AsciiDoc renderer.
+ *
  * Flow :
  *   1. Resolve [ReleaseNotesConfig.fromTag] (auto-detect if null)
  *   2. Parse commits between fromTag and toTag
- *   3. Render to AsciiDoc (or other configured format)
- *   4. Write to `{outputDir}/release-notes-{version}.adoc`
+ *   3. Render to the selected format
+ *   4. Write to `{outputDir}/release-notes-{version}.{ext}`
  *
  * The version is resolved from [ReleaseNotesConfig.version] or auto-detected
  * from the project (VERSION file / gradle.properties).
  */
-class GitReleaseNotesGenerator(
+class GitReleaseNotesGenerator private constructor(
     private val projectDir: File,
     override val parser: GitLogParser,
     override val renderer: ReleaseNotesRenderer,
+    private val configDrivenRenderer: Boolean,
 ) : ReleaseNotesGenerator {
+
+    /** DOC-8.1 constructor — default AsciiDoc renderer (backward compatible). */
+    constructor(projectDir: File, parser: GitLogParser) : this(
+        projectDir = projectDir,
+        parser = parser,
+        renderer = AsciidocReleaseNotesRenderer(),
+        configDrivenRenderer = false,
+    )
+
+    /** DOC-8.1 constructor — explicit renderer injection (custom/escape hatch). */
+    constructor(projectDir: File, parser: GitLogParser, renderer: ReleaseNotesRenderer) : this(
+        projectDir = projectDir,
+        parser = parser,
+        renderer = renderer,
+        configDrivenRenderer = false,
+    )
 
     override fun generate(config: ReleaseNotesConfig): File {
         val resolvedVersion = config.version ?: parser.detectVersion(projectDir) ?: "SNAPSHOT"
@@ -33,8 +60,36 @@ class GitReleaseNotesGenerator(
         } else {
             parser.parse("", config.toTag)
         }
+        val effectiveRenderer = if (configDrivenRenderer) rendererFor(config.rendererType) else renderer
         val outputDir = projectDir.resolve(config.outputDir)
-        val outputFile = outputDir.resolve("release-notes-$resolvedVersion.adoc")
-        return renderer.renderToFile(commits, config.copy(version = resolvedVersion), outputFile)
+        val outputFile = outputDir.resolve("release-notes-$resolvedVersion.${extensionFor(effectiveRenderer.format)}")
+        return effectiveRenderer.renderToFile(commits, config.copy(version = resolvedVersion), outputFile)
+    }
+
+    private fun rendererFor(rendererType: String): ReleaseNotesRenderer = when (rendererType) {
+        "markdown" -> MarkdownReleaseNotesRenderer()
+        "json" -> JsonReleaseNotesRenderer()
+        else -> AsciidocReleaseNotesRenderer()
+    }
+
+    private fun extensionFor(format: String): String = when (format) {
+        "markdown" -> "md"
+        "json" -> "json"
+        else -> "adoc"
+    }
+
+    companion object {
+        /**
+         * DOC-8.2 — Builds a config-driven generator : the renderer is selected
+         * at [generate] time from [ReleaseNotesConfig.rendererType]. Use this
+         * factory when the DSL/task must honour `rendererType`.
+         */
+        fun configDriven(projectDir: File, parser: GitLogParser): GitReleaseNotesGenerator =
+            GitReleaseNotesGenerator(
+                projectDir = projectDir,
+                parser = parser,
+                renderer = AsciidocReleaseNotesRenderer(),
+                configDrivenRenderer = true,
+            )
     }
 }
