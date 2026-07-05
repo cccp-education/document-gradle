@@ -1,0 +1,214 @@
+= Session 016 (2026-07-05) — DOC-8.3 Intégration N3 metadata.json + composite-context.json release notes
+
+:date: 2026-07-05
+:epic: DOC-8.3
+:borough: New Orleans 🟢 (document-gradle)
+:method: baby-step DDD/TDD/BDD — unit → functional → cucumber
+:tests: 289 total (209 unit + 39 functional + 41 cucumber), +32 vs session 015
+
+== Objectif
+
+DOC-8.3 — `metadata.json` inclut le chemin du fichier release notes pour
+runner-gradle `assembleCompositeContext` + déploiement gh-pages.
+
+Le critère : `composite-context.json` expose un tableau `releaseNotes` et
+`metadata.json` porte `releaseNotesPath` + `releaseNotesRenderer` du fichier
+release-notes primaire produit par `releaseNotesGenerate`.
+
+== Baby-steps exécutés (TDD red → green)
+
+=== Step 1 — UNIT-1 : ReleaseNotesArtifactEntry (domaine DDD)
+
+Nouveau value object `ReleaseNotesArtifactEntry(path, rendererType, exists)`.
+
+- `toMap()` produit une entrée N3-compatible `{source: "document", type: "release-notes", path, rendererType, exists}`
+- `fromFile(path, exists)` infère le `rendererType` depuis l'extension (`.adoc`→asciidoc, `.md`→markdown, `.json`→json)
+- 7 tests unitaires (ReleaseNotesArtifactEntryTest)
+
+Fichier : `src/main/kotlin/document/ReleaseNotesArtifactEntry.kt`
+
+=== Step 2 — UNIT-2 : DocumentRetrieveResult.releaseNotes field
+
+Extension du résultat N3 pour porter les release notes.
+
+- Nouveau champ `releaseNotes: List<ReleaseNotesArtifactEntry>` (défaut emptyList)
+- Nouveau champ `releaseNotesCount: Int` (dérivé)
+- `toMap()` enrichi avec `releaseNotes` + `releaseNotesCount`
+- `writeTo()` produit un `composite-context.json` contenant le tableau releaseNotes
+- 7 tests unitaires ajoutés à DocumentRetrieveResultTest
+
+Fichier : `src/main/kotlin/document/DocumentRetrieveResult.kt`
+
+=== Step 3 — UNIT-3 : DocumentMetadata.releaseNotesPath + releaseNotesRenderer
+
+Extension du metadata.json pour porter le chemin release notes.
+
+- Nouveaux champs optionnels `releaseNotesPath: String?` et `releaseNotesRenderer: String?`
+- `forNewOrleans()` accepte les deux paramètres
+- Jackson `JsonInclude.Include.NON_NULL` — les champs null sont omis du JSON
+- 7 tests unitaires ajoutés à DocumentMetadataTest
+
+Fichier : `src/main/kotlin/document/DocumentMetadata.kt`
+
+=== Step 4 — UNIT-4 : DocumentArtifactCollector.collectReleaseNotes
+
+Nouvelle méthode de scan du directory release-notes.
+
+- `collectReleaseNotes(releaseNotesDir: File): List<ReleaseNotesArtifactEntry>`
+- Scanne les fichiers `.adoc`, `.md`, `.json` (RELEASE_NOTES_EXTENSIONS)
+- Skip les autres extensions (`.txt`, etc.)
+- Utilise `ReleaseNotesArtifactEntry.fromFile()` pour inférer le rendererType
+- 8 tests unitaires ajoutés à DocumentArtifactCollectorTest
+
+Fichier : `src/main/kotlin/document/DocumentArtifactCollector.kt`
+
+=== Step 5 — TASK-1 : CollectDocumentRetrieveTask wiring
+
+La task `collectDocumentRetrieve` indexe désormais les release notes.
+
+- Nouvel input `releaseNotesDirPath: Property<String>` (`@Input @Optional`)
+  * Choix d'un `@Input String` plutôt que `@InputDirectory` car le directory
+    release-notes peut ne pas exister (cas sans release notes générées) et
+    `@InputDirectory` exige un directory existant à la validation Gradle
+- Le task action résout `releaseNotesDirPath` en `File`, vérifie existence +
+  isDirectory, puis appelle `collector.collectReleaseNotes(it)`
+- Le premier release-notes entry (s'il existe) devient `releaseNotesPath` +
+  `releaseNotesRenderer` dans `DocumentMetadata.forNewOrleans()`
+- `DocumentRetrieveResult` est construit avec `entries` + `releaseNotes`
+
+Fichier : `src/main/kotlin/document/CollectDocumentRetrieveTask.kt`
+
+=== Step 6 — PLUGIN-1 : DocumentPlugin wiring
+
+`registerCollectDocumentRetrieve` câble `releaseNotesDirPath` vers
+`project.layout.buildDirectory.dir("release-notes").map { it.asFile.absolutePath }`.
+
+Fichier : `src/main/kotlin/document/DocumentPlugin.kt`
+
+=== Step 7 — FUNC-1 : ReleaseNotesFunctionalTest N3 metadata
+
+4 tests fonctionnels GradleRunner :
+
+- `collectDocumentRetrieve indexes release notes in composite-context json`
+  → vérifie `releaseNotes`, `releaseNotesCount`, `rendererType`, `asciidoc`
+- `collectDocumentRetrieve includes release notes path in metadata json`
+  → vérifie `releaseNotesPath` + `releaseNotesRenderer: asciidoc`
+- `collectDocumentRetrieve metadata json omits releaseNotesPath when no release notes`
+  → vérifie l'absence des champs quand le dir release-notes n'existe pas
+- `collectDocumentRetrieve indexes markdown release notes when rendererType is markdown`
+  → vérifie le rendererType markdown propagé dans composite + metadata
+
+Fichier : `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
+
+=== Step 8 — BDD-1 : release-notes.feature + steps
+
+2 nouveaux scénarios Cucumber (tag `@doc83 @n3`) :
+
+- `collectDocumentRetrieve indexes release notes in composite-context.json`
+  → flow complet : git repo + commits + tag + releaseNotesGenerate + collectDocumentRetrieve
+  → assertions sur composite-context.json + metadata.json
+- `collectDocumentRetrieve omits release notes path when no release notes generated`
+  → projet sans repo git, collectDocumentRetrieve seul
+  → metadata.json ne contient pas releaseNotesPath
+
+4 nouveaux @Then steps dans DocumentSteps.kt :
+- `the composite context json should contain the release notes entry`
+- `the metadata json should contain the release notes path`
+- `the metadata json should contain the release notes renderer asciidoc`
+- `the metadata json should not contain release notes path`
+
+Fichiers :
+- `src/test/resources/features/release-notes.feature` (5→7 scénarios)
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt`
+
+== Contrat N3 — forme finale du composite-context.json
+
+[source,json]
+----
+{
+  "source" : "new-orleans",
+  "entries" : [ {document artifacts} ],
+  "count" : N,
+  "releaseNotes" : [
+    {
+      "source" : "document",
+      "path" : "/abs/build/release-notes/release-notes-1.0.0.adoc",
+      "type" : "release-notes",
+      "rendererType" : "asciidoc",
+      "exists" : true
+    }
+  ],
+  "releaseNotesCount" : 1,
+  "timestamp" : 1751234567890
+}
+----
+
+== Contrat N3 — forme finale du metadata.json
+
+[source,json]
+----
+{
+  "source" : "new-orleans",
+  "type" : "retrieve",
+  "sessions" : N,
+  "generatedAt" : "2026-07-05T16:00:00Z",
+  "model" : "onnx-local",
+  "version" : "1.0",
+  "dependencies" : ["brooklyn", "htown"],
+  "releaseNotesPath" : "/abs/build/release-notes/release-notes-1.0.0.adoc",
+  "releaseNotesRenderer" : "asciidoc"
+}
+----
+
+Quand `releaseNotesDir` n'existe pas ou ne contient aucun fichier release-notes,
+les champs `releaseNotesPath` et `releaseNotesRenderer` sont omis du JSON
+(grâce à `JsonInclude.Include.NON_NULL`).
+
+== Tests
+
+- `./gradlew test functionalTest` : BUILD SUCCESSFUL (3m 56s)
+- `./gradlew cucumberTest --no-daemon` : BUILD SUCCESSFUL (6m 21s)
+- Total : 289 tests (209 unit + 39 functional + 41 cucumber), +32 vs session 015 (257)
+- Delta : +7 unit (ReleaseNotesArtifactEntry) +7 unit (DocumentRetrieveResult)
+  +7 unit (DocumentMetadata) +8 unit (DocumentArtifactCollector)
+  +4 functional (ReleaseNotesFunctionalTest N3) +2 cucumber (release-notes.feature)
+- `compileKotlin compileTestKotlin compileFunctionalTestKotlin` : BUILD SUCCESSFUL
+
+== Décisions techniques
+
+=== @Input String plutôt que @InputDirectory
+
+Le directory `build/release-notes/` n'existe pas toujours (pipeline sans
+release notes). `@InputDirectory` + `@Optional` lève une erreur de validation
+Gradle si le directory n'existe pas. Solution : `@Input Property<String>` qui
+porte le path absolu, résolu en `File` dans le task action avec garde
+`takeIf { it.exists() && it.isDirectory }`.
+
+=== Premier entry = release notes primaire
+
+Le tableau `releaseNotes` peut contenir plusieurs fichiers (asciidoc + markdown
+par exemple). Le `releaseNotesPath` dans metadata.json porte le premier entry
+uniquement — c'est le "release notes primaire" que runner-gradle déploie en
+priorité pour gh-pages.
+
+=== JsonInclude.Include.NON_NULL
+
+`DocumentMetadata` sérialise désormais avec `JsonInclude.Include.NON_NULL` —
+les champs null (`releaseNotesPath`, `releaseNotesRenderer`) sont omis du JSON
+plutôt que sérialisés en `null`. Garde le metadata.json propre quand le
+pipeline n'a pas produit de release notes.
+
+== Vérifications
+
+- `git status` : copie de travail propre avant modification
+- `grep "TOKEN|SECRET|PASSWORD|API_KEY|gho_|ghp_"` : aucun secret dans le code source
+- `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` : BUILD SUCCESSFUL
+
+== Statut EPIC DOC-8
+
+- DOC-8.1 ✅ Terminé (session 014) — Release Notes Pipeline git log → AsciiDoc
+- DOC-8.2 ✅ Terminé (session 015) — Template configurable (Markdown/JSON)
+- DOC-8.3 ✅ Terminé (session 016) — Intégration N3 metadata.json + composite-context.json
+- DOC-8.4 ⏳ Restant — Extension IA Ollama (résumé humain)
+
+EPIC DOC-8 avance à 75% (3/4 US terminées).

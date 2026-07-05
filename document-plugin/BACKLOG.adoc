@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-05 (session 015 — DOC-8.2 Template configurable, 257 tests)
+_Date revision_ : 2026-07-05 (session 016 — DOC-8.3 N3 metadata.json + composite-context.json release notes, 289 tests)
 _Version_ : 0.1.0-SNAPSHOT
 
 '''
@@ -106,7 +106,7 @@ ou application de lecture EPUB.
 *EPIC* : DOC-6
 *Statut* : ✅ TERMINÉ (session 010)
 
-.Valeur
+.Valor
 Les documents generes et convertis sont indexes dans le composite-context
 du runner-gradle pour deploiement automatique.
 
@@ -114,6 +114,26 @@ du runner-gradle pour deploiement automatique.
 - ✅ `collectDocumentRetrieve` produit un `metadata.json` conforme au contrat N3
 - ✅ Le JSON contient : chemins des fichiers, formats, metadonnees de la source AsciiDoc
 - ✅ `runner-gradle assembleCompositeContext` ingere le JSON sans erreur (contrat de facto respecté — `{source, entries, count}` dans composite-context.json)
+
+=== US-DOC-8.3 — En tant qu'intégrateur, je veux que les release notes soient indexées par runner-gradle N3
+
+*Priorite* : P3
+*EPIC* : DOC-8
+*Statut* : ✅ TERMINÉ (session 016)
+
+.Valeur
+Les release notes générées par `releaseNotesGenerate` sont collectées par
+`collectDocumentRetrieve` et exposées dans `composite-context.json` +
+`metadata.json` pour que runner-gradle `assembleCompositeContext` les
+déploie via gh-pages.
+
+.Critères d'acceptation
+- ✅ `composite-context.json` inclut un tableau `releaseNotes` + `releaseNotesCount`
+- ✅ Chaque entry contient `{source: "document", type: "release-notes", path, rendererType, exists}`
+- ✅ `metadata.json` porte `releaseNotesPath` + `releaseNotesRenderer` du release notes primaire
+- ✅ Quand le dir release-notes n'existe pas, les champs sont omis (JsonInclude.NON_NULL)
+- ✅ Tests fonctionnels valident le flow complet (releaseNotesGenerate → collectDocumentRetrieve)
+- ✅ Scénarios Cucumber BDD couvrent le cas avec release notes + le cas sans
 
 === US-DOC-06 — En tant que redacteur technique, je veux generer de la documentation technique au format DocBook
 

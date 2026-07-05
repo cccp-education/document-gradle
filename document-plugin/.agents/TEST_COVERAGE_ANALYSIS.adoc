@@ -1,30 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-07-05
-:session: 015
+:session: 016
 
-== Pyramide de tests — Session 015 (DOC-8.2 Template configurable)
+== Pyramide de tests — Session 016 (DOC-8.3 N3 metadata.json + composite-context.json release notes)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 3 renderers)
-| 183
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 3 renderers + N3 release notes)
+| 209
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
 
 | Functional (GradleTestKit)
-| 35
-| ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
-
-| Cucumber BDD (acceptance)
 | 39
 | ✅ PASS
-| `src/test/resources/features/document.feature` + `src/test/resources/features/release-notes.feature` (+2 : markdown renderer, custom categories)
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt` (+4 N3 metadata tests)
+
+| Cucumber BDD (acceptance)
+| 41
+| ✅ PASS
+| `src/test/resources/features/document.feature` + `src/test/resources/features/release-notes.feature` (+2 : N3 metadata release notes, omit when none)
 |===
 
-**Total : 257 tests, 0 échec.** (+71 par rapport à session 014 — DOC-8.2 Template configurable)
+**Total : 289 tests, 0 échec.** (+32 par rapport à session 015 — DOC-8.3 N3 metadata.json + composite-context.json release notes)
 
 == Détail unit (62)
 

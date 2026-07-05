@@ -156,4 +156,79 @@ class DocumentRetrieveResultTest {
 
         assertTrue(File(nested, "composite-context.json").exists())
     }
+
+    // --- DOC-8.3 — release notes N3 integration ---
+
+    @Test
+    fun `DocumentRetrieveResult defaults releaseNotes to empty list`() {
+        val result = DocumentRetrieveResult(entries = emptyList())
+
+        assertTrue(result.releaseNotes.isEmpty())
+    }
+
+    @Test
+    fun `DocumentRetrieveResult releaseNotesCount matches releaseNotes size`() {
+        val releaseNotes = listOf(
+            ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true),
+            ReleaseNotesArtifactEntry("/rn.md", "markdown", true),
+        )
+        val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
+
+        assertEquals(2, result.releaseNotesCount)
+    }
+
+    @Test
+    fun `DocumentRetrieveResult releaseNotesCount is zero when no release notes`() {
+        val result = DocumentRetrieveResult(entries = emptyList())
+
+        assertEquals(0, result.releaseNotesCount)
+    }
+
+    @Test
+    fun `DocumentRetrieveResult toMap includes releaseNotes array`() {
+        val releaseNotes = listOf(
+            ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
+        )
+        val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
+
+        val map = result.toMap()
+
+        assertTrue(map.containsKey("releaseNotes"))
+        @Suppress("UNCHECKED_CAST")
+        val rnEntries = map["releaseNotes"] as List<Map<String, Any>>
+        assertEquals(1, rnEntries.size)
+        assertEquals("/build/release-notes/rn.adoc", rnEntries[0]["path"])
+        assertEquals("release-notes", rnEntries[0]["type"])
+        assertEquals("asciidoc", rnEntries[0]["rendererType"])
+    }
+
+    @Test
+    fun `DocumentRetrieveResult toMap includes releaseNotesCount`() {
+        val result = DocumentRetrieveResult(
+            entries = emptyList(),
+            releaseNotes = listOf(ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true)),
+        )
+
+        val map = result.toMap()
+
+        assertEquals(1, map["releaseNotesCount"])
+    }
+
+    @Test
+    fun `DocumentRetrieveResult writeTo creates composite-context json with release notes`() {
+        val dir = tempDir()
+        val releaseNotes = listOf(
+            ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
+        )
+        val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
+
+        val file = result.writeTo(dir)
+
+        assertTrue(file.exists())
+        val content = file.readText()
+        assertTrue(content.contains("\"releaseNotes\""))
+        assertTrue(content.contains("\"releaseNotesCount\""))
+        assertTrue(content.contains("/build/release-notes/rn.adoc"))
+        assertTrue(content.contains("\"rendererType\""))
+    }
 }

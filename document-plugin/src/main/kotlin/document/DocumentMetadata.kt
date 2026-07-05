@@ -1,5 +1,6 @@
 package document
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -17,6 +18,10 @@ import java.time.Instant
  * is written alongside composite-context.json and ingested by
  * `assembleCompositeContext` in runner-gradle (N3).
  *
+ * DOC-8.3 — the optional [releaseNotesPath] and [releaseNotesRenderer] carry
+ * the path and renderer type of the release-notes file produced by
+ * `releaseNotesGenerate`, so runner-gradle can deploy them via gh-pages.
+ *
  * @property source originating borough slug (always "new-orleans" for Document)
  * @property type pipeline stage type (e.g. "retrieve", "composite-context")
  * @property sessions number of artifact entries in the companion JSON
@@ -24,6 +29,8 @@ import java.time.Instant
  * @property model embedding model name (e.g. "onnx-local")
  * @property version artifact version string (always "1.0")
  * @property dependencies list of upstream borough slugs this artifact depends on
+ * @property releaseNotesPath absolute path of the release-notes file (DOC-8.3, nullable)
+ * @property releaseNotesRenderer renderer type that produced the release-notes file (DOC-8.3, nullable)
  */
 data class DocumentMetadata(
     val source: String,
@@ -32,12 +39,15 @@ data class DocumentMetadata(
     val generatedAt: String,
     val model: String,
     val version: String,
-    val dependencies: List<String>
+    val dependencies: List<String>,
+    val releaseNotesPath: String? = null,
+    val releaseNotesRenderer: String? = null,
 ) {
     companion object {
         private val mapper: ObjectMapper = jacksonObjectMapper()
             .registerModule(KotlinModule.Builder().build())
             .enable(SerializationFeature.INDENT_OUTPUT)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
         /**
          * Writes metadata as a pretty-printed JSON file to the given directory.
@@ -62,13 +72,17 @@ data class DocumentMetadata(
          * @param dependencies upstream borough dependencies
          *        (default: ["brooklyn", "htown"] — Codex provides OCR AsciiDoc,
          *         plantuml-gradle provides diagrams)
+         * @param releaseNotesPath absolute path of the release-notes file (DOC-8.3, default: null)
+         * @param releaseNotesRenderer renderer type of the release-notes file (DOC-8.3, default: null)
          * @return a new [DocumentMetadata] with source set to "new-orleans"
          */
         fun forNewOrleans(
             type: String = "retrieve",
             model: String = "onnx-local",
             sessions: Int = 0,
-            dependencies: List<String> = listOf("brooklyn", "htown")
+            dependencies: List<String> = listOf("brooklyn", "htown"),
+            releaseNotesPath: String? = null,
+            releaseNotesRenderer: String? = null,
         ): DocumentMetadata = DocumentMetadata(
             source = "new-orleans",
             type = type,
@@ -76,7 +90,9 @@ data class DocumentMetadata(
             generatedAt = Instant.now().toString(),
             model = model,
             version = "1.0",
-            dependencies = dependencies
+            dependencies = dependencies,
+            releaseNotesPath = releaseNotesPath,
+            releaseNotesRenderer = releaseNotesRenderer,
         )
     }
 }

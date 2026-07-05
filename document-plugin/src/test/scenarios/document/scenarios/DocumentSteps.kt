@@ -534,6 +534,46 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(file!!.readText()).contains(text)
     }
 
+    // --- DOC-8.3 — N3 metadata integration ---
+
+    @Then("the composite context json should contain the release notes entry")
+    fun compositeContextJsonShouldContainReleaseNotesEntry() {
+        val composite = world.compositeContextJsonFile()
+        assertThat(composite).exists()
+        val content = composite!!.readText()
+        assertThat(content).contains("\"releaseNotes\"")
+        assertThat(content).contains("\"releaseNotesCount\"")
+        assertThat(content).contains("release-notes")
+        assertThat(content).contains("\"rendererType\"")
+    }
+
+    @Then("the metadata json should contain the release notes path")
+    fun metadataJsonShouldContainReleaseNotesPath() {
+        val metadata = world.metadataJsonFile()
+        assertThat(metadata).exists()
+        val content = metadata!!.readText()
+        assertThat(content).contains("\"releaseNotesPath\"")
+        assertThat(content).contains("release-notes")
+    }
+
+    @Then("the metadata json should contain the release notes renderer asciidoc")
+    fun metadataJsonShouldContainReleaseNotesRendererAsciidoc() {
+        val metadata = world.metadataJsonFile()
+        assertThat(metadata).exists()
+        val content = metadata!!.readText()
+        assertThat(content).contains("\"releaseNotesRenderer\"")
+        assertThat(content).contains("asciidoc")
+    }
+
+    @Then("the metadata json should not contain release notes path")
+    fun metadataJsonShouldNotContainReleaseNotesPath() {
+        val metadata = world.metadataJsonFile()
+        assertThat(metadata).exists()
+        val content = metadata!!.readText()
+        assertThat(content).doesNotContain("releaseNotesPath")
+        assertThat(content).doesNotContain("releaseNotesRenderer")
+    }
+
     @After
     fun cleanup() {
         world.cleanup()

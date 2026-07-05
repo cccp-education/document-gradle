@@ -19,6 +19,7 @@
 | 013 | 2026-07-04 | feat | DOC-12 DSL unifié `document { }` — DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer, 3 nested DSL blocks, 180 tests (+25), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 014 | 2026-07-05 | feat | DOC-8.1 Release Notes Pipeline — pipeline-contracts 0.0.2, ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesGenerateTask, DSL releaseNotes { }, 186 tests (+35 unit +4 functional +3 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 015 | 2026-07-05 | feat | DOC-8.2 Template configurable — MarkdownReleaseNotesRenderer, JsonReleaseNotesRenderer, GitReleaseNotesGenerator.configDriven, ReleaseNotesDsl rendererType+categories, CLI override, 257 tests (+31 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 016 | 2026-07-05 | feat | DOC-8.3 N3 metadata.json + composite-context.json release notes — ReleaseNotesArtifactEntry, DocumentRetrieveResult.releaseNotes/releaseNotesCount, DocumentMetadata.releaseNotesPath/Renderer (NON_NULL), DocumentArtifactCollector.collectReleaseNotes, CollectDocumentRetrieveTask.releaseNotesDirPath (@Input String), 289 tests (+32: 7+7+7+8 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 |===
 
 ---

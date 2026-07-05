@@ -280,4 +280,125 @@ class ReleaseNotesFunctionalTest {
         val mdFiles = outputDir.listFiles { _, name -> name.endsWith(".md") } ?: emptyArray()
         assertTrue(mdFiles.isNotEmpty(), "CLI override should produce markdown")
     }
+
+    // --- DOC-8.3 — N3 metadata integration ---
+
+    @Test
+    fun `collectDocumentRetrieve indexes release notes in composite-context json`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: initial feature")
+        tag("v1.0.0")
+        commit("fix(api): bug fix")
+
+        GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
+        assertTrue(compositeFile.exists(), "composite-context.json must be produced")
+        val content = compositeFile.readText()
+        assertTrue(content.contains("\"releaseNotes\""), "composite-context must have releaseNotes array")
+        assertTrue(content.contains("\"releaseNotesCount\""), "composite-context must have releaseNotesCount")
+        assertTrue(content.contains("release-notes"), "releaseNotes entries must reference the release-notes file")
+        assertTrue(content.contains("\"rendererType\""), "releaseNotes entries must carry rendererType")
+        assertTrue(content.contains("\"asciidoc\""), "asciidoc rendererType must be present")
+    }
+
+    @Test
+    fun `collectDocumentRetrieve includes release notes path in metadata json`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: initial feature")
+        tag("v1.0.0")
+        commit("fix: bug fix")
+
+        GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataFile = File(projectDir, "build/docs/document/metadata.json")
+        assertTrue(metadataFile.exists(), "metadata.json must be produced")
+        val content = metadataFile.readText()
+        assertTrue(content.contains("\"releaseNotesPath\""), "metadata must carry releaseNotesPath")
+        assertTrue(content.contains("release-notes"), "releaseNotesPath must reference the release-notes file")
+        assertTrue(content.contains("\"releaseNotesRenderer\""), "metadata must carry releaseNotesRenderer")
+        assertTrue(content.contains("asciidoc"), "releaseNotesRenderer must be asciidoc")
+    }
+
+    @Test
+    fun `collectDocumentRetrieve metadata json omits releaseNotesPath when no release notes`() {
+        setupPluginProject()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataFile = File(projectDir, "build/docs/document/metadata.json")
+        assertTrue(metadataFile.exists())
+        val content = metadataFile.readText()
+        assertTrue(!content.contains("releaseNotesPath"), "metadata must omit releaseNotesPath when no release notes")
+    }
+
+    @Test
+    fun `collectDocumentRetrieve indexes markdown release notes when rendererType is markdown`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: initial feature")
+        tag("v1.0.0")
+        commit("fix: bug fix")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("markdown")
+                }
+            }
+            """.trimIndent()
+        )
+
+        GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate")
+            .withPluginClasspath()
+            .build()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
+        val content = compositeFile.readText()
+        assertTrue(content.contains("\"markdown\""), "composite-context must carry markdown rendererType")
+        val metadataFile = File(projectDir, "build/docs/document/metadata.json")
+        assertTrue(metadataFile.readText().contains("\"markdown\""), "metadata releaseNotesRenderer must be markdown")
+    }
 }

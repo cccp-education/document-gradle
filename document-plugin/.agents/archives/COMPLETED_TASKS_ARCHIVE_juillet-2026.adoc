@@ -221,3 +221,42 @@ Sérialisation Jackson INDENT_OUTPUT, valeurs null pour theme files absents.
 - Parser Conventional Commit regex stricte → custom categories ne mappent que sur types reconnus
 
 *EPIC* : DOC-8.2 ✅ TERMINÉ (DOC-8.3/8.4 restants)
+
+=== Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json release notes
+
+*DOC-8.3* : Intégration N3 — `metadata.json` inclut le chemin du fichier release
+notes pour runner-gradle `assembleCompositeContext` + déploiement gh-pages.
+`composite-context.json` expose un tableau `releaseNotes` et `releaseNotesCount`.
+
+*Nouveaux fichiers main* (1) :
+- `ReleaseNotesArtifactEntry.kt` — value object (path, rendererType, exists) + toMap N3 + fromFile infère renderer depuis extension
+
+*Fichiers main modifiés* (4) :
+- `DocumentRetrieveResult.kt` — champs `releaseNotes` + `releaseNotesCount` + toMap + writeTo
+- `DocumentMetadata.kt` — champs optionnels `releaseNotesPath` + `releaseNotesRenderer` + Jackson NON_NULL
+- `DocumentArtifactCollector.kt` — méthode `collectReleaseNotes(releaseNotesDir)` scanne .adoc/.md/.json
+- `CollectDocumentRetrieveTask.kt` — input `releaseNotesDirPath` (@Input String, pas @InputDirectory) + wiring release notes + metadata primaire
+- `DocumentPlugin.kt` — registerCollectDocumentRetrieve câble releaseNotesDirPath vers build/release-notes
+
+*Nouveaux tests* (32) :
+- `ReleaseNotesArtifactEntryTest.kt` — 7 unit (store, toMap N3, markdown, json, non-existing, fromFile adoc/md/json)
+- `DocumentRetrieveResultTest.kt` — 7 unit (defaults releaseNotes empty, releaseNotesCount, toMap releaseNotes array, writeTo composite + releaseNotes)
+- `DocumentMetadataTest.kt` — 7 unit (defaults null, forNewOrleans accepts path/renderer, writeTo includes/omits)
+- `DocumentArtifactCollectorTest.kt` — 8 unit (collectReleaseNotes empty/adoc/md/json/multiple/skip-non-release-notes/primary path)
+- `ReleaseNotesFunctionalTest.kt` — 4 functional (composite releaseNotes, metadata releaseNotesPath, omit when none, markdown renderer)
+- `release-notes.feature` — 2 cucumber (@doc83 @n3 : indexes release notes, omits when none)
+- `DocumentSteps.kt` — 4 @Then steps (composite release notes entry, metadata path, renderer asciidoc, not contain)
+
+*Tests* : 289 verts (209 unit + 39 functional + 41 cucumber), 0 failures (+32 vs session 015)
+
+*Contrat N3 final* :
+- `composite-context.json` : `{source, entries, count, releaseNotes, releaseNotesCount, timestamp}`
+- `metadata.json` : `{source, type, sessions, generatedAt, model, version, dependencies, releaseNotesPath?, releaseNotesRenderer?}` (champs releaseNotes omis si null grâce à JsonInclude.Include.NON_NULL)
+
+*Décisions techniques* :
+- `@Input Property<String>` plutôt que `@InputDirectory` car le dir release-notes peut ne pas exister (validation Gradle échoue sinon)
+- Premier entry du tableau = release notes primaire (releaseNotesPath dans metadata.json)
+- Jackson `JsonInclude.Include.NON_NULL` sur DocumentMetadata — les champs null sont omis du JSON
+- `ReleaseNotesArtifactEntry.fromFile()` infère le rendererType depuis l'extension (.adoc→asciidoc, .md→markdown, .json→json)
+
+*EPIC* : DOC-8.3 ✅ TERMINÉ (DOC-8.4 restant — IA Ollama résumé humain)

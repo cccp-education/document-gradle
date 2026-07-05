@@ -95,4 +95,68 @@ class DocumentMetadataTest {
 
         assertTrue(File(nested, "metadata.json").exists())
     }
+
+    // --- DOC-8.3 — release notes path in metadata.json ---
+
+    @Test
+    fun `DocumentMetadata defaults releaseNotesPath to null`() {
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        assertEquals(null, metadata.releaseNotesPath)
+    }
+
+    @Test
+    fun `DocumentMetadata defaults releaseNotesRenderer to null`() {
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        assertEquals(null, metadata.releaseNotesRenderer)
+    }
+
+    @Test
+    fun `DocumentMetadata forNewOrleans accepts a releaseNotesPath`() {
+        val metadata = DocumentMetadata.forNewOrleans(
+            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
+        )
+
+        assertEquals("/build/release-notes/release-notes-1.0.0.adoc", metadata.releaseNotesPath)
+    }
+
+    @Test
+    fun `DocumentMetadata forNewOrleans accepts a releaseNotesRenderer`() {
+        val metadata = DocumentMetadata.forNewOrleans(
+            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.md",
+            releaseNotesRenderer = "markdown",
+        )
+
+        assertEquals("markdown", metadata.releaseNotesRenderer)
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo includes releaseNotesPath when set`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans(
+            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
+            releaseNotesRenderer = "asciidoc",
+        )
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(content.contains("\"releaseNotesPath\""))
+        assertTrue(content.contains("/build/release-notes/release-notes-1.0.0.adoc"))
+        assertTrue(content.contains("\"releaseNotesRenderer\""))
+        assertTrue(content.contains("asciidoc"))
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo omits releaseNotesPath when null`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(!content.contains("releaseNotesPath"))
+        assertTrue(!content.contains("releaseNotesRenderer"))
+    }
 }

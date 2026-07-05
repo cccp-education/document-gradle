@@ -1,18 +1,17 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 016
+:session: 017
 :date: 2026-07-05
-:status: DOC-8.2 terminé (257 tests) — prêt DOC-8.3/8.4 ou extension DOC-12
+:status: DOC-8.3 terminé (289 tests, +32) — prêt DOC-8.4 ou extension DOC-12
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew test functionalTest            # 218 tests (183 unit + 35 functional)
-./gradlew cucumberTest --no-daemon      # 39 scénarios BDD (6-7 min, GradleRunner)
+./gradlew test functionalTest            # 248 tests (209 unit + 39 functional)
+./gradlew cucumberTest --no-daemon      # 41 scénarios BDD (6-7 min)
 ./gradlew publishToMavenLocal            # publie le plugin pour la racine consommateur
-cd ..
-./gradlew tasks --group=document         # 12 tâches
+cd .. && ./gradlew tasks --group=document  # 12 tâches
 ```
 
 == Architecture (session 006, stable)
@@ -22,86 +21,52 @@ Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
 - Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
 - `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les tasks
 
-== Contexte
+== Contexte récent
 
-Session 002 (2026-06-29) — DOC-1 Plugin stub TERMINÉ (18 tests).
-Session 003 (2026-06-29) — DOC-2 generateDocument IA TERMINÉ (31 tests).
-Session 004 (2026-06-30) — DOC-3 + DOC-4 HTML + PDF TERMINÉS (50 tests).
-Session 005 (2026-06-30) — DOC-5 EPUB + DocBook + ManPage TERMINÉS (69 tests).
-Session 006 (2026-06-30) — Architecture Plugin Indépendant + Racine Consommateur.
-Session 007 (2026-07-01) — DOC-9 enrichDocument TERMINÉ (79 tests).
-Session 008 (2026-07-01) — DOC-10 Theme DSL TERMINÉ (103 tests).
-Session 009 (2026-07-03) — CNV-6 + DOC-8 i18n bridge (session intermédiaire).
 Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests).
 Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests).
 Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ (155 tests).
 Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }` TERMINÉ (180 tests).
 Session 014 (2026-07-05) — DOC-8.1 Release Notes Pipeline TERMINÉ (186 tests).
-Session 015 (2026-07-05) — DOC-8.2 Template configurable TERMINÉ (257 tests, +31 unit +4 functional +2 cucumber).
+Session 015 (2026-07-05) — DOC-8.2 Template configurable TERMINÉ (257 tests).
+Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json release notes TERMINÉ (289 tests, +32).
 
-== Objectif session 016 — DOC-8.3/8.4 ou extension DOC-12
+== Objectif session 017 — DOC-8.4 ou extension DOC-12
 
-Trois pistes possibles :
-
-=== P1 — DOC-8.3 Intégration N3 metadata.json (priorité P3)
-
-`metadata.json` inclut le chemin du fichier release notes pour
-runner-gradle `assembleCompositeContext`.
-
-=== P2 — DOC-8.4 Extension IA (Ollama) pour résumé humain (priorité P3)
+=== P1 — DOC-8.4 Extension IA (Ollama) pour résumé humain (priorité P3, 1 pt)
 
 Renderer `ollama-asciidoc` : Ollama produit un résumé en langage naturel
 des commits, ajouté en introduction des release notes. Fallback gracieux.
+Clôture EPIC DOC-8 (4/4 US).
 
-=== P3 — Extension DOC-12 (priorité P3)
+=== P2 — Extension DOC-12 (priorité P3)
 
 Intégrer le block `book { }` (DOC-11) dans le DSL unifié `document { }`.
 
-== DSL unifié (session 013 + releaseNotes session 014-015)
+=== P3 — DOC-8.5 Publication Maven Central document-gradle
 
-```
-document {
-    source.set(file("livre.adoc"))
-    enrich { plantuml.set(true); images.set(true); passthrough.set(true) }
-    outputs { html.set(true); pdf.set(true); epub.set(true) }
-    theme { pdfTheme.set(file("theme.yml")); htmlStylesheet.set(file("style.css")) }
-    metadata { title.set("Mon Livre"); author.set("Auteur"); language.set("fr") }
-    releaseNotes {
-        fromTag.set("v1.0.0"); toTag.set("HEAD"); version.set("1.2.0")
-        includeDownloads.set(true)
-        rendererType.set("markdown")              // DOC-8.2 — asciidoc|markdown|json
-        categories.set(mapOf("feat" to "New", "fix" to "Fixes"))  // DOC-8.2
-    }
-}
-```
+Publier `education.cccp:document-gradle` 0.0.1 sur Maven Central (nmcp).
+Pré-requis : BOM 0.0.7, dépendances releases, POM complet, signing.
 
-== Stack (rappel — 5 formats + enrich + theme + N3 + publication + book + DSL + release notes 3 renderers)
+== DSL unifié (releaseNotes 014-015 + N3 016)
 
-- **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
-- **asciidoctorj-pdf 2.3.23** : backend pdf
-- **asciidoctorj-epub3 2.2.0** : backend epub3
-- **asciidoctorj-diagram 3.2.0** + **plantuml 1.2025.3** : rendu inline PlantUML
-- **BookAssembler** : pages OCRisées -> livre AsciiDoc (DOC-11)
-- **DocumentConverter** : 5 formats (convert, convertToFile, skip, metadata, theme)
-- **DocumentEnricher** : résolution includes récursive, préservation plantuml/passthrough
-- **DocumentTheme** : value object (pdfTheme, htmlStylesheet, epubStylesheet, logo) + toAttributes
-- **DocumentPipelineConfig** (DOC-12) : source + enrich + outputs + theme + frontMatter
-- **DocumentConfigSerializer** (DOC-12) : sérialisation document-config.json
-- **ConventionalCommitParser** (DOC-8) : parsing regex Conventional Commits
-- **CliGitLogParser** (DOC-8) : implémente GitLogParser (contracts.pipeline) via git CLI
-- **AsciidocReleaseNotesRenderer** (DOC-8.1) : format asciidoc (défaut)
-- **MarkdownReleaseNotesRenderer** (DOC-8.2) : format markdown
-- **JsonReleaseNotesRenderer** (DOC-8.2) : format json (schema stable machine-readable)
-- **GitReleaseNotesGenerator** (DOC-8.1+8.2) : configDriven factory + sélection renderer par rendererType
-- **ReleaseNotesGenerateTask** (DOC-8) : task Gradle + DSL nested releaseNotes { rendererType, categories }
-- **pipeline-contracts 0.0.2** : contrat N0 (MEM-2 workspace-bom)
-- **nmcp 1.5.0** : publication Maven Central
+Block `document { }` avec nested `enrich { }`, `outputs { }`, `theme { }`, `metadata { }`, `releaseNotes { }`.
+releaseNotes expose : `fromTag`, `toTag`, `version`, `includeDownloads`, `rendererType` (asciidoc|markdown|json), `categories`.
+N3 : `collectDocumentRetrieve` scanne `build/release-notes/` et alimente `composite-context.json.releaseNotes` + `metadata.json.releaseNotesPath/Renderer`.
 
-== Pattern de surcharge (rappel)
+== Contrat N3 (session 016)
 
-```
-CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
-```
+`composite-context.json` : `{source, entries, count, releaseNotes, releaseNotesCount, timestamp}`
+`metadata.json` : `{source, type, sessions, generatedAt, model, version, dependencies, releaseNotesPath?, releaseNotesRenderer?}`
+
+Nouveaux classes : `ReleaseNotesArtifactEntry`, `DocumentArtifactCollector.collectReleaseNotes`,
+`CollectDocumentRetrieveTask.releaseNotesDirPath` (`@Input String` — pas `@InputDirectory` car le dir peut ne pas exister).
+
+== Stack (rappel)
+
+- AsciidoctorJ 3.0.0 + asciidoctorj-pdf 2.3.23 + asciidoctorj-epub3 2.2.0 + asciidoctorj-diagram 3.2.0
+- 3 renderers release notes (asciidoc, markdown, json) + N3 metadata releaseNotesPath/Renderer
+- pipeline-contracts 0.0.2 (MEM-2 workspace-bom) + nmcp 1.5.0
 
 == Règles absolues (rappel)
 

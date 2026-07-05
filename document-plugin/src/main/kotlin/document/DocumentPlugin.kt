@@ -177,9 +177,10 @@ class DocumentPlugin : Plugin<Project> {
     private fun registerCollectDocumentRetrieve(project: Project, ext: DocumentExtension) {
         project.tasks.register("collectDocumentRetrieve", CollectDocumentRetrieveTask::class.java) { task ->
             task.group = "document"
-            task.description = "Produit metadata.json + composite-context.json pour l'integration N3 runner-gradle (assembleCompositeContext). — DOC-6"
+            task.description = "Produit metadata.json + composite-context.json pour l'integration N3 runner-gradle (assembleCompositeContext). — DOC-6 + DOC-8.3"
             task.outputDir.set(project.layout.buildDirectory.dir("docs/document"))
             task.sourceAdoc.set(cliProp(project, "source").orElse(ext.source.map { it.asFile.name }).orElse("source.adoc"))
+            task.releaseNotesDirPath.set(project.layout.buildDirectory.dir("release-notes").map { it.asFile.absolutePath })
         }
     }
 

@@ -22,6 +22,7 @@ class DocumentArtifactCollector(private val outputDir: File) {
     companion object {
         private const val GENERATED_ADOC = "document.adoc"
         private const val ENRICHED_ADOC = "document-enriched.adoc"
+        private val RELEASE_NOTES_EXTENSIONS = setOf("adoc", "md", "json")
     }
 
     /**
@@ -54,6 +55,29 @@ class DocumentArtifactCollector(private val outputDir: File) {
         }
 
         return entries
+    }
+
+    /**
+     * Collects all release-notes artifacts present in the release-notes output
+     * directory (DOC-8.3).
+     *
+     * Scans for files with extensions `.adoc`, `.md`, `.json` and infers the
+     * [ReleaseNotesArtifactEntry.rendererType] from the extension. Files with
+     * other extensions (e.g. `.txt`) are skipped.
+     *
+     * @param releaseNotesDir the directory where `releaseNotesGenerate` writes
+     *   its output (typically build/release-notes)
+     * @return a list of [ReleaseNotesArtifactEntry], one per release-notes file
+     *   present on disk
+     */
+    fun collectReleaseNotes(releaseNotesDir: File): List<ReleaseNotesArtifactEntry> {
+        if (!releaseNotesDir.exists() || !releaseNotesDir.isDirectory) return emptyList()
+
+        return releaseNotesDir.listFiles { file ->
+            file.isFile && file.extension.lowercase() in RELEASE_NOTES_EXTENSIONS
+        }?.map { file ->
+            ReleaseNotesArtifactEntry.fromFile(path = file.absolutePath, exists = true)
+        } ?: emptyList()
     }
 
     private fun addIfExists(fileName: String, sourceAdoc: String, entries: MutableList<DocumentArtifactEntry>) {
