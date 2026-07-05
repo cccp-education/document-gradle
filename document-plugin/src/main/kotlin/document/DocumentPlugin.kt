@@ -44,6 +44,12 @@ class DocumentPlugin : Plugin<Project> {
                 author = project.objects.property(String::class.java),
                 language = project.objects.property(String::class.java),
             ),
+            releaseNotes = ReleaseNotesDsl(
+                fromTag = project.objects.property(String::class.java),
+                toTag = project.objects.property(String::class.java),
+                version = project.objects.property(String::class.java),
+                includeDownloads = project.objects.property(Boolean::class.java),
+            ),
         )
 
         // Conventions (defauts)
@@ -68,6 +74,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.metadata.title.convention("Untitled Document")
         ext.metadata.author.convention("Unknown Author")
         ext.metadata.language.convention("fr")
+        // DOC-8 — releaseNotes DSL conventions
+        ext.releaseNotes.toTag.convention("HEAD")
+        ext.releaseNotes.includeDownloads.convention(true)
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -97,6 +106,7 @@ class DocumentPlugin : Plugin<Project> {
         registerAssembleBook(project, ext)
         registerBookPipeline(project, ext)
         registerSerializeDocumentConfig(project, ext)
+        registerReleaseNotesGenerate(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -234,6 +244,21 @@ class DocumentPlugin : Plugin<Project> {
             task.metaTitle.set(cliProp(project, "metaTitle").orElse(ext.metadata.title))
             task.metaAuthor.set(cliProp(project, "metaAuthor").orElse(ext.metadata.author))
             task.metaLanguage.set(cliProp(project, "metaLanguage").orElse(ext.metadata.language))
+        }
+    }
+
+    private fun registerReleaseNotesGenerate(project: Project, ext: DocumentExtension) {
+        project.tasks.register("releaseNotesGenerate", ReleaseNotesGenerateTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Generates release notes AsciiDoc from git log between two tags (DOC-8)."
+            task.fromTag.set(cliProp(project, "releaseNotesFromTag").orElse(ext.releaseNotes.fromTag))
+            task.toTag.set(cliProp(project, "releaseNotesToTag").orElse(ext.releaseNotes.toTag))
+            task.version.set(cliProp(project, "releaseNotesVersion").orElse(ext.releaseNotes.version))
+            task.includeDownloads.set(
+                cliProp(project, "releaseNotesIncludeDownloads").map { it.toBoolean() }
+                    .orElse(ext.releaseNotes.includeDownloads),
+            )
+            task.outputDir.set(project.layout.buildDirectory.dir("release-notes"))
         }
     }
 }

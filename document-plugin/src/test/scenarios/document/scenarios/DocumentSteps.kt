@@ -472,6 +472,43 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(content).contains("\"language\" : \"fr\"")
     }
 
+    @Given("a new document project with a git repository")
+    fun createNewDocumentProjectWithGitRepo() {
+        world.createGradleProjectWithGitRepo()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a conventional commit {string}")
+    fun addConventionalCommit(message: String) {
+        world.gitCommit(message)
+    }
+
+    @Given("a git tag {string}")
+    fun addGitTag(name: String) {
+        world.gitTag(name)
+    }
+
+    @Then("the release notes adoc file should exist")
+    fun releaseNotesAdocShouldExist() {
+        val file = world.releaseNotesAdocFile()
+        assertThat(file).exists()
+    }
+
+    @Then("the release notes adoc should contain {string}")
+    fun releaseNotesAdocShouldContain(text: String) {
+        val file = world.releaseNotesAdocFile()
+        assertThat(file).exists()
+        assertThat(file!!.readText()).contains(text)
+    }
+
+    @Then("the release notes adoc should have the version {string} in its filename")
+    fun releaseNotesAdocShouldHaveVersionInFilename(version: String) {
+        val dir = world.releaseNotesOutputDir()
+        assertThat(dir).exists()
+        val files = dir!!.listFiles { _, name -> name.endsWith(".adoc") } ?: emptyArray()
+        assertThat(files.any { it.name.contains(version) }).isTrue()
+    }
+
     @After
     fun cleanup() {
         world.cleanup()

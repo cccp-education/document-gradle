@@ -29,8 +29,10 @@ dependencies {
     compileOnly(libs.plantuml.plugin)
 
     // N0 contracts — i18n (internationalisation documents) + opencode-session (traçabilité release notes)
+    // + pipeline-contracts (release notes generator, MEM-2 DOC-8)
     implementation(libs.i18n.contracts)
     implementation(libs.opencode.session.contracts)
+    implementation(libs.pipeline.contracts)
 
     // Tests unitaires
     testImplementation(kotlin("test-junit5"))

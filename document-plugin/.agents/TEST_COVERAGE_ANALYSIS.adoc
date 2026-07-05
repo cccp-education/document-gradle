@@ -273,3 +273,62 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
   + metadata. READ-only — n'invoque jamais le LLM (Loi de l'Économie d'Encre).
 - Contrat N3 de facto : pas de contrat N0 formel (workspace-bom pipeline-contracts MEM-2 non
   implémenté). Chaque borough duplique une classe Metadata. Document suit le pattern hyperframes.
+
+---
+
+== Session 014 — DOC-8.1 Release Notes Pipeline
+
+**Nouveaux tests** : +35 unit + 4 functional + 3 cucumber = +42 tests (total 186)
+
+=== ConventionalCommitParser (9 unit)
+
+- Parsing regex Conventional Commits 1.0.0 : `type(scope)!: message`
+- Types supportés : feat, fix, chore, perf, refactor, docs, test, ci, build, style
+- Scope optionnel (parenthèses), breaking change marker `!` strippé
+- `parseSubject` retourne null pour lignes non-conventionnelles ou vides
+- `parseLines` filtre et zip subjects/hashes/dates (même taille requise)
+
+=== CliGitLogParser (9 unit, @TempDir fixture)
+
+- Implémente `GitLogParser` (contracts.pipeline) via `ProcessBuilder("git", "log", ...)`
+- Format `--format=%s%x09%H%x09%aI` (TAB separator, évite collisions)
+- `parse(fromTag, toTag)` : `asReversed()` car git log retourne newest-first
+- `detectVersion` : VERSION file → gradle.properties `version=` → null
+- `detectFromTag` : `--sort=-v:refname` (lightweight tags n'ont pas creatordate)
+- 3 fixes TDD : ordre reverse, version sort tags, version sort detectFromTag
+
+=== AsciidocReleaseNotesRenderer (12 unit)
+
+- Implémente `ReleaseNotesRenderer` (format = "asciidoc")
+- `render` : titre `= Release Notes {version}`, sections par catégorie (config.categories order)
+- Scope entre parenthèses `- message (scope)`, catégories vides omises
+- Section "Téléchargement" optionnelle (includeDownloads)
+- `renderToFile` crée les répertoires parents
+
+=== GitReleaseNotesGenerator (5 unit, fake/stub/spy)
+
+- Implémente `ReleaseNotesGenerator` (orchestration parser + renderer)
+- Résout version : config.version → detectVersion → SNAPSHOT
+- Résout fromTag : config.fromTag → detectFromTag → parse("", toTag)
+- Fichier sortie : `{outputDir}/release-notes-{version}.adoc`
+- Spy parser vérifie fromTag/toTag capturés
+
+=== ReleaseNotesFunctionalTest (4 functional, GradleTestKit)
+
+- Task `releaseNotesGenerate` registered (tasks --group document)
+- Produit .adoc depuis commits conventionnels (feat, fix(api), docs)
+- SNAPSHOT quand pas de VERSION/gradle.properties
+- Lit VERSION file comme version
+
+=== release-notes.feature (3 cucumber BDD)
+
+- `@doc8 @releasenotes` — 3 scénarios (registration, produit adoc, SNAPSHOT)
+- Steps : Given git repo, conventional commit, git tag / Then adoc exists, contains, version in filename
+
+=== Notes techniques
+
+- `cucumberTest` task : ~6-7 min (GradleRunner démarre un daemon par scénario)
+- `NoSuchFileException binary/in-progress-results-generic.bin` : bug Gradle 9.6.1 + plugin
+  cucumber custom (binary results), pas un échec de test. Tous scénarios PASSED dans le log.
+- `./gradlew test functionalTest` : 22s, succès. Cucumber via `./gradlew cucumberTest` séparé.
+- pipeline-contracts 0.0.2 dans ~/.m2 (MEMPHIS MEM-2 publié session 013 workspace-bom)

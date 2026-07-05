@@ -101,3 +101,40 @@ directe vers codex-gradle.
 - Photos optionnelles (png/jpg/jpeg/webp, même baseName que la page)
 - bookPipeline = lifecycle task avec `mustRunAfter` pour l'ordre
 - Gherkin traduit intégralement en anglais (règle code en anglais)
+
+---
+
+== Session 014 — 2026-07-05 — DOC-8.1 Release Notes Pipeline (git log → AsciiDoc)
+
+*EPIC* : DOC-8 (US-DOC-8.1 + partiellement US-DOC-8.2)
+*Statut* : ✅ TERMINÉ
+*Tests* : 186 verts (145 unit + 4 functional + 37 cucumber), 0 failures (+35 unit + 4 functional + 3 cucumber vs session 013)
+
+**Objectif** : Câbler le contrat `pipeline-contracts` (MEM-2, workspace-bom N0) et implémenter le pipeline release notes (git log → Conventional Commits → AsciiDoc).
+
+**Méthode baby-step TDD/BDD** : 10 baby-steps, pyramide unit -> functional -> cucumber.
+- BDD : 3 scénarios `@doc8 @releasenotes` (registration, produit adoc depuis commits, SNAPSHOT)
+- DDD : ubiquitous language (ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesDsl, ReleaseNotesGenerateTask)
+- TDD : 35 tests unitaires (9 ConventionalCommitParser + 9 CliGitLogParser + 12 AsciidocReleaseNotesRenderer + 5 GitReleaseNotesGenerator)
+- Functional : 4 tests (task registered, produit adoc, SNAPSHOT, VERSION file)
+- Cucumber : 3 scénarios end-to-end
+
+**Nouveaux fichiers** : 6 main + 5 test + 1 feature
+- ConventionalCommitParser (regex Conventional Commits 1.0.0)
+- CliGitLogParser (implémente GitLogParser via ProcessBuilder git log)
+- AsciidocReleaseNotesRenderer (implémente ReleaseNotesRenderer, template AsciiDoc)
+- GitReleaseNotesGenerator (implémente ReleaseNotesGenerator, orchestration)
+- ReleaseNotesDsl + ReleaseNotesGenerateTask (task + DSL nested)
+- release-notes.feature (3 scénarios BDD)
+
+**Fichiers modifiés** : libs.versions.toml (+pipeline-contracts), build.gradle.kts (+implementation), DocumentExtension.kt (+releaseNotes block), DocumentPlugin.kt (+registerReleaseNotesGenerate + initNested), DocumentWorld.kt (+git repo/commit/tag helpers), DocumentSteps.kt (+6 steps), DocumentI18nBridge.kt (commentaire KDoc)
+
+**Tests** : 186 verts (145 unit + 4 functional + 37 cucumber), 0 failures
+
+**Décisions techniques** :
+- `git log` retourne newest-first → `asReversed()` pour ordre chronologique
+- `detectFromTag` utilise `--sort=-v:refname` (lightweight tags n'ont pas de creatordate)
+- Extension `.adoc` (convention workspace), pas `.asciidoc`
+- DSL nested `releaseNotes { }` pattern DOC-12 (classe concrète, val Property, fun action(Action<T>))
+- CLI override : -Pdocument.releaseNotesFromTag, -Pdocument.releaseNotesToTag, -Pdocument.releaseNotesVersion, -Pdocument.releaseNotesIncludeDownloads
+- @DisableCachingByDefault sur ReleaseNotesGenerateTask (git log non-déterministe)

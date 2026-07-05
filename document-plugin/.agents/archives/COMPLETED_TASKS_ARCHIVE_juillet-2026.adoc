@@ -173,3 +173,24 @@ Sérialisation Jackson INDENT_OUTPUT, valeurs null pour theme files absents.
 *Tests* : 180 verts (119 unit + 27 functional + 34 cucumber), 0 failures (+25 vs session 012).
 
 *EPIC* : DOC-12 ✅ TERMINÉ
+
+---
+
+=== Session 014 — DOC-8.1 Release Notes Pipeline (2026-07-05)
+
+*Tâche* : DOC-8.1 — Générer des release notes depuis l'historique git (git log → AsciiDoc)
+
+*Livrables* :
+- pipeline-contracts 0.0.2 (MEM-2, workspace-bom N0) câblé en implementation
+- ConventionalCommitParser : regex Conventional Commits 1.0.0 (10 types, scope optionnel, breaking marker)
+- CliGitLogParser : implémente GitLogParser via ProcessBuilder git log (%s %H %aI TAB-separated)
+- AsciidocReleaseNotesRenderer : implémente ReleaseNotesRenderer (template AsciiDoc, catégories, scope, downloads)
+- GitReleaseNotesGenerator : implémente ReleaseNotesGenerator (orchestration parser+renderer)
+- ReleaseNotesDsl + ReleaseNotesGenerateTask : task Gradle + DSL nested releaseNotes { }
+- BDD : 3 scénarios @doc8 (registration, produit adoc, SNAPSHOT)
+
+*Fichiers* : 6 main + 5 test + 1 feature + 6 modifiés
+
+*Tests* : 186 verts (145 unit + 4 functional + 37 cucumber), 0 failures (+35 unit + 4 functional + 3 cucumber vs session 013)
+
+*EPIC* : DOC-8.1 ✅ TERMINÉ (DOC-8.2/8.3/8.4 restants)

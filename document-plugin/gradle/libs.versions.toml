@@ -20,10 +20,12 @@ planner = "0.0.1"
 plantuml-plugin = "0.0.1"
 i18n-contracts = "0.0.2"
 opencode-session-contracts = "0.0.2"
+pipeline-contracts = "0.0.2"
 
 [libraries]
 i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
 opencode-session-contracts = { module = "education.cccp:opencode-session-contracts", version.ref = "opencode-session-contracts" }
+pipeline-contracts = { module = "education.cccp:pipeline-contracts", version.ref = "pipeline-contracts" }
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
 asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram-plantuml", version.ref = "asciidoctorj-diagram-plantuml" }

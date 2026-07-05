@@ -10,7 +10,7 @@ import contracts.i18n.SupportedLanguage
  * une [SupportedLanguage] depuis la configuration du plugin.
  *
  * EPIC DOC-8 : consommation des contrats N0 (i18n, pipeline, session).
- * pipeline-contracts (MEM-2) pas encore publie — releaseNotesGenerate en TODO.
+ * pipeline-contracts (MEM-2) publié session 017 — releaseNotesGenerate câblé via [ReleaseNotesGenerateTask].
  */
 data class DocumentI18nBridge(
     val language: SupportedLanguage = LanguageCatalog.findByCode("en") ?: SupportedLanguage("en", "English", "English", false, "en"),

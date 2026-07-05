@@ -1,23 +1,24 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 014
-:date: 2026-07-04
-:status: DOC-12 terminé (DSL unifié, 180 tests) — prêt DOC-8 / extension DOC-12
+:session: 015
+:date: 2026-07-05
+:status: DOC-8.1 terminé (186 tests) — prêt DOC-8.2/8.3 ou extension DOC-12
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew check                        # 180 tests (119 unit + 27 functional + 34 cucumber), Gradle 9.6.1
-./gradlew publishToMavenLocal          # publie le plugin pour la racine consommateur
+./gradlew test functionalTest            # 149 tests (145 unit + 4 functional)
+./gradlew cucumberTest --no-daemon      # 37 scénarios BDD (6-7 min, GradleRunner)
+./gradlew publishToMavenLocal            # publie le plugin pour la racine consommateur
 cd ..
-./gradlew tasks --group=document       # 11 tâches visibles (8 + assembleBook + bookPipeline + serializeDocumentConfig)
+./gradlew tasks --group=document         # 12 tâches (8 + assembleBook + bookPipeline + serializeDocumentConfig + releaseNotesGenerate)
 ```
 
 == Architecture (session 006, stable)
 
 Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
-- `document-plugin/` — build Gradle autonome (settings, wrapper 9.6.1, catalogue 66 lignes)
+- `document-plugin/` — build Gradle autonome (settings, wrapper 9.6.1, catalogue 68 lignes)
 - Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
 - `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les tasks
 
@@ -35,25 +36,27 @@ Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 te
 Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests).
 Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ (155 tests, +18).
 Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }` TERMINÉ (180 tests, +25).
+Session 014 (2026-07-05) — DOC-8.1 Release Notes Pipeline TERMINÉ (186 tests, +35 unit + 4 functional + 3 cucumber).
 
-== Objectif session 014 — DOC-8 Release Notes (ou extension DOC-12)
+== Objectif session 015 — DOC-8.2/8.3 ou extension DOC-12
 
-Deux pistes possibles :
+Trois pistes possibles :
 
-=== P1 — DOC-8 Release Notes Pipeline (priorité P2)
+=== P1 — DOC-8.2 Template configurable (priorité P2)
 
-Câbler le contrat `pipeline-contracts` (MEM-2, workspace-bom) non encore implémenté.
-Le bridge `DocumentI18nBridge` existe (session 009) ; le pipeline release notes
-(git log → AsciiDoc → multi-format) reste à implémenter.
+Compléter US-DOC-8.2 : renderer sélectionnable (asciidoc/markdown/json),
+fichier sortie convention, categories custom via DSL.
 
-=== P2 — Extension DOC-12 (priorité P3)
+=== P2 — DOC-8.3 Intégration N3 metadata.json (priorité P3)
+
+`metadata.json` inclut le chemin du fichier release notes pour
+runner-gradle `assembleCompositeContext`.
+
+=== P3 — Extension DOC-12 (priorité P3)
 
 Intégrer le block `book { }` (DOC-11) dans le DSL unifié `document { }`.
-Actuellement `bookPagesDir`, `bookPhotosDir`, `bookTitle`, `bookAuthor` sont
-des flat properties — les migrer vers un nested block `book { }` cohérent
-avec `enrich { }`, `outputs { }`, `metadata { }`.
 
-== DSL unifié (session 013, stable)
+== DSL unifié (session 013, stable + releaseNotes session 014)
 
 ```
 document {
@@ -62,14 +65,11 @@ document {
     outputs { html.set(true); pdf.set(true); epub.set(true) }
     theme { pdfTheme.set(file("theme.yml")); htmlStylesheet.set(file("style.css")) }
     metadata { title.set("Mon Livre"); author.set("Auteur"); language.set("fr") }
+    releaseNotes { fromTag.set("v1.0.0"); toTag.set("HEAD"); version.set("1.2.0"); includeDownloads.set(true) }
 }
 ```
 
-- `serializeDocumentConfig` → `document-config.json` (contrat N3)
-- Pattern nested : `fun enrich(action: Action<DocumentEnrichDsl>)` (org.gradle.api.Action)
-- Classes DSL concrètes avec `val` initialisés via `project.objects.property()`
-
-== Stack (rappel — 5 formats + enrichissement + theme + N3 + publication + book + DSL unifié)
+== Stack (rappel — 5 formats + enrichissement + theme + N3 + publication + book + DSL unifié + release notes)
 
 - **AsciidoctorJ 3.0.0** : html5, docbook5, manpage (core)
 - **asciidoctorj-pdf 2.3.23** : backend pdf
@@ -81,6 +81,12 @@ document {
 - **DocumentTheme** : value object (pdfTheme, htmlStylesheet, epubStylesheet, logo) + toAttributes
 - **DocumentPipelineConfig** (DOC-12) : source + enrich + outputs + theme + frontMatter
 - **DocumentConfigSerializer** (DOC-12) : sérialisation document-config.json
+- **ConventionalCommitParser** (DOC-8) : parsing regex Conventional Commits
+- **CliGitLogParser** (DOC-8) : implémente GitLogParser (contracts.pipeline) via git CLI
+- **AsciidocReleaseNotesRenderer** (DOC-8) : implémente ReleaseNotesRenderer (template AsciiDoc)
+- **GitReleaseNotesGenerator** (DOC-8) : implémente ReleaseNotesGenerator (orchestration)
+- **ReleaseNotesGenerateTask** (DOC-8) : task Gradle + DSL nested releaseNotes { }
+- **pipeline-contracts 0.0.2** : contrat N0 (MEM-2 workspace-bom)
 - **nmcp 1.5.0** : publication Maven Central
 
 == Pattern de surcharge (rappel)
@@ -88,15 +94,6 @@ document {
 ```
 CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 ```
-
-== Roadmap prioritaire (post DOC-12)
-
-[cols="1,3,2]
-|===
-| EPIC | Description | Priorite
-| DOC-8 | Release notes — pipeline-contracts (MEM-2) à implémenter | P2 — session 014
-| DOC-12+ | Extension — block `book { }` dans DSL unifié | P3
-|===
 
 == Règles absolues (rappel)
 
@@ -110,10 +107,3 @@ CLI (-Pdocument.xxx) > DSL (block document { }) > convention (.convention())
 . Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
 . Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
 . CODE EN ANGLAIS — aucun commentaire/texte français dans le code source
-
-== Méthode baby-step TDD/BDD
-
-. DDD : ubiquitous language (BookPage, PageOrder, BookAssemblyResult, DocumentConfig, DocumentFormat, DocumentSource, DocumentConverter, DocumentEnricher, DocumentTheme, DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, DocumentEnrichConfig, DocumentOutputs, DocumentFrontMatter, DocumentPipelineConfig, DocumentConfigSerializer)
-. TDD : Red → Green → Refactor, 1 test à la fois
-. BDD : Cucumber .feature en amont (scénarios métier) → step definitions
-. Pyramide : unit (rapide) → functional (GradleTestKit) → cucumber (acceptance)

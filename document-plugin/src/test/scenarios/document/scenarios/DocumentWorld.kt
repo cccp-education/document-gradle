@@ -666,6 +666,67 @@ class DocumentWorld {
         return dir.resolve("build/docs/document/document-config.json")
     }
 
+    fun createGradleProjectWithGitRepo(): File {
+        val dir = Files.createTempDirectory("doc-bdd-rn").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            """.trimIndent()
+        )
+        runGit(dir, "init")
+        runGit(dir, "config", "user.email", "bdd@example.com")
+        runGit(dir, "config", "user.name", "BDD")
+        projectDir = dir
+        return dir
+    }
+
+    fun gitCommit(message: String) {
+        val dir = projectDir ?: return
+        dir.resolve("README.md").appendText("# $message\n")
+        runGit(dir, "add", ".")
+        val pb = ProcessBuilder("git", "commit", "-m", message)
+            .directory(dir)
+            .redirectErrorStream(true)
+        pb.environment()["GIT_AUTHOR_DATE"] = "2026-07-05T10:00:00"
+        pb.environment()["GIT_COMMITTER_DATE"] = "2026-07-05T10:00:00"
+        val p = pb.start()
+        p.inputStream.bufferedReader().readText()
+        p.waitFor()
+    }
+
+    fun gitTag(name: String) {
+        val dir = projectDir ?: return
+        val p = ProcessBuilder("git", "tag", name)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
+        p.inputStream.bufferedReader().readText()
+        p.waitFor()
+    }
+
+    fun releaseNotesOutputDir(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/release-notes")
+    }
+
+    fun releaseNotesAdocFile(): File? {
+        val dir = releaseNotesOutputDir() ?: return null
+        return dir.listFiles { _, name -> name.endsWith(".adoc") }?.firstOrNull()
+    }
+
+    private fun runGit(dir: File, vararg args: String): String {
+        val process = ProcessBuilder("git", *args)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
+        val output = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+        return output
+    }
+
     fun cleanup() {
         projectDir?.deleteRecursively()
         projectDir = null

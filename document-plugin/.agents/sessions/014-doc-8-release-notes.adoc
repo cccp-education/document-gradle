@@ -1,0 +1,88 @@
+= Session 014 — DOC-8.1 Release Notes Pipeline (git log → AsciiDoc)
+:session: 014
+:date: 2026-07-05
+:epic: DOC-8 (US-DOC-8.1 + US-DOC-8.2)
+:status: ✅ TERMINÉ
+:tests: 145 unit + 4 functional + 37 cucumber = 186 verts
+:method: baby-step DDD/TDD/BDD
+
+== Objectif
+
+Câbler le contrat `pipeline-contracts` (MEM-2, workspace-bom N0) et implémenter
+le pipeline de release notes : git log → parsing commits conventionnels →
+fichier AsciiDoc structuré groupé par catégories.
+
+== Livrables
+
+=== Nouveaux fichiers (main, 5)
+
+- `src/main/kotlin/document/releasenotes/ConventionalCommitParser.kt` — parsing regex Conventional Commits (feat/fix/chore/perf/refactor/docs/test/ci/build/style, scope optionnel, breaking change marker `!`)
+- `src/main/kotlin/document/releasenotes/CliGitLogParser.kt` — implémente `GitLogParser` (contracts.pipeline) via `ProcessBuilder("git", "log", ...)`. Format `%s%x09%H%x09%aI` (TAB separator). `detectVersion` lit VERSION ou gradle.properties, `detectFromTag` sort par `--sort=-v:refname`.
+- `src/main/kotlin/document/releasenotes/AsciidocReleaseNotesRenderer.kt` — implémente `ReleaseNotesRenderer`. Format `asciidoc`. Titre `= Release Notes {version}`, sections par catégorie (config.categories order), scope entre parenthèses, section Téléchargement optionnelle.
+- `src/main/kotlin/document/releasenotes/GitReleaseNotesGenerator.kt` — implémente `ReleaseNotesGenerator`. Orchestre parser + renderer. Résout fromTag (auto-detect si null), version (detectVersion ou SNAPSHOT), écrit `release-notes-{version}.adoc` dans outputDir.
+- `src/main/kotlin/document/ReleaseNotesDsl.kt` — nested DSL block `releaseNotes { }` (fromTag, toTag, version, includeDownloads), pattern DOC-12 (classe concrète avec val Property).
+- `src/main/kotlin/document/ReleaseNotesGenerateTask.kt` — task `releaseNotesGenerate`, @DisableCachingByDefault, construit ReleaseNotesConfig et délègue à GitReleaseNotesGenerator.
+
+=== Nouveaux fichiers (test, 5)
+
+- `src/test/kotlin/document/releasenotes/ConventionalCommitParserTest.kt` — 9 tests (parsing feat/scope, types, null non-conventionnel, empty, breaking marker, parseLines filtre)
+- `src/test/kotlin/document/releasenotes/CliGitLogParserTest.kt` — 9 tests (@TempDir git repo, parse entre 2 tags, empty fromTag, detectVersion VERSION/gradle.properties/null, detectFromTag previous/first/null)
+- `src/test/kotlin/document/releasenotes/AsciidocReleaseNotesRendererTest.kt` — 12 tests (format, empty, titre version, SNAPSHOT, catégories ordre config, scope, catégories vides omises, downloads on/off, renderToFile + parent dirs)
+- `src/test/kotlin/document/releasenotes/GitReleaseNotesGeneratorTest.kt` — 5 tests (version detectVersion, config version, SNAPSHOT fallback, fromTag auto-detect spy, outputDir configuré)
+- `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt` — 4 tests (task registered, produit adoc depuis commits, SNAPSHOT empty repo, VERSION file)
+- `src/test/resources/features/release-notes.feature` — 3 scénarios BDD @doc8
+
+=== Fichiers modifiés (6)
+
+- `gradle/libs.versions.toml` — +pipeline-contracts version 0.0.2 + library
+- `build.gradle.kts` — +implementation(libs.pipeline.contracts)
+- `src/main/kotlin/document/DocumentExtension.kt` — +nested block releaseNotes (lateinit + initNested + fun releaseNotes(action))
+- `src/main/kotlin/document/DocumentPlugin.kt` — initNested releaseNotes (ObjectFactory properties), conventions (toTag=HEAD, includeDownloads=true), registerReleaseNotesGenerate (CLI props document.releaseNotes*)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +createGradleProjectWithGitRepo, +gitCommit, +gitTag, +releaseNotesOutputDir, +releaseNotesAdocFile, +runGit privé
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +6 step definitions (Given git repo, Given conventional commit, Given git tag, Then adoc exists, Then adoc contains, Then version in filename)
+- `src/main/kotlin/document/DocumentI18nBridge.kt` — commentaire KDoc mis à jour (releaseNotesGenerate câblé)
+
+== Méthode baby-step TDD/BDD
+
+10 baby-steps, pyramide unit -> functional -> cucumber :
+
+. Câblage dépendance pipeline-contracts 0.0.2 (catalogue + build)
+. TDD ConventionalCommitParser — 9 tests unit (Red → Green → Refactor regex)
+. TDD CliGitLogParser — 9 tests unit (@TempDir fixture git repo, 3 fixes : ordre reverse, version sort tags, version sort detectFromTag)
+. TDD AsciidocReleaseNotesRenderer — 12 tests unit (template AsciiDoc, catégories, scope, downloads)
+. TDD GitReleaseNotesGenerator — 5 tests unit (orchestration parser+renderer, fake/stub/spy)
+. DSL ReleaseNotesDsl + ReleaseNotesGenerateTask
+. Wiring DocumentPlugin (initNested + registerReleaseNotesGenerate)
+. Functional GradleTestKit — 4 tests (repo git réel, .adoc produit, VERSION file, SNAPSHOT)
+. BDD Cucumber — 3 scénarios @doc8 (registration, produit adoc, SNAPSHOT)
+. Vérification — ./gradlew test functionalTest SUCCESS, cucumber 37/37 PASSED
+
+== Tests
+
+- 145 unit (119 avant + 35 nouveaux : 9 + 9 + 12 + 5)
+- 4 functional (ReleaseNotesFunctionalTest)
+- 37 cucumber (34 avant + 3 nouveaux @doc8)
+- Total : 186 verts, 0 failures
+
+== Décisions techniques
+
+- `parseLines` reverse l'ordre car `git log` retourne newest-first ; on veut chronologique (oldest-first)
+- `detectFromTag` utilise `--sort=-v:refname` (version sort desc) car les lightweight tags n'ont pas de creatordate
+- Extension `.adoc` (pas `.asciidoc`) — convention workspace
+- `@DisableCachingByDefault` sur ReleaseNotesGenerateTask (git log non-déterministe)
+- DSL nested `releaseNotes { }` pattern DOC-12 (classe concrète, val Property, fun action(Action<T>))
+- CLI override : `-Pdocument.releaseNotesFromTag`, `-Pdocument.releaseNotesToTag`, `-Pdocument.releaseNotesVersion`, `-Pdocument.releaseNotesIncludeDownloads`
+
+== US-DOC-8.1 critères acceptation
+
+- ✅ `releaseNotesGenerate` lit les tags git du projet
+- ✅ Les commits conventionnels sont parsés en catégories (feat/fix/chore/…)
+- ✅ Un fichier `.adoc` structuré est produit
+- ✅ La tâche fonctionne sans configuration (auto-détection VERSION + tags)
+- ✅ Test fonctionnel avec Gradle TestKit sur un repo git de test
+
+== Reste DOC-8
+
+- US-DOC-8.2 (Template AsciiDoc configurable) — partiellement fait (categories configurables, includeDownloads). Reste : renderer sélectionnable, fichier sortie convention.
+- US-DOC-8.3 (Intégration N3 metadata.json) — TODO
+- US-DOC-8.4 (Extension IA Ollama résumé) — TODO

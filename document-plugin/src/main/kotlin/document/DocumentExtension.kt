@@ -101,14 +101,22 @@ abstract class DocumentExtension {
     lateinit var metadata: DocumentMetadataDsl
         private set
 
+    /**
+     * Nested DSL block `releaseNotes { }` (DOC-8) — git log → AsciiDoc.
+     */
+    lateinit var releaseNotes: ReleaseNotesDsl
+        private set
+
     internal fun initNested(
         enrich: DocumentEnrichDsl,
         outputs: DocumentOutputsDsl,
         metadata: DocumentMetadataDsl,
+        releaseNotes: ReleaseNotesDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
         this.metadata = metadata
+        this.releaseNotes = releaseNotes
     }
 
     /**
@@ -137,6 +145,13 @@ abstract class DocumentExtension {
      */
     fun metadata(action: Action<DocumentMetadataDsl>) {
         action.execute(metadata)
+    }
+
+    /**
+     * Nested DSL block `releaseNotes { }` (DOC-8).
+     */
+    fun releaseNotes(action: Action<ReleaseNotesDsl>) {
+        action.execute(releaseNotes)
     }
 
     fun formats(vararg formats: DocumentFormat) {
