@@ -260,3 +260,43 @@ notes pour runner-gradle `assembleCompositeContext` + déploiement gh-pages.
 - `ReleaseNotesArtifactEntry.fromFile()` infère le rendererType depuis l'extension (.adoc→asciidoc, .md→markdown, .json→json)
 
 *EPIC* : DOC-8.3 ✅ TERMINÉ (DOC-8.4 restant — IA Ollama résumé humain)
+
+=== Session 017 (2026-07-06) — DOC-8.4 Extension IA Ollama (résumé humain)
+
+*DOC-8.4* : Le renderer `ollama-asciidoc` produit un résumé en langage naturel
+des commits via Ollama, ajouté en introduction des release notes AsciiDoc.
+Fallback gracieux si Ollama indisponible. Clôture EPIC DOC-8 (4/4 US).
+
+*Nouveaux fichiers main* (1) :
+- `OllamaAsciidocReleaseNotesRenderer.kt` — décorateur ReleaseNotesRenderer, injecte `== Résumé` via DocumentLlmProvider, fallback AsciidocReleaseNotesRenderer si LLM jette
+
+*Fichiers main modifiés* (4) :
+- `GitReleaseNotesGenerator.kt` — paramètre privé llmProvider + companion `configDrivenWithLlm(projectDir, parser, llmProvider)` + case `"ollama-asciidoc"` dans rendererFor
+- `ReleaseNotesDsl.kt` — propriété `llmMode: Property<String>` (ollama|fake, seulement pour ollama-asciidoc)
+- `ReleaseNotesGenerateTask.kt` — `@Input llmMode` + sélection configDrivenWithLlm quand rendererType = ollama-asciidoc
+- `DocumentPlugin.kt` — câblage `releaseNotes.llmMode` (convention "ollama" + CLI -Pdocument.releaseNotesLlmMode)
+
+*Nouveaux tests* (11) :
+- `OllamaAsciidocReleaseNotesRendererTest.kt` — 7 unit (format, empty, résumé avant catégories, fallback LLM jette, renderToFile, parent dirs)
+- `GitReleaseNotesGeneratorTest.kt` — +4 unit (configDrivenWithLlm ollama-asciidoc produit résumé, fallback LLM jette, route markdown, injected renderer compat)
+- `ReleaseNotesDslTest.kt` — constructeur +llmMode (redécalage, pas un nouveau test)
+- `ReleaseNotesFunctionalTest.kt` — +1 functional (ollama-asciidoc + fake LLM produit adoc avec Résumé)
+- `release-notes.feature` — +1 cucumber `@doc84 @ollama` (ollama-asciidoc + fake LLM BDD end-to-end)
+- `DocumentWorld.kt` — +1 factory `createGradleProjectWithGitRepoAndOllamaAsciidocRendererWithFakeLlm()`
+- `DocumentSteps.kt` — +1 @Given ollama-asciidoc renderer with fake LLM
+
+*Tests* : 300 verts (218 unit + 40 functional + 42 cucumber), 0 failures (+11 vs session 016)
+
+*Méthode* : 6 baby-steps DDD/TDD/BDD, pyramide unit → functional → cucumber.
+- DDD : décorateur sur AsciidocReleaseNotesRenderer (composition, pas héritage)
+- TDD : Red (classe manquante) → Green (7 tests OllamaAsciidocRenderer) → Refactor (wiring factory + DSL + task + plugin)
+- BDD : scénario end-to-end GradleTestKit + Cucumber avec LLM fake
+
+* Décisions techniques* :
+- Décorateur (pas ré-implémentation) : OllamaAsciidocReleaseNotesRenderer délègue le corps à AsciidocReleaseNotesRenderer, insère `== Résumé` entre titre et corps
+- `runBlocking { provider.call(prompt) }` : bridge sync N0 `render()` / suspend `call()` (pattern DocumentGenerationGraph.kt DOC-2)
+- Fallback gracieux : `runCatching { ... }.getOrNull() ?: return base` — pas de crash du build si Ollama down, rendu pur sans résumé (Loi économie d'encre)
+- Factory `configDrivenWithLlm` : sépare responsabilités — provider instancié uniquement si rendererType = ollama-asciidoc (pas de coût init LLM pour asciidoc/markdown/json)
+- DSL llmMode mirror de `DocumentExtension.llmMode` (DOC-2 generateDocument) — même factory `DocumentLlmProviderFactory`, même sémantique fake/ollama
+
+*EPIC* : DOC-8.4 ✅ TERMINÉ — EPIC DOC-8 4/4 TERMINÉ (DOC-8.1/8.2/8.3/8.4)

@@ -17,6 +17,7 @@ class ReleaseNotesDslTest {
         includeDownloads = objects.property(Boolean::class.java),
         rendererType = objects.property(String::class.java),
         categories = objects.mapProperty(String::class.java, String::class.java),
+        llmMode = objects.property(String::class.java),
     )
 
     @Test

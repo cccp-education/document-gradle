@@ -20,6 +20,7 @@
 | 014 | 2026-07-05 | feat | DOC-8.1 Release Notes Pipeline — pipeline-contracts 0.0.2, ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer, GitReleaseNotesGenerator, ReleaseNotesGenerateTask, DSL releaseNotes { }, 186 tests (+35 unit +4 functional +3 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 015 | 2026-07-05 | feat | DOC-8.2 Template configurable — MarkdownReleaseNotesRenderer, JsonReleaseNotesRenderer, GitReleaseNotesGenerator.configDriven, ReleaseNotesDsl rendererType+categories, CLI override, 257 tests (+31 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 016 | 2026-07-05 | feat | DOC-8.3 N3 metadata.json + composite-context.json release notes — ReleaseNotesArtifactEntry, DocumentRetrieveResult.releaseNotes/releaseNotesCount, DocumentMetadata.releaseNotesPath/Renderer (NON_NULL), DocumentArtifactCollector.collectReleaseNotes, CollectDocumentRetrieveTask.releaseNotesDirPath (@Input String), 289 tests (+32: 7+7+7+8 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 017 | 2026-07-06 | feat | DOC-8.4 Extension IA Ollama (résumé humain) — OllamaAsciidocReleaseNotesRenderer décorateur ReleaseNotesRenderer, GitReleaseNotesGenerator.configDrivenWithLlm factory, ReleaseNotesDsl.llmMode + ReleaseNotesGenerateTask.llmMode + DocumentPlugin wiring CLI -Pdocument.releaseNotesLlmMode, fallback gracieux si LLM jette, 300 tests (+11: 7 unit OllamaAsciidoc +4 unit GeneratorWithLlm +1 functional +1 cucumber -2 redécalés), baby-step DDD/TDD/BDD, EPIC DOC-8 4/4 TERMINÉ | ✅ TERMINÉ
 |===
 
 ---

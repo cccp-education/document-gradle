@@ -490,6 +490,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with a git repository and ollama-asciidoc renderer with fake LLM")
+    fun createNewDocumentProjectWithGitRepoAndOllamaAsciidocRenderer() {
+        world.createGradleProjectWithGitRepoAndOllamaAsciidocRendererWithFakeLlm()
+        assertThat(world.projectDir).exists()
+    }
+
     @Given("a conventional commit {string}")
     fun addConventionalCommit(message: String) {
         world.gitCommit(message)

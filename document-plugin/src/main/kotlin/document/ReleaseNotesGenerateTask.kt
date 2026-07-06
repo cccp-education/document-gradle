@@ -9,6 +9,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
+import document.generation.DocumentLlmProviderFactory
 import document.releasenotes.AsciidocReleaseNotesRenderer
 import document.releasenotes.CliGitLogParser
 import document.releasenotes.GitReleaseNotesGenerator
@@ -48,6 +49,14 @@ abstract class ReleaseNotesGenerateTask : DefaultTask() {
     @get:Input
     abstract val categories: MapProperty<String, String>
 
+    /**
+     * DOC-8.4 — LLM mode for the `ollama-asciidoc` rendererType.
+     * "fake" (tests, no network) or "ollama" (production, local Ollama).
+     * Ignored when [rendererType] is not `"ollama-asciidoc"`.
+     */
+    @get:Input
+    abstract val llmMode: Property<String>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -60,7 +69,13 @@ abstract class ReleaseNotesGenerateTask : DefaultTask() {
     fun generate() {
         val projectDir = project.projectDir
         val parser = CliGitLogParser(projectDir)
-        val generator = GitReleaseNotesGenerator.configDriven(projectDir, parser)
+        val resolvedRendererType = rendererType.getOrElse("asciidoc")
+        val generator = if (resolvedRendererType == "ollama-asciidoc") {
+            val provider = DocumentLlmProviderFactory.create(llmMode.getOrElse("ollama"))
+            GitReleaseNotesGenerator.configDrivenWithLlm(projectDir, parser, provider)
+        } else {
+            GitReleaseNotesGenerator.configDriven(projectDir, parser)
+        }
 
         val customCategories = categories.get().takeIf { it.isNotEmpty() }
         val config = ReleaseNotesConfig(
@@ -69,7 +84,7 @@ abstract class ReleaseNotesGenerateTask : DefaultTask() {
             version = version.orNull,
             includeDownloads = includeDownloads.getOrElse(true),
             outputDir = outputDir.get().asFile.toRelativeString(projectDir),
-            rendererType = rendererType.getOrElse("asciidoc"),
+            rendererType = resolvedRendererType,
             categories = customCategories ?: ReleaseNotesConfig().categories,
         )
         val result = generator.generate(config)

@@ -1,15 +1,15 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 017
-:date: 2026-07-05
-:status: DOC-8.3 terminé (289 tests, +32) — prêt DOC-8.4 ou extension DOC-12
+:date: 2026-07-06
+:status: DOC-8.4 terminé (300 tests, +11) — EPIC DOC-8 4/4 TERMINÉ. Prêt DOC-8.5 ou extension DOC-12.
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew test functionalTest            # 248 tests (209 unit + 39 functional)
-./gradlew cucumberTest --no-daemon      # 41 scénarios BDD (6-7 min)
+./gradlew test functionalTest            # 258 tests (218 unit + 40 functional)
+./gradlew cucumberTest --no-daemon      # 42 scénarios BDD (6-7 min)
 ./gradlew publishToMavenLocal            # publie le plugin pour la racine consommateur
 cd .. && ./gradlew tasks --group=document  # 12 tâches
 ```
@@ -23,50 +23,62 @@ Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
 
 == Contexte récent
 
-Session 010 (2026-07-03) — DOC-6 N3 runner-gradle integration TERMINÉ (135 tests).
 Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests).
 Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ (155 tests).
 Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }` TERMINÉ (180 tests).
 Session 014 (2026-07-05) — DOC-8.1 Release Notes Pipeline TERMINÉ (186 tests).
 Session 015 (2026-07-05) — DOC-8.2 Template configurable TERMINÉ (257 tests).
-Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json release notes TERMINÉ (289 tests, +32).
+Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json TERMINÉ (289 tests).
+Session 017 (2026-07-06) — DOC-8.4 Extension IA Ollama (résumé humain) TERMINÉ (300 tests, +11).
 
-== Objectif session 017 — DOC-8.4 ou extension DOC-12
+== Objectif session 018 — DOC-8.5 ou extension DOC-12
 
-=== P1 — DOC-8.4 Extension IA (Ollama) pour résumé humain (priorité P3, 1 pt)
+=== P1 — DOC-8.5 Publication Maven Central document-gradle
 
-Renderer `ollama-asciidoc` : Ollama produit un résumé en langage naturel
-des commits, ajouté en introduction des release notes. Fallback gracieux.
-Clôture EPIC DOC-8 (4/4 US).
+Publier `education.cccp:document-gradle` 0.0.1 sur Maven Central (nmcp).
+Pré-requis : BOM 0.0.7 (déjà publiée), dépendances releases, POM complet, signing.
+Vérifier que tous les `implementation` sont des releases (pas de -SNAPSHOT).
 
 === P2 — Extension DOC-12 (priorité P3)
 
 Intégrer le block `book { }` (DOC-11) dans le DSL unifié `document { }`.
+Actuellement `bookPagesDir`, `bookPhotosDir`, `bookTitle`, `bookAuthor` sont
+des flat properties sur `DocumentExtension`. Les migrer dans un nested
+block `book { }` (pattern enrich/outputs/metadata/releaseNotes).
 
-=== P3 — DOC-8.5 Publication Maven Central document-gradle
+=== P3 — DOC-9b enrichissement images
 
-Publier `education.cccp:document-gradle` 0.0.1 sur Maven Central (nmcp).
-Pré-requis : BOM 0.0.7, dépendances releases, POM complet, signing.
+US-DOC-08 (DOC-9) mentionne "Les blocs `[plantuml]` sont préservés" mais
+l'enrichissement images (`image::photo.png[]`) n'est pas testé explicitement
+dans le rendu final HTML/PDF. Ajouter scénario BDD.
 
-== DSL unifié (releaseNotes 014-015 + N3 016)
+== EPIC DOC-8 — 4/4 TERMINÉ
 
-Block `document { }` avec nested `enrich { }`, `outputs { }`, `theme { }`, `metadata { }`, `releaseNotes { }`.
-releaseNotes expose : `fromTag`, `toTag`, `version`, `includeDownloads`, `rendererType` (asciidoc|markdown|json), `categories`.
-N3 : `collectDocumentRetrieve` scanne `build/release-notes/` et alimente `composite-context.json.releaseNotes` + `metadata.json.releaseNotesPath/Renderer`.
+- DOC-8.1 ✅ git log → AsciiDoc (ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer)
+- DOC-8.2 ✅ Template configurable (Markdown/JSON, configDriven, custom categories)
+- DOC-8.3 ✅ N3 metadata.json + composite-context.json (ReleaseNotesArtifactEntry, collectReleaseNotes)
+- DOC-8.4 ✅ Extension IA Ollama (OllamaAsciidocReleaseNotesRenderer, llmMode, fallback gracieux)
 
-== Contrat N3 (session 016)
+4 renderers release notes : asciidoc, markdown, json, ollama-asciidoc (décorateur IA).
+
+== OllamaAsciidocReleaseNotesRenderer (rappel DOC-8.4)
+
+Décorateur sur AsciidocReleaseNotesRenderer. Injecte `== Résumé` avant les
+catégories via `DocumentLlmProvider`. Fallback gracieux si LLM jette (rendu
+pur sans résumé). DSL : `rendererType.set("ollama-asciidoc")` + `llmMode.set("fake"|"ollama")`.
+CLI : `-Pdocument.releaseNotesRendererType=ollama-asciidoc -Pdocument.releaseNotesLlmMode=fake`.
+
+== Contrat N3 (session 016, stable)
 
 `composite-context.json` : `{source, entries, count, releaseNotes, releaseNotesCount, timestamp}`
 `metadata.json` : `{source, type, sessions, generatedAt, model, version, dependencies, releaseNotesPath?, releaseNotesRenderer?}`
 
-Nouveaux classes : `ReleaseNotesArtifactEntry`, `DocumentArtifactCollector.collectReleaseNotes`,
-`CollectDocumentRetrieveTask.releaseNotesDirPath` (`@Input String` — pas `@InputDirectory` car le dir peut ne pas exister).
-
 == Stack (rappel)
 
 - AsciidoctorJ 3.0.0 + asciidoctorj-pdf 2.3.23 + asciidoctorj-epub3 2.2.0 + asciidoctorj-diagram 3.2.0
-- 3 renderers release notes (asciidoc, markdown, json) + N3 metadata releaseNotesPath/Renderer
+- 4 renderers release notes (asciidoc, markdown, json, ollama-asciidoc) + N3 metadata releaseNotesPath/Renderer
 - pipeline-contracts 0.0.2 (MEM-2 workspace-bom) + nmcp 1.5.0
+- langchain4j ollama + koog (orchestrateur) pour le LLM
 
 == Règles absolues (rappel)
 

@@ -51,6 +51,7 @@ class DocumentPlugin : Plugin<Project> {
                 includeDownloads = project.objects.property(Boolean::class.java),
                 rendererType = project.objects.property(String::class.java),
                 categories = project.objects.mapProperty(String::class.java, String::class.java),
+                llmMode = project.objects.property(String::class.java),
             ),
         )
 
@@ -82,6 +83,8 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-8.2 — rendererType null by default (generator falls back to asciidoc)
         ext.releaseNotes.rendererType.convention("asciidoc")
         ext.releaseNotes.categories.convention(emptyMap())
+        // DOC-8.4 — llmMode default ollama (only used when rendererType = ollama-asciidoc)
+        ext.releaseNotes.llmMode.convention("ollama")
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -265,6 +268,7 @@ class DocumentPlugin : Plugin<Project> {
                     .orElse(ext.releaseNotes.includeDownloads),
             )
             task.rendererType.set(cliProp(project, "releaseNotesRendererType").orElse(ext.releaseNotes.rendererType))
+            task.llmMode.set(cliProp(project, "releaseNotesLlmMode").orElse(ext.releaseNotes.llmMode))
             task.categories.set(
                 cliProp(project, "releaseNotesCategories")
                     .map { parseCategoriesCli(it) }

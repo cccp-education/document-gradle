@@ -14,7 +14,8 @@ import org.gradle.api.provider.Property
  *         toTag.set("HEAD")
  *         version.set("1.2.0")
  *         includeDownloads.set(true)
- *         rendererType.set("markdown")   // DOC-8.2 — asciidoc | markdown | json
+ *         rendererType.set("markdown")   // DOC-8.2 — asciidoc | markdown | json | ollama-asciidoc
+ *         llmMode.set("fake")             // DOC-8.4 — ollama | fake (only for ollama-asciidoc)
  *         categories.set(mapOf(           // DOC-8.2 — custom category labels
  *             "feat" to "New features",
  *             "fix" to "Bug fixes",
@@ -39,4 +40,5 @@ class ReleaseNotesDsl(
     val includeDownloads: Property<Boolean>,
     val rendererType: Property<String>,
     val categories: MapProperty<String, String>,
+    val llmMode: Property<String>,
 )

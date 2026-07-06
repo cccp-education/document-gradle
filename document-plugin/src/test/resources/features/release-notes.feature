@@ -70,3 +70,16 @@ Feature: Release Notes Pipeline (DOC-8 — git log → AsciiDoc)
     Then the build should succeed
     And the metadata json file should exist
     And the metadata json should not contain release notes path
+
+  @doc84 @ollama
+  Scenario: releaseNotesGenerate produces an AsciiDoc file with an IA summary when rendererType is ollama-asciidoc
+    Given a new document project with a git repository and ollama-asciidoc renderer with fake LLM
+    And a conventional commit "feat: initial feature"
+    And a git tag "v1.0.0"
+    And a conventional commit "fix(api): correct bug"
+    When I am executing the task 'releaseNotesGenerate'
+    Then the build should succeed
+    And the release notes adoc file should exist
+    And the release notes adoc should contain '== Résumé'
+    And the release notes adoc should contain 'Release Notes'
+    And the release notes adoc should contain 'correct bug (api)'

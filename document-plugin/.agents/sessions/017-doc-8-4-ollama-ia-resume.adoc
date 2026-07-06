@@ -1,0 +1,175 @@
+= Session 017 (2026-07-06) — DOC-8.4 Extension IA (Ollama) résumé humain
+
+:date: 2026-07-06
+:epic: DOC-8.4
+:borough: New Orleans 🟢 (document-gradle)
+:method: baby-step DDD/TDD/BDD — unit → functional → cucumber
+:tests: 300 total (218 unit + 40 functional + 42 cucumber), +11 vs session 016
+
+== Objectif
+
+DOC-8.4 — Le renderer `ollama-asciidoc` produit un résumé en langage
+naturel des commits via Ollama, ajouté en introduction des release notes
+AsciiDoc. Fallback gracieux si Ollama n'est pas disponible. Clôture EPIC
+DOC-8 (4/4 US).
+
+== Baby-steps exécutés (TDD red → green)
+
+=== Step 1 — UNIT-1 : OllamaAsciidocReleaseNotesRenderer (domaine DDD)
+
+Nouveau renderer décorateur qui implémente `ReleaseNotesRenderer`
+(contrat N0 pipeline-contracts) en injectant `DocumentLlmProvider`.
+
+- `format = "asciidoc"` (sortie AsciiDoc finale)
+- Délègue le corps à `AsciidocReleaseNotesRenderer` (décorateur)
+- Invoque `provider.call(prompt)` via `runBlocking` pour produire le résumé
+- Insère une section `== Résumé` **avant** les catégories de commits
+- Fallback gracieux : si `provider.call()` lève (Ollama indisponible),
+  retourne le rendu AsciidocRenderer pur (sans section Résumé)
+- `buildPrompt(commits)` : prompt stable en anglais listant les commits
+  (synthèse FR demandée dans le prompt), déterministe pour cacheabilité
+- 7 tests unitaires (format, empty, résumé avant catégories, fallback LLM
+  qui jette, renderToFile, parent dirs)
+
+Fichier : `src/main/kotlin/document/releasenotes/OllamaAsciidocReleaseNotesRenderer.kt`
+
+=== Step 2 — UNIT-2 : GitReleaseNotesGenerator.configDrivenWithLlm
+
+Nouvelle factory pour le rendu config-driven avec LLM.
+
+- Nouveau paramètre privé `llmProvider: DocumentLlmProvider? = null`
+- `rendererFor("ollama-asciidoc")` → `OllamaAsciidocReleaseNotesRenderer(provider)`
+  avec `IllegalStateException` si provider est null (escape hatch clair)
+- `configDrivenWithLlm(projectDir, parser, llmProvider)` companion factory
+- Les autres rendererType (markdown, json, asciidoc) ignorent le provider
+- 4 tests unitaires ajoutés à GitReleaseNotesGeneratorTest :
+  * produit asciidoc avec résumé IA quand rendererType = ollama-asciidoc
+  * fallback plain asciidoc quand LLM jette
+  * route markdown quand rendererType = markdown (provider ignoré)
+  * (test "uses injected renderer when provided" inchangé — compat)
+
+Fichier : `src/main/kotlin/document/releasenotes/GitReleaseNotesGenerator.kt`
+
+=== Step 3 — DSL-1 : ReleaseNotesDsl.llmMode
+
+Nouvelle propriété `llmMode: Property<String>` dans le DSL `releaseNotes { }`.
+
+- `"ollama"` (défaut, production) : `OllamaDocumentLlmProvider` (langchain4j)
+- `"fake"` (tests, sans réseau) : `FakeDocumentLlmProvider`
+- Ignoré quand `rendererType != "ollama-asciidoc"`
+- 1 test `ReleaseNotesDslTest` mis à jour (constructeur +llmMode)
+
+Fichiers :
+- `src/main/kotlin/document/ReleaseNotesDsl.kt`
+- `src/test/kotlin/document/ReleaseNotesDslTest.kt`
+
+=== Step 4 — TASK-1 : ReleaseNotesGenerateTask.llmMode + wiring
+
+La task sélectionne la factory du generator selon rendererType.
+
+- Nouvel `@Input llmMode: Property<String>` sur la task
+- Si `rendererType == "ollama-asciidoc"` : `DocumentLlmProviderFactory.create(llmMode)`
+  + `GitReleaseNotesGenerator.configDrivenWithLlm(projectDir, parser, provider)`
+- Sinon : `GitReleaseNotesGenerator.configDriven(projectDir, parser)` (inchangé)
+- `DocumentPlugin.registerReleaseNotesGenerate` : câble `llmMode` via
+  CLI `-Pdocument.releaseNotesLlmMode` > DSL `releaseNotes.llmMode` > défaut "ollama"
+- Convention plugin : `ext.releaseNotes.llmMode.convention("ollama")`
+
+Fichiers :
+- `src/main/kotlin/document/ReleaseNotesGenerateTask.kt`
+- `src/main/kotlin/document/DocumentPlugin.kt`
+
+=== Step 5 — FUNC-1 : ReleaseNotesFunctionalTest ollama-asciidoc + fake
+
+Nouveau test fonctionnel GradleTestKit :
+
+- DSL `rendererType.set("ollama-asciidoc")` + `llmMode.set("fake")`
+- Git repo + 3 commits (feat, fix(api), docs) + tag
+- `releaseNotesGenerate` → BUILD SUCCESS
+- Vérifie : fichier .adoc produit, `= Release Notes`, `== Résumé`, catégories,
+  `bug fix (api)` après le résumé
+
+Fichier : `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
+
+=== Step 6 — BDD-1 : release-notes.feature scénario ollama-asciidoc
+
+Nouveau scénario Cucumber (tag `@doc84 @ollama`) :
+
+- `Given a new document project with a git repository and ollama-asciidoc renderer with fake LLM`
+- commits + tag → `releaseNotesGenerate` → assertions `== Résumé`, `Release Notes`,
+  `correct bug (api)`
+
+World : `createGradleProjectWithGitRepoAndOllamaAsciidocRendererWithFakeLlm()`
+factory (DSL ollama-asciidoc + fake + git init).
+
+Steps : `@Given` ollama-asciidoc renderer with fake LLM.
+
+Fichiers :
+- `src/test/resources/features/release-notes.feature` (+1 scénario, 42 total)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` (+1 factory)
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` (+1 Given)
+
+== Tests
+
+- `./gradlew test functionalTest` : BUILD SUCCESSFUL (4m 52s)
+- `./gradlew cucumberTest --no-daemon` : BUILD SUCCESSFUL (3m 42s)
+- Total : 300 tests (218 unit + 40 functional + 42 cucumber), +11 vs session 016
+- Delta : +7 unit (OllamaAsciidocReleaseNotesRenderer) +4 unit (GitReleaseNotesGeneratorWithLlm)
+  +1 functional (ollama-asciidoc + fake) +1 cucumber (ollama-asciidoc BDD)
+  -2 redécalés (ReleaseNotesDslTest constructeur)
+- `compileKotlin compileTestKotlin compileFunctionalTestKotlin` : BUILD SUCCESSFUL
+
+== Décisions techniques
+
+=== Décorateur sur AsciidocReleaseNotesRenderer
+
+`OllamaAsciidocReleaseNotesRenderer` ne re-implemente pas le template
+AsciiDoc — il délègue à `AsciidocReleaseNotesRenderer` et insère la section
+`== Résumé` entre le titre (`= Release Notes {version}`) et le corps. La
+séparation title/body est faite par `indexOf("\n\n")` (le titre est la
+première ligne, suivie d'une ligne vide). Fallback = rendu pur sans résumé.
+
+=== runBlocking pour bridge sync N0 / suspend LLM
+
+Le contrat N0 `ReleaseNotesRenderer.render()` est synchrone (interface
+Java-friendly). `DocumentLlmProvider.call()` est `suspend` (coroutine Kotlin).
+Le bridge utilise `runBlocking { provider.call(prompt) }` — pattern déjà
+utilisé dans `DocumentGenerationGraph.kt` (DOC-2). Pas de fuite de contexte
+IO car la task Gradle n'est pas structurée concurrency-wise.
+
+=== Fallback gracieux (Loi de l'Économie d'Encre)
+
+`runCatching { runBlocking { provider.call(...) } }.getOrNull() ?: return base`
+attrape toute exception (Ollama down, timeout, réseau). Pas de retry, pas de
+crash du build Gradle. Le release notes sans résumé reste un release notes
+valide. Le résumé est une valeur ajoutée, pas une dépendance dure.
+
+=== Factory configDrivenWithLlm sépare les responsabilités
+
+`configDriven(projectDir, parser)` (DOC-8.2) reste pour les renderers sans
+LLM (asciidoc/markdown/json). `configDrivenWithLlm(projectDir, parser, provider)`
+est l'extension pour `ollama-asciidoc`. Le provider n'est instancié que si
+`rendererType == "ollama-asciidoc"` dans la task — pas de coût d'init LLM
+pour les autres renderers.
+
+=== DSL llmMode mirror de llmMode extension (DOC-2)
+
+Le mode `"fake"` est partagé avec `DocumentExtension.llmMode` (DOC-2
+generateDocument). Même factory `DocumentLlmProviderFactory`, même
+sémantique (fake = tests sans réseau, ollama = production local).
+
+== Vérifications
+
+- `git status` : copie de travail propre avant modification (session 016 commit b121e84)
+- `grep "TOKEN|SECRET|PASSWORD|API_KEY|gho_|ghp_"` : aucun secret dans le code source
+- `./gradlew compileKotlin` : BUILD SUCCESSFUL
+
+== Statut EPIC DOC-8 — 4/4 TERMINÉ
+
+- DOC-8.1 ✅ (session 014) — Release Notes Pipeline git log → AsciiDoc
+- DOC-8.2 ✅ (session 015) — Template configurable (Markdown/JSON)
+- DOC-8.3 ✅ (session 016) — Intégration N3 metadata.json + composite-context.json
+- DOC-8.4 ✅ (session 017) — Extension IA Ollama (résumé humain)
+
+EPIC DOC-8 TERMINÉ. Prochaines priorités : extension DOC-12 (book { } dans
+DSL unifié) ou DOC-8.5 publication Maven Central document-gradle.

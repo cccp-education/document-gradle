@@ -4,6 +4,7 @@ import contracts.pipeline.ConventionalCommit
 import contracts.pipeline.GitLogParser
 import contracts.pipeline.ReleaseNotesConfig
 import contracts.pipeline.ReleaseNotesRenderer
+import document.generation.FakeDocumentLlmProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.io.TempDir
@@ -121,5 +122,52 @@ class GitReleaseNotesGeneratorTest {
         val result = generator.generate(ReleaseNotesConfig(rendererType = "markdown"))
         assertEquals("release-notes-1.5.0.adoc", result.name)
         assertTrue(result.readText().contains("RENDERED 2 commits version=1.5.0"))
+    }
+
+    // --- DOC-8.4 — ollama-asciidoc renderer wiring ---
+
+    @Test
+    fun `configDrivenWithLlm produces asciidoc with IA summary when rendererType is ollama-asciidoc`() {
+        val generator = GitReleaseNotesGenerator.configDrivenWithLlm(
+            projectDir = projectDir,
+            parser = fakeParser,
+            llmProvider = FakeDocumentLlmProvider("Cette version apporte deux changements."),
+        )
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "ollama-asciidoc"))
+        assertTrue(result.isFile)
+        assertEquals("release-notes-1.5.0.adoc", result.name)
+        val content = result.readText()
+        assertTrue(content.contains("== Résumé"))
+        assertTrue(content.contains("Cette version apporte deux changements."))
+        assertTrue(content.contains("== Nouveautés"))
+    }
+
+    @Test
+    fun `configDrivenWithLlm falls back to plain asciidoc when LLM throws`() {
+        val failingProvider = object : document.generation.DocumentLlmProvider {
+            override suspend fun call(prompt: String): String = throw RuntimeException("boom")
+        }
+        val generator = GitReleaseNotesGenerator.configDrivenWithLlm(
+            projectDir = projectDir,
+            parser = fakeParser,
+            llmProvider = failingProvider,
+        )
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "ollama-asciidoc"))
+        assertTrue(result.isFile)
+        val content = result.readText()
+        assertTrue(content.contains("= Release Notes"))
+        assertTrue(!content.contains("== Résumé"))
+    }
+
+    @Test
+    fun `configDrivenWithLlm still routes to markdown when rendererType is markdown`() {
+        val generator = GitReleaseNotesGenerator.configDrivenWithLlm(
+            projectDir = projectDir,
+            parser = fakeParser,
+            llmProvider = FakeDocumentLlmProvider(),
+        )
+        val result = generator.generate(ReleaseNotesConfig(rendererType = "markdown"))
+        assertEquals("release-notes-1.5.0.md", result.name)
+        assertTrue(result.readText().contains("# Release Notes 1.5.0"))
     }
 }

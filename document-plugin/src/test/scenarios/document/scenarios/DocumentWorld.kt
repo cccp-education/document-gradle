@@ -731,6 +731,29 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithGitRepoAndOllamaAsciidocRendererWithFakeLlm(): File {
+        val dir = Files.createTempDirectory("doc-bdd-rn-ollama").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("ollama-asciidoc")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        runGit(dir, "init")
+        runGit(dir, "config", "user.email", "bdd@example.com")
+        runGit(dir, "config", "user.name", "BDD")
+        projectDir = dir
+        return dir
+    }
+
     fun gitCommit(message: String) {
         val dir = projectDir ?: return
         dir.resolve("README.md").appendText("# $message\n")

@@ -401,4 +401,46 @@ class ReleaseNotesFunctionalTest {
         val metadataFile = File(projectDir, "build/docs/document/metadata.json")
         assertTrue(metadataFile.readText().contains("\"markdown\""), "metadata releaseNotesRenderer must be markdown")
     }
+
+    // --- DOC-8.4 — ollama-asciidoc renderer with IA summary ---
+
+    @Test
+    fun `releaseNotesGenerate produces asciidoc with IA summary when rendererType is ollama-asciidoc and llmMode is fake`() {
+        setupPluginProject()
+        initRepo()
+        commit("feat: first feature")
+        tag("v1.0.0")
+        commit("fix(api): bug fix")
+        commit("docs: update readme")
+
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                releaseNotes {
+                    rendererType.set("ollama-asciidoc")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("releaseNotesGenerate", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
+        val outputDir = File(projectDir, "build/release-notes")
+        val adocFiles = outputDir.listFiles { _, name -> name.endsWith(".adoc") } ?: emptyArray()
+        assertTrue(adocFiles.isNotEmpty(), "an .adoc file should be generated")
+        val content = adocFiles.first().readText()
+        assertTrue(content.contains("= Release Notes"), "title must be present")
+        assertTrue(content.contains("== Résumé"), "IA summary section must be present")
+        assertTrue(content.contains("== Nouveautés") || content.contains("== Corrections"), "categories must be present")
+        assertTrue(content.contains("bug fix (api)"), "commit messages must be present after the summary")
+    }
 }

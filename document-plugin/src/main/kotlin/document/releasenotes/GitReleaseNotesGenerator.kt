@@ -4,6 +4,7 @@ import contracts.pipeline.GitLogParser
 import contracts.pipeline.ReleaseNotesConfig
 import contracts.pipeline.ReleaseNotesGenerator
 import contracts.pipeline.ReleaseNotesRenderer
+import document.generation.DocumentLlmProvider
 import java.io.File
 
 /**
@@ -34,6 +35,7 @@ class GitReleaseNotesGenerator private constructor(
     override val parser: GitLogParser,
     override val renderer: ReleaseNotesRenderer,
     private val configDrivenRenderer: Boolean,
+    private val llmProvider: DocumentLlmProvider? = null,
 ) : ReleaseNotesGenerator {
 
     /** DOC-8.1 constructor — default AsciiDoc renderer (backward compatible). */
@@ -50,6 +52,7 @@ class GitReleaseNotesGenerator private constructor(
         parser = parser,
         renderer = renderer,
         configDrivenRenderer = false,
+        llmProvider = null,
     )
 
     override fun generate(config: ReleaseNotesConfig): File {
@@ -69,6 +72,11 @@ class GitReleaseNotesGenerator private constructor(
     private fun rendererFor(rendererType: String): ReleaseNotesRenderer = when (rendererType) {
         "markdown" -> MarkdownReleaseNotesRenderer()
         "json" -> JsonReleaseNotesRenderer()
+        "ollama-asciidoc" -> OllamaAsciidocReleaseNotesRenderer(
+            provider = llmProvider ?: throw IllegalStateException(
+                "rendererType 'ollama-asciidoc' requires an LLM provider — use configDrivenWithLlm()",
+            ),
+        )
         else -> AsciidocReleaseNotesRenderer()
     }
 
@@ -90,6 +98,24 @@ class GitReleaseNotesGenerator private constructor(
                 parser = parser,
                 renderer = AsciidocReleaseNotesRenderer(),
                 configDrivenRenderer = true,
+                llmProvider = null,
             )
+
+        /**
+         * DOC-8.4 — Config-driven generator with an LLM provider for the
+         * `ollama-asciidoc` renderer type. The provider is only invoked if
+         * [ReleaseNotesConfig.rendererType] equals `"ollama-asciidoc"`.
+         */
+        fun configDrivenWithLlm(
+            projectDir: File,
+            parser: GitLogParser,
+            llmProvider: DocumentLlmProvider,
+        ): GitReleaseNotesGenerator = GitReleaseNotesGenerator(
+            projectDir = projectDir,
+            parser = parser,
+            renderer = AsciidocReleaseNotesRenderer(),
+            configDrivenRenderer = true,
+            llmProvider = llmProvider,
+        )
     }
 }
