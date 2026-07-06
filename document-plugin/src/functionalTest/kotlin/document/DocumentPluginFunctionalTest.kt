@@ -440,6 +440,109 @@ class DocumentPluginFunctionalTest {
     }
 
     @Test
+    fun `convertDocumentToDocBook rend les tableaux et blocs de code AsciiDoc en elements DocBook`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        File(projectDir, "mon-livre.adoc").writeText(
+            """
+            = Document DocBook Avance
+
+            == Donnees
+
+            |===
+            | Colonne A | Colonne B
+
+            | Ligne 1A | Ligne 1B
+            |===
+
+            [source,kotlin]
+            ----
+            fun main() {
+                println("hello")
+            }
+            ----
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToDocBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToDocBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.xml")
+        assertTrue(output.exists(), "le fichier DocBook doit etre genere")
+        val content = output.readText()
+        assertTrue(
+            content.contains("<table", ignoreCase = true) || content.contains("<informaltable", ignoreCase = true),
+            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau"
+        )
+        assertTrue(
+            content.contains("<programlisting", ignoreCase = true),
+            "le DocBook doit contenir un element <programlisting> pour le bloc de code source"
+        )
+        assertTrue(content.contains("fun main"), "le DocBook doit preserver le contenu du bloc de code")
+    }
+
+    @Test
+    fun `convertDocumentToManPage rend les options formatees en gras troff`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-manpage-adv\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("man.adoc"))
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("man.adoc").writeText(
+            """
+            = document(1)
+            :doctype: manpage
+            :manmanual: Document Gradle Manual
+            :mansource: Document Gradle
+
+            == NAME
+
+            document - Gradle plugin for AsciiDoc document creation and publication
+
+            == SYNOPSIS
+
+            *document* ['OPTION']...
+
+            == OPTIONS
+
+            *--html*::
+            Generate HTML output.
+
+            *--pdf*::
+            Generate PDF output.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToManPage")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToManPage")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.man")
+        assertTrue(output.exists(), "le fichier manpage doit etre genere")
+        val content = output.readText()
+        assertTrue(content.contains("SYNOPSIS"), "le manpage doit contenir la section SYNOPSIS")
+        assertTrue(
+            content.contains(".B ") || content.contains("\\fB"),
+            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees"
+        )
+    }
+
+    @Test
     fun `enrichDocument produces a resolved AsciiDoc file from a source with includes`() {
         val projectDir = newTempDir()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-enrich\"\n")
@@ -1013,6 +1116,106 @@ class DocumentPluginFunctionalTest {
         val bytes = output.readBytes()
         val header = String(bytes.copyOfRange(0, minOf(5, bytes.size)))
         assertTrue(header.startsWith("%PDF"), "the file must start with PDF signature")
+    }
+
+    @Test
+    fun `convertDocumentToEpub renders image directives without dropping them`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB avec Image
+
+            == Illustration
+
+            image::photo.png[Photo descriptive]
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        assertTrue(output.length() > 100, "the EPUB must not be empty")
+        val bytes = output.readBytes()
+        val header = String(bytes.copyOfRange(0, minOf(4, bytes.size)))
+        assertTrue(header.startsWith("PK"), "the file must start with the zip signature PK")
+        val entries = java.util.zip.ZipFile(output).use { zf ->
+            zf.entries().toList().map { it.name }
+        }
+        assertTrue(
+            entries.any { it.contains("photo.png") },
+            "the EPUB must embed the image referenced by image:: as a zip entry (entries: $entries)"
+        )
+    }
+
+    @Test
+    fun `serializeDocumentConfig serialises the book block into document-config json`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-document\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("livre.adoc"))
+                book {
+                    pagesDir.set(file("pages"))
+                    photosDir.set(file("photos"))
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
+        projectDir.resolve("pages").mkdirs()
+        projectDir.resolve("photos").mkdirs()
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":serializeDocumentConfig")?.outcome)
+        val config = File(projectDir, "build/docs/document/document-config.json")
+        assertTrue(config.exists(), "document-config.json must be generated")
+        val json = config.readText()
+        assertTrue(json.contains("\"book\""), "the config JSON must contain a book block (json=$json)")
+        assertTrue(json.contains("Mon Livre"), "the book block must contain the title")
+        assertTrue(json.contains("Auteur"), "the book block must contain the author")
+        assertTrue(json.contains("pages"), "the book block must reference the pagesDir")
+        assertTrue(json.contains("photos"), "the book block must reference the photosDir")
+    }
+
+    @Test
+    fun `serializeDocumentConfig omits the book block when book is unset`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText("= Livre\n\nContenu.\n")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":serializeDocumentConfig")?.outcome)
+        val config = File(projectDir, "build/docs/document/document-config.json")
+        assertTrue(config.exists(), "document-config.json must be generated")
+        val json = config.readText()
+        assertTrue(!json.contains("\"book\""), "the config JSON must not contain a book block when book is unset (json=$json)")
     }
 
     private fun setupTestProject(projectDir: File) {

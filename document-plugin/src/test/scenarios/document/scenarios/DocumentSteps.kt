@@ -232,6 +232,60 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(header).startsWith("PK")
     }
 
+    @Then("the converted EPUB should embed the image directive as a zip entry")
+    fun convertedEpubShouldEmbedImageDirectiveAsZipEntry() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val entries = java.util.zip.ZipFile(epub).use { zf ->
+            zf.entries().toList().map { it.name }
+        }
+        assertThat(entries).anySatisfy { name ->
+            assertThat(name).contains("photo.png")
+        }
+    }
+
+    // --- US-DOC-06/07 (P3) — DocBook + ManPage advanced rendering ---
+
+    @Given("a new document project with an AsciiDoc source containing a table and a code block")
+    fun createNewDocumentProjectWithTableAndCode() {
+        world.createGradleProjectWithAsciiDocSourceWithTableAndCode()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the converted DocBook should render the table as a DocBook table element")
+    fun convertedDocBookShouldRenderTableAsDocBookTableElement() {
+        val docbook = world.convertedDocBookFile()
+        assertThat(docbook).exists()
+        val content = docbook!!.readText()
+        val hasTable = content.contains("<table", ignoreCase = true) || content.contains("<informaltable", ignoreCase = true)
+        assertThat(hasTable).`as`("the DocBook must contain a <table> or <informaltable> element").isTrue()
+    }
+
+    @Then("the converted DocBook should render the code block as a programlisting element")
+    fun convertedDocBookShouldRenderCodeBlockAsProgramlistingElement() {
+        val docbook = world.convertedDocBookFile()
+        assertThat(docbook).exists()
+        val content = docbook!!.readText()
+        assertThat(content).containsIgnoringCase("<programlisting")
+        assertThat(content).contains("fun main")
+    }
+
+    @Given("a new document project with an AsciiDoc manpage source with formatted options")
+    fun createNewDocumentProjectWithManpageWithOptions() {
+        world.createGradleProjectWithAsciiDocManpageWithOptions()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the converted ManPage should render the options in bold troff directives")
+    fun convertedManPageShouldRenderOptionsInBoldTroffDirectives() {
+        val manpage = world.convertedManPageFile()
+        assertThat(manpage).exists()
+        val content = manpage!!.readText()
+        assertThat(content).contains("SYNOPSIS")
+        val hasBold = content.contains(".B ") || content.contains("\\fB")
+        assertThat(hasBold).`as`("the manpage must contain a bold troff directive (.B or \\fB)").isTrue()
+    }
+
     @Then("the converted DocBook file should exist")
     fun convertedDocBookFileShouldExist() {
         val docbook = world.convertedDocBookFile()
@@ -442,6 +496,18 @@ class DocumentSteps(private val world: DocumentWorld) {
         val content = cfg!!.readText()
         assertThat(content).contains("Mon Livre")
         assertThat(content).contains("\"language\" : \"fr\"")
+    }
+
+    @Then("the document config json should contain the book block with title and author")
+    fun documentConfigJsonShouldContainBookBlockWithTitleAndAuthor() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val content = cfg!!.readText()
+        assertThat(content).contains("\"book\"")
+        assertThat(content).contains("DSL Book")
+        assertThat(content).contains("DSL Author")
+        assertThat(content).contains("pages")
+        assertThat(content).contains("photos")
     }
 
     @Then("the document config json should contain default enrich flags all false")

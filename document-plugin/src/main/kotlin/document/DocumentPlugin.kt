@@ -266,6 +266,11 @@ class DocumentPlugin : Plugin<Project> {
             task.metaTitle.set(cliProp(project, "metaTitle").orElse(ext.metadata.title))
             task.metaAuthor.set(cliProp(project, "metaAuthor").orElse(ext.metadata.author))
             task.metaLanguage.set(cliProp(project, "metaLanguage").orElse(ext.metadata.language))
+            // Book (DOC-12 extension — book { } serialisation)
+            task.bookPagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPagesDir.asFile.map { it.path }))
+            task.bookPhotosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPhotosDir.asFile.map { it.path }))
+            task.bookTitle.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
+            task.bookAuthor.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
         }
     }
 

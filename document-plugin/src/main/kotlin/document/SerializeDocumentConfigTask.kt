@@ -84,6 +84,20 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Input
     abstract val metaLanguage: Property<String>
 
+    // Book (DOC-12 extension — book { } serialisation)
+    @get:Input
+    @get:Optional
+    abstract val bookPagesDir: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookPhotosDir: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookTitle: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookAuthor: Property<String>
+
     init {
         group = "document"
     }
@@ -123,6 +137,12 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 title = metaTitle.getOrElse("Untitled Document"),
                 author = metaAuthor.orNull,
                 language = metaLanguage.getOrElse("fr"),
+            ),
+            book = BookConfig(
+                pagesDir = bookPagesDir.orNull?.let { File(it) },
+                photosDir = bookPhotosDir.orNull?.let { File(it) },
+                title = bookTitle.orNull,
+                author = bookAuthor.orNull,
             ),
         )
 

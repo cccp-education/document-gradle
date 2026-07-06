@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-06 (session 018 — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication Maven Central, 310 tests, +10)
-_Session terminee_ : 018 — DOC-12 book { } nested DSL (BookDsl + mirror rétro-compatible), DOC-9b images BDD (rendu HTML/PDF), DOC-8.5 publication Maven Central (bundle 4d15e522), bug fix conventions-gradle 0.0.2 (SCM double .git), harmonisation 15 boroughs
-_Prochaine session_ : 019 — Maintenance (tous EPICs DOC-0→DOC-12 TERMINÉS)
+_Derniere mise a jour_ : 2026-07-06 (session 019 — DOC-9b EPUB image + DOC-12 book serialization + DOC-06/07 advanced rendering, 323 tests, +17)
+_Session terminee_ : 019 — DOC-9b EPUB image rendering (image:: embedded as zip entry, unit + functional + Cucumber), DOC-12 book { } serialization in document-config.json (BookConfig value object + DocumentConfigSerializer + SerializeDocumentConfigTask inputs + DocumentPlugin wiring), US-DOC-06/07 DocBook + ManPage advanced rendering tests (tableaux/programlisting/itemizedlist/orderedlist + bold troff options/sub-sections), baby-step DDD/TDD/BDD
+_Prochaine session_ : 020 — Maintenance (tous EPICs DOC-0→DOC-12 TERMINÉS)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -89,8 +89,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-9 | enrichDocument — Asciidoctor Diagram inline (PlantUML), HTML passthrough, resolution includes | ✅ TERMINÉ (session 007) | P0
 | DOC-10 | Theme document — DSL `theme { }` YML PDF + CSS HTML/EPUB + logo | ✅ TERMINÉ (session 008) | P0
 | DOC-11 | Pipeline Livre Codex→Document — photos → OCR → AsciiDoc → livre multi-format | ✅ TERMINÉ (session 012) | P1
-| DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata, book | ✅ TERMINÉ (session 013 + extension 018 book { }) | P2
-| DOC-9b | Enrichissement images — rendu HTML/PDF `image::photo.png[]` | ✅ TERMINÉ (session 018) | P3
+| DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata, book | ✅ TERMINÉ (session 013 + extension 018 book DSL + extension 019 book serialization) | P2
+| DOC-9b | Enrichissement images — rendu HTML/PDF/EPUB `image::photo.png[]` | ✅ TERMINÉ (session 018 HTML/PDF + session 019 EPUB) | P3
 | DOC-8.5 | Publication Maven Central document-gradle 0.0.1 | ✅ TERMINÉ (session 018, bundle 4d15e522) | P1
 |===
 
@@ -144,6 +144,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 016 | 2026-07-05 | feat | DOC-8.3 N3 metadata.json + composite-context.json release notes — ReleaseNotesArtifactEntry, DocumentRetrieveResult.releaseNotes/releaseNotesCount, DocumentMetadata.releaseNotesPath/Renderer (NON_NULL), DocumentArtifactCollector.collectReleaseNotes, CollectDocumentRetrieveTask.releaseNotesDirPath (@Input String), 289 tests (+7 unit +7 unit +7 unit +8 unit +4 functional +2 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 017 | 2026-07-06 | feat | DOC-8.4 Extension IA Ollama (résumé humain) — OllamaAsciidocReleaseNotesRenderer décorateur ReleaseNotesRenderer, GitReleaseNotesGenerator.configDrivenWithLlm factory, ReleaseNotesDsl.llmMode + ReleaseNotesGenerateTask.llmMode + DocumentPlugin wiring CLI -Pdocument.releaseNotesLlmMode, fallback gracieux si LLM jette (rendu pur sans Résumé), 300 tests (+7 unit OllamaAsciidoc +4 unit GeneratorWithLlm +1 functional +1 cucumber -2 redécalés), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 018 | 2026-07-06 | feat | DOC-12 book { } nested DSL (BookDsl + mirror rétro-compatible) + DOC-9b images BDD (rendu HTML/PDF image:: directives) + DOC-8.5 publication Maven Central (bundle 4d15e522), bug fix conventions-gradle 0.0.2 (SCM double .git PublishingConventionsPlugin), harmonisation 15 boroughs vers 0.0.2, 310 tests (+4 unit BookDsl +2 unit DocumentEnricher image +4 functional +4 cucumber), baby-step DDD/TDD/BDD | ✅ TERMINE
+| 019 | 2026-07-06 | feat | DOC-9b EPUB image rendering (image:: embedded as zip entry) + DOC-12 book serialization in document-config.json (BookConfig value object + DocumentConfigSerializer + SerializeDocumentConfigTask + DocumentPlugin wiring) + US-DOC-06/07 DocBook + ManPage advanced rendering (tableaux/programlisting/itemizedlist/orderedlist + bold troff options/sub-sections), 323 tests (+1 unit EPUB +2 unit book serializer +5 unit DocBook/ManPage advanced +1 functional EPUB +2 functional book serializer +2 functional DocBook/ManPage advanced +1 cucumber EPUB +1 cucumber book serializer +2 cucumber DocBook/ManPage advanced), baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''

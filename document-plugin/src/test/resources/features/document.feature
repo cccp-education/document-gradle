@@ -105,6 +105,23 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the converted ManPage file should exist
     And the converted ManPage should be a valid manpage document
 
+  @doc5 @conversion @docbook-advanced
+  Scenario: convertDocumentToDocBook renders AsciiDoc tables and code blocks into DocBook elements
+    Given a new document project with an AsciiDoc source containing a table and a code block
+    When I am executing the task 'convertDocumentToDocBook'
+    Then the build should succeed
+    And the converted DocBook file should exist
+    And the converted DocBook should render the table as a DocBook table element
+    And the converted DocBook should render the code block as a programlisting element
+
+  @doc5 @conversion @manpage-advanced
+  Scenario: convertDocumentToManPage renders formatted options in bold troff directives
+    Given a new document project with an AsciiDoc manpage source with formatted options
+    When I am executing the task 'convertDocumentToManPage'
+    Then the build should succeed
+    And the converted ManPage file should exist
+    And the converted ManPage should render the options in bold troff directives
+
   @doc9 @enrichment
   Scenario: enrichDocument preserves inline plantuml blocks without escaping
     Given a new document project with an AsciiDoc source containing a plantuml block
@@ -263,6 +280,14 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the document config json should contain default outputs html only
     And the document config json should contain default metadata language fr
 
+  @doc12 @serialization @book
+  Scenario: The serializeDocumentConfig task serialises the book block into document-config json
+    Given a new document project with a unified DSL book block with photos
+    When I am executing the task 'serializeDocumentConfig'
+    Then the build should succeed
+    And the document config json file should exist
+    And the document config json should contain the book block with title and author
+
   @doc12 @dsl @book
   Scenario: The document DSL accepts a book block with pagesDir title and author
     Given a new document project with a unified DSL book block
@@ -297,3 +322,11 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the converted HTML file should exist
     And the converted HTML should render an img tag for the image directive
+
+  @doc9 @enrichment @images @epub
+  Scenario: convertDocumentToEpub embeds image directives as zip entries in the final EPUB
+    Given a new document project with an AsciiDoc source containing an image directive
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should embed the image directive as a zip entry

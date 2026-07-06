@@ -624,6 +624,7 @@ class DocumentWorld {
             appendLine("plugins { id(\"education.cccp.document\") }")
             appendLine()
             appendLine("document {")
+            appendLine("    source.set(file(\"book-source.adoc\"))")
             appendLine("    book {")
             appendLine("        pagesDir.set(file(\"pages\"))")
             if (photos) appendLine("        photosDir.set(file(\"photos\"))")
@@ -635,6 +636,7 @@ class DocumentWorld {
             appendLine("}")
         }
         dir.resolve("build.gradle.kts").writeText(dsl)
+        dir.resolve("book-source.adoc").writeText("= DSL Book\n\nSource for the book pipeline.\n")
 
         val pagesDir = dir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst DSL page content.")
@@ -676,6 +678,86 @@ class DocumentWorld {
             """.trimIndent()
         )
         dir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceWithTableAndCode(): File {
+        val dir = Files.createTempDirectory("doc-bdd-docbook-adv").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document DocBook Avance
+
+            == Donnees
+
+            |===
+            | Colonne A | Colonne B
+
+            | Ligne 1A | Ligne 1B
+            |===
+
+            [source,kotlin]
+            ----
+            fun main() {
+                println("hello")
+            }
+            ----
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocManpageWithOptions(): File {
+        val dir = Files.createTempDirectory("doc-bdd-man-adv").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = document(1)
+            :doctype: manpage
+            :manmanual: Document Gradle Manual
+            :mansource: Document Gradle
+
+            == NAME
+
+            document - Gradle plugin for AsciiDoc document creation and publication
+
+            == SYNOPSIS
+
+            *document* ['OPTION']...
+
+            == OPTIONS
+
+            *--html*::
+            Generate HTML output.
+
+            *--pdf*::
+            Generate PDF output.
+            """.trimIndent()
+        )
         projectDir = dir
         return dir
     }

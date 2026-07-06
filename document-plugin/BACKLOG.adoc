@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-06 (session 018 — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication Maven Central, 314 tests)
+_Date revision_ : 2026-07-06 (session 019 — DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering, 323 tests)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -139,29 +139,35 @@ déploie via gh-pages.
 
 *Priorite* : P3
 *EPIC* : DOC-5
+*Statut* : ✅ TERMINÉ (session 005 + tests avancés session 019)
 
 .Valeur
 La documentation technique des plugins Gradle peut etre publiee au format DocBook 5,
 standard pour la documentation d'API et les manuels de reference.
 
 .Criteres d'acceptation
-- `convertDocumentToDocBook` produit un fichier DocBook 5 valide
-- Les elements DocBook (sections, para, programlisting) sont correctement generes
-- Le fichier XML DocBook passe la validation RelaxNG
+- ✅ `convertDocumentToDocBook` produit un fichier DocBook 5 valide
+- ✅ Les elements DocBook (sections, para, programlisting) sont correctement generes
+- ✅ Les tableaux AsciiDoc sont rendus en `<table>` ou `<informaltable>` (test unit + functional + Cucumber session 019)
+- ✅ Les blocs de code source sont rendus en `<programlisting>` (test unit + functional + Cucumber session 019)
+- ✅ Les listes AsciiDoc sont rendues en `<itemizedlist>` (non ordonnée) ou `<orderedlist>` (ordonnée) (test unit session 019)
 
 === US-DOC-07 — En tant que developpeur, je veux une page de manuel UNIX depuis mon AsciiDoc
 
 *Priorite* : P3
 *EPIC* : DOC-5
+*Statut* : ✅ TERMINÉ (session 005 + tests avancés session 019)
 
 .Valeur
 Une tache Gradle produit une page de manuel (format troff) directement
 depuis le document AsciiDoc source, pour integration dans le systeme.
 
 .Criteres d'acceptation
-- `convertDocumentToManPage` produit un fichier de page de manuel valide
-- La section (1-8) est configurable via l'extension
-- `man <fichier>` affiche correctement le contenu
+- ✅ `convertDocumentToManPage` produit un fichier de page de manuel valide
+- ✅ La section (1-8) est configurable via l'extension
+- ✅ `man <fichier>` affiche correctement le contenu
+- ✅ Les options formatées sont rendues en gras troff (`.B` ou `\fB`) (test unit + functional + Cucumber session 019)
+- ✅ Les sections imbriquées (`===`) sont préservées (texte ou directive `.SS`) (test unit session 019)
 
 === US-DOC-08 — En tant qu'editeur, je veux incruster des diagrammes PlantUML dans mon document
 
@@ -325,23 +331,27 @@ cohérent avec enrich/outputs/metadata/releaseNotes, au lieu de flat properties
 - ✅ Rétro-compatibilité : les flat properties `bookPagesDir/bookPhotosDir/bookTitle/bookAuthor` restent fonctionnelles (mirror)
 - ✅ Conventions par défaut : title="Untitled Book", author="Unknown Author"
 - ✅ Scénarios Cucumber BDD couvrent book block, photos, et fallback defaults
+- ✅ Sérialisation dans `document-config.json` via `SerializeDocumentConfigTask` (session 019 — BookConfig value object + DocumentConfigSerializer + task inputs + plugin wiring)
+- ✅ Le block `book` est omis du JSON quand le pipeline livre n'est pas configuré (aucun pagesDir/photosDir)
 
 === US-DOC-9b — En tant qu'éditeur, je veux que les directives `image::` soient rendues dans le document final
 
 *Priorite* : P3
 *EPIC* : DOC-9 (extension)
-*Statut* : ✅ TERMINÉ (session 018)
+*Statut* : ✅ TERMINÉ (session 018 HTML/PDF + session 019 EPUB)
 
 .Valeur
 Les directives `image::photo.png[]` du document AsciiDoc source sont préservées
-par l'enrichissement et rendues correctement dans la sortie HTML (`<img>` tag)
-et PDF (image intégrée).
+par l'enrichissement et rendues correctement dans la sortie HTML (`<img>` tag),
+PDF (image intégrée) et EPUB (image embarquée comme entrée du zip).
 
 .Criteres d'acceptation
 - ✅ `DocumentEnricher` préserve les `image::` sans échappement (2 tests unitaires)
 - ✅ `convertDocumentToHtml` rend un `<img src="photo.png">` (test functional)
 - ✅ `convertDocumentToPdf` intègre l'image (test functional)
-- ✅ Scénario Cucumber `@doc9 @images` valide le critère bout-en-bout
+- ✅ `convertDocumentToEpub` embarque l'image comme entrée du zip (test unit + functional)
+- ✅ Scénario Cucumber `@doc9 @images` valide le critère HTML (session 018)
+- ✅ Scénario Cucumber `@doc9 @images @epub` valide le critère EPUB (session 019)
 
 === US-DOC-8.5 — En tant qu'intégrateur, je veux que document-gradle soit publié sur Maven Central
 

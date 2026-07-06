@@ -20,6 +20,7 @@ data class DocumentPipelineConfig(
     val outputs: DocumentOutputs = DocumentOutputs(),
     val theme: DocumentTheme = DocumentTheme(),
     val frontMatter: DocumentFrontMatter = DocumentFrontMatter(),
+    val book: BookConfig = BookConfig(),
 ) {
 
     /**

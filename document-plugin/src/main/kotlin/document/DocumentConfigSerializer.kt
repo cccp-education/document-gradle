@@ -68,6 +68,15 @@ class DocumentConfigSerializer {
         metadata.put("language", config.frontMatter.language)
         root.set<ObjectNode>("metadata", metadata)
 
+        if (!config.book.isEmpty()) {
+            val book = mapper.createObjectNode()
+            book.put("pagesDir", config.book.pagesDir?.absolutePath)
+            book.put("photosDir", config.book.photosDir?.absolutePath)
+            book.put("title", config.book.title)
+            book.put("author", config.book.author)
+            root.set<ObjectNode>("book", book)
+        }
+
         val file = File(dir, "document-config.json")
         file.writeText(mapper.writeValueAsString(root))
         return file

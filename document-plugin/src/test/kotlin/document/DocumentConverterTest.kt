@@ -255,6 +255,39 @@ class DocumentConverterTest {
         assertFalse(DocumentConverter.shouldSkipBinaryConversion(source, epubOutput))
     }
 
+    // --- DOC-9b : image:: directives embedding in EPUB ---
+
+    @Test
+    fun `convertToEpub embeds image referenced by image directive as a zip entry`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document avec Image
+
+            == Illustration
+
+            image::photo.png[Photo descriptive]
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        File(dir, "photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        assertTrue(output.length() > 100, "l'EPUB ne doit pas etre vide")
+        val entries = java.util.zip.ZipFile(output).use { zf ->
+            zf.entries().toList().map { it.name }
+        }
+        assertTrue(
+            entries.any { it.contains("photo.png") },
+            "l'EPUB doit embarquer l'image referencee par image:: comme entree du zip (entries: $entries)"
+        )
+    }
+
     // --- DOC-5 : convertToDocBook ---
 
     @Test
@@ -330,5 +363,184 @@ class DocumentConverterTest {
         org.junit.jupiter.api.assertThrows<Exception> {
             DocumentConverter.convertToManPage(source)
         }
+    }
+
+    // --- US-DOC-06/07 (P3) : DocBook advanced rendering ---
+
+    @Test
+    fun `convertToDocBook rend les tableaux AsciiDoc en elements DocBook table`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document avec Tableau
+
+            == Donnees
+
+            |===
+            | Colonne A | Colonne B
+
+            | Ligne 1A | Ligne 1B
+            | Ligne 2A | Ligne 2B
+            |===
+            """.trimIndent()
+        )
+
+        val docbook = DocumentConverter.convertToDocBook(source)
+
+        assertNotNull(docbook)
+        assertTrue(
+            docbook.contains("<table", ignoreCase = true) || docbook.contains("<informaltable", ignoreCase = true),
+            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau AsciiDoc"
+        )
+    }
+
+    @Test
+    fun `convertToDocBook rend les blocs de code AsciiDoc en elements programlisting`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document avec Code
+
+            == Exemple
+
+            [source,kotlin]
+            ----
+            fun main() {
+                println("hello")
+            }
+            ----
+            """.trimIndent()
+        )
+
+        val docbook = DocumentConverter.convertToDocBook(source)
+
+        assertNotNull(docbook)
+        assertTrue(
+            docbook.contains("<programlisting", ignoreCase = true),
+            "le DocBook doit contenir un element <programlisting> pour le bloc de code source"
+        )
+        assertTrue(docbook.contains("fun main"), "le DocBook doit preserver le contenu du bloc de code")
+    }
+
+    @Test
+    fun `convertToDocBook rend les listes AsciiDoc en elements itemizedlist ou orderedlist`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document avec Listes
+
+            == Listes
+
+            Liste non ordonnee:
+
+            * Element un
+            * Element deux
+            * Element trois
+
+            Liste ordonnee:
+
+            . Premier
+            . Deuxieme
+            . Troisieme
+            """.trimIndent()
+        )
+
+        val docbook = DocumentConverter.convertToDocBook(source)
+
+        assertNotNull(docbook)
+        assertTrue(
+            docbook.contains("<itemizedlist", ignoreCase = true),
+            "le DocBook doit contenir un element <itemizedlist> pour la liste non ordonnee"
+        )
+        assertTrue(
+            docbook.contains("<orderedlist", ignoreCase = true),
+            "le DocBook doit contenir un element <orderedlist> pour la liste ordonnee"
+        )
+        assertTrue(docbook.contains("Element un"), "le DocBook doit preserver le contenu des items de liste")
+        assertTrue(docbook.contains("Premier"), "le DocBook doit preserver le contenu des items ordonnes")
+    }
+
+    // --- US-DOC-06/07 (P3) : ManPage advanced rendering ---
+
+    @Test
+    fun `convertToManPage rend la section SYNOPSIS avec les options en gras troff`() {
+        val dir = tempDir()
+        val source = DocumentSource(File(dir, "man.adoc").apply {
+            writeText(
+                """
+                = document(1)
+                :doctype: manpage
+
+                == NAME
+
+                document - Gradle plugin for AsciiDoc publication
+
+                == SYNOPSIS
+
+                *document* ['OPTION']...
+
+                == OPTIONS
+
+                *--html*::
+                    Generate HTML output.
+                *--pdf*::
+                    Generate PDF output.
+                """.trimIndent()
+            )
+        })
+
+        val manpage = DocumentConverter.convertToManPage(source)
+
+        assertNotNull(manpage)
+        assertTrue(manpage.contains("SYNOPSIS"), "le manpage doit contenir la section SYNOPSIS")
+        assertTrue(manpage.contains("OPTIONS") || manpage.contains("options"), "le manpage doit contenir la section OPTIONS")
+        assertTrue(
+            manpage.contains(".B ") || manpage.contains("\\fB"),
+            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees"
+        )
+    }
+
+    @Test
+    fun `convertToManPage rend les sections imbriquees du document source`() {
+        val dir = tempDir()
+        val source = DocumentSource(File(dir, "man.adoc").apply {
+            writeText(
+                """
+                = document(1)
+                :doctype: manpage
+
+                == NAME
+
+                document - Gradle plugin for AsciiDoc publication
+
+                == DESCRIPTION
+
+                The *document* plugin converts AsciiDoc to multiple formats.
+
+                === Sub-section
+
+                Detailed description of a sub-feature.
+
+                == EXAMPLES
+
+                *document* --html livre.adoc
+                """.trimIndent()
+            )
+        })
+
+        val manpage = DocumentConverter.convertToManPage(source)
+
+        assertNotNull(manpage)
+        assertTrue(manpage.contains("DESCRIPTION"), "le manpage doit contenir la section DESCRIPTION")
+        assertTrue(manpage.contains("EXAMPLES"), "le manpage doit contenir la section EXAMPLES")
+        // AsciidoctorJ manpage renders === sub-sections as .SS (sub-section troff directive)
+        // or preserves the heading text. Either signal validates the sub-section is present.
+        assertTrue(
+            manpage.contains("Sub-section") || manpage.contains(".SS"),
+            "le manpage doit rendre les sous-sections (texte ou directive .SS): $manpage"
+        )
     }
 }

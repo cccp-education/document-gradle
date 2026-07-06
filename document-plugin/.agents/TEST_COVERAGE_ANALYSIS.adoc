@@ -1,30 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-07-06
-:session: 018
+:session: 019
 
-== Pyramide de tests — Session 018 (DOC-12 book { } + DOC-9b images + DOC-8.5 publication)
+== Pyramide de tests — Session 019 (DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation)
-| 224
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation + EPUB image + BookConfig serializer + DocBook/ManPage advanced)
+| 232
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` + `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 image directives) + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/BookDslTest.kt` (+4) + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` (+1 EPUB image +3 DocBook advanced +2 ManPage advanced) + `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 image directives) + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/BookDslTest.kt` (+4) + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` (+2 book block) + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
 
 | Functional (GradleTestKit)
-| 44
+| 49
 | ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+4 : 2 book nested DSL + 2 convertDocumentToHtml/Pdf renders image) + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+5 : 1 EPUB image + 2 book serializer + 2 DocBook/ManPage advanced) + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 46
+| 42
 | ✅ PASS
-| `src/test/resources/features/document.feature` (+4 : 3 @doc12 @book + 1 @doc9 @images) + `src/test/resources/features/release-notes.feature`
+| `src/test/resources/features/document.feature` (+4 : 1 @doc9 @images @epub + 1 @doc12 @serialization @book + 2 @doc5 @conversion advanced) + `src/test/resources/features/release-notes.feature`
 |===
 
-**Total : 314 tests, 0 échec.** (+14 par rapport à session 017 — DOC-12 book { } + DOC-9b images)
+**Total : 323 tests, 0 échec.** (+17 par rapport à session 018 — DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering)
 
 == Détail unit (62)
 

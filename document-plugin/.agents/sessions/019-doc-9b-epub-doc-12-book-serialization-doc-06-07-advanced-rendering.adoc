@@ -1,0 +1,78 @@
+= Session 019 — DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering
+:session: 019
+:date: 2026-07-06
+:status: ✅ TERMINÉ — 3 objectifs P2/P3 livrés (maintenance extensions)
+
+== Objectifs
+
+Ordre exécuté : US 1 → US 2 → US 3 (choix utilisateur, baby-step DDD/TDD/BDD unit → functional → Cucumber).
+
+== US 1 — DOC-9b extension EPUB : rendu image:: dans EPUB ✅
+
+Critère d'acceptation US-DOC-08 : "l'enrichissement images est testé explicitement dans le rendu final HTML + PDF + EPUB". Sessions précédentes : HTML + PDF testés (018). Cette session : EPUB.
+
+Livrables :
+- Test unitaire : `DocumentConverterTest.convertToEpub embeds image referenced by image directive as a zip entry` — vérifie que l'EPUB (zip) embarque l'image comme entrée du zip
+- Test functional : `DocumentPluginFunctionalTest.convertDocumentToEpub renders image directives without dropping them` — task Gradle `convertDocumentToEpub` + validation zip entry
+- Scénario Cucumber : 1 `@doc9 @enrichment @images @epub` (rendu EPUB embed image as zip entry)
+
+== US 2 — DOC-12 extension : sérialisation block `book { }` dans document-config.json ✅
+
+Critère d'acceptation : le block `book { }` (DOC-11) est sérialisé dans `document-config.json` via `SerializeDocumentConfigTask`.
+
+Livrables :
+- `BookConfig.kt` — value object (pagesDir, photosDir, title, author) avec `isEmpty()` basé sur les dirs uniquement (les conventions title/author Gradle ne sont pas un signal d'activation)
+- `DocumentPipelineConfig` — nouveau champ `book: BookConfig = BookConfig()`
+- `DocumentConfigSerializer` — sérialise le block `book` uniquement si non-empty (omit sinon)
+- `SerializeDocumentConfigTask` — 4 nouveaux `@Input` optionnels (bookPagesDir, bookPhotosDir, bookTitle, bookAuthor) + construction `BookConfig` dans `execute()`
+- `DocumentPlugin.registerSerializeDocumentConfig` — wiring CLI props + flat properties mirror
+- Tests unitaires : 2 (`serialize includes book block when book is provided` + `serialize omits book block when book is not provided`)
+- Tests functional : 2 (`serializeDocumentConfig serialises the book block` + `serializeDocumentConfig omits the book block when book is unset`)
+- Scénario Cucumber : 1 `@doc12 @serialization @book` (book block serialised with title + author)
+
+== US 3 — US-DOC-06/07 (P3) : tests de rendu avancés DocBook + ManPage ✅
+
+Critère d'acceptation : ajouter des tests de rendu avancés pour DocBook (tableaux, blocs de code, listes) et ManPage (options formatées, sections imbriquées).
+
+Livrables :
+- Tests unitaires DocBook : 3 (`convertToDocBook rend les tableaux AsciiDoc en elements DocBook table` + `convertToDocBook rend les blocs de code AsciiDoc en elements programlisting` + `convertToDocBook rend les listes AsciiDoc en elements itemizedlist ou orderedlist`)
+- Tests unitaires ManPage : 2 (`convertToManPage rend la section SYNOPSIS avec les options en gras troff` + `convertToManPage rend les sections imbriquees du document source`)
+- Tests functional : 2 (`convertDocumentToDocBook rend les tableaux et blocs de code AsciiDoc` + `convertDocumentToManPage rend les options formatees en gras troff`)
+- Scénarios Cucumber : 2 (`@doc5 @conversion @docbook-advanced` DocBook table + programlisting + `@doc5 @conversion @manpage-advanced` ManPage bold troff)
+
+== Tests
+
+- Unit : 232 (+8 : 1 EPUB image + 2 book serializer + 3 DocBook advanced + 2 ManPage advanced)
+- Functional : 49 (+5 : 1 EPUB image + 2 book serializer + 2 DocBook/ManPage advanced)
+- Cucumber : 42 (+4 : 1 EPUB image + 1 book serializer + 2 DocBook/ManPage advanced)
+- Total : 323 tests (+17), build GREEN
+
+== Fichiers modifiés
+
+- `src/main/kotlin/document/BookConfig.kt` — NOUVEAU (value object DOC-12 book)
+- `src/main/kotlin/document/DocumentPipelineConfig.kt` — champ `book`
+- `src/main/kotlin/document/DocumentConfigSerializer.kt` — sérialisation block `book`
+- `src/main/kotlin/document/SerializeDocumentConfigTask.kt` — 4 inputs book + construction BookConfig
+- `src/main/kotlin/document/DocumentPlugin.kt` — wiring serializeDocumentConfig book inputs
+- `src/test/kotlin/document/DocumentConverterTest.kt` — 1 test EPUB image + 5 tests DocBook/ManPage advanced
+- `src/test/kotlin/document/DocumentConfigSerializerTest.kt` — 2 tests book block
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — 1 test EPUB image + 2 tests book serializer + 2 tests DocBook/ManPage advanced
+- `src/test/resources/features/document.feature` — 4 nouveaux scénarios
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — 5 nouveaux steps
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — 2 nouveaux worlds + 1 world modifié (book source file)
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (unit → functional → Cucumber), agile software craftsmanship. Chaque US : RED → GREEN → REFACTOR. Aucune régression sur les 306 tests existants (session 018).
+
+== Règles absolues respectées
+
+- Aucun commit (Règle 1)
+- Aucun publish (Règle 2)
+- DAG N2 respecté (Règle 3)
+- 6 étapes fermeture en cours (Règle 4)
+- Hook ouverture exécuté (Règle 5)
+- Zéro secret en dur (Règle 6)
+- Document consomme AsciiDoc lecture seule (Règle 7)
+- Boundary Codex respecté (Règle 8)
+- Code en anglais (Règle 9)

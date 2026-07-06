@@ -95,4 +95,46 @@ class DocumentConfigSerializerTest {
         assertTrue(json.contains("\"theme\""))
         assertTrue(json.contains("talaria.css"))
     }
+
+    // --- DOC-12 extension : book { } serialisation ---
+
+    @Test
+    fun `serialize includes book block when book is provided`() {
+        val dir = tempDir()
+        val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
+        val pagesDir = File(dir, "pages").apply { mkdirs() }
+        val photosDir = File(dir, "photos").apply { mkdirs() }
+        val config = DocumentPipelineConfig(
+            source = DocumentSource(sourceFile),
+            book = BookConfig(
+                pagesDir = pagesDir,
+                photosDir = photosDir,
+                title = "Mon Livre",
+                author = "Auteur",
+            ),
+        )
+        val serializer = DocumentConfigSerializer()
+
+        val file = serializer.serialize(dir, config)
+        val json = file.readText()
+
+        assertTrue(json.contains("\"book\""), "the JSON must contain a book block (json=$json)")
+        assertTrue(json.contains("Mon Livre"), "the book block must contain the title")
+        assertTrue(json.contains("Auteur"), "the book block must contain the author")
+        assertTrue(json.contains("pages"), "the book block must contain the pagesDir")
+        assertTrue(json.contains("photos"), "the book block must contain the photosDir")
+    }
+
+    @Test
+    fun `serialize omits book block when book is not provided`() {
+        val dir = tempDir()
+        val sourceFile = File(dir, "x.adoc").apply { writeText("= X") }
+        val config = DocumentPipelineConfig(source = DocumentSource(sourceFile))
+        val serializer = DocumentConfigSerializer()
+
+        val file = serializer.serialize(dir, config)
+        val json = file.readText()
+
+        assertTrue(!json.contains("\"book\""), "the JSON must not contain a book block when book is unset (json=$json)")
+    }
 }
