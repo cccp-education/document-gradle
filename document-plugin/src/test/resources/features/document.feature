@@ -288,6 +288,25 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the document config json file should exist
     And the document config json should contain the book block with title and author
 
+  @doc12 @round-trip
+  Scenario: serializeDocumentConfig is idempotent — two consecutive runs produce byte-identical json
+    Given a new document project with a full unified DSL document block
+    When I am executing the task 'serializeDocumentConfig' twice in a row
+    Then the build should succeed
+    And the two document config json outputs must be byte-identical
+
+  @doc11 @book @n3 @cross-borough
+  Scenario: bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts
+    Given a new document project with OCR pages and photos directory and a source pointing to the assembled book
+    When I am executing the task 'bookPipeline'
+    Then the build should succeed
+    And the assembled book file should exist
+    And the converted HTML file should exist
+    And the converted PDF file should exist
+    And the converted EPUB file should exist
+    And the composite context json file should exist
+    And the composite context json should index the html pdf and epub book artifacts
+
   @doc12 @dsl @book
   Scenario: The document DSL accepts a book block with pagesDir title and author
     Given a new document project with a unified DSL book block
@@ -330,3 +349,21 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the converted EPUB file should exist
     And the converted EPUB should embed the image directive as a zip entry
+
+  @doc5 @conversion @epub-advanced
+  Scenario: convertDocumentToEpub renders AsciiDoc tables and code blocks into XHTML elements
+    Given a new document project with an AsciiDoc source containing a table and a code block
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should render the table as a XHTML table element
+    And the converted EPUB should render the code block as a pre code element
+
+  @doc5 @conversion @epub-advanced
+  Scenario: convertDocumentToEpub renders AsciiDoc lists into XHTML ul and ol elements
+    Given a new document project with an AsciiDoc source containing ordered and unordered lists
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should render the unordered list as a ul element
+    And the converted EPUB should render the ordered list as an ol element

@@ -979,6 +979,63 @@ class DocumentPluginFunctionalTest {
     }
 
     @Test
+    fun `bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-n3\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("build/docs/document/book.adoc"))
+                book {
+                    pagesDir.set(file("pages"))
+                    photosDir.set(file("photos"))
+                    title.set("Cross Borough Book")
+                    author.set("Runner N3")
+                }
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page for runner-gradle.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond page for runner-gradle.")
+        val photosDir = projectDir.resolve("photos").apply { mkdirs() }
+        photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("bookPipeline")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+
+        val composite = File(projectDir, "build/docs/document/composite-context.json")
+        assertTrue(composite.exists(), "composite-context.json must be produced for runner-gradle N3")
+        val json = composite.readText()
+        assertTrue(json.contains("\"source\""), "composite-context must carry the source field for runner-gradle")
+        assertTrue(json.contains("\"entries\""), "composite-context must carry the entries array for runner-gradle")
+        assertTrue(json.contains("\"count\""), "composite-context must carry the count field for runner-gradle")
+        assertTrue(json.contains(".html"), "composite-context must index the HTML artifact produced by the book pipeline")
+        assertTrue(json.contains(".pdf"), "composite-context must index the PDF artifact produced by the book pipeline")
+        assertTrue(json.contains(".epub"), "composite-context must index the EPUB artifact produced by the book pipeline")
+
+        val metadata = File(projectDir, "build/docs/document/metadata.json")
+        assertTrue(metadata.exists(), "metadata.json must be produced for runner-gradle N3")
+        val meta = metadata.readText()
+        assertTrue(meta.contains("\"source\""), "metadata.json must carry the source field for runner-gradle")
+        assertTrue(meta.contains("\"sessions\""), "metadata.json must carry the sessions count for runner-gradle")
+    }
+
+    @Test
     fun `book nested DSL block configures assembleBook with title author pages and photos`() {
         val projectDir = newTempDir()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-dsl\"\n")
@@ -1158,6 +1215,133 @@ class DocumentPluginFunctionalTest {
     }
 
     @Test
+    fun `convertDocumentToEpub renders AsciiDoc tables into XHTML table elements`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Tableau
+
+            == Donnees
+
+            |===
+            | Colonne A | Colonne B
+
+            | Ligne 1A | Ligne 1B
+            |===
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<table", ignoreCase = true),
+            "the EPUB XHTML must contain a <table> element for the AsciiDoc table"
+        )
+        assertTrue(xhtml.contains("Colonne A"), "the EPUB XHTML must preserve the table header")
+    }
+
+    @Test
+    fun `convertDocumentToEpub renders AsciiDoc code blocks into XHTML pre code elements`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Code
+
+            == Exemple
+
+            [source,kotlin]
+            ----
+            fun main() {
+                println("hello")
+            }
+            ----
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<pre", ignoreCase = true),
+            "the EPUB XHTML must contain a <pre> element for the code block"
+        )
+        assertTrue(
+            xhtml.contains("<code", ignoreCase = true),
+            "the EPUB XHTML must contain a <code> element for the code block"
+        )
+        assertTrue(xhtml.contains("fun main"), "the EPUB XHTML must preserve the code content")
+    }
+
+    @Test
+    fun `convertDocumentToEpub renders AsciiDoc lists into XHTML ul and ol elements`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Listes
+
+            == Listes
+
+            Liste non ordonnee:
+
+            * Element un
+            * Element deux
+
+            Liste ordonnee:
+
+            . Premier
+            . Deuxieme
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<ul", ignoreCase = true),
+            "the EPUB XHTML must contain a <ul> element for the unordered list"
+        )
+        assertTrue(
+            xhtml.contains("<ol", ignoreCase = true),
+            "the EPUB XHTML must contain a <ol> element for the ordered list"
+        )
+        assertTrue(xhtml.contains("Element un"), "the EPUB XHTML must preserve the unordered list content")
+        assertTrue(xhtml.contains("Premier"), "the EPUB XHTML must preserve the ordered list content")
+    }
+
+    private fun extractEpubXhtml(epub: File): String {
+        return java.util.zip.ZipFile(epub).use { zf ->
+            zf.entries().toList()
+                .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
+                .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
+        }
+    }
+
+    @Test
     fun `serializeDocumentConfig serialises the book block into document-config json`() {
         val projectDir = newTempDir()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-document\"\n")
@@ -1216,6 +1400,69 @@ class DocumentPluginFunctionalTest {
         assertTrue(config.exists(), "document-config.json must be generated")
         val json = config.readText()
         assertTrue(!json.contains("\"book\""), "the config JSON must not contain a book block when book is unset (json=$json)")
+    }
+
+    @Test
+    fun `serializeDocumentConfig is idempotent — two runs produce byte-identical json`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-rt\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("livre.adoc"))
+                enrich {
+                    plantuml.set(true)
+                    images.set(true)
+                    passthrough.set(false)
+                }
+                outputs {
+                    html.set(true)
+                    pdf.set(true)
+                    epub.set(true)
+                }
+                metadata {
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                    language.set("fr")
+                }
+                book {
+                    pagesDir.set(file("pages"))
+                    photosDir.set(file("photos"))
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
+        projectDir.resolve("pages").mkdirs()
+        projectDir.resolve("photos").mkdirs()
+
+        val first = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, first.task(":serializeDocumentConfig")?.outcome)
+        val configFile = File(projectDir, "build/docs/document/document-config.json")
+        assertTrue(configFile.exists(), "document-config.json must be generated on first run")
+        val firstJson = configFile.readText()
+
+        // Wipe output and re-run — the produced JSON must be byte-identical
+        configFile.delete()
+        val second = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, second.task(":serializeDocumentConfig")?.outcome)
+        val secondJson = configFile.readText()
+
+        assertEquals(firstJson, secondJson, "two serializeDocumentConfig runs must produce byte-identical json (round-trip idempotence)")
     }
 
     private fun setupTestProject(projectDir: File) {

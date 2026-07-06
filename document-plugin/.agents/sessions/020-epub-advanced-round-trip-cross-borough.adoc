@@ -1,0 +1,145 @@
+= Session 020 — EPUB avancés + DOC-12 round-trip + régression cross-boroughs
+
+:session: 020
+:date: 2026-07-06
+:epic: DOC-9b extension + DOC-12 round-trip + DOC-11 cross-borough
+:status: ✅ TERMINÉ
+:tests: 348 (240 unit + 54 functional + 54 cucumber)
+
+== Objectifs
+
+Trois extensions de maintenance baby-step DDD/TDD/BDD :
+
+. **Option 1 — Tests EPUB avancés** (US-DOC-04) : tableaux, blocs de code,
+  listes en rendu XHTML EPUB3 — miroir des tests DocBook/ManPage advanced (session 019).
+. **Option 2 — DOC-12 round-trip désérialisation** : `DocumentConfigSerializer.deserialize()`
+  lit un `document-config.json` en `DocumentPipelineConfig`. Round-trip idempotent.
+. **Option 3 — Régression cross-boroughs runner-gradle** : `bookPipeline` produit un
+  `composite-context.json` + `metadata.json` valides avec artefacts HTML/PDF/EPUB
+  indexés (contrat N3 consommé par runner-gradle).
+
+== Baby-step DDD/TDD/BDD
+
+Chaque extension suivie le cycle RED → GREEN → REFACTOR :
+
+* **Unit** (JUnit5) — caractérisation du domaine/value objects
+* **Functional** (GradleTestKit) — tâche Gradle end-to-end
+* **Cucumber BDD** — scénarios `*.feature` avec tags
+
+== Option 1 — EPUB avancés (US-DOC-04)
+
+Découverte structure interne EPUB3 (AsciidoctorJ epub3 backend) :
+
+[cols="2,3"]
+|===
+| AsciiDoc | XHTML dans EPUB/*.xhtml
+| Tableau `|===` | `<table>` (thead/tbody)
+| Bloc `[source]` | `<figure class="listing"><pre class="highlight"><code>`
+| Liste `*` | `<div class="itemized-list"><ul><li>`
+| Liste `.` | `<div class="ordered-list arabic"><ol class="arabic"><li>`
+|===
+
+Tests ajoutés (3+3+2) :
+
+* **3 tests unitaires** `DocumentConverterTest` :
+  - `convertToEpub rend les tableaux AsciiDoc en elements table XHTML`
+  - `convertToEpub rend les blocs de code AsciiDoc en elements pre code XHTML`
+  - `convertToEpub rend les listes AsciiDoc en elements ul et ol XHTML`
+* **3 tests fonctionnels** `DocumentPluginFunctionalTest` (GradleRunner) :
+  - `convertDocumentToEpub renders AsciiDoc tables into XHTML table elements`
+  - `convertDocumentToEpub renders AsciiDoc code blocks into XHTML pre code elements`
+  - `convertDocumentToEpub renders AsciiDoc lists into XHTML ul and ol elements`
+* **2 scénarios Cucumber** `@doc5 @conversion @epub-advanced` :
+  - `convertDocumentToEpub renders AsciiDoc tables and code blocks into XHTML elements`
+  - `convertDocumentToEpub renders AsciiDoc lists into XHTML ul and ol elements`
+
+Helper partagé `extractEpubXhtml(epub: File): String` (extraction des entrées
+`EPUB/*.xhtml` du zip EPUB) ajouté dans `DocumentWorld` + `DocumentConverterTest`.
+
+== Option 2 — DOC-12 round-trip désérialisation
+
+Nouvelle méthode `DocumentConfigSerializer.deserialize(file, baseDir)` :
+lit un `document-config.json` et reconstruit un `DocumentPipelineConfig`.
+Résout `source` + theme/book paths contre `baseDir`. Fallback sur défauts
+pour blocs optionnels manquants (theme, book).
+
+Tests ajoutés (6+1+1) :
+
+* **6 tests unitaires** `DocumentConfigSerializerTest` :
+  - `deserialize reads back a serialized config preserving source enrich outputs and metadata`
+  - `deserialize reads back a serialized config with defaults when no block is set`
+  - `deserialize reads back a serialized config with theme block when theme is provided`
+  - `deserialize reads back a serialized config with book block when book is provided`
+  - `round-trip serialize then deserialize is idempotent` (byte-identical JSON)
+* **1 test fonctionnel** `DocumentPluginFunctionalTest` :
+  - `serializeDocumentConfig is idempotent — two runs produce byte-identical json`
+* **1 scénario Cucumber** `@doc12 @round-trip` :
+  - `serializeDocumentConfig is idempotent — two consecutive runs produce byte-identical json`
+  - Step `When I am executing the task {string} twice in a row` + `DocumentWorld.lastConfigJson`
+
+== Option 3 — Régression cross-boroughs runner-gradle
+
+Valide le contrat N3 consommé par runner-gradle : après `bookPipeline`,
+`composite-context.json` + `metadata.json` contiennent les artefacts
+HTML/PDF/EPUB indexés (c'est ce que `assembleCompositeContext` ingère).
+
+Tests ajoutés (1+1) :
+
+* **1 test fonctionnel** `DocumentPluginFunctionalTest` :
+  - `bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts`
+  - Configure `source.set(file("build/docs/document/book.adoc"))` + `book { }` block
+  - Vérifie `assembleBook`/`convertDocumentToHtml/Pdf/Epub`/`collectDocumentRetrieve` SUCCESS
+  - Vérifie `composite-context.json` contient `.html`/`.pdf`/`.epub` + `entries`/`count`/`source`
+  - Vérifie `metadata.json` contient `source`/`sessions`
+* **1 scénario Cucumber** `@doc11 @book @n3 @cross-borough` :
+  - `bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts`
+  - Step `Given a new document project with OCR pages and photos directory and a source pointing to the assembled book`
+  - Step `Then the composite context json should index the html pdf and epub book artifacts`
+  - Helper `DocumentWorld.createGradleProjectWithOcrPagesAndSourcePointingToBook()`
+
+== Détail des modifications
+
+=== Production (1 fichier)
+
+* `src/main/kotlin/document/DocumentConfigSerializer.kt` — ajout `deserialize(file, baseDir)`
+
+=== Tests (5 fichiers)
+
+* `src/test/kotlin/document/DocumentConverterTest.kt` — +3 tests EPUB unit + helper `extractEpubXhtml`
+* `src/test/kotlin/document/DocumentConfigSerializerTest.kt` — +6 tests round-trip
+* `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +3 EPUB + 1 idempotent + 1 bookPipeline N3 + helper `extractEpubXhtml`
+* `src/test/resources/features/document.feature` — +2 scénarios `@epub-advanced` + 1 `@doc12 @round-trip` + 1 `@cross-borough`
+* `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +steps Given/Then EPUB + round-trip + cross-borough
+* `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +helpers `extractEpubXhtml`, `createGradleProjectWithAsciiDocSourceWithLists`, `createGradleProjectWithOcrPagesAndSourcePointingToBook`, `lastConfigJson`
+
+== Stack (inchangée)
+
+* AsciidoctorJ 3.0.0 + asciidoctorj-pdf 2.3.23 + asciidoctorj-epub3 2.2.0 + asciidoctorj-diagram 3.2.0
+* Jackson (ObjectMapper + KotlinModule) — serialize/deserialize round-trip
+* JUnit5 + GradleRunner + AssertJ + Cucumber Java 7
+
+== Vérifications
+
+* `./gradlew test` — 240 unit PASS (0 failures)
+* `./gradlew functionalTest` — 54 functional PASS (0 failures)
+* `./gradlew cucumberTest` — 54 scénarios PASS (0 failures)
+* Total : **348 tests** (+25 vs session 019 : 323)
+
+== Règles respectées
+
+* ✅ Aucun commit sans permission (clôture demande commit + push)
+* ✅ Aucun publish
+* ✅ DAG N2 — pas d'import N3
+* ✅ Zéro secret en dur (vérifié `grep -r "TOKEN|SECRET|PASSWORD|API_KEY|gho_|ghp_"` sur `*.kts`)
+* ✅ Code en anglais (production + tests)
+* ✅ Baby-step DDD/TDD/BDD — unit → functional → cucumber
+* ✅ Loi de l'Économie d'Encre — `deserialize` réutilise le JSON existant
+
+== Prochaine session (021)
+
+Le borough reste en maintenance. Pistes possibles :
+
+* Tests EPUB avancés supplémentaires (admonitions, sidebars, bibliographie)
+* `DocumentConfigSerializer.deserialize` exposé comme tâche Gradle `deserializeDocumentConfig`
+  (round-trip bidirectionnel côté tâche)
+* Tests de régression cross-boroughs avec release notes + book block combinés

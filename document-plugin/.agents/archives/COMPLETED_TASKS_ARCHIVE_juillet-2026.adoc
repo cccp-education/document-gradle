@@ -370,3 +370,45 @@ Fallback gracieux si Ollama indisponible. Clôture EPIC DOC-8 (4/4 US).
 *Méthode* : baby-step TDD/BDD agile software craftsmanship (Red → Green → Refactor → Functional → Cucumber)
 
 *EPICs* : DOC-9b ✅ TERMINÉ (EPUB), DOC-12 étendu ✅ (book serialization), US-DOC-06/07 ✅ (advanced rendering)
+
+=== Session 020 (2026-07-06) — EPUB advanced + DOC-12 round-trip + régression cross-boroughs
+
+*US 1 — EPUB advanced rendering (US-DOC-04) : tableaux, blocs de code, listes en XHTML*
+
+Découverte structure interne EPUB3 (AsciidoctorJ epub3 backend) :
+- AsciiDoc tableau `|===` → `<table>` (thead/tbody) dans `EPUB/*.xhtml`
+- AsciiDoc bloc `[source]` → `<figure class="listing"><pre class="highlight"><code>`
+- AsciiDoc liste `*` → `<div class="itemized-list"><ul><li>`
+- AsciiDoc liste `.` → `<div class="ordered-list arabic"><ol class="arabic"><li>`
+
+- `DocumentConverterTest.kt` — +3 unit (`convertToEpub rend les tableaux AsciiDoc en elements table XHTML` + `convertToEpub rend les blocs de code AsciiDoc en elements pre code XHTML` + `convertToEpub rend les listes AsciiDoc en elements ul et ol XHTML`) + helper `extractEpubXhtml`
+- `DocumentPluginFunctionalTest.kt` — +3 functional (`convertDocumentToEpub renders AsciiDoc tables into XHTML table elements` + `convertDocumentToEpub renders AsciiDoc code blocks into XHTML pre code elements` + `convertDocumentToEpub renders AsciiDoc lists into XHTML ul and ol elements`) + helper `extractEpubXhtml`
+- `document.feature` — +2 cucumber `@doc5 @conversion @epub-advanced` (tables + code blocks ; lists ul/ol)
+- `DocumentSteps.kt` — +5 steps (Given lists + 4 Then EPUB table/code/ul/ol)
+- `DocumentWorld.kt` — +helper `extractEpubXhtml` + `createGradleProjectWithAsciiDocSourceWithLists`
+
+*US 2 — DOC-12 round-trip désérialisation*
+
+- `DocumentConfigSerializer.kt` — NOUVELLE méthode `deserialize(file, baseDir)` : lit un `document-config.json` et reconstruit un `DocumentPipelineConfig`. Résout `source` + theme/book paths contre `baseDir`. Fallback sur défauts pour blocs optionnels manquants (theme, book).
+- `DocumentConfigSerializerTest.kt` — +6 unit (`deserialize reads back a serialized config preserving source enrich outputs and metadata` + `deserialize reads back a serialized config with defaults when no block is set` + `deserialize reads back a serialized config with theme block when theme is provided` + `deserialize reads back a serialized config with book block when book is provided` + `round-trip serialize then deserialize is idempotent` byte-identical JSON)
+- `DocumentPluginFunctionalTest.kt` — +1 functional (`serializeDocumentConfig is idempotent — two runs produce byte-identical json`)
+- `document.feature` — +1 cucumber `@doc12 @round-trip` (serializeDocumentConfig is idempotent — two consecutive runs produce byte-identical json)
+- `DocumentSteps.kt` — +1 step `When I am executing the task {string} twice in a row` + 1 step `Then the two document config json outputs must be byte-identical`
+- `DocumentWorld.kt` — +champ `lastConfigJson` + propagation dans `executeTaskTwice` + `cleanup`
+
+*US 3 — Régression cross-boroughs runner-gradle N3*
+
+Valide le contrat N3 consommé par runner-gradle : après `bookPipeline`,
+`composite-context.json` + `metadata.json` contiennent les artefacts
+HTML/PDF/EPUB indexés (c'est ce que `assembleCompositeContext` ingère).
+
+- `DocumentPluginFunctionalTest.kt` — +1 functional (`bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts`) : configure `source.set(file("build/docs/document/book.adoc"))` + `book { }` block + vérifie `assembleBook`/`convertDocumentToHtml/Pdf/Epub`/`collectDocumentRetrieve` SUCCESS + vérifie `composite-context.json` contient `.html`/`.pdf`/`.epub` + `entries`/`count`/`source` + vérifie `metadata.json` contient `source`/`sessions`
+- `document.feature` — +1 cucumber `@doc11 @book @n3 @cross-borough` (bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts)
+- `DocumentSteps.kt` — +1 Given (`a new document project with OCR pages and photos directory and a source pointing to the assembled book`) + 1 Then (`the composite context json should index the html pdf and epub book artifacts`)
+- `DocumentWorld.kt` — +helper `createGradleProjectWithOcrPagesAndSourcePointingToBook`
+
+*Tests* : 348 verts (240 unit + 54 functional + 54 cucumber), 0 failures (+25 vs session 019)
+
+*Méthode* : baby-step TDD/BDD agile software craftsmanship (Red → Green → Refactor → Functional → Cucumber)
+
+*EPICs* : DOC-9b étendu ✅ (EPUB advanced rendering), DOC-12 étendu ✅ (round-trip deserialize), régression cross-boroughs N3 ✅

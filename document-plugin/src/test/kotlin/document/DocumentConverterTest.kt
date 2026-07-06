@@ -255,6 +255,121 @@ class DocumentConverterTest {
         assertFalse(DocumentConverter.shouldSkipBinaryConversion(source, epubOutput))
     }
 
+    // --- US-DOC-04 (P2) : EPUB advanced rendering (tableaux, code, listes) ---
+
+    private fun extractEpubXhtml(epub: File): String {
+        return java.util.zip.ZipFile(epub).use { zf ->
+            zf.entries().toList()
+                .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
+                .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
+        }
+    }
+
+    @Test
+    fun `convertToEpub rend les tableaux AsciiDoc en elements table XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Tableau
+
+            == Donnees
+
+            |===
+            | Colonne A | Colonne B
+
+            | Ligne 1A | Ligne 1B
+            |===
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<table", ignoreCase = true),
+            "l'EPUB doit contenir un element <table> XHTML pour le tableau AsciiDoc"
+        )
+        assertTrue(xhtml.contains("Colonne A"), "l'EPUB doit preserver l'en-tete du tableau")
+        assertTrue(xhtml.contains("Ligne 1A"), "l'EPUB doit preserver le contenu des cellules")
+    }
+
+    @Test
+    fun `convertToEpub rend les blocs de code AsciiDoc en elements pre code XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Code
+
+            == Exemple
+
+            [source,kotlin]
+            ----
+            fun main() {
+                println("hello")
+            }
+            ----
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<pre", ignoreCase = true),
+            "l'EPUB doit contenir un element <pre> XHTML pour le bloc de code source"
+        )
+        assertTrue(
+            xhtml.contains("<code", ignoreCase = true),
+            "l'EPUB doit contenir un element <code> XHTML pour le bloc de code source"
+        )
+        assertTrue(xhtml.contains("fun main"), "l'EPUB doit preserver le contenu du bloc de code")
+    }
+
+    @Test
+    fun `convertToEpub rend les listes AsciiDoc en elements ul et ol XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Listes
+
+            == Listes
+
+            Liste non ordonnee:
+
+            * Element un
+            * Element deux
+
+            Liste ordonnee:
+
+            . Premier
+            . Deuxieme
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("<ul", ignoreCase = true),
+            "l'EPUB doit contenir un element <ul> XHTML pour la liste non ordonnee"
+        )
+        assertTrue(
+            xhtml.contains("<ol", ignoreCase = true),
+            "l'EPUB doit contenir un element <ol> XHTML pour la liste ordonnee"
+        )
+        assertTrue(xhtml.contains("Element un"), "l'EPUB doit preserver le contenu des items non ordonnes")
+        assertTrue(xhtml.contains("Premier"), "l'EPUB doit preserver le contenu des items ordonnes")
+    }
+
     // --- DOC-9b : image:: directives embedding in EPUB ---
 
     @Test

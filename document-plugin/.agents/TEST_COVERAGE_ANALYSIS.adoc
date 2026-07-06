@@ -1,30 +1,30 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-07-06
-:session: 019
+:session: 020
 
-== Pyramide de tests — Session 019 (DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering)
+== Pyramide de tests — Session 020 (EPUB advanced + DOC-12 round-trip + régression cross-boroughs)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation + EPUB image + BookConfig serializer + DocBook/ManPage advanced)
-| 232
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation + EPUB image + BookConfig serializer + DocBook/ManPage advanced + EPUB advanced + round-trip deserialize)
+| 240
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` (+1 EPUB image +3 DocBook advanced +2 ManPage advanced) + `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 image directives) + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/BookDslTest.kt` (+4) + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` (+2 book block) + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
+| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` (+3 EPUB advanced : table/code/lists XHTML) + `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 image directives) + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/BookDslTest.kt` (+4) + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` (+2 book block +6 round-trip deserialize) + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
 
 | Functional (GradleTestKit)
-| 49
+| 54
 | ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+5 : 1 EPUB image + 2 book serializer + 2 DocBook/ManPage advanced) + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+5 : 3 EPUB advanced + 1 serialize idempotent + 1 bookPipeline N3 cross-borough) + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
-| 42
+| 54
 | ✅ PASS
-| `src/test/resources/features/document.feature` (+4 : 1 @doc9 @images @epub + 1 @doc12 @serialization @book + 2 @doc5 @conversion advanced) + `src/test/resources/features/release-notes.feature`
+| `src/test/resources/features/document.feature` (+4 : 2 @doc5 @conversion @epub-advanced + 1 @doc12 @round-trip + 1 @doc11 @book @n3 @cross-borough) + `src/test/resources/features/release-notes.feature`
 |===
 
-**Total : 323 tests, 0 échec.** (+17 par rapport à session 018 — DOC-9b EPUB + DOC-12 book serialization + DOC-06/07 advanced rendering)
+**Total : 348 tests, 0 échec.** (+25 par rapport à session 019 — EPUB advanced rendering + DOC-12 round-trip deserialize + régression cross-boroughs N3)
 
 == Détail unit (62)
 

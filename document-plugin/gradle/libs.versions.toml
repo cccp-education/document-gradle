@@ -1,7 +1,7 @@
 [versions]
 document = "0.0.1"
 workspace-bom = "0.0.6"
-asciidoctorj = "3.0.0"
+asciidoctorj = "3.0.1"
 asciidoctorj-diagram = "3.2.0"
 asciidoctorj-diagram-plantuml = "1.2025.3"
 asciidoctorj-pdf = "2.3.23"

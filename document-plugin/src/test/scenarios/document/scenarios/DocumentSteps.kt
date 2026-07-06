@@ -112,6 +112,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with OCR pages and photos directory and a source pointing to the assembled book")
+    fun createNewDocumentProjectWithOcrPagesPhotosAndBookSource() {
+        world.createGradleProjectWithOcrPagesAndSourcePointingToBook()
+        assertThat(world.projectDir).exists()
+    }
+
     @Given("a new document project with a unified DSL enrich block")
     fun createNewDocumentProjectWithUnifiedEnrichBlock() {
         world.createGradleProjectWithUnifiedEnrichBlock()
@@ -149,6 +155,15 @@ class DocumentSteps(private val world: DocumentWorld) {
     @When("I am executing the task {string} with prompt {string}")
     fun executeTaskWithPrompt(taskName: String, prompt: String) {
         world.executeGradle(taskName, "-Pdocument.prompt=$prompt")
+    }
+
+    @When("I am executing the task {string} twice in a row")
+    fun executeTaskTwice(taskName: String) {
+        world.executeGradle(taskName)
+        val cfg = world.documentConfigJsonFile()
+        world.lastConfigJson = cfg?.readText()
+        cfg?.delete()
+        world.executeGradle(taskName)
     }
 
     @Then("the build should succeed")
@@ -242,6 +257,51 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(entries).anySatisfy { name ->
             assertThat(name).contains("photo.png")
         }
+    }
+
+    // --- US-DOC-04 (P2) : EPUB advanced rendering (tableaux, code, listes) ---
+
+    @Given("a new document project with an AsciiDoc source containing ordered and unordered lists")
+    fun createNewDocumentProjectWithOrderedAndUnorderedLists() {
+        world.createGradleProjectWithAsciiDocSourceWithLists()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the converted EPUB should render the table as a XHTML table element")
+    fun convertedEpubShouldRenderTableAsXhtmlTableElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("<table")
+        assertThat(xhtml).contains("Colonne A")
+    }
+
+    @Then("the converted EPUB should render the code block as a pre code element")
+    fun convertedEpubShouldRenderCodeBlockAsPreCodeElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("<pre")
+        assertThat(xhtml).containsIgnoringCase("<code")
+        assertThat(xhtml).contains("fun main")
+    }
+
+    @Then("the converted EPUB should render the unordered list as a ul element")
+    fun convertedEpubShouldRenderUnorderedListAsUlElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("<ul")
+        assertThat(xhtml).contains("Element un")
+    }
+
+    @Then("the converted EPUB should render the ordered list as an ol element")
+    fun convertedEpubShouldRenderOrderedListAsOlElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("<ol")
+        assertThat(xhtml).contains("Premier")
     }
 
     // --- US-DOC-06/07 (P3) — DocBook + ManPage advanced rendering ---
@@ -385,6 +445,18 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(composite).exists()
         val content = composite!!.readText()
         assertThat(content).contains("\"count\" : 0")
+    }
+
+    @Then("the composite context json should index the html pdf and epub book artifacts")
+    fun compositeContextJsonShouldIndexHtmlPdfEpubBookArtifacts() {
+        val composite = world.compositeContextJsonFile()
+        assertThat(composite).exists()
+        val content = composite!!.readText()
+        assertThat(content).contains(".html")
+        assertThat(content).contains(".pdf")
+        assertThat(content).contains(".epub")
+        assertThat(content).contains("\"entries\"")
+        assertThat(content).contains("\"count\"")
     }
 
     @Then("the generated POM should contain the Document Gradle Plugin name")
@@ -536,6 +608,16 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(cfg).exists()
         val content = cfg!!.readText()
         assertThat(content).contains("\"language\" : \"fr\"")
+    }
+
+    @Then("the two document config json outputs must be byte-identical")
+    fun theTwoDocumentConfigJsonOutputsMustBeByteIdentical() {
+        val cfg = world.documentConfigJsonFile()
+        assertThat(cfg).exists()
+        val secondJson = cfg!!.readText()
+        val firstJson = world.lastConfigJson
+        assertThat(firstJson).isNotNull()
+        assertThat(secondJson).isEqualTo(firstJson)
     }
 
     @Given("a new document project with a git repository")

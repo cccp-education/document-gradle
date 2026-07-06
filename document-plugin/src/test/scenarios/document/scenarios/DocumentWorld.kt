@@ -10,6 +10,7 @@ class DocumentWorld {
 
     var projectDir: File? = null
     var buildResult: BuildResult? = null
+    var lastConfigJson: String? = null
 
     fun createGradleProject(): File {
         val dir = Files.createTempDirectory("doc-bdd").toFile()
@@ -538,6 +539,32 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithOcrPagesAndSourcePointingToBook(): File {
+        val dir = Files.createTempDirectory("doc-bdd-book-n3").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins { id("education.cccp.document") }
+
+            document {
+                source.set(file("build/docs/document/book.adoc"))
+                bookPagesDir.set(file("pages"))
+                bookPhotosDir.set(file("photos"))
+                bookTitle.set("Cross Borough Book")
+                bookAuthor.set("Runner N3")
+            }
+            """.trimIndent()
+        )
+        val pagesDir = dir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page for runner-gradle.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond page for runner-gradle.")
+        val photosDir = dir.resolve("photos").apply { mkdirs() }
+        photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        projectDir = dir
+        return dir
+    }
+
     fun assembledBookFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/book.adoc")
@@ -762,6 +789,49 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceWithLists(): File {
+        val dir = Files.createTempDirectory("doc-bdd-epub-adv-lists").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document EPUB Listes
+
+            == Listes
+
+            Liste non ordonnee:
+
+            * Element un
+            * Element deux
+
+            Liste ordonnee:
+
+            . Premier
+            . Deuxieme
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun extractEpubXhtml(epub: File): String {
+        return java.util.zip.ZipFile(epub).use { zf ->
+            zf.entries().toList()
+                .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
+                .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
+        }
+    }
+
     fun createGradleProjectWithFullUnifiedDslBlock(): File {
         val dir = Files.createTempDirectory("doc-bdd-full").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
@@ -952,5 +1022,6 @@ class DocumentWorld {
         projectDir?.deleteRecursively()
         projectDir = null
         buildResult = null
+        lastConfigJson = null
     }
 }

@@ -21,6 +21,12 @@ import java.io.File
  *   "metadata": { "title": "...", "author": "...", "language": "fr" }
  * }
  * ```
+ *
+ * DOC-12 round-trip: the [deserialize] method reads a `document-config.json`
+ * file back into a [DocumentPipelineConfig]. The round-trip is idempotent —
+ * serialising then deserialising then re-serialising produces byte-identical
+ * output. The `source` and theme/book paths are resolved against [baseDir]
+ * (the project directory hosting the JSON file).
  */
 class DocumentConfigSerializer {
 
@@ -80,5 +86,77 @@ class DocumentConfigSerializer {
         val file = File(dir, "document-config.json")
         file.writeText(mapper.writeValueAsString(root))
         return file
+    }
+
+    /**
+     * Deserialises a `document-config.json` file back into a [DocumentPipelineConfig].
+     *
+     * DOC-12 round-trip: this is the mirror of [serialize]. The `source` field
+     * is resolved against [baseDir] (the project directory). Theme paths and
+     * book directories are resolved against [baseDir] too. Missing optional
+     * blocks (theme, book) fall back to their defaults.
+     *
+     * @param file the `document-config.json` file to read
+     * @param baseDir the directory used to resolve relative paths (source, theme, book)
+     * @return the reconstructed [DocumentPipelineConfig]
+     */
+    fun deserialize(file: File, baseDir: File): DocumentPipelineConfig {
+        val root = mapper.readTree(file)
+
+        val sourceName = root.get("source")?.asText()
+            ?: throw IllegalStateException("document-config.json is missing the 'source' field")
+        val sourceFile = File(baseDir, sourceName)
+        val source = DocumentSource(sourceFile)
+
+        val enrich = DocumentEnrichConfig(
+            plantuml = root.get("enrich")?.get("plantuml")?.asBoolean() ?: false,
+            images = root.get("enrich")?.get("images")?.asBoolean() ?: false,
+            passthrough = root.get("enrich")?.get("passthrough")?.asBoolean() ?: false,
+        )
+
+        val outputsNode = root.get("outputs")
+        val outputs = DocumentOutputs(
+            html = outputsNode?.get("html")?.asBoolean() ?: true,
+            pdf = outputsNode?.get("pdf")?.asBoolean() ?: false,
+            epub = outputsNode?.get("epub")?.asBoolean() ?: false,
+            docbook = outputsNode?.get("docbook")?.asBoolean() ?: false,
+            manpage = outputsNode?.get("manpage")?.asBoolean() ?: false,
+        )
+
+        val themeNode = root.get("theme")
+        val theme = DocumentTheme(
+            pdfTheme = themeNode?.get("pdfTheme")?.asText()?.let { File(it) },
+            htmlStylesheet = themeNode?.get("htmlStylesheet")?.asText()?.let { File(it) },
+            epubStylesheet = themeNode?.get("epubStylesheet")?.asText()?.let { File(it) },
+            logo = themeNode?.get("logo")?.asText()?.let { File(it) },
+        )
+
+        val metadataNode = root.get("metadata")
+        val frontMatter = DocumentFrontMatter(
+            title = metadataNode?.get("title")?.asText() ?: "Untitled Document",
+            author = metadataNode?.get("author")?.asText() ?: "Unknown Author",
+            language = metadataNode?.get("language")?.asText() ?: "fr",
+        )
+
+        val bookNode = root.get("book")
+        val book = if (bookNode != null && !bookNode.isNull) {
+            BookConfig(
+                pagesDir = bookNode.get("pagesDir")?.asText()?.let { File(it) },
+                photosDir = bookNode.get("photosDir")?.asText()?.let { File(it) },
+                title = bookNode.get("title")?.asText(),
+                author = bookNode.get("author")?.asText(),
+            )
+        } else {
+            BookConfig()
+        }
+
+        return DocumentPipelineConfig(
+            source = source,
+            enrich = enrich,
+            outputs = outputs,
+            theme = theme,
+            frontMatter = frontMatter,
+            book = book,
+        )
     }
 }
