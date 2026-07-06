@@ -1,15 +1,15 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 017
+:session: 019
 :date: 2026-07-06
-:status: DOC-8.4 terminé (300 tests, +11) — EPIC DOC-8 4/4 TERMINÉ. Prêt DOC-8.5 ou extension DOC-12.
+:status: Session 018 terminée — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication Maven Central. EPIC DOC-12 étendu.
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew test functionalTest            # 258 tests (218 unit + 40 functional)
-./gradlew cucumberTest --no-daemon      # 42 scénarios BDD (6-7 min)
+./gradlew test functionalTest            # 268 tests (224 unit + 44 functional)
+./gradlew cucumberTest --no-daemon      # 46 scénarios BDD (6-7 min)
 ./gradlew publishToMavenLocal            # publie le plugin pour la racine consommateur
 cd .. && ./gradlew tasks --group=document  # 12 tâches
 ```
@@ -21,57 +21,60 @@ Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
 - Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
 - `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les tasks
 
+== Publications Maven Central (session 018)
+
+- `education.ccp:conventions-plugin:0.0.2` — bundle 04040b07 (fix SCM double .git)
+- `education.ccp:document-plugin:0.0.1` — bundle 4d15e522 (publication initiale)
+- 15 boroughs consommateurs harmonisés vers conventions 0.0.2
+
 == Contexte récent
 
-Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ (137 tests).
-Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ (155 tests).
-Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }` TERMINÉ (180 tests).
-Session 014 (2026-07-05) — DOC-8.1 Release Notes Pipeline TERMINÉ (186 tests).
-Session 015 (2026-07-05) — DOC-8.2 Template configurable TERMINÉ (257 tests).
-Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json TERMINÉ (289 tests).
-Session 017 (2026-07-06) — DOC-8.4 Extension IA Ollama (résumé humain) TERMINÉ (300 tests, +11).
+Session 011 (2026-07-04) — DOC-7 CI + Publication Maven Central / Plugin Portal TERMINÉ.
+Session 012 (2026-07-04) — DOC-11 Book Pipeline Codex -> Document TERMINÉ.
+Session 013 (2026-07-04) — DOC-12 DSL unifié `document { }` TERMINÉ.
+Session 014 (2026-07-05) — DOC-8.1 Release Notes Pipeline TERMINÉ.
+Session 015 (2026-07-05) — DOC-8.2 Template configurable TERMINÉ.
+Session 016 (2026-07-05) — DOC-8.3 N3 metadata.json + composite-context.json TERMINÉ.
+Session 017 (2026-07-06) — DOC-8.4 Extension IA Ollama (résumé humain) TERMINÉ.
+Session 018 (2026-07-06) — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication TERMINÉ.
 
-== Objectif session 018 — DOC-8.5 ou extension DOC-12
+== Objectifs session 019
 
-=== P1 — DOC-8.5 Publication Maven Central document-gradle
+Tous les EPICs DOC-0→DOC-12 sont TERMINÉS. Le borough est en maintenance.
 
-Publier `education.cccp:document-gradle` 0.0.1 sur Maven Central (nmcp).
-Pré-requis : BOM 0.0.7 (déjà publiée), dépendances releases, POM complet, signing.
-Vérifier que tous les `implementation` sont des releases (pas de -SNAPSHOT).
+=== P1 — Maintenance
 
-=== P2 — Extension DOC-12 (priorité P3)
+- Surveiller les dépôts GitHub pour les issues/PRs
+- Mettre à jour la BOM quand de nouvelles versions de dépendances sortent
+- Vérifier la compatibilité Gradle/Kotlin sur les montées de version
 
-Intégrer le block `book { }` (DOC-11) dans le DSL unifié `document { }`.
-Actuellement `bookPagesDir`, `bookPhotosDir`, `bookTitle`, `bookAuthor` sont
-des flat properties sur `DocumentExtension`. Les migrer dans un nested
-block `book { }` (pattern enrich/outputs/metadata/releaseNotes).
+=== P2 — Extension possible (priorité basse)
 
-=== P3 — DOC-9b enrichissement images
+- DOC-9b extension : tester le rendu images dans EPUB (actuellement HTML + PDF testés)
+- DOC-12 extension : sérialiser le block `book { }` dans `document-config.json` (SerializeDocumentConfigTask)
+- US-DOC-06/07 (P3) : DocBook + ManPage déjà implémentés, ajouter tests de rendu avancés
 
-US-DOC-08 (DOC-9) mentionne "Les blocs `[plantuml]` sont préservés" mais
-l'enrichissement images (`image::photo.png[]`) n'est pas testé explicitement
-dans le rendu final HTML/PDF. Ajouter scénario BDD.
+== EPIC DOC-12 — étendu (session 018)
+
+- enrich { } ✅ (session 013)
+- outputs { } ✅ (session 013)
+- metadata { } ✅ (session 013)
+- theme { } ✅ (session 008)
+- releaseNotes { } ✅ (session 014)
+- book { } ✅ (session 018) — migration flat properties + mirror rétro-compatible
 
 == EPIC DOC-8 — 4/4 TERMINÉ
 
-- DOC-8.1 ✅ git log → AsciiDoc (ConventionalCommitParser, CliGitLogParser, AsciidocReleaseNotesRenderer)
-- DOC-8.2 ✅ Template configurable (Markdown/JSON, configDriven, custom categories)
-- DOC-8.3 ✅ N3 metadata.json + composite-context.json (ReleaseNotesArtifactEntry, collectReleaseNotes)
-- DOC-8.4 ✅ Extension IA Ollama (OllamaAsciidocReleaseNotesRenderer, llmMode, fallback gracieux)
+- DOC-8.1 ✅ git log → AsciiDoc
+- DOC-8.2 ✅ Template configurable (Markdown/JSON)
+- DOC-8.3 ✅ N3 metadata.json + composite-context.json
+- DOC-8.4 ✅ Extension IA Ollama (résumé humain)
 
-4 renderers release notes : asciidoc, markdown, json, ollama-asciidoc (décorateur IA).
+== EPIC DOC-9b — images ✅ TERMINÉ (session 018)
 
-== OllamaAsciidocReleaseNotesRenderer (rappel DOC-8.4)
-
-Décorateur sur AsciidocReleaseNotesRenderer. Injecte `== Résumé` avant les
-catégories via `DocumentLlmProvider`. Fallback gracieux si LLM jette (rendu
-pur sans résumé). DSL : `rendererType.set("ollama-asciidoc")` + `llmMode.set("fake"|"ollama")`.
-CLI : `-Pdocument.releaseNotesRendererType=ollama-asciidoc -Pdocument.releaseNotesLlmMode=fake`.
-
-== Contrat N3 (session 016, stable)
-
-`composite-context.json` : `{source, entries, count, releaseNotes, releaseNotesCount, timestamp}`
-`metadata.json` : `{source, type, sessions, generatedAt, model, version, dependencies, releaseNotesPath?, releaseNotesRenderer?}`
+- Tests unitaires : `DocumentEnricher` préserve `image::` sans échappement (2 tests)
+- Tests functional : rendu HTML `<img src="photo.png">` + PDF intègre l'image (2 tests)
+- Cucumber : scénario `@doc9 @images` valide le critère d'acceptation
 
 == Stack (rappel)
 
@@ -79,6 +82,7 @@ CLI : `-Pdocument.releaseNotesRendererType=ollama-asciidoc -Pdocument.releaseNot
 - 4 renderers release notes (asciidoc, markdown, json, ollama-asciidoc) + N3 metadata releaseNotesPath/Renderer
 - pipeline-contracts 0.0.2 (MEM-2 workspace-bom) + nmcp 1.5.0
 - langchain4j ollama + koog (orchestrateur) pour le LLM
+- conventions-gradle 0.0.2 (education.ccp.build.*)
 
 == Règles absolues (rappel)
 

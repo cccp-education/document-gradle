@@ -300,3 +300,40 @@ Fallback gracieux si Ollama indisponible. Clôture EPIC DOC-8 (4/4 US).
 - DSL llmMode mirror de `DocumentExtension.llmMode` (DOC-2 generateDocument) — même factory `DocumentLlmProviderFactory`, même sémantique fake/ollama
 
 *EPIC* : DOC-8.4 ✅ TERMINÉ — EPIC DOC-8 4/4 TERMINÉ (DOC-8.1/8.2/8.3/8.4)
+
+=== Session 018 (2026-07-06) — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication Maven Central
+
+*P2 — DOC-12 extension : nested block `book { }`*
+- `BookDsl.kt` créé (pagesDir, photosDir, title, author — concrete class + val Property)
+- `DocumentExtension` — `book` lateinit + `initNested(book)` + `fun book(action: Action<BookDsl>)`
+- `DocumentPlugin` — wiring ObjectFactory + conventions (Untitled Book / Unknown Author) + mirror rétro-compatible
+- Rétro-compat : flat properties `bookPagesDir/bookPhotosDir/bookTitle/bookAuthor` deviennent miroir du nested block
+- `BookDslTest.kt` — 4 unit (propriétés, défauts unset, conventions, settable)
+- `DocumentPluginFunctionalTest.kt` — +2 functional (book nested DSL + fallback defaults)
+- `document.feature` — +3 cucumber `@doc12 @dsl @book` (book block, photos, defaults)
+
+*P3 — DOC-9b enrichissement images*
+- `DocumentEnricher` préserve déjà `image::` sans échappement (attesté par 2 unit)
+- `DocumentEnricherTest.kt` — +2 unit (image directives preserved + inline image with alt text)
+- `DocumentPluginFunctionalTest.kt` — +2 functional (HTML renders `<img src="photo.png">` + PDF intègre image)
+- `document.feature` — +1 cucumber `@doc9 @enrichment @images` (rendu HTML img tag)
+
+*P1 — DOC-8.5 Publication Maven Central*
+- `education.ccp:document-plugin:0.0.1` publié — bundle `4d15e522-02b3-46d3-92b2-5d9a23f2f195`
+- POM validé : groupId education.ccp, Apache 2.0, developer cccp-education, SCM, deps releases
+- Pré-requis : BOM 0.0.6 + i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 + pipeline-contracts 0.0.2 sur Central
+
+*Bug fix conventions-gradle (ABIDJAN)*
+- `PublishingConventionsPlugin.kt:71` — `removeSuffix(".git")` ajouté pour éviter double `.git` dans SCM
+- Scénario Cucumber `@scm-dedup` valide le fix
+- `conventions-gradle` 0.0.2 publié — bundle `04040b07-a397-4d80-9e26-54b2427a27af`
+
+*Harmonisation 0.0.2*
+- 15 boroughs consommateurs bumpés vers `education.ccp.build.*` 0.0.2
+- Validation : 13/15 compileKotlin OK, 2 échecs préexistants (codebase DORMANT, codex sans gradlew)
+
+*Tests* : 314 verts (224 unit + 44 functional + 46 cucumber), 0 failures (+14 vs session 017)
+
+*Méthode* : baby-step TDD/BDD agile software craftsmanship (Red → Green → Refactor → Functional → Cucumber)
+
+*EPICs* : DOC-12 étendu ✅ (book { }), DOC-9b ✅ TERMINÉ, DOC-8.5 ✅ TERMINÉ

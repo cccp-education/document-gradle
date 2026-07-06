@@ -617,6 +617,69 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithUnifiedBookBlock(photos: Boolean = false, titleAndAuthor: Boolean = true): File {
+        val dir = Files.createTempDirectory("doc-bdd-book-dsl").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val dsl = buildString {
+            appendLine("plugins { id(\"education.cccp.document\") }")
+            appendLine()
+            appendLine("document {")
+            appendLine("    book {")
+            appendLine("        pagesDir.set(file(\"pages\"))")
+            if (photos) appendLine("        photosDir.set(file(\"photos\"))")
+            if (titleAndAuthor) {
+                appendLine("        title.set(\"DSL Book\")")
+                appendLine("        author.set(\"DSL Author\")")
+            }
+            appendLine("    }")
+            appendLine("}")
+        }
+        dir.resolve("build.gradle.kts").writeText(dsl)
+
+        val pagesDir = dir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst DSL page content.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond DSL page content.")
+
+        if (photos) {
+            val photosDir = dir.resolve("photos").apply { mkdirs() }
+            photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+            photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        }
+
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceContainingImage(): File {
+        val dir = Files.createTempDirectory("doc-bdd-img").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document avec Image
+
+            == Illustration
+
+            image::photo.png[Photo descriptive]
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        dir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        projectDir = dir
+        return dir
+    }
+
     fun createGradleProjectWithFullUnifiedDslBlock(): File {
         val dir = Files.createTempDirectory("doc-bdd-full").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")

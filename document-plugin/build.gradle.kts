@@ -1,8 +1,8 @@
 plugins {
-    id("education.cccp.build.gradle-plugin") version "0.0.1"
-    id("education.cccp.build.publishing") version "0.0.1"
-    id("education.cccp.build.functional-test") version "0.0.1"
-    id("education.cccp.build.cucumber") version "0.0.1"
+    id("education.cccp.build.gradle-plugin") version "0.0.2"
+    id("education.cccp.build.publishing") version "0.0.2"
+    id("education.cccp.build.functional-test") version "0.0.2"
+    id("education.cccp.build.cucumber") version "0.0.2"
 }
 
 group = "education.cccp"

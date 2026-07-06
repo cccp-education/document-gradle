@@ -580,6 +580,75 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(content).doesNotContain("releaseNotesRenderer")
     }
 
+    // --- DOC-12 extension — book { } nested DSL ---
+
+    @Given("a new document project with a unified DSL book block")
+    fun createNewDocumentProjectWithUnifiedBookBlock() {
+        world.createGradleProjectWithUnifiedBookBlock()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a unified DSL book block with photos")
+    fun createNewDocumentProjectWithUnifiedBookBlockWithPhotos() {
+        world.createGradleProjectWithUnifiedBookBlock(photos = true)
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a unified DSL book block without title and author")
+    fun createNewDocumentProjectWithUnifiedBookBlockWithoutTitleAndAuthor() {
+        world.createGradleProjectWithUnifiedBookBlock(titleAndAuthor = false)
+        assertThat(world.projectDir).exists()
+    }
+
+    // --- DOC-9b — image:: directives rendering in final output ---
+
+    @Given("a new document project with an AsciiDoc source containing an image directive")
+    fun createNewDocumentProjectWithImageDirective() {
+        world.createGradleProjectWithAsciiDocSourceContainingImage()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the converted HTML should render an img tag for the image directive")
+    fun convertedHtmlShouldRenderImgTagForImageDirective() {
+        val html = world.convertedHtmlFile()
+        assertThat(html).exists()
+        val content = html!!.readText()
+        assertThat(content).contains("<img")
+        assertThat(content).contains("photo.png")
+    }
+
+    @Then("the assembled book should contain the DSL book title")
+    fun assembledBookShouldContainDslBookTitle() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains("= DSL Book")
+    }
+
+    @Then("the assembled book should contain the DSL book author")
+    fun assembledBookShouldContainDslBookAuthor() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains(":author: DSL Author")
+    }
+
+    @Then("the assembled book should contain the default book title")
+    fun assembledBookShouldContainDefaultBookTitle() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains("= Untitled Book")
+    }
+
+    @Then("the assembled book should contain the default book author")
+    fun assembledBookShouldContainDefaultBookAuthor() {
+        val book = world.assembledBookFile()
+        assertThat(book).exists()
+        val content = book!!.readText()
+        assertThat(content).contains(":author: Unknown Author")
+    }
+
     @After
     fun cleanup() {
         world.cleanup()

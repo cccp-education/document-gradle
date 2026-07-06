@@ -262,3 +262,38 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the document config json should contain default enrich flags all false
     And the document config json should contain default outputs html only
     And the document config json should contain default metadata language fr
+
+  @doc12 @dsl @book
+  Scenario: The document DSL accepts a book block with pagesDir title and author
+    Given a new document project with a unified DSL book block
+    When I am executing the task 'assembleBook'
+    Then the build should succeed
+    And the assembled book file should exist
+    And the assembled book should contain the DSL book title
+    And the assembled book should contain the DSL book author
+    And the assembled book should contain all page contents in order
+
+  @doc12 @dsl @book
+  Scenario: The document DSL book block accepts a photosDir and embeds photo image directives
+    Given a new document project with a unified DSL book block with photos
+    When I am executing the task 'assembleBook'
+    Then the build should succeed
+    And the assembled book file should exist
+    And the assembled book should contain photo image directives
+
+  @doc12 @dsl @book
+  Scenario: The document DSL book block falls back to default title and author when unset
+    Given a new document project with a unified DSL book block without title and author
+    When I am executing the task 'assembleBook'
+    Then the build should succeed
+    And the assembled book file should exist
+    And the assembled book should contain the default book title
+    And the assembled book should contain the default book author
+
+  @doc9 @enrichment @images
+  Scenario: convertDocumentToHtml renders image directives into img tags in the final HTML
+    Given a new document project with an AsciiDoc source containing an image directive
+    When I am executing the task 'convertDocumentToHtml'
+    Then the build should succeed
+    And the converted HTML file should exist
+    And the converted HTML should render an img tag for the image directive

@@ -119,4 +119,48 @@ class DocumentEnricherTest {
 
         assertEquals(originalContent, sourceFile.readText(), "the source file must not be modified")
     }
+
+    @Test
+    fun `enrich preserves image directives without escaping`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document with Image
+
+            == Illustration
+
+            image::photo.png[]
+
+            Paragraph after the image.
+            """.trimIndent()
+        )
+
+        val enriched = DocumentEnricher.enrich(source)
+
+        assertTrue(enriched.contains("image::photo.png[]"), "the image directive must be preserved verbatim")
+        assertTrue(!enriched.contains("image\\::"), "the image directive must not be escaped")
+    }
+
+    @Test
+    fun `enrich preserves inline image syntax with alt text`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document with Captioned Image
+
+            image::diagram.png[Architecture diagram]
+
+            Next paragraph.
+            """.trimIndent()
+        )
+
+        val enriched = DocumentEnricher.enrich(source)
+
+        assertTrue(
+            enriched.contains("image::diagram.png[Architecture diagram]"),
+            "the inline image with alt text must be preserved verbatim",
+        )
+    }
 }

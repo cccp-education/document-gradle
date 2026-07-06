@@ -53,6 +53,12 @@ class DocumentPlugin : Plugin<Project> {
                 categories = project.objects.mapProperty(String::class.java, String::class.java),
                 llmMode = project.objects.property(String::class.java),
             ),
+            book = BookDsl(
+                pagesDir = project.objects.directoryProperty(),
+                photosDir = project.objects.directoryProperty(),
+                title = project.objects.property(String::class.java),
+                author = project.objects.property(String::class.java),
+            ),
         )
 
         // Conventions (defauts)
@@ -62,8 +68,6 @@ class DocumentPlugin : Plugin<Project> {
         ext.enrichImages.convention(false)
         ext.enrichPassthrough.convention(false)
         ext.llmMode.convention("ollama")
-        ext.bookTitle.convention("Untitled Book")
-        ext.bookAuthor.convention("Unknown Author")
 
         // DOC-12 — Nested DSL block conventions (unified document { }).
         ext.enrich.plantuml.convention(false)
@@ -85,6 +89,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.releaseNotes.categories.convention(emptyMap())
         // DOC-8.4 — llmMode default ollama (only used when rendererType = ollama-asciidoc)
         ext.releaseNotes.llmMode.convention("ollama")
+        // DOC-12 extension — book DSL conventions (mirror of legacy flat properties)
+        ext.book.title.convention("Untitled Book")
+        ext.book.author.convention("Unknown Author")
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -93,6 +100,12 @@ class DocumentPlugin : Plugin<Project> {
         ext.enrichPlantUml.convention(ext.enrich.plantuml)
         ext.enrichImages.convention(ext.enrich.images)
         ext.enrichPassthrough.convention(ext.enrich.passthrough)
+        // DOC-12 extension — Mirror the legacy flat book properties from the nested block
+        // so both `book { title.set("X") }` and the flat `bookTitle.set("X")` paths work.
+        ext.bookPagesDir.convention(ext.book.pagesDir)
+        ext.bookPhotosDir.convention(ext.book.photosDir)
+        ext.bookTitle.convention(ext.book.title)
+        ext.bookAuthor.convention(ext.book.author)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(

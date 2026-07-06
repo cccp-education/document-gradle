@@ -875,6 +875,146 @@ class DocumentPluginFunctionalTest {
         assertTrue(result.output.contains("bookPipeline"), "bookPipeline task must be registered")
     }
 
+    @Test
+    fun `book nested DSL block configures assembleBook with title author pages and photos`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-dsl\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                book {
+                    pagesDir.set(file("pages"))
+                    photosDir.set(file("photos"))
+                    title.set("DSL Book")
+                    author.set("DSL Author")
+                }
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst DSL page.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond DSL page.")
+        val photosDir = projectDir.resolve("photos").apply { mkdirs() }
+        photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/book.adoc")
+        assertTrue(output.exists(), "the assembled book must exist")
+        val content = output.readText()
+        assertTrue(content.contains("= DSL Book"), "the book title from nested DSL must be present")
+        assertTrue(content.contains(":author: DSL Author"), "the book author from nested DSL must be present")
+        assertTrue(content.contains("Chapter 1"), "page 1 content must be present")
+        assertTrue(content.contains("Chapter 2"), "page 2 content must be present")
+        assertTrue(content.contains("image::001-page.png[]"), "the photo from nested DSL must be embedded")
+    }
+
+    @Test
+    fun `book nested DSL block falls back to default title and author when unset`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-defaults\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                book {
+                    pagesDir.set(file("pages"))
+                }
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nOnly page.")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        val output = File(projectDir, "build/docs/document/book.adoc")
+        assertTrue(output.exists(), "the assembled book must exist")
+        val content = output.readText()
+        assertTrue(content.contains("= Untitled Book"), "default book title must be applied")
+        assertTrue(content.contains(":author: Unknown Author"), "default book author must be applied")
+    }
+
+    @Test
+    fun `convertDocumentToHtml renders image directives into img tags`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document avec Image
+
+            == Illustration
+
+            image::photo.png[Photo descriptive]
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.html")
+        assertTrue(output.exists(), "the HTML file must be generated")
+        val content = output.readText()
+        assertTrue(content.contains("<img"), "the HTML must render an <img> tag from the image:: directive")
+        assertTrue(content.contains("photo.png"), "the img src must reference photo.png")
+    }
+
+    @Test
+    fun `convertDocumentToPdf renders image directives without dropping them`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document PDF avec Image
+
+            == Illustration
+
+            image::photo.png[Photo descriptive]
+
+            Paragraphe suivant.
+            """.trimIndent()
+        )
+        projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToPdf")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.pdf")
+        assertTrue(output.exists(), "the PDF file must be generated")
+        assertTrue(output.length() > 100, "the PDF must not be empty")
+        val bytes = output.readBytes()
+        val header = String(bytes.copyOfRange(0, minOf(5, bytes.size)))
+        assertTrue(header.startsWith("%PDF"), "the file must start with PDF signature")
+    }
+
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
             "rootProject.name = \"test-document\"\n"

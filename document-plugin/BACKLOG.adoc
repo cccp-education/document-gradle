@@ -1,8 +1,8 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-06 (session 017 — DOC-8.4 Extension IA Ollama résumé humain, 300 tests, EPIC DOC-8 4/4 TERMINÉ)
-_Version_ : 0.1.0-SNAPSHOT
+_Date revision_ : 2026-07-06 (session 018 — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication Maven Central, 314 tests)
+_Version_ : 0.0.1 (publié Maven Central)
 
 '''
 == Vision Produit
@@ -308,6 +308,57 @@ sortie, metadata N3.
 - Les `fun interface` SAM ne génèrent pas de lambdas à receiver en Kotlin DSL
 - Classes DSL concrètes (non-abstract) avec `val` initialisés dans le plugin via ObjectFactory
 - Rétro-compatibilité : flat properties `enrichPlantUml`, `formats` conservées, miroir des nested
+
+=== US-DOC-12b — En tant qu'auteur, je veux configurer le pipeline livre dans un block DSL unifié `book { }`
+
+*Priorite* : P2
+*EPIC* : DOC-12 (extension)
+*Statut* : ✅ TERMINÉ (session 018)
+
+.Valeur
+Les 4 propriétés du pipeline livre (DOC-11) sont groupées dans un block DSL
+cohérent avec enrich/outputs/metadata/releaseNotes, au lieu de flat properties
+éparpillées sur `DocumentExtension`.
+
+.Criteres d'acceptation
+- ✅ DSL `document { book { } }` expose : `pagesDir`, `photosDir`, `title`, `author`
+- ✅ Rétro-compatibilité : les flat properties `bookPagesDir/bookPhotosDir/bookTitle/bookAuthor` restent fonctionnelles (mirror)
+- ✅ Conventions par défaut : title="Untitled Book", author="Unknown Author"
+- ✅ Scénarios Cucumber BDD couvrent book block, photos, et fallback defaults
+
+=== US-DOC-9b — En tant qu'éditeur, je veux que les directives `image::` soient rendues dans le document final
+
+*Priorite* : P3
+*EPIC* : DOC-9 (extension)
+*Statut* : ✅ TERMINÉ (session 018)
+
+.Valeur
+Les directives `image::photo.png[]` du document AsciiDoc source sont préservées
+par l'enrichissement et rendues correctement dans la sortie HTML (`<img>` tag)
+et PDF (image intégrée).
+
+.Criteres d'acceptation
+- ✅ `DocumentEnricher` préserve les `image::` sans échappement (2 tests unitaires)
+- ✅ `convertDocumentToHtml` rend un `<img src="photo.png">` (test functional)
+- ✅ `convertDocumentToPdf` intègre l'image (test functional)
+- ✅ Scénario Cucumber `@doc9 @images` valide le critère bout-en-bout
+
+=== US-DOC-8.5 — En tant qu'intégrateur, je veux que document-gradle soit publié sur Maven Central
+
+*Priorite* : P1
+*EPIC* : DOC-8.5
+*Statut* : ✅ TERMINÉ (session 018)
+
+.Valeur
+Le plugin est consommable par tout projet Gradle externe via
+`id("education.ccp.document")` sans compilation locale.
+
+.Criteres d'acceptation
+- ✅ `education.ccp:document-plugin:0.0.1` publié sur Maven Central (bundle 4d15e522)
+- ✅ POM complet : name, description, licence Apache 2.0, developer, SCM
+- ✅ Aucune dépendance -SNAPSHOT
+- ✅ Dépendances `education.ccp:*` (i18n-contracts, opencode-session-contracts, pipeline-contracts) sur Central
+- ✅ conventions-gradle 0.0.2 publié (bug fix SCM double .git) + 15 boroughs harmonisés
 
 '''
 == Dette Technique

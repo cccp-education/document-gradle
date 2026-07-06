@@ -1,0 +1,102 @@
+= Session 018 — DOC-12 book DSL + DOC-9b images BDD + DOC-8.5 Publication Maven Central
+:session: 018
+:date: 2026-07-06
+:status: ✅ TERMINÉ — 3 objectifs livrés (P2 book { } + P3 images BDD + P1 publication)
+
+== Objectifs
+
+Ordre exécuté : P2 → P3 → P1 (choix utilisateur).
+
+=== P2 — Extension DOC-12 : nested block `book { }` ✅
+
+Migration des 4 flat properties `bookPagesDir/bookPhotosDir/bookTitle/bookAuthor` de `DocumentExtension` vers un nested block `book { }` (pattern enrich/outputs/metadata/releaseNotes).
+
+Livrables :
+- `BookDsl.kt` — classe concrète (pagesDir, photosDir, title, author) avec `val` Property pour Kotlin DSL
+- `DocumentExtension` — `book` lateinit + `initNested()` + `fun book(action: Action<BookDsl>)`
+- `DocumentPlugin` — wiring ObjectFactory + conventions (title="Untitled Book", author="Unknown Author") + mirror rétro-compatible
+- Rétro-compatibilité : les flat properties deviennent miroir du nested block (`ext.bookTitle.convention(ext.book.title)`)
+- Tests unitaires : `BookDslTest` (4 tests — propriétés, défauts, conventions, settable)
+- Tests functional : 2 (DSL book block + fallback defaults)
+- Scénarios Cucumber : 3 `@doc12 @dsl @book` (book block, photos, defaults)
+
+=== P3 — DOC-9b enrichissement images ✅
+
+Critère d'acceptation US-DOC-08 : "l'enrichissement images (`image::photo.png[]`) est testé explicitement dans le rendu final HTML/PDF".
+
+Livrables :
+- `DocumentEnricher` préserve déjà les `image::` sans échappement (attesté par 2 tests unitaires)
+- Tests functional : 2 (`convertDocumentToHtml renders image directives into img tags` + `convertDocumentToPdf renders image directives`)
+- Scénario Cucumber : 1 `@doc9 @enrichment @images` (rendu HTML `<img src="photo.png">`)
+
+=== P1 — DOC-8.5 Publication Maven Central ✅
+
+Publication `education.cccp:document-plugin:0.0.1` sur Maven Central.
+
+Pré-requis validés :
+- BOM 0.0.6 déjà publiée, dépendances `education.ccp:*` (i18n-contracts, opencode-session-contracts, pipeline-contracts) sur Central 0.0.2
+- planner-plugin et plantuml-plugin en compileOnly (pas dans le POM publié)
+- POM complet : name, description, licence Apache 2.0, developer cccp-education, SCM
+- Aucune dépendance -SNAPSHOT
+
+**Bug découvert et fixé** dans `conventions-gradle` (ABIDJAN) : double `.git` dans SCM quand `vcsUrl` finit déjà par `.git`.
+- `PublishingConventionsPlugin.kt:71` — `removeSuffix(".git")` ajouté
+- Scénario Cucumber `@scm-dedup` valide le fix (publication-conventions.feature)
+
+== Harmonisation 0.0.2 — conventions-gradle
+
+Bump `conventions-gradle` 0.0.1 → 0.0.2 (version hardcodée `build.gradle.kts:10`).
+
+15 boroughs consommateurs harmonisés (`education.ccp.build.*` version `"0.0.1"` → `"0.0.2"`) :
+- document-gradle, bakery-gradle, codebase-gradle, readme-gradle, api-key-pool-gradle, planner-gradle, slider-gradle, container-provision-gradle, capsule-gradle, codex-gradle, hyperframes-gradle, graphify-gradle, review-gradle, flow-gradle, plantuml-gradle
+
+Validation compilation (mavenLocal 0.0.2) :
+- **13/15 OK** : document, bakery, readme, api-key-pool, planner, slider, container-provision, capsule, hyperframes, graphify, review, flow, plantuml
+- **2 échecs préexistants** (non liés au bump) : codebase (DORMANT, `libs` unresolved — échoue aussi en 0.0.1), codex (pas de `gradlew` dans codex-plugin)
+
+== Publications Maven Central
+
+1. `conventions-gradle` 0.0.2 — bundle `04040b07-a397-4d80-9e26-54b2427a27af` ✅ propagé
+2. `document-gradle` 0.0.1 — bundle `4d15e522-02b3-46d3-92b2-5d9a23f2f195` ✅ propagé
+
+== Totaux tests (document-gradle)
+
+* Unit : 224 (+6 depuis session 017 : 4 BookDslTest + 2 DocumentEnricherTest image)
+* Functional : 44 (+4 : 2 book nested DSL + 2 convertDocumentToHtml/Pdf renders image)
+* Cucumber : 46 scénarios (+4 : 3 @doc12 @book + 1 @doc9 @images)
+
+== Totaux tests (conventions-gradle)
+
+* Cucumber : 17 scénarios (+1 @scm-dedup)
+
+== Méthode
+
+Baby-step TDD/BDD agile software craftsmanship :
+1. Red — test unitaire échoue d'abord (un comportement à la fois)
+2. Green — implémentation minimale qui passe
+3. Refactor — DDD value objects, langage ubiquitaire
+4. Functional — test Gradle TestKit (task wiring, DSL)
+5. Cucumber — scénario Gherkin (critère d'acceptation bout-en-bout)
+
+== Fichiers modifiés
+
+Document-gradle :
+- `src/main/kotlin/document/BookDsl.kt` (CRÉÉ)
+- `src/main/kotlin/document/DocumentExtension.kt` (book lateinit + initNested + fun book)
+- `src/main/kotlin/document/DocumentPlugin.kt` (wiring + conventions + mirror)
+- `src/test/kotlin/document/BookDslTest.kt` (CRÉÉ)
+- `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 tests image)
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+4 tests)
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` (+2 helpers)
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` (+5 steps)
+- `src/test/resources/features/document.feature` (+4 scénarios)
+- `build.gradle.kts` (bump 0.0.1 → 0.0.2)
+
+Conventions-gradle (ABIDJAN) :
+- `conventions-plugin/src/main/kotlin/build/PublishingConventionsPlugin.kt` (fix removeSuffix .git)
+- `conventions-plugin/src/test/scenarios/build/PublishingConventionsSteps.kt` (+2 steps)
+- `conventions-plugin/src/test/resources/features/publishing-conventions.feature` (+1 scénario)
+- `conventions-plugin/build.gradle.kts` (version 0.0.2)
+
+15 boroughs consommateurs :
+- `build.gradle.kts` (bump 0.0.1 → 0.0.2 pour education.ccp.build.*)

@@ -107,16 +107,24 @@ abstract class DocumentExtension {
     lateinit var releaseNotes: ReleaseNotesDsl
         private set
 
+    /**
+     * Nested DSL block `book { }` (DOC-12 extension — book pipeline DOC-11).
+     */
+    lateinit var book: BookDsl
+        private set
+
     internal fun initNested(
         enrich: DocumentEnrichDsl,
         outputs: DocumentOutputsDsl,
         metadata: DocumentMetadataDsl,
         releaseNotes: ReleaseNotesDsl,
+        book: BookDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
         this.metadata = metadata
         this.releaseNotes = releaseNotes
+        this.book = book
     }
 
     /**
@@ -152,6 +160,13 @@ abstract class DocumentExtension {
      */
     fun releaseNotes(action: Action<ReleaseNotesDsl>) {
         action.execute(releaseNotes)
+    }
+
+    /**
+     * Nested DSL block `book { }` (DOC-12 extension — book pipeline DOC-11).
+     */
+    fun book(action: Action<BookDsl>) {
+        action.execute(book)
     }
 
     fun formats(vararg formats: DocumentFormat) {
