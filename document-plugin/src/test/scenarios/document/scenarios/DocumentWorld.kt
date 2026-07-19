@@ -565,6 +565,41 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithOcrPagesAndGitRepoForCombinedN3(): File {
+        val dir = Files.createTempDirectory("doc-bdd-combined-n3").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins { id("education.cccp.document") }
+
+            document {
+                source.set(file("build/docs/document/book.adoc"))
+                bookPagesDir.set(file("pages"))
+                bookPhotosDir.set(file("photos"))
+                bookTitle.set("Combined N3 Book")
+                bookAuthor.set("Runner N3")
+            }
+            """.trimIndent()
+        )
+        val pagesDir = dir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst combined N3 page.")
+        pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond combined N3 page.")
+        val photosDir = dir.resolve("photos").apply { mkdirs() }
+        photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
+        runGit(dir, "init")
+        runGit(dir, "config", "user.email", "bdd@example.com")
+        runGit(dir, "config", "user.name", "BDD")
+        dir.resolve("README.adoc").writeText("= Combined N3\n\nBook + release notes pipeline.\n")
+        runGit(dir, "add", ".")
+        runGit(dir, "commit", "-m", "feat(book): initial combined N3 commit")
+        dir.resolve("chapter.adoc").writeText("== Chapter 3\n\nAdded chapter.\n")
+        runGit(dir, "add", ".")
+        runGit(dir, "commit", "-m", "feat(doc): add chapter 3")
+        projectDir = dir
+        return dir
+    }
+
     fun assembledBookFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/book.adoc")
@@ -824,6 +859,95 @@ class DocumentWorld {
         return dir
     }
 
+    fun createGradleProjectWithAsciiDocSourceWithAdmonitions(): File {
+        val dir = Files.createTempDirectory("doc-bdd-epub-adv-admo").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document EPUB Admonitions
+
+            == Notes
+
+            NOTE: Ceci est une note importante.
+
+            TIP: Ceci est une astuce.
+
+            WARNING: Ceci est un avertissement.
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceWithSidebar(): File {
+        val dir = Files.createTempDirectory("doc-bdd-epub-adv-sb").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document EPUB Sidebar
+
+            == Section
+
+            [sidebar]
+            Contenu du sidebar dans un bloc.
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithAsciiDocSourceWithBibliography(): File {
+        val dir = Files.createTempDirectory("doc-bdd-epub-adv-bib").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("source.adoc"))
+            }
+            """.trimIndent()
+        )
+        dir.resolve("source.adoc").writeText(
+            """
+            = Document EPUB Bibliographie
+
+            == References
+
+            [bibliography]
+            .References
+            * [[[ref1]]] Author, *Title*, 2026.
+            * [[[ref2]]] Author2, *Title2*, 2026.
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
     fun extractEpubXhtml(epub: File): String {
         return java.util.zip.ZipFile(epub).use { zf ->
             zf.entries().toList()
@@ -879,6 +1003,11 @@ class DocumentWorld {
     fun documentConfigJsonFile(): File? {
         val dir = projectDir ?: return null
         return dir.resolve("build/docs/document/document-config.json")
+    }
+
+    fun roundTrippedConfigJsonFile(): File? {
+        val dir = projectDir ?: return null
+        return dir.resolve("build/docs/document-roundtrip/document-config.roundtrip.json")
     }
 
     fun createGradleProjectWithGitRepo(): File {

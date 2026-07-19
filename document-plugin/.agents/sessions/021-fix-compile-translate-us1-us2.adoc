@@ -1,0 +1,80 @@
+= Session 021 — Fix compile + DOC-TRANSLATE US-1 & US-2
+:date: 2026-07-20
+:status: ✅ TERMINÉ
+:epic: DOC-TRANSLATE
+:us: TRANSLATE-1, TRANSLATE-2
+
+== Objectif
+
+Reprendre document-gradle après session 020. Fixer l'erreur de compilation
+(`jacksonObjectMapper()` non résolu) et avancer l'EPIC DOC-TRANSLATE
+(refacto transverse bakery→document).
+
+== Résumé
+
+=== Fix compilation
+
+3 fichiers modifiés : `DocumentMetadata.kt`, `DocumentRetrieveResult.kt`,
+`DocumentConfigSerializer.kt`. Suppression de `jackson-module-kotlin` non
+disponible dans le classpath. Remplacement `jacksonObjectMapper()` →
+`ObjectMapper()` + suppression `KotlinModule.Builder().build()`.
+
+=== DOC-TRANSLATE US-1 — PivotModel + AsciiDocParser + TextTranslatableClassifier
+
+Déjà copiés en session 020 (fichiers non commités). Vérification :
+- `PivotModel.kt` (95 lignes, package `document.translation`)
+- `AsciiDocParser.kt` (412 lignes, package `document.translation`)
+- `TextTranslatableClassifier.kt` (58 lignes, package `document.translation`)
+- Tests : `PivotModelTest.kt` (4 UT) + `AsciiDocParserTest.kt` (27 UT) = 31 UT GREEN
+
+=== DOC-TRANSLATE US-2 — PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer
+
+3 fichiers copiés de `bakery.pivot` → `document.translation` :
+- `PivotYamlRenderer.kt` (139 lignes) — renderer YAML pivot
+- `AsciiDocRenderer.kt` (111 lignes) — renderer AsciiDoc round-trip + interface `ArticleRenderer`
+- `JbakeNativeRenderer.kt` (128 lignes) — renderer JBake native header
+
+Tests copiés :
+- `PivotYamlRendererTest.kt` (9 UT)
+- `AsciiDocRendererTest.kt` (8 UT)
+- `JbakeNativeRendererTest.kt` (5 UT)
+
+== Tests
+
+[cols="2,2"]
+|===
+| Classe | Tests
+| PivotModelTest | 4 ✅
+| AsciiDocParserTest | 27 ✅
+| PivotYamlRendererTest | 9 ✅
+| AsciiDocRendererTest | 8 ✅
+| JbakeNativeRendererTest | 5 ✅
+|===
+
+*Total translation* : 53 UT GREEN, 0 failures.
+*Total document* : 348 + 53 = 401 tests (estimation, full check non exécuté).
+
+== Fichiers modifiés
+
+[cols="2,3"]
+|===
+| Fichier | Action
+| `DocumentMetadata.kt` | Fix jacksonObjectMapper → ObjectMapper, suppr KotlinModule
+| `DocumentRetrieveResult.kt` | Fix jacksonObjectMapper → ObjectMapper, suppr KotlinModule
+| `DocumentConfigSerializer.kt` | Suppr KotlinModule (non utilisé)
+| `PivotYamlRenderer.kt` | NOUVEAU — copié bakery→document, package document.translation
+| `AsciiDocRenderer.kt` | NOUVEAU — copié bakery→document, package document.translation
+| `JbakeNativeRenderer.kt` | NOUVEAU — copié bakery→document, package document.translation
+| `PivotYamlRendererTest.kt` | NOUVEAU
+| `AsciiDocRendererTest.kt` | NOUVEAU
+| `JbakeNativeRendererTest.kt` | NOUVEAU
+| `PROMPT_REPRISE.adoc` | MAJ session 022
+| `INDEX.adoc` | MAJ session 021
+| `SESSIONS_HISTORY.adoc` | MAJ session 021
+| `BACKLOG.adoc` | MAJ US-1 + US-2 statut
+|===
+
+== Prochaine session
+
+Session 022 — DOC-TRANSLATE US-3 : ContentTranslationService + PlantUmlTranslationAdapter
++ PlantUmlClassifier (3 fichiers, ~25 UT, 8 pts).

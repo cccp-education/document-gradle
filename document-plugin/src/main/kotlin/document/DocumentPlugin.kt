@@ -127,6 +127,7 @@ class DocumentPlugin : Plugin<Project> {
         registerAssembleBook(project, ext)
         registerBookPipeline(project, ext)
         registerSerializeDocumentConfig(project, ext)
+        registerDeserializeDocumentConfig(project, ext)
         registerReleaseNotesGenerate(project, ext)
     }
 
@@ -271,6 +272,19 @@ class DocumentPlugin : Plugin<Project> {
             task.bookPhotosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPhotosDir.asFile.map { it.path }))
             task.bookTitle.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
             task.bookAuthor.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
+        }
+    }
+
+    private fun registerDeserializeDocumentConfig(project: Project, ext: DocumentExtension) {
+        project.tasks.register("deserializeDocumentConfig", DeserializeDocumentConfigTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Deserialises document-config.json back to DocumentPipelineConfig and re-serialises it (DOC-12 round-trip validation)."
+            val defaultInput = project.layout.buildDirectory.file("docs/document/document-config.json")
+            task.inputFile.set(defaultInput)
+            project.providers.gradleProperty("document.deserializeInput").orNull?.let { cliPath ->
+                task.inputFile.set(project.layout.projectDirectory.file(cliPath))
+            }
+            task.outputDir.set(project.layout.buildDirectory.dir("docs/document-roundtrip"))
         }
     }
 

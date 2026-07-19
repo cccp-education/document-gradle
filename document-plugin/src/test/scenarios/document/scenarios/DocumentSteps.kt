@@ -304,6 +304,56 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(xhtml).contains("Premier")
     }
 
+    // --- US-DOC-04 (P2) : EPUB advanced rendering (admonitions, sidebars, bibliographie) ---
+
+    @Given("a new document project with an AsciiDoc source containing admonitions")
+    fun createNewDocumentProjectWithAdmonitions() {
+        world.createGradleProjectWithAsciiDocSourceWithAdmonitions()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc source containing a sidebar block")
+    fun createNewDocumentProjectWithSidebarBlock() {
+        world.createGradleProjectWithAsciiDocSourceWithSidebar()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with an AsciiDoc source containing a bibliography block")
+    fun createNewDocumentProjectWithBibliographyBlock() {
+        world.createGradleProjectWithAsciiDocSourceWithBibliography()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the converted EPUB should render the admonitions as aside elements")
+    fun convertedEpubShouldRenderAdmonitionsAsAsideElements() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("admonition note")
+        assertThat(xhtml).containsIgnoringCase("admonition tip")
+        assertThat(xhtml).containsIgnoringCase("admonition warning")
+        assertThat(xhtml).contains("Ceci est une note importante")
+    }
+
+    @Then("the converted EPUB should render the sidebar as an aside sidebar element")
+    fun convertedEpubShouldRenderSidebarAsAsideSidebarElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("sidebar")
+        assertThat(xhtml).contains("Contenu du sidebar")
+    }
+
+    @Then("the converted EPUB should render the bibliography as a bibliography element")
+    fun convertedEpubShouldRenderBibliographyAsBibliographyElement() {
+        val epub = world.convertedEpubFile()
+        assertThat(epub).exists()
+        val xhtml = world.extractEpubXhtml(epub!!)
+        assertThat(xhtml).containsIgnoringCase("bibliography")
+        assertThat(xhtml).contains("Author")
+        assertThat(xhtml).contains("ref1")
+    }
+
     // --- US-DOC-06/07 (P3) — DocBook + ManPage advanced rendering ---
 
     @Given("a new document project with an AsciiDoc source containing a table and a code block")
@@ -618,6 +668,32 @@ class DocumentSteps(private val world: DocumentWorld) {
         val firstJson = world.lastConfigJson
         assertThat(firstJson).isNotNull()
         assertThat(secondJson).isEqualTo(firstJson)
+    }
+
+    // --- DOC-12 round-trip extension : deserializeDocumentConfig task ---
+
+    @When("I am executing the serializeDocumentConfig then deserializeDocumentConfig tasks")
+    fun executeSerializeThenDeserialize() {
+        world.executeGradle("serializeDocumentConfig")
+        val cfg = world.documentConfigJsonFile()
+        world.lastConfigJson = cfg?.readText()
+        world.executeGradle("deserializeDocumentConfig")
+    }
+
+    @Then("the round-tripped document config json file should exist")
+    fun roundTrippedConfigJsonFileShouldExist() {
+        val cfg = world.roundTrippedConfigJsonFile()
+        assertThat(cfg).exists()
+    }
+
+    @Then("the round-tripped document config json should be byte-identical to the source")
+    fun roundTrippedConfigJsonShouldBeByteIdenticalToSource() {
+        val roundTripped = world.roundTrippedConfigJsonFile()
+        assertThat(roundTripped).exists()
+        val roundTrippedJson = roundTripped!!.readText()
+        val sourceJson = world.lastConfigJson
+        assertThat(sourceJson).isNotNull()
+        assertThat(roundTrippedJson).isEqualTo(sourceJson)
     }
 
     @Given("a new document project with a git repository")

@@ -1,30 +1,42 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-07-06
-:session: 020
+:date: 2026-07-20
+:session: 021
 
-== Pyramide de tests — Session 020 (EPUB advanced + DOC-12 round-trip + régression cross-boroughs)
+== Pyramide de tests — Session 021 (Fix compile + DOC-TRANSLATE US-1 & US-2)
 
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
 
-| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation + EPUB image + BookConfig serializer + DocBook/ManPage advanced + EPUB advanced + round-trip deserialize)
-| 240
+| Unit (domaine + génération IA + conversion + enrichissement + theme + N3 retrieve + book + DSL unifié + release notes 4 renderers + N3 release notes + ollama-asciidoc + BookDsl + image preservation + EPUB image + BookConfig serializer + DocBook/ManPage advanced + EPUB advanced + round-trip deserialize + translation)
+| 293
 | ✅ PASS
-| `src/test/kotlin/document/DocumentPluginTest.kt` + `src/test/kotlin/document/generation/DocumentGenerationGraphTest.kt` + `src/test/kotlin/document/DocumentConverterTest.kt` (+3 EPUB advanced : table/code/lists XHTML) + `src/test/kotlin/document/DocumentEnricherTest.kt` (+2 image directives) + `src/test/kotlin/document/DocumentThemeTest.kt` + `src/test/kotlin/document/DocumentMetadataTest.kt` + `src/test/kotlin/document/DocumentArtifactEntryTest.kt` + `src/test/kotlin/document/DocumentArtifactCollectorTest.kt` + `src/test/kotlin/document/ReleaseNotesArtifactEntryTest.kt` + `src/test/kotlin/document/BookAssemblerTest.kt` + `src/test/kotlin/document/BookDslTest.kt` (+4) + `src/test/kotlin/document/DocumentEnrichConfigTest.kt` + `src/test/kotlin/document/DocumentOutputsTest.kt` + `src/test/kotlin/document/DocumentFrontMatterTest.kt` + `src/test/kotlin/document/DocumentConfigSerializerTest.kt` (+2 book block +6 round-trip deserialize) + `src/test/kotlin/document/releasenotes/*Test.kt` + `src/test/kotlin/document/ReleaseNotesDslTest.kt`
+| `src/test/kotlin/document/*Test.kt` + `src/test/kotlin/document/translation/*Test.kt` (+53 translation)
 
 | Functional (GradleTestKit)
 | 54
 | ✅ PASS
-| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` (+5 : 3 EPUB advanced + 1 serialize idempotent + 1 bookPipeline N3 cross-borough) + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
+| `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` + `src/functionalTest/kotlin/document/ReleaseNotesFunctionalTest.kt`
 
 | Cucumber BDD (acceptance)
 | 54
 | ✅ PASS
-| `src/test/resources/features/document.feature` (+4 : 2 @doc5 @conversion @epub-advanced + 1 @doc12 @round-trip + 1 @doc11 @book @n3 @cross-borough) + `src/test/resources/features/release-notes.feature`
+| `src/test/resources/features/document.feature` + `src/test/resources/features/release-notes.feature`
 |===
 
-**Total : 348 tests, 0 échec.** (+25 par rapport à session 019 — EPUB advanced rendering + DOC-12 round-trip deserialize + régression cross-boroughs N3)
+*Total : 401 tests, 0 échec.* (+53 par rapport à session 020 — DOC-TRANSLATE US-1 & US-2)
+
+== Nouveaux tests translation (53)
+
+[cols="2,3,1"]
+|===
+| Classe | Tests | Status
+| PivotModelTest | 4 | ✅
+| AsciiDocParserTest | 27 | ✅
+| PivotYamlRendererTest | 9 | ✅
+| AsciiDocRendererTest | 8 | ✅
+| JbakeNativeRendererTest | 5 | ✅
+|===
 
 == Détail unit (62)
 

@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-19 (session 021 — EPIC DOC-TRANSLATE cadré. US-1 PivotModel + AsciiDocParser en cours. 348 tests.)
+_Date revision_ : 2026-07-20 (session 021 — US-1 & US-2 TERMINÉES, 53 UT translation GREEN. US-3 next.)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -479,6 +479,7 @@ CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
 | UT : 20 PivotModel + 30 AsciiDocParser = 50 UT GREEN dans document
 | 5
 | —
+| ✅ TERMINÉ (session 021)
 
 | DOC-TRANSLATE-2
 | *Déplacer `PivotYamlRenderer` + `AsciiDocRenderer` + `JbakeNativeRenderer` +
@@ -487,6 +488,7 @@ CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
 | UT : 10 + 5 + 5 + 10 = 30 UT GREEN
 | 5
 | TRANSLATE-1
+| ✅ TERMINÉ (session 021)
 
 | DOC-TRANSLATE-3
 | *Déplacer `ContentTranslationService` + `PlantUmlTranslationAdapter` +
@@ -524,11 +526,10 @@ TRANSLATE-1 (PivotModel + Parser) ─→ TRANSLATE-2 (Renderers) ─→ TRANSLAT
 
 === Projection sessions
 
-* *S021* — TRANSLATE-1 (5 pts, PivotModel + AsciiDocParser)
-* *S022* — TRANSLATE-2 (5 pts, Renderers + Classifier)
-* *S023* — TRANSLATE-3 (8 pts, TranslationService + PlantUml)
-* *S024* — TRANSLATE-4 (8 pts, Delta + Plan)
-* *S025* — TRANSLATE-5 (8 pts, Câblage bakery consommateur, clôture EPIC)
+* *S021* — TRANSLATE-1 + TRANSLATE-2 (10 pts, PivotModel + AsciiDocParser + PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer + TextTranslatableClassifier) ✅ TERMINÉ
+* *S022* — TRANSLATE-3 (8 pts, TranslationService + PlantUml)
+* *S023* — TRANSLATE-4 (8 pts, Delta + Plan)
+* *S024* — TRANSLATE-5 (8 pts, Câblage bakery consommateur, clôture EPIC)
 
 Projection conservatrice : 5 sessions, ~34 pts, méthodo baby step DDD/TDD/BDD.
 

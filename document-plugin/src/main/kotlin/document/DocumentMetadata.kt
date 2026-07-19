@@ -3,8 +3,6 @@ package document
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
 import java.time.Instant
 
@@ -44,8 +42,7 @@ data class DocumentMetadata(
     val releaseNotesRenderer: String? = null,
 ) {
     companion object {
-        private val mapper: ObjectMapper = jacksonObjectMapper()
-            .registerModule(KotlinModule.Builder().build())
+        private val mapper: ObjectMapper = ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 

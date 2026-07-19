@@ -1,39 +1,46 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 021
-:date: 2026-07-19
-:status: EPIC DOC-TRANSLATE cadré. US-1 en cours — PivotModel + AsciiDocParser + TextTranslatableClassifier copiés dans document/translation/. compileKotlin FAIL (fichiers modifiés non commités dans document-plugin/).
+:session: 022
+:date: 2026-07-20
+:status: EPIC DOC-TRANSLATE — US-1 & US-2 TERMINÉES (53 UT GREEN). US-3 next.
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-git status  # vérifier les fichiers modifiés non commités
-./gradlew compileKotlin  # doit compiler avant de continuer
+./gradlew compileKotlin  # BUILD SUCCESSFUL
+./gradlew test --tests "document.translation.*"  # 53 UT GREEN
 ```
 
 == Contexte de fin
 
-EPIC DOC-TRANSLATE cadré dans BACKLOG.adoc (5 US, ~34 pts, 5 sessions projetées).
-US-1 démarrée : 3 fichiers copiés de bakery vers document :
-- `document/translation/PivotModel.kt` (95 lignes)
-- `document/translation/AsciiDocParser.kt` (412 lignes)
-- `document/translation/TextTranslatableClassifier.kt` (58 lignes)
-- Tests : `PivotModelTest.kt` (4 UT) + `AsciiDocParserTest.kt` (28 UT)
+EPIC DOC-TRANSLATE : 2/5 US terminées.
+- US-1 ✅ : PivotModel + AsciiDocParser + TextTranslatableClassifier (31 UT)
+- US-2 ✅ : PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer (22 UT)
+- Fix compile : jacksonObjectMapper → ObjectMapper dans 3 fichiers (DocumentMetadata, DocumentRetrieveResult, DocumentConfigSerializer)
 
 == Reprendre à
 
-. `git status` — 7 fichiers modifiés non commités dans document-plugin/
-. Résoudre l'erreur de compilation (probablement conflit avec les modifs existantes)
-. `./gradlew test --tests "document.translation.*"` → 32 UT GREEN
-. Continuer US-2 : déplacer PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer + TextTranslatableClassifier
+. `./gradlew compileKotlin` — BUILD SUCCESSFUL
+. `./gradlew test --tests "document.translation.*"` → 53 UT GREEN
+. Continuer US-3 : ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier
+  - Copier depuis `bakery/i18n/` → `document/translation/`
+  - Dépend de i18n-contracts (déjà en implementation dans document)
+  - ~25 UT, 8 pts
 
 == Fichiers touchés S021
 
-. `BACKLOG.adoc` — EPIC DOC-TRANSLATE cadré
+. `DocumentMetadata.kt` — Fix jacksonObjectMapper → ObjectMapper
+. `DocumentRetrieveResult.kt` — Fix jacksonObjectMapper → ObjectMapper
+. `DocumentConfigSerializer.kt` — Suppr KotlinModule
+. `PivotYamlRenderer.kt` — NOUVEAU (copié bakery→document)
+. `AsciiDocRenderer.kt` — NOUVEAU (copié bakery→document)
+. `JbakeNativeRenderer.kt` — NOUVEAU (copié bakery→document)
+. `PivotYamlRendererTest.kt` — NOUVEAU
+. `AsciiDocRendererTest.kt` — NOUVEAU
+. `JbakeNativeRendererTest.kt` — NOUVEAU
+. `BACKLOG.adoc` — MAJ US-1 + US-2 statut
 . `PROMPT_REPRISE.adoc` — ce fichier
-. `src/main/kotlin/document/translation/PivotModel.kt` — NOUVEAU
-. `src/main/kotlin/document/translation/AsciiDocParser.kt` — NOUVEAU
-. `src/main/kotlin/document/translation/TextTranslatableClassifier.kt` — NOUVEAU
-. `src/test/kotlin/document/translation/PivotModelTest.kt` — NOUVEAU
-. `src/test/kotlin/document/translation/AsciiDocParserTest.kt` — NOUVEAU
+. `INDEX.adoc` — MAJ session 021
+. `SESSIONS_HISTORY.adoc` — MAJ session 021
+. `.agents/sessions/021-fix-compile-translate-us1-us2.adoc` — NOUVEAU

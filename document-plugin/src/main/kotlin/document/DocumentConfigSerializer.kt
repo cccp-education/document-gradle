@@ -1,9 +1,9 @@
 package document
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.File
 
 /**
@@ -31,7 +31,6 @@ import java.io.File
 class DocumentConfigSerializer {
 
     private val mapper: ObjectMapper = ObjectMapper()
-        .registerModule(KotlinModule.Builder().build())
         .enable(SerializationFeature.INDENT_OUTPUT)
 
     /**
@@ -125,26 +124,26 @@ class DocumentConfigSerializer {
 
         val themeNode = root.get("theme")
         val theme = DocumentTheme(
-            pdfTheme = themeNode?.get("pdfTheme")?.asText()?.let { File(it) },
-            htmlStylesheet = themeNode?.get("htmlStylesheet")?.asText()?.let { File(it) },
-            epubStylesheet = themeNode?.get("epubStylesheet")?.asText()?.let { File(it) },
-            logo = themeNode?.get("logo")?.asText()?.let { File(it) },
+            pdfTheme = themeNode?.get("pdfTheme")?.textValueOrNull()?.let { File(it) },
+            htmlStylesheet = themeNode?.get("htmlStylesheet")?.textValueOrNull()?.let { File(it) },
+            epubStylesheet = themeNode?.get("epubStylesheet")?.textValueOrNull()?.let { File(it) },
+            logo = themeNode?.get("logo")?.textValueOrNull()?.let { File(it) },
         )
 
         val metadataNode = root.get("metadata")
         val frontMatter = DocumentFrontMatter(
-            title = metadataNode?.get("title")?.asText() ?: "Untitled Document",
-            author = metadataNode?.get("author")?.asText() ?: "Unknown Author",
-            language = metadataNode?.get("language")?.asText() ?: "fr",
+            title = metadataNode?.get("title")?.textValueOrNull() ?: "Untitled Document",
+            author = metadataNode?.get("author")?.textValueOrNull() ?: "Unknown Author",
+            language = metadataNode?.get("language")?.textValueOrNull() ?: "fr",
         )
 
         val bookNode = root.get("book")
         val book = if (bookNode != null && !bookNode.isNull) {
             BookConfig(
-                pagesDir = bookNode.get("pagesDir")?.asText()?.let { File(it) },
-                photosDir = bookNode.get("photosDir")?.asText()?.let { File(it) },
-                title = bookNode.get("title")?.asText(),
-                author = bookNode.get("author")?.asText(),
+                pagesDir = bookNode.get("pagesDir")?.textValueOrNull()?.let { File(it) },
+                photosDir = bookNode.get("photosDir")?.textValueOrNull()?.let { File(it) },
+                title = bookNode.get("title")?.textValueOrNull(),
+                author = bookNode.get("author")?.textValueOrNull(),
             )
         } else {
             BookConfig()
@@ -160,3 +159,13 @@ class DocumentConfigSerializer {
         )
     }
 }
+
+/**
+ * Returns the textual value of a [JsonNode] or `null` when the node is absent,
+ * null-typed, or non-textual. This is the null-safe mirror of [JsonNode.asText]
+ * — `asText` returns the string `"null"` for explicit JSON `null` values,
+ * whereas this helper returns a Kotlin `null` so downstream `?.let { File(it) }`
+ * chains do not create a `File("null")` pointing to a phantom path.
+ */
+private fun JsonNode?.textValueOrNull(): String? =
+    if (this == null || isNull) null else textValue()

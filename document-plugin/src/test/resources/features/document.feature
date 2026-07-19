@@ -295,6 +295,14 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the two document config json outputs must be byte-identical
 
+  @doc12 @round-trip @deserialize
+  Scenario: deserializeDocumentConfig round-trips the serialized config producing byte-identical json
+    Given a new document project with a full unified DSL document block
+    When I am executing the serializeDocumentConfig then deserializeDocumentConfig tasks
+    Then the build should succeed
+    And the round-tripped document config json file should exist
+    And the round-tripped document config json should be byte-identical to the source
+
   @doc11 @book @n3 @cross-borough
   Scenario: bookPipeline produces a composite-context json consumable by runner-gradle N3 with book artifacts
     Given a new document project with OCR pages and photos directory and a source pointing to the assembled book
@@ -367,3 +375,27 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the converted EPUB file should exist
     And the converted EPUB should render the unordered list as a ul element
     And the converted EPUB should render the ordered list as an ol element
+
+  @doc5 @conversion @epub-advanced
+  Scenario: convertDocumentToEpub renders AsciiDoc admonitions into XHTML aside elements
+    Given a new document project with an AsciiDoc source containing admonitions
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should render the admonitions as aside elements
+
+  @doc5 @conversion @epub-advanced
+  Scenario: convertDocumentToEpub renders AsciiDoc sidebars into XHTML aside sidebar elements
+    Given a new document project with an AsciiDoc source containing a sidebar block
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should render the sidebar as an aside sidebar element
+
+  @doc5 @conversion @epub-advanced
+  Scenario: convertDocumentToEpub renders AsciiDoc bibliography into XHTML bibliography element
+    Given a new document project with an AsciiDoc source containing a bibliography block
+    When I am executing the task 'convertDocumentToEpub'
+    Then the build should succeed
+    And the converted EPUB file should exist
+    And the converted EPUB should render the bibliography as a bibliography element

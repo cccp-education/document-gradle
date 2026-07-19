@@ -412,3 +412,36 @@ HTML/PDF/EPUB indexés (c'est ce que `assembleCompositeContext` ingère).
 *Méthode* : baby-step TDD/BDD agile software craftsmanship (Red → Green → Refactor → Functional → Cucumber)
 
 *EPICs* : DOC-9b étendu ✅ (EPUB advanced rendering), DOC-12 étendu ✅ (round-trip deserialize), régression cross-boroughs N3 ✅
+
+=== Session 021 (2026-07-20) — Fix compile + DOC-TRANSLATE US-1 & US-2
+
+*Fix compile* : `jacksonObjectMapper()` → `ObjectMapper()` dans 3 fichiers
+(DocumentMetadata, DocumentRetrieveResult, DocumentConfigSerializer).
+Suppression `KotlinModule` non disponible dans le classpath.
+
+*DOC-TRANSLATE US-1* : PivotModel + AsciiDocParser + TextTranslatableClassifier
+copiés de `bakery.pivot` → `document.translation`. 31 UT GREEN.
+
+*DOC-TRANSLATE US-2* : PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer
+copiés de `bakery.pivot` → `document.translation`. 22 UT GREEN.
+
+*Nouveaux fichiers main* (3) :
+- `PivotYamlRenderer.kt` — renderer YAML pivot (139 lignes)
+- `AsciiDocRenderer.kt` — renderer AsciiDoc round-trip + interface ArticleRenderer (111 lignes)
+- `JbakeNativeRenderer.kt` — renderer JBake native header (128 lignes)
+
+*Nouveaux fichiers test* (3) :
+- `PivotYamlRendererTest.kt` — 9 UT
+- `AsciiDocRendererTest.kt` — 8 UT
+- `JbakeNativeRendererTest.kt` — 5 UT
+
+*Fichiers modifiés* (3) :
+- `DocumentMetadata.kt` — Fix jacksonObjectMapper → ObjectMapper
+- `DocumentRetrieveResult.kt` — Fix jacksonObjectMapper → ObjectMapper
+- `DocumentConfigSerializer.kt` — Suppr KotlinModule
+
+*Tests* : 401 verts (293 unit + 54 functional + 54 cucumber), 0 failures (+53 vs session 020).
+
+*Méthode* : baby-step DDD/TDD/BDD agile software craftsmanship.
+
+*EPICs* : DOC-TRANSLATE US-1 ✅, US-2 ✅ (2/5 US terminées, 10/34 pts)

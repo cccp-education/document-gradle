@@ -1342,6 +1342,116 @@ class DocumentPluginFunctionalTest {
     }
 
     @Test
+    fun `convertDocumentToEpub renders AsciiDoc admonitions into XHTML aside elements`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Admonitions
+
+            == Notes
+
+            NOTE: Ceci est une note importante.
+
+            TIP: Ceci est une astuce.
+
+            WARNING: Ceci est un avertissement.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("admonition note", ignoreCase = true),
+            "the EPUB XHTML must contain an admonition note aside for NOTE"
+        )
+        assertTrue(
+            xhtml.contains("admonition tip", ignoreCase = true),
+            "the EPUB XHTML must contain an admonition tip aside for TIP"
+        )
+        assertTrue(
+            xhtml.contains("admonition warning", ignoreCase = true),
+            "the EPUB XHTML must contain an admonition warning aside for WARNING"
+        )
+        assertTrue(xhtml.contains("Ceci est une note importante"), "the EPUB XHTML must preserve the note content")
+    }
+
+    @Test
+    fun `convertDocumentToEpub renders AsciiDoc sidebars into XHTML aside sidebar elements`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Sidebar
+
+            == Section
+
+            [sidebar]
+            Contenu du sidebar dans un bloc.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("sidebar", ignoreCase = true),
+            "the EPUB XHTML must contain a sidebar aside for the [sidebar] block"
+        )
+        assertTrue(xhtml.contains("Contenu du sidebar"), "the EPUB XHTML must preserve the sidebar content")
+    }
+
+    @Test
+    fun `convertDocumentToEpub renders AsciiDoc bibliography into XHTML bibliography element`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document EPUB Bibliographie
+
+            == References
+
+            [bibliography]
+            .References
+            * [[[ref1]]] Author, *Title*, 2026.
+            * [[[ref2]]] Author2, *Title2*, 2026.
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToEpub")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
+        val output = File(projectDir, "build/docs/document/document.epub")
+        assertTrue(output.exists(), "the EPUB file must be generated")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("bibliography", ignoreCase = true),
+            "the EPUB XHTML must contain a bibliography element for the [bibliography] block"
+        )
+        assertTrue(xhtml.contains("Author"), "the EPUB XHTML must preserve the reference content")
+        assertTrue(xhtml.contains("ref1"), "the EPUB XHTML must preserve the reference id")
+    }
+
+    @Test
     fun `serializeDocumentConfig serialises the book block into document-config json`() {
         val projectDir = newTempDir()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-document\"\n")
@@ -1463,6 +1573,135 @@ class DocumentPluginFunctionalTest {
         val secondJson = configFile.readText()
 
         assertEquals(firstJson, secondJson, "two serializeDocumentConfig runs must produce byte-identical json (round-trip idempotence)")
+    }
+
+    @Test
+    fun `deserializeDocumentConfig round-trips a serialized config producing byte-identical json`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-deserialize\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("livre.adoc"))
+                enrich {
+                    plantuml.set(true)
+                    images.set(true)
+                    passthrough.set(false)
+                }
+                outputs {
+                    html.set(true)
+                    pdf.set(true)
+                    epub.set(true)
+                }
+                metadata {
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                    language.set("fr")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
+
+        // First, serialise the config
+        val serialize = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, serialize.task(":serializeDocumentConfig")?.outcome)
+        val sourceConfig = File(projectDir, "build/docs/document/document-config.json")
+        assertTrue(sourceConfig.exists(), "document-config.json must be generated by serializeDocumentConfig")
+        val sourceJson = sourceConfig.readText()
+
+        // Then, deserialize and re-serialise it (round-trip)
+        val deserialize = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("deserializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, deserialize.task(":deserializeDocumentConfig")?.outcome)
+        val roundTrippedConfig = File(projectDir, "build/docs/document-roundtrip/document-config.roundtrip.json")
+        assertTrue(roundTrippedConfig.exists(), "document-config.roundtrip.json must be generated by deserializeDocumentConfig")
+        val roundTrippedJson = roundTrippedConfig.readText()
+
+        assertEquals(sourceJson, roundTrippedJson, "deserializeDocumentConfig must produce byte-identical json to the source (round-trip idempotence)")
+    }
+
+    @Test
+    fun `deserializeDocumentConfig round-trips a serialized config with a book block`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-ds-book\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                source.set(file("livre.adoc"))
+                book {
+                    pagesDir.set(file("pages"))
+                    photosDir.set(file("photos"))
+                    title.set("Mon Livre")
+                    author.set("Auteur")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
+        projectDir.resolve("pages").mkdirs()
+        projectDir.resolve("photos").mkdirs()
+
+        val serialize = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("serializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, serialize.task(":serializeDocumentConfig")?.outcome)
+        val sourceConfig = File(projectDir, "build/docs/document/document-config.json")
+        assertTrue(sourceConfig.exists(), "document-config.json must be generated")
+        val sourceJson = sourceConfig.readText()
+        assertTrue(sourceJson.contains("\"book\""), "the source config must contain a book block")
+
+        val deserialize = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("deserializeDocumentConfig")
+            .withPluginClasspath()
+            .build()
+        assertEquals(TaskOutcome.SUCCESS, deserialize.task(":deserializeDocumentConfig")?.outcome)
+        val roundTrippedConfig = File(projectDir, "build/docs/document-roundtrip/document-config.roundtrip.json")
+        assertTrue(roundTrippedConfig.exists(), "document-config.roundtrip.json must be generated")
+        val roundTrippedJson = roundTrippedConfig.readText()
+        assertTrue(roundTrippedJson.contains("\"book\""), "the round-tripped config must preserve the book block")
+        assertTrue(roundTrippedJson.contains("Mon Livre"), "the book title must be preserved")
+
+        assertEquals(sourceJson, roundTrippedJson, "deserializeDocumentConfig must produce byte-identical json with book block (round-trip idempotence)")
+    }
+
+    @Test
+    fun `deserializeDocumentConfig fails gracefully when the input config is missing`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText("= Livre\n\nContenu.\n")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("deserializeDocumentConfig")
+            .withPluginClasspath()
+            .buildAndFail()
+
+        // The task must fail clearly when document-config.json does not exist —
+        // either our explicit message or Gradle's input validation message.
+        val output = result.output
+        assertTrue(
+            output.contains("document-config.json not found") || output.contains("document-config.json") && output.contains("does not exist"),
+            "the failure must mention the missing document-config.json file (output=$output)"
+        )
     }
 
     private fun setupTestProject(projectDir: File) {

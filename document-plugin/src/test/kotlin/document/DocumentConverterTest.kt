@@ -370,6 +370,103 @@ class DocumentConverterTest {
         assertTrue(xhtml.contains("Premier"), "l'EPUB doit preserver le contenu des items ordonnes")
     }
 
+    // --- US-DOC-04 (P2) : EPUB advanced rendering (admonitions, sidebars, bibliographie) ---
+
+    @Test
+    fun `convertToEpub rend les admonitions AsciiDoc en elements aside XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Admonitions
+
+            == Notes
+
+            NOTE: Ceci est une note importante.
+
+            TIP: Ceci est une astuce.
+
+            WARNING: Ceci est un avertissement.
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("admonition note", ignoreCase = true),
+            "l'EPUB doit contenir un aside admonition note pour NOTE"
+        )
+        assertTrue(
+            xhtml.contains("admonition tip", ignoreCase = true),
+            "l'EPUB doit contenir un aside admonition tip pour TIP"
+        )
+        assertTrue(
+            xhtml.contains("admonition warning", ignoreCase = true),
+            "l'EPUB doit contenir un aside admonition warning pour WARNING"
+        )
+        assertTrue(xhtml.contains("Ceci est une note importante"), "l'EPUB doit preserver le contenu de la note")
+    }
+
+    @Test
+    fun `convertToEpub rend les blocs sidebar AsciiDoc en elements aside sidebar XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Sidebar
+
+            == Section
+
+            [sidebar]
+            Contenu du sidebar dans un bloc.
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("sidebar", ignoreCase = true),
+            "l'EPUB doit contenir un element aside sidebar pour le bloc [sidebar]"
+        )
+        assertTrue(xhtml.contains("Contenu du sidebar"), "l'EPUB doit preserver le contenu du sidebar")
+    }
+
+    @Test
+    fun `convertToEpub rend la bibliographie AsciiDoc en element bibliography XHTML`() {
+        val dir = tempDir()
+        val source = adocSource(
+            dir,
+            content = """
+            = Document EPUB Bibliographie
+
+            == References
+
+            [bibliography]
+            .References
+            * [[[ref1]]] Author, *Title*, 2026.
+            * [[[ref2]]] Author2, *Title2*, 2026.
+            """.trimIndent()
+        )
+        val output = File(dir, "output.epub")
+
+        DocumentConverter.convertToEpub(source, output)
+
+        assertTrue(output.exists(), "le fichier EPUB doit etre cree")
+        val xhtml = extractEpubXhtml(output)
+        assertTrue(
+            xhtml.contains("bibliography", ignoreCase = true),
+            "l'EPUB doit contenir un element bibliography pour le bloc [bibliography]"
+        )
+        assertTrue(xhtml.contains("Author"), "l'EPUB doit preserver le contenu de la reference")
+        assertTrue(xhtml.contains("ref1"), "l'EPUB doit preserver l'identifiant de reference")
+    }
+
     // --- DOC-9b : image:: directives embedding in EPUB ---
 
     @Test

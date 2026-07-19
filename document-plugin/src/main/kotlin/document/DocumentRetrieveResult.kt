@@ -2,8 +2,6 @@ package document
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
 
 /**
@@ -37,8 +35,7 @@ data class DocumentRetrieveResult(
     val timestamp: Long = System.currentTimeMillis()
 ) {
     companion object {
-        private val mapper: ObjectMapper = jacksonObjectMapper()
-            .registerModule(KotlinModule.Builder().build())
+        private val mapper: ObjectMapper = ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT)
     }
 
