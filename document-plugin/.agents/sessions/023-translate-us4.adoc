@@ -1,0 +1,67 @@
+= Session 023 — DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan)
+:date: 2026-07-20
+:status: ✅ TERMINÉ
+:tests: 128 UT GREEN (+36 vs S022)
+
+== Objectif
+
+Déplacer les 4 fichiers delta/plan + les types tree/ depuis bakery-gradle vers
+document-gradle : `I18nDeltaApplier`, `ContentChecksum`, `SubtreeI18nPlanner`,
+`SiteTranslationPlan`.
+
+== Méthode baby-step DDD/TDD/BDD
+
+. Copier les types tree/ minimaux (SiteNode, SiteTree, Content, NodeMetadata,
+  OutputConfig, PageAssets, AssetRef, LayoutType, ThemeConfig) — 9 fichiers
+. Copier ContentChecksum + I18nDelta + I18nDeltaApplier dans delta/
+. Copier SubtreeI18nPlanner + SiteTranslationPlan dans plan/
+. Adapter les packages (bakery.* → document.translation.*)
+. SiteTranslationPlan : remplacer BakeryConstants.SUPPORTED_LANGS par
+  LanguageCatalog.supportedCodes() (contrat N0 i18n-contracts)
+. Copier les 3 fichiers de test, adapter les packages
+. Vérifier compileKotlin ✅
+. Vérifier tests translation.* → 128 UT GREEN
+
+== Fichiers créés
+
+[cols="2,3"]
+|===
+| Fichier | Package
+| `tree/AssetRef.kt` | `document.translation.tree`
+| `tree/PageAssets.kt` | `document.translation.tree`
+| `tree/LayoutType.kt` | `document.translation.tree`
+| `tree/ThemeConfig.kt` | `document.translation.tree`
+| `tree/NodeMetadata.kt` | `document.translation.tree`
+| `tree/OutputConfig.kt` | `document.translation.tree`
+| `tree/Content.kt` | `document.translation.tree`
+| `tree/SiteNode.kt` | `document.translation.tree`
+| `tree/SiteTree.kt` | `document.translation.tree`
+| `delta/ContentChecksum.kt` | `document.translation.delta`
+| `delta/I18nDelta.kt` | `document.translation.delta`
+| `delta/I18nDeltaApplier.kt` | `document.translation.delta`
+| `plan/SubtreeI18nPlanner.kt` | `document.translation.plan`
+| `plan/SiteTranslationPlan.kt` | `document.translation.plan`
+| `I18nDeltaApplierTest.kt` | `document.translation.delta`
+| `SiteTranslationPlanTest.kt` | `document.translation.plan`
+| `SubtreeI18nDeltaTest.kt` | `document.translation.tree`
+|===
+
+== Fichiers modifiés
+
+- `BACKLOG.adoc` — US-4 marquée TERMINÉ
+- `PROMPT_REPRISE.adoc` — session 024
+- `INDEX.adoc` — session 023
+- `SESSIONS_HISTORY.adoc` — session 023
+
+== Tests
+
+128 UT GREEN (92 US-1+US-2+US-3 + 36 US-4) :
+- I18nDeltaApplierTest : 8 tests
+- SiteTranslationPlanTest : 18 tests
+- SubtreeI18nDeltaTest : 10 tests
+
+== Prochaine session
+
+US-5 : Câblage bakery consommateur — remplacer imports bakery.* → document.translation.*,
+ajouter implementation document-plugin dans bakery, supprimer fichiers migrés,
+vérifier 0 régression (FT + BDD, 8 pts). Clôture EPIC DOC-TRANSLATE.

@@ -1,0 +1,53 @@
+= Session 022 — DOC-TRANSLATE US-3 (ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier)
+:date: 2026-07-20
+:status: ✅ TERMINÉ
+:tests: 92 UT GREEN (+39 vs S021)
+
+== Objectif
+
+Déplacer les 3 fichiers de traduction + PlantUML depuis bakery-gradle vers
+document-gradle : `ContentTranslationService`, `PlantUmlTranslationAdapter`,
+`PlantUmlClassifier`.
+
+== Méthode baby-step DDD/TDD/BDD
+
+. Copier les 3 fichiers source bakery → document, adapter les packages
+  (`bakery.i18n` → `document.translation`, `bakery.pivot` → `document.translation`,
+  `bakery.i18n.plantuml` → `document.translation.plantuml`)
+. Copier les 3 fichiers de test, adapter les packages
+. Ajouter les dépendances manquantes : kotlinx-coroutines-core, kotlinx-coroutines-jdk8, slf4j-api
+. Vérifier compileKotlin ✅
+. Vérifier tests translation.* → 92 UT GREEN
+
+== Fichiers créés
+
+[cols="2,3"]
+|===
+| Fichier | Package
+| `ContentTranslationService.kt` | `document.translation`
+| `PlantUmlTranslationAdapter.kt` | `document.translation.plantuml`
+| `PlantUmlClassifier.kt` | `document.translation.plantuml`
+| `ContentTranslationServiceTest.kt` | `document.translation`
+| `PlantUmlTranslationAdapterTest.kt` | `document.translation.plantuml`
+| `PlantUmlClassifierTest.kt` | `document.translation.plantuml`
+|===
+
+== Fichiers modifiés
+
+- `build.gradle.kts` — +coroutines +slf4j implementation
+- `libs.versions.toml` — +coroutines version + libraries
+- `BACKLOG.adoc` — US-3 marquée TERMINÉ
+- `PROMPT_REPRISE.adoc` — session 023
+- `INDEX.adoc` — session 022
+- `SESSIONS_HISTORY.adoc` — session 022
+
+== Tests
+
+92 UT GREEN (53 US-1+US-2 + 39 US-3) :
+- ContentTranslationServiceTest : 13 tests
+- PlantUmlClassifierTest : 15 tests
+- PlantUmlTranslationAdapterTest : 11 tests
+
+== Prochaine session
+
+US-4 : I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan (~38 UT, 8 pts)

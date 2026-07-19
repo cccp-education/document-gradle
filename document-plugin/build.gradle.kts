@@ -34,6 +34,13 @@ dependencies {
     implementation(libs.opencode.session.contracts)
     implementation(libs.pipeline.contracts)
 
+    // Coroutines — ContentTranslationService parallel translation
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.jdk8)
+
+    // SLF4J — logging in ContentTranslationService
+    implementation(libs.slf4j.api)
+
     // Tests unitaires
     testImplementation(kotlin("test-junit5"))
     testRuntimeOnly(libs.junit.platform.launcher)

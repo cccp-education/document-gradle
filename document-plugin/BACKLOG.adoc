@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-20 (session 021 — US-1 & US-2 TERMINÉES, 53 UT translation GREEN. US-3 next.)
+_Date revision_ : 2026-07-20 (session 023 — US-4 TERMINÉE, 128 UT translation GREEN. US-5 next.)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -494,9 +494,10 @@ CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
 | *Déplacer `ContentTranslationService` + `PlantUmlTranslationAdapter` +
   `PlantUmlClassifier`* — 3 fichiers. Dépend de `i18n-contracts` (déjà en
   implementation dans document). Copier les tests.
-| UT : 15 + 10 = 25 UT GREEN
+| UT : 15 + 10 + 14 = 39 UT GREEN
 | 8
 | TRANSLATE-2
+| ✅ TERMINÉ (session 022)
 
 | DOC-TRANSLATE-4
 | *Déplacer `I18nDeltaApplier` + `ContentChecksum` + `SubtreeI18nPlanner` +
@@ -505,6 +506,7 @@ CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
 | UT : 8 + 10 + 20 = 38 UT GREEN
 | 8
 | TRANSLATE-3
+| ✅ TERMINÉ (session 023)
 
 | DOC-TRANSLATE-5
 | *Câbler bakery comme consommateur* — remplacer les imports `bakery.pivot.*`
@@ -527,8 +529,8 @@ TRANSLATE-1 (PivotModel + Parser) ─→ TRANSLATE-2 (Renderers) ─→ TRANSLAT
 === Projection sessions
 
 * *S021* — TRANSLATE-1 + TRANSLATE-2 (10 pts, PivotModel + AsciiDocParser + PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer + TextTranslatableClassifier) ✅ TERMINÉ
-* *S022* — TRANSLATE-3 (8 pts, TranslationService + PlantUml)
-* *S023* — TRANSLATE-4 (8 pts, Delta + Plan)
+* *S022* — TRANSLATE-3 (8 pts, TranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier) ✅ TERMINÉ
+* *S023* — TRANSLATE-4 (8 pts, Delta + Plan) ✅ TERMINÉ
 * *S024* — TRANSLATE-5 (8 pts, Câblage bakery consommateur, clôture EPIC)
 
 Projection conservatrice : 5 sessions, ~34 pts, méthodo baby step DDD/TDD/BDD.

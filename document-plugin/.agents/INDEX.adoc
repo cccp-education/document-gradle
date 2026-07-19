@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-20 (session 021 — Fix compile + DOC-TRANSLATE US-1 & US-2, 53 UT translation GREEN)
-_Session terminee_ : 021 — Fix compile (jacksonObjectMapper → ObjectMapper, 3 fichiers) + DOC-TRANSLATE US-1 (PivotModel + AsciiDocParser + TextTranslatableClassifier, 31 UT) + US-2 (PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer, 22 UT), baby-step DDD/TDD/BDD
-_Prochaine session_ : 022 — DOC-TRANSLATE US-3 (ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier, ~25 UT, 8 pts)
+_Derniere mise a jour_ : 2026-07-20 (session 023 — DOC-TRANSLATE US-4, 128 UT translation GREEN)
+_Session terminee_ : 023 — DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan + tree types, 36 UT), baby-step DDD/TDD/BDD
+_Prochaine session_ : 024 — DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC, 8 pts)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -92,7 +92,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-12 | DSL unifie `document { }` — source, enrich, theme, outputs, metadata, book + round-trip deserialize | ✅ TERMINÉ (session 013 + extension 018 book DSL + extension 019 book serialization + extension 020 round-trip deserialize) | P2
 | DOC-9b | Enrichissement images — rendu HTML/PDF/EPUB `image::photo.png[]` + EPUB advanced (tableaux/code/listes XHTML) | ✅ TERMINÉ (session 018 HTML/PDF + session 019 EPUB image + session 020 EPUB advanced) | P3
 | DOC-8.5 | Publication Maven Central document-gradle 0.0.1 | ✅ TERMINÉ (session 018, bundle 4d15e522) | P1
-| DOC-TRANSLATE | Pipeline traduction AsciiDoc — refacto transverse bakery→document (5 US, ~34 pts) | 🔵 EN COURS (session 021 — US-1 & US-2 TERMINÉES, 53 UT GREEN) | P1
+| DOC-TRANSLATE | Pipeline traduction AsciiDoc — refacto transverse bakery→document (5 US, ~34 pts) | 🔵 EN COURS (session 023 — US-1, US-2, US-3 & US-4 TERMINÉES, 128 UT GREEN) | P1
 |===
 
 '''
@@ -148,6 +148,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 019 | 2026-07-06 | feat | DOC-9b EPUB image rendering (image:: embedded as zip entry) + DOC-12 book serialization in document-config.json (BookConfig value object + DocumentConfigSerializer + SerializeDocumentConfigTask + DocumentPlugin wiring) + US-DOC-06/07 DocBook + ManPage advanced rendering (tableaux/programlisting/itemizedlist/orderedlist + bold troff options/sub-sections), 323 tests (+1 unit EPUB +2 unit book serializer +5 unit DocBook/ManPage advanced +1 functional EPUB +2 functional book serializer +2 functional DocBook/ManPage advanced +1 cucumber EPUB +1 cucumber book serializer +2 cucumber DocBook/ManPage advanced), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 020 | 2026-07-06 | maintenance | EPUB advanced rendering (tableaux/code/listes en XHTML via AsciidoctorJ epub3 backend) + DOC-12 round-trip deserialize (DocumentConfigSerializer.deserialize method, idempotent byte-identical JSON) + régression cross-boroughs (bookPipeline produit composite-context.json + metadata.json valides pour runner-gradle N3), 348 tests (+3 unit EPUB +6 unit round-trip +3 functional EPUB +1 functional idempotent +1 functional bookPipeline N3 +2 cucumber epub-advanced +1 cucumber round-trip +1 cucumber cross-borough), baby-step DDD/TDD/BDD | ✅ TERMINE
 | 021 | 2026-07-20 | fix + feat | Fix compile (jacksonObjectMapper → ObjectMapper, 3 fichiers) + DOC-TRANSLATE US-1 (PivotModel + AsciiDocParser + TextTranslatableClassifier, 31 UT) + US-2 (PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer, 22 UT), 53 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
+| 022 | 2026-07-20 | feat | DOC-TRANSLATE US-3 (ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier, 39 UT), 92 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
+| 023 | 2026-07-20 | feat | DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan + tree types, 36 UT), 128 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''

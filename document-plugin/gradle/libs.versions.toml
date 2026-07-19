@@ -21,6 +21,7 @@ plantuml-plugin = "0.0.1"
 i18n-contracts = "0.0.2"
 opencode-session-contracts = "0.0.2"
 pipeline-contracts = "0.0.2"
+coroutines = "1.10.2"
 
 [libraries]
 i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
@@ -46,6 +47,8 @@ cucumber-picocontainer = { module = "io.cucumber:cucumber-picocontainer", versio
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", version.ref = "junit-platform-suite" }
 planner-plugin = { module = "education.cccp:planner-plugin", version.ref = "planner" }
 plantuml-plugin = { module = "education.cccp:plantuml-plugin", version.ref = "plantuml-plugin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
 
 [bundles]
 koog = ["koog-agents"]
