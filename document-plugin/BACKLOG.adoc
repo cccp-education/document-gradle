@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-06 (session 020 — EPUB advanced rendering + DOC-12 round-trip deserialize + régression cross-boroughs N3, 348 tests)
+_Date revision_ : 2026-07-19 (session 021 — EPIC DOC-TRANSLATE cadré. US-1 PivotModel + AsciiDocParser en cours. 348 tests.)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -422,6 +422,117 @@ _document a sa propre dependance AsciidoctorJ directe, pas de compileOnly sur co
 
 '''
 
+'''
+== EPIC DOC-TRANSLATE — Pipeline de traduction AsciiDoc (refacto transverse bakery→document)
+
+_Cadré Session 021 (2026-07-19). Document est le bounded context naturel pour toute
+manipulation d'AsciiDoc (parse, traduire, convertir, enrichir). Bakery n'a pas
+vocation à maintenir un AST AsciiDoc — il devrait le consommer._
+
+[CAUTION]
+====
+**Motivation** : bakery-gradle contient un pipeline de traduction AsciiDoc complet
+(`PivotModel` AST, `AsciiDocParser`, `ContentTranslationService`, `PlantUmlTranslationAdapter`,
+`SubtreeI18nPlanner`, `I18nDeltaApplier`) qui n'a rien à voir avec le métier de bakery
+(site statique JBake). Ce code devrait appartenir à document-gradle (WRITE + TRANSLATE +
+CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
+
+**Bénéfices** :
+. Document = single source of truth pour la manipulation d'AsciiDoc
+. Réutilisation cross-borough : magic-stick, cccp.education, talaria peuvent traduire sans bakery
+. Bakery allégé, recentré sur son vrai métier : site statique JBake
+. Boundary claire : Document = WRITE + TRANSLATE + CONVERT + PUBLISH
+
+**DAG** : bakery → document (nouvelle dépendance `implementation`)
+====
+
+=== Artefacts à migrer
+
+[cols="3,3,2,2"]
+|===
+| Artefact bakery | Destination document | Lignes | Tests
+| `PivotModel.kt` | `document/translation/PivotModel.kt` | 95 | 20 UT
+| `AsciiDocParser.kt` | `document/translation/AsciiDocParser.kt` | 412 | 30 UT
+| `PivotYamlRenderer.kt` | `document/translation/PivotYamlRenderer.kt` | 138 | 10 UT
+| `AsciiDocRenderer.kt` | `document/translation/renderer/` | 111 | 5 UT
+| `JbakeNativeRenderer.kt` | `document/translation/renderer/` | 127 | 5 UT
+| `TextTranslatableClassifier.kt` | `document/translation/` | 58 | 10 UT
+| `ContentTranslationService.kt` | `document/translation/` | 260 | 15 UT
+| `PlantUmlTranslationAdapter.kt` | `document/translation/plantuml/` | 200 | 10 UT
+| `I18nDeltaApplier.kt` | `document/translation/delta/` | 60 | 8 UT
+| `ContentChecksum.kt` | `document/translation/delta/` | 20 | —
+| `SubtreeI18nPlanner.kt` | `document/translation/plan/` | 66 | 10 UT
+| `SiteTranslationPlan.kt` | `document/translation/plan/` | 80 | 20 UT
+|===
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-TRANSLATE-1
+| *Déplacer `PivotModel` + `AsciiDocParser`* — copier les 2 fichiers dans
+  `document/translation/`, changer le package `bakery.pivot` → `document.translation`.
+  Copier les tests associés. Vérifier que bakery compile encore (les fichiers
+  restent en place dans bakery, pas de suppression).
+| UT : 20 PivotModel + 30 AsciiDocParser = 50 UT GREEN dans document
+| 5
+| —
+
+| DOC-TRANSLATE-2
+| *Déplacer `PivotYamlRenderer` + `AsciiDocRenderer` + `JbakeNativeRenderer` +
+  `TextTranslatableClassifier`* — 4 fichiers dans `document/translation/renderer/`.
+  Copier les tests.
+| UT : 10 + 5 + 5 + 10 = 30 UT GREEN
+| 5
+| TRANSLATE-1
+
+| DOC-TRANSLATE-3
+| *Déplacer `ContentTranslationService` + `PlantUmlTranslationAdapter` +
+  `PlantUmlClassifier`* — 3 fichiers. Dépend de `i18n-contracts` (déjà en
+  implementation dans document). Copier les tests.
+| UT : 15 + 10 = 25 UT GREEN
+| 8
+| TRANSLATE-2
+
+| DOC-TRANSLATE-4
+| *Déplacer `I18nDeltaApplier` + `ContentChecksum` + `SubtreeI18nPlanner` +
+  `SiteTranslationPlan`* — 4 fichiers dans `document/translation/delta/` et
+  `document/translation/plan/`. Copier les tests.
+| UT : 8 + 10 + 20 = 38 UT GREEN
+| 8
+| TRANSLATE-3
+
+| DOC-TRANSLATE-5
+| *Câbler bakery comme consommateur* — remplacer les imports `bakery.pivot.*`
+  et `bakery.i18n.*` dans bakery par `document.translation.*`. Ajouter
+  `implementation("education.cccp:document-plugin:0.0.1")` dans bakery.
+  Supprimer les fichiers source migrés de bakery. Vérifier 0 régression.
+| FT + BDD : 0 régression bakery, tous les tests bakery passent
+| 8
+| TRANSLATE-4
+|===
+
+_Total_ : ~34 pts, 5 US.
+
+=== Dépendances (DAG)
+
+----
+TRANSLATE-1 (PivotModel + Parser) ─→ TRANSLATE-2 (Renderers) ─→ TRANSLATE-3 (Translation) ─→ TRANSLATE-4 (Delta/Plan) ─→ TRANSLATE-5 (Câblage bakery)
+----
+
+=== Projection sessions
+
+* *S021* — TRANSLATE-1 (5 pts, PivotModel + AsciiDocParser)
+* *S022* — TRANSLATE-2 (5 pts, Renderers + Classifier)
+* *S023* — TRANSLATE-3 (8 pts, TranslationService + PlantUml)
+* *S024* — TRANSLATE-4 (8 pts, Delta + Plan)
+* *S025* — TRANSLATE-5 (8 pts, Câblage bakery consommateur, clôture EPIC)
+
+Projection conservatrice : 5 sessions, ~34 pts, méthodo baby step DDD/TDD/BDD.
+
+'''
 == EPIC PUB — Publication Maven Central + Plugin Portal
 
 _Source : configuration/EPIC_PUB.adoc (Session 096)_

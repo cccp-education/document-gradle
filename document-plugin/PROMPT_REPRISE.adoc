@@ -1,93 +1,39 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 021
-:date: 2026-07-06
-:status: Session 020 terminée — EPUB avancés + DOC-12 round-trip + régression cross-boroughs. 348 tests.
+:date: 2026-07-19
+:status: EPIC DOC-TRANSLATE cadré. US-1 en cours — PivotModel + AsciiDocParser + TextTranslatableClassifier copiés dans document/translation/. compileKotlin FAIL (fichiers modifiés non commités dans document-plugin/).
 :max-lines: 70
 
 == Quick Start
 
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-./gradlew test functionalTest            # 294 tests (240 unit + 54 functional)
-./gradlew cucumberTest --no-daemon      # 54 scénarios BDD (~13-16 min)
-./gradlew publishToMavenLocal            # publie le plugin pour la racine consommateur
-cd .. && ./gradlew tasks --group=document  # 12 tâches
+git status  # vérifier les fichiers modifiés non commités
+./gradlew compileKotlin  # doit compiler avant de continuer
 ```
 
-== Architecture (session 006, stable)
+== Contexte de fin
 
-Pattern « Plugin Indépendant + Racine Consommateur » (article #0124) :
-- `document-plugin/` — build Gradle autonome (settings, wrapper 9.6.1, catalogue 68 lignes)
-- Racine `document-gradle/` — consommateur dogfood minimal (6 lignes, catalogue 2 entrées)
-- `@DisableCachingByDefault` + `@PathSensitive(PathSensitivity.NONE)` sur les tasks
+EPIC DOC-TRANSLATE cadré dans BACKLOG.adoc (5 US, ~34 pts, 5 sessions projetées).
+US-1 démarrée : 3 fichiers copiés de bakery vers document :
+- `document/translation/PivotModel.kt` (95 lignes)
+- `document/translation/AsciiDocParser.kt` (412 lignes)
+- `document/translation/TextTranslatableClassifier.kt` (58 lignes)
+- Tests : `PivotModelTest.kt` (4 UT) + `AsciiDocParserTest.kt` (28 UT)
 
-== Publications Maven Central (session 018)
+== Reprendre à
 
-- `education.ccp:conventions-plugin:0.0.2` — bundle 04040b07 (fix SCM double .git)
-- `education.ccp:document-plugin:0.0.1` — bundle 4d15e522 (publication initiale)
-- 15 boroughs consommateurs harmonisés vers conventions 0.0.2
+. `git status` — 7 fichiers modifiés non commités dans document-plugin/
+. Résoudre l'erreur de compilation (probablement conflit avec les modifs existantes)
+. `./gradlew test --tests "document.translation.*"` → 32 UT GREEN
+. Continuer US-2 : déplacer PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer + TextTranslatableClassifier
 
-== Contexte récent
+== Fichiers touchés S021
 
-Session 018 (2026-07-06) — DOC-12 book { } + DOC-9b images BDD + DOC-8.5 publication.
-Session 019 (2026-07-06) — DOC-9b EPUB image + DOC-12 book serialization + DOC-06/07 advanced rendering.
-Session 020 (2026-07-06) — EPUB advanced (tableaux/code/listes XHTML) + DOC-12 round-trip deserialize + régression cross-boroughs N3.
-
-== Objectifs session 021
-
-Tous les EPICs DOC-0→DOC-12 sont TERMINÉS. Le borough est en maintenance.
-
-=== P1 — Maintenance
-
-- Surveiller les dépôts GitHub pour les issues/PRs
-- Mettre à jour la BOM quand de nouvelles versions de dépendances sortent
-- Vérifier la compatibilité Gradle/Kotlin sur les montées de version
-
-=== P2 — Extension possible (priorité basse)
-
-- Tests EPUB avancés supplémentaires (admonitions, sidebars, bibliographie)
-- `deserializeDocumentConfig` task Gradle (round-trip bidirectionnel côté tâche)
-- Tests de régression cross-boroughs avec release notes + book block combinés
-
-== EPIC DOC-12 — étendu (session 020)
-
-- enrich { } ✅ (session 013)
-- outputs { } ✅ (session 013)
-- metadata { } ✅ (session 013)
-- theme { } ✅ (session 008)
-- releaseNotes { } ✅ (session 014)
-- book { } ✅ (session 018 DSL + session 019 serialization + session 020 round-trip deserialize)
-
-== EPIC DOC-8 — 4/4 TERMINÉ
-
-- DOC-8.1 ✅ git log → AsciiDoc
-- DOC-8.2 ✅ Template configurable (Markdown/JSON)
-- DOC-8.3 ✅ N3 metadata.json + composite-context.json
-- DOC-8.4 ✅ Extension IA Ollama (résumé humain)
-
-== EPIC DOC-9b — images + EPUB advanced ✅ TERMINÉ
-
-- HTML/PDF/EPUB `image::` rendering ✅ (session 018/019)
-- EPUB advanced rendering (tableaux/code/listes XHTML) ✅ (session 020)
-
-== Stack (rappel)
-
-- AsciidoctorJ 3.0.0 + asciidoctorj-pdf 2.3.23 + asciidoctorj-epub3 2.2.0 + asciidoctorj-diagram 3.2.0
-- 4 renderers release notes (asciidoc, markdown, json, ollama-asciidoc) + N3 metadata releaseNotesPath/Renderer
-- pipeline-contracts 0.0.2 (MEM-2 workspace-bom) + nmcp 1.5.0
-- langchain4j ollama + koog (orchestrateur) pour le LLM
-- conventions-gradle 0.0.2 (education.ccp.build.*)
-- Jackson (ObjectMapper + KotlinModule) — serialize/deserialize round-trip (session 020)
-
-== Règles absolues (rappel)
-
-. COMMITS/GIT — INTERDICTION FORMELLE sans permission
-. PUBLISH — INTERDICTION FORMELLE sans permission
-. DAG N2 — importable par N3 runner-gradle, jamais importe N3
-. ZERO secret/token/api key en dur
-. DOCUMENT CONSOMME ASCIIDOC — lecture seule
-. BOUNDARY CODEX — pas de dependance directe document->codex
-. BOUNDARY PLANTUML — Asciidoctor Diagram inline (zéro compileOnly pour DOC-9)
-. Hook ouverture : lire `.agents/SESSION_CHECKLIST.adoc` en premier
-. Procedure fermeture : 6 etapes obligatoires `.agents/SESSION_PROCEDURE.adoc`
-. CODE EN ANGLAIS — aucun commentaire/texte français dans le code source
+. `BACKLOG.adoc` — EPIC DOC-TRANSLATE cadré
+. `PROMPT_REPRISE.adoc` — ce fichier
+. `src/main/kotlin/document/translation/PivotModel.kt` — NOUVEAU
+. `src/main/kotlin/document/translation/AsciiDocParser.kt` — NOUVEAU
+. `src/main/kotlin/document/translation/TextTranslatableClassifier.kt` — NOUVEAU
+. `src/test/kotlin/document/translation/PivotModelTest.kt` — NOUVEAU
+. `src/test/kotlin/document/translation/AsciiDocParserTest.kt` — NOUVEAU
