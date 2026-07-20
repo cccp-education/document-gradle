@@ -27,6 +27,7 @@
 | 021 | 2026-07-20 | fix + feat | Fix compile (jacksonObjectMapper → ObjectMapper, 3 fichiers) + DOC-TRANSLATE US-1 (PivotModel + AsciiDocParser + TextTranslatableClassifier, 31 UT) + US-2 (PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer, 22 UT), 53 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 022 | 2026-07-20 | feat | DOC-TRANSLATE US-3 (ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier, 39 UT), 92 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 023 | 2026-07-20 | feat | DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan + tree types, 36 UT), 128 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 024 | 2026-07-20 | feat | DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC, 8 pts), 1480 tests bakery 0 régression, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 |===
 
 ---

@@ -1,0 +1,92 @@
+= Session 024 — DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC)
+:date: 2026-07-20
+:status: ✅ TERMINÉ
+:epic: DOC-TRANSLATE
+:points: 8
+
+== Objectif
+
+Câbler bakery-gradle comme consommateur de `document.translation.*` :
+- Remplacer les imports `bakery.pivot.*` et `bakery.i18n.*` dans bakery par `document.translation.*`
+- Ajouter `implementation("education.cccp:document-plugin:0.0.1")` dans bakery
+- Supprimer les fichiers source migrés de bakery
+- Vérifier 0 régression bakery
+
+== Résultat
+
+BUILD SUCCESSFUL — 1480 tests, 0 échec (2 pré-existants fixés).
+
+== Fichiers supprimés (bakery main)
+
+- `bakery/pivot/AsciiDocParser.kt`
+- `bakery/pivot/AsciiDocRenderer.kt`
+- `bakery/pivot/JbakeNativeRenderer.kt`
+- `bakery/pivot/PivotModel.kt`
+- `bakery/pivot/PivotYamlRenderer.kt`
+- `bakery/pivot/TextTranslatableClassifier.kt`
+- `bakery/i18n/ContentTranslationService.kt`
+- `bakery/i18n/plantuml/PlantUmlTranslationAdapter.kt`
+- `bakery/i18n/plantuml/PlantUmlClassifier.kt`
+- `bakery/i18n/I18nDeltaApplier.kt`
+- `bakery/i18n/ContentChecksum.kt`
+- `bakery/i18n/deploy/SiteTranslationPlan.kt`
+
+== Fichiers supprimés (bakery test)
+
+- `bakery/pivot/AsciiDocParserTest.kt`
+- `bakery/pivot/PivotModelTest.kt`
+- `bakery/pivot/PivotYamlRendererTest.kt`
+- `bakery/pivot/TextTranslatableClassifierTest.kt`
+- `bakery/pivot/AsciiDocRendererTest.kt`
+- `bakery/pivot/JbakeNativeRendererTest.kt`
+- `bakery/i18n/ContentTranslationServiceTest.kt`
+- `bakery/i18n/ContentTranslationServiceParallelTest.kt`
+- `bakery/i18n/plantuml/PlantUmlTranslationAdapterTest.kt`
+- `bakery/i18n/plantuml/PlantUmlClassifierTest.kt`
+- `bakery/i18n/I18nDeltaApplierTest.kt`
+- `bakery/i18n/deploy/SiteTranslationPlanTest.kt`
+- `bakery/tree/SubtreeI18nDeltaTest.kt`
+- `bakery/i18n/JbakeNativeTranslationBddTest.kt`
+
+== Fichiers créés (bakery)
+
+- `bakery/tree/I18nDelta.kt` — ArticleModification + I18nDelta (couplés à bakery.tree.SiteNode)
+- `bakery/i18n/I18nDeltaApplier.kt` — version bakery (couplée à bakery.tree.I18nDelta)
+
+== Fichiers modifiés (bakery main)
+
+- `build.gradle.kts` — +`implementation("education.cccp:document-plugin:0.0.1")`
+- `ContentTaskRegistrar.kt` — import `ContentTranslationService` → `document.translation`
+- `i18n/rtl/RtlDirectionInjectionTask.kt` — imports `bakery.pivot.*` → `document.translation.*`
+- `i18n/rtl/RtlDirectionInjector.kt` — import `PivotFrontmatter` → `document.translation`
+- `tree/Content.kt` — imports `bakery.pivot.*` → `document.translation.*`
+- `pivot/GeneratePivotYamlTask.kt` — +imports `document.translation.AsciiDocParser`, `PivotYamlRenderer`
+- `i18n/MigrateContentI18nTask.kt` — imports `document.translation.*` + `bakery.i18n.I18nDeltaApplier`
+- `tree/SubtreeI18nPlanner.kt` — utilise `bakery.tree.I18nDelta` (pas `document.translation.delta`)
+
+== Fichiers modifiés (bakery test)
+
+- 16 fichiers de test — imports `bakery.pivot.*`/`bakery.i18n.*` → `document.translation.*`
+- `MigrateContentI18nDeltaFunctionalTest.kt` — +FakeTranslationService
+- `MigrateContentI18nTaskTest.kt` — +FakeTranslationService
+- `I18nDeltaWireSteps.kt` — import `I18nDeltaApplier` → `bakery.i18n`
+
+== Fichiers modifiés (document-gradle)
+
+- `document-plugin/` — `publishToMavenLocal` (jar contenant `document.translation.*`)
+
+== Fix tests pré-existants
+
+- `FixtureAlignmentAuditorTest.cheroliv-com` — fixture `menu.thyme` synchronisé avec site réel
+- `RealSiteI18nMigrationIntegrationTest` — golden master régénéré + traductions EN `menu.13-15` ajoutées
+
+== Architecture
+
+- `SubtreeI18nPlanner` + `I18nDelta` + `ArticleModification` restent dans `bakery.tree` (couplés à `bakery.tree.SiteNode`)
+- `I18nDeltaApplier` dupliqué dans `bakery.i18n` (couplé à `bakery.tree.I18nDelta`)
+- Tous les autres types migrés vers `document.translation.*`
+- Bakery consomme `document.translation.*` via `implementation("education.cccp:document-plugin:0.0.1")`
+
+== Tests
+
+1480 tests, 0 échec, 3 skipped. BUILD SUCCESSFUL.

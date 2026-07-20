@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 024
+:session: 025
 :date: 2026-07-20
-:status: EPIC DOC-TRANSLATE — US-1, US-2, US-3 & US-4 TERMINÉES (128 UT GREEN). US-5 next (clôture EPIC).
+:status: EPIC DOC-TRANSLATE CLOS (5/5 US, 128 UT document + 1480 tests bakery 0 régression)
 :max-lines: 70
 
 == Quick Start
@@ -14,46 +14,28 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 
 == Contexte de fin
 
-EPIC DOC-TRANSLATE : 4/5 US terminées.
+EPIC DOC-TRANSLATE : 5/5 US TERMINÉES. EPIC CLOS.
 - US-1 ✅ : PivotModel + AsciiDocParser + TextTranslatableClassifier (31 UT)
 - US-2 ✅ : PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer (22 UT)
 - US-3 ✅ : ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier (39 UT)
 - US-4 ✅ : I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan (36 UT)
-- Types tree/ copiés : SiteNode, SiteTree, Content, NodeMetadata, OutputConfig, PageAssets, AssetRef, LayoutType, ThemeConfig
+- US-5 ✅ : Câblage bakery consommateur — imports bakery.pivot/i18n → document.translation, 1480 tests 0 échec
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
 . `./gradlew test --tests "document.translation.*"` → 128 UT GREEN
-. Continuer US-5 : Câbler bakery comme consommateur
-  - Remplacer les imports `bakery.pivot.*` et `bakery.i18n.*` dans bakery par `document.translation.*`
-  - Ajouter `implementation("education.cccp:document-plugin:0.0.1")` dans bakery
-  - Supprimer les fichiers source migrés de bakery
-  - Vérifier 0 régression bakery
-  - FT + BDD : 0 régression bakery, tous les tests bakery passent
-  - 8 pts
+. Prochain EPIC : à déterminer (BACKLOG.adoc)
 
-== Fichiers touchés S023
+== Fichiers touchés S024
 
-. `tree/AssetRef.kt` — NOUVEAU
-. `tree/PageAssets.kt` — NOUVEAU
-. `tree/LayoutType.kt` — NOUVEAU
-. `tree/ThemeConfig.kt` — NOUVEAU
-. `tree/NodeMetadata.kt` — NOUVEAU
-. `tree/OutputConfig.kt` — NOUVEAU
-. `tree/Content.kt` — NOUVEAU
-. `tree/SiteNode.kt` — NOUVEAU
-. `tree/SiteTree.kt` — NOUVEAU
-. `delta/ContentChecksum.kt` — NOUVEAU
-. `delta/I18nDelta.kt` — NOUVEAU
-. `delta/I18nDeltaApplier.kt` — NOUVEAU
-. `plan/SubtreeI18nPlanner.kt` — NOUVEAU
-. `plan/SiteTranslationPlan.kt` — NOUVEAU
-. `I18nDeltaApplierTest.kt` — NOUVEAU
-. `SiteTranslationPlanTest.kt` — NOUVEAU
-. `SubtreeI18nDeltaTest.kt` — NOUVEAU
-. `BACKLOG.adoc` — MAJ US-4 statut
+. `bakery-gradle/bakery-plugin/build.gradle.kts` — +implementation document-plugin:0.0.1
+. `bakery-gradle/bakery-plugin/src/main/kotlin/bakery/` — 12 suppressions + 7 modifications + 2 créations
+. `bakery-gradle/bakery-plugin/src/test/` — 14 suppressions + 16 modifications
+. `bakery-gradle/bakery-plugin/src/test/resources/i18n-fixtures/cheroliv-com/` — fixture + golden master + traductions EN
+. `document-gradle/document-plugin/` — publishToMavenLocal (jar avec document.translation.*)
+. `BACKLOG.adoc` — EPIC DOC-TRANSLATE CLOS
 . `PROMPT_REPRISE.adoc` — ce fichier
-. `INDEX.adoc` — MAJ session 023
-. `SESSIONS_HISTORY.adoc` — MAJ session 023
-. `.agents/sessions/023-translate-us4.adoc` — NOUVEAU
+. `INDEX.adoc` — MAJ session 024
+. `SESSIONS_HISTORY.adoc` — MAJ session 024
+. `.agents/sessions/024-translate-us5.adoc` — NOUVEAU
