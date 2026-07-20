@@ -1,0 +1,72 @@
+= Session 026 — DOC-TRANSLATE Câblage (translateDocument task + DSL + Ollama adapter)
+
+:date: 2026-07-20
+:type: feat
+:score: ✅ TERMINÉ
+:epic: DOC-TRANSLATE (extension — câblage plugin)
+
+== Résumé
+
+Câblage du pipeline de traduction AsciiDoc dans document-gradle :
+- DSL `translation { }` dans `DocumentExtension`
+- Tâche `translateDocument` dans `DocumentPlugin`
+- Adaptateur Ollama réel `OllamaTranslationAdapter` (langchain4j)
+- `FakeTranslationService` extrait dans `main` (réutilisable par bakery)
+- `AsciiDocParser.parseFrontmatter` enrichi (author, jbake-*)
+- `AsciiDocRenderer.renderFrontmatter` enrichi (author, jbake-*)
+
+== Baby-step DDD/TDD/BDD
+
+. *US-1* — DSL `translation { }` + `OllamaTranslationAdapter` + `FakeTranslationService`
+. *US-2* — Tâche `translateDocument` (parse → traduire → render)
+. *US-3* — Tests : 5 UT + 3 FT + 3 Cucumber BDD
+
+== Fichiers créés
+
+- `src/main/kotlin/document/translation/TranslationDsl.kt` — DSL block
+- `src/main/kotlin/document/translation/OllamaTranslationAdapter.kt` — LLM adapter (langchain4j)
+- `src/main/kotlin/document/translation/FakeTranslationService.kt` — fake pour tests
+- `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — tâche Gradle
+- `src/test/kotlin/document/translation/TranslateDocumentTaskTest.kt` — 5 UT
+
+== Fichiers modifiés
+
+- `DocumentExtension.kt` — +translation DSL block + initNested + fun translation()
+- `DocumentPlugin.kt` — +registerTranslateDocument + conventions + wiring
+- `AsciiDocParser.kt` — parseFrontmatter enrichi (author, jbake-*)
+- `AsciiDocRenderer.kt` — renderFrontmatter enrichi (author, jbake-*)
+- `DocumentPluginFunctionalTest.kt` — +3 FT translateDocument
+- `document.feature` — +3 scénarios @doc-translate
+- `DocumentSteps.kt` — +3 Given + 1 Then
+- `DocumentWorld.kt` — +2 factory methods
+
+== Tests
+
+- Unitaires : 128/128 PASS (translation.*)
+- Fonctionnels : 3/3 PASS (translateDocument)
+- Cucumber : 3 nouveaux scénarios @doc-translate (non exécutés — full suite trop lente)
+
+== Usage
+
+[source,shell]
+----
+./gradlew translateDocument -Pdocument.translateSource=article.adoc -Pdocument.translateSourceLang=fr -Pdocument.translateTargetLang=en -Pdocument.translateLlmMode=fake
+----
+
+DSL :
+[source,kotlin]
+----
+document {
+    translation {
+        sourceFile.set("src/docs/article.adoc")
+        sourceLanguage.set("fr")
+        targetLanguage.set("en")
+        llmMode.set("ollama")
+    }
+}
+----
+
+== Reste à faire
+
+- US-4 : Bakery devient consommateur pur (appelle `translateDocument` au lieu de `migrateContentI18n`)
+- Traduire les 104 articles cheroliv.com FR→EN

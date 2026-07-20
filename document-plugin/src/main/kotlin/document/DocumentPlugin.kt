@@ -4,6 +4,8 @@ import document.batch.BatchConvertDocumentsTask
 import document.batch.BatchDsl
 import document.template.ApplyDocumentTemplateTask
 import document.template.TemplateDsl
+import document.translation.TranslateDocumentTask
+import document.translation.TranslationDsl
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -75,6 +77,13 @@ class DocumentPlugin : Plugin<Project> {
                 formats = project.objects.listProperty(String::class.java),
                 recursive = project.objects.property(Boolean::class.java),
             ),
+            translation = TranslationDsl(
+                sourceLanguage = project.objects.property(String::class.java),
+                targetLanguage = project.objects.property(String::class.java),
+                sourceFile = project.objects.property(String::class.java),
+                outputFileName = project.objects.property(String::class.java),
+                llmMode = project.objects.property(String::class.java),
+            ),
         )
 
         // Conventions (defauts)
@@ -114,6 +123,10 @@ class DocumentPlugin : Plugin<Project> {
         ext.template.variables.convention(emptyMap())
         ext.batch.formats.convention(listOf("html"))
         ext.batch.recursive.convention(true)
+        ext.translation.sourceLanguage.convention("fr")
+        ext.translation.targetLanguage.convention("en")
+        ext.translation.llmMode.convention("ollama")
+        ext.translation.outputFileName.convention("document")
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -153,6 +166,7 @@ class DocumentPlugin : Plugin<Project> {
         registerReleaseNotesGenerate(project, ext)
         registerApplyDocumentTemplate(project, ext)
         registerBatchConvertDocuments(project, ext)
+        registerTranslateDocument(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -388,6 +402,25 @@ class DocumentPlugin : Plugin<Project> {
             task.recursive.set(
                 cliProp(project, "batchRecursive").map { it.toBoolean() }
                     .orElse(ext.batch.recursive),
+            )
+        }
+    }
+
+    private fun registerTranslateDocument(project: Project, ext: DocumentExtension) {
+        project.tasks.register("translateDocument", TranslateDocumentTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Translates an AsciiDoc document from source language to target language via LLM. — DOC-TRANSLATE"
+            val cliSource = cliProp(project, "translateSource").map { project.layout.projectDirectory.file(it) }
+            task.sourceFile.set(cliSource.orElse(ext.translation.sourceFile.map { project.layout.projectDirectory.file(it) }))
+            task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
+            task.targetLanguage.set(cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage))
+            task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+            task.outputFile.set(
+                project.layout.buildDirectory.file(
+                    project.providers.gradleProperty("document.translateOutputFileName")
+                        .orElse(ext.translation.outputFileName)
+                        .map { "docs/document/$it-${ext.translation.targetLanguage.get()}.adoc" },
+                ),
             )
         }
     }

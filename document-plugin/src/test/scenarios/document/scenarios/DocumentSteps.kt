@@ -901,4 +901,23 @@ class DocumentSteps(private val world: DocumentWorld) {
         world.createGradleProjectWithBatchDsl()
         assertThat(world.projectDir).exists()
     }
+
+    @Given("a new document project with translation DSL")
+    fun createNewDocumentProjectWithTranslationDsl() {
+        world.createGradleProjectWithTranslationDsl()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with translation DSL and source code")
+    fun createNewDocumentProjectWithTranslationDslAndSourceCode() {
+        world.createGradleProjectWithTranslationDslAndSourceCode()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the translated document should contain {string}")
+    fun translatedDocumentShouldContain(expected: String) {
+        val output = world.projectDir!!.resolve("build/docs/document/document-en.adoc")
+        assertThat(output).exists()
+        assertThat(output.readText()).contains(expected)
+    }
 }

@@ -1247,4 +1247,81 @@ class DocumentWorld {
         projectDir = dir
         return dir
     }
+
+    fun createGradleProjectWithTranslationDsl(): File {
+        val dir = Files.createTempDirectory("doc-bdd-translate").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("article.adoc").writeText("""title=Bonjour le monde
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Introduction
+
+Ceci est un paragraphe en francais.
+
+== Conclusion
+
+Fin du document.
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    sourceFile.set("src/docs/article.adoc")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithTranslationDslAndSourceCode(): File {
+        val dir = Files.createTempDirectory("doc-bdd-translate-code").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("article.adoc").writeText("""title=Code Example
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Sample
+
+[source,java]
+----
+public class Hello {}
+----
+
+Some text after code.
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    sourceFile.set("src/docs/article.adoc")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
 }

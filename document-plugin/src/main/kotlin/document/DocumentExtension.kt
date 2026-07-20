@@ -2,6 +2,7 @@ package document
 
 import document.batch.BatchDsl
 import document.template.TemplateDsl
+import document.translation.TranslationDsl
 import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -124,6 +125,9 @@ abstract class DocumentExtension {
     lateinit var batch: BatchDsl
         private set
 
+    lateinit var translation: TranslationDsl
+        private set
+
     internal fun initNested(
         enrich: DocumentEnrichDsl,
         outputs: DocumentOutputsDsl,
@@ -132,6 +136,7 @@ abstract class DocumentExtension {
         book: BookDsl,
         template: TemplateDsl,
         batch: BatchDsl,
+        translation: TranslationDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
@@ -140,6 +145,7 @@ abstract class DocumentExtension {
         this.book = book
         this.template = template
         this.batch = batch
+        this.translation = translation
     }
 
     /**
@@ -193,6 +199,10 @@ abstract class DocumentExtension {
 
     fun batch(action: Action<BatchDsl>) {
         action.execute(batch)
+    }
+
+    fun translation(action: Action<TranslationDsl>) {
+        action.execute(translation)
     }
 
     fun formats(vararg formats: DocumentFormat) {

@@ -434,3 +434,25 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Given a new document project
     When I am executing the task 'tasks' with group 'document'
     Then the output should contain 'batchConvertDocuments'
+
+  @doc-translate @translation
+  Scenario: translateDocument task is registered
+    Given a new document project
+    When I am executing the task 'tasks' with group 'document'
+    Then the output should contain 'translateDocument'
+
+  @doc-translate @translation
+  Scenario: translateDocument translates FR to EN via fake LLM
+    Given a new document project with translation DSL
+    When I am executing the task 'translateDocument'
+    Then the build should succeed
+    And the translated document should contain 'Bonjour le monde [EN]'
+    And the translated document should contain 'Introduction [EN]'
+
+  @doc-translate @translation
+  Scenario: translateDocument preserves source code blocks
+    Given a new document project with translation DSL and source code
+    When I am executing the task 'translateDocument'
+    Then the build should succeed
+    And the translated document should contain 'public class Hello {}'
+    And the translated document should contain 'Some text after code. [EN]'

@@ -110,14 +110,22 @@ class AsciiDocParser {
         var date = ""
         var type = ""
         var status = ""
+        var author = ""
+        val jbakeAttributes = mutableMapOf<String, String>()
         for (line in lines) {
             if (line.startsWith("title=")) title = line.removePrefix("title=").trim()
             else if (line.startsWith("date=")) date = line.removePrefix("date=").trim()
             else if (line.startsWith("type=")) type = line.removePrefix("type=").trim()
             else if (line.startsWith("status=")) status = line.removePrefix("status=").trim()
+            else if (line.startsWith("author=")) author = line.removePrefix("author=").trim()
+            else if (line.startsWith("jbake-")) {
+                val key = line.removePrefix("jbake-").substringBefore("=").trim()
+                val value = line.substringAfter("=").trim()
+                jbakeAttributes[key] = value
+            }
             else if (line.startsWith("~~~~~~")) break
         }
-        return PivotFrontmatter(title, date, type, status)
+        return PivotFrontmatter(title, date, type, status, author, jbakeAttributes)
     }
 
     private fun indexOfTildeSeparator(lines: List<String>): Int =

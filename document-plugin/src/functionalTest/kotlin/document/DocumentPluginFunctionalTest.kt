@@ -1899,4 +1899,121 @@ class DocumentPluginFunctionalTest {
 
         assertTrue(result.output.contains("batchConvertDocuments"), "batchConvertDocuments must be listed")
     }
+
+    @Test
+    fun `translateDocument task is registered`() {
+        val projectDir = newTempDir()
+        setupTestProject(projectDir)
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("tasks", "--group", "document")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("translateDocument"), "translateDocument must be listed")
+    }
+
+    @Test
+    fun `translateDocument translates FR to EN via fake LLM`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-translate\"\n")
+        val srcDir = projectDir.resolve("src/docs")
+        srcDir.mkdirs()
+        srcDir.resolve("article.adoc").writeText("""title=Bonjour le monde
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Introduction
+
+Ceci est un paragraphe en francais.
+
+== Conclusion
+
+Fin du document.
+""")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    sourceFile.set("src/docs/article.adoc")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("translateDocument")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
+        val output = projectDir.resolve("build/docs/document/document-en.adoc")
+        assertTrue(output.exists(), "translated output must exist")
+        val content = output.readText()
+        assertTrue(content.contains("Bonjour le monde [EN]"))
+        assertTrue(content.contains("Introduction [EN]"))
+        assertTrue(content.contains("Ceci est un paragraphe en francais. [EN]"))
+    }
+
+    @Test
+    fun `translateDocument preserves source code blocks`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-translate-code\"\n")
+        val srcDir = projectDir.resolve("src/docs")
+        srcDir.mkdirs()
+        srcDir.resolve("article.adoc").writeText("""title=Code Example
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Sample
+
+[source,java]
+----
+public class Hello {}
+----
+
+Some text after code.
+""")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    sourceFile.set("src/docs/article.adoc")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("translateDocument")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
+        val output = projectDir.resolve("build/docs/document/document-en.adoc")
+        val content = output.readText()
+        assertTrue(content.contains("public class Hello {}"))
+        assertTrue(content.contains("Some text after code. [EN]"))
+    }
 }

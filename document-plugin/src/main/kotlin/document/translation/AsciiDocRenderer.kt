@@ -21,6 +21,9 @@ class AsciiDocRenderer : ArticleRenderer {
         sb.appendLine("date=${fm.date}")
         sb.appendLine("type=${fm.type}")
         sb.appendLine("status=${fm.status}")
+        if (fm.author.isNotEmpty()) sb.appendLine("author=${fm.author}")
+        fm.jbakeAttributes.forEach { (k, v) -> sb.appendLine("jbake-$k=$v") }
+        fm.asciidocAttributes.forEach { (k, v) -> sb.appendLine("$k=$v") }
         sb.appendLine("~~~~~~")
     }
 

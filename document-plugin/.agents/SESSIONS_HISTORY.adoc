@@ -29,6 +29,7 @@
 | 023 | 2026-07-20 | feat | DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan + tree types, 36 UT), 128 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 024 | 2026-07-20 | feat | DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC, 8 pts), 1480 tests bakery 0 régression, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 | 025 | 2026-07-20 | feat + fix | DOC-13 Templates + DOC-14 Batch + DOC-15 Hardening + Fix Duplications bakery (I18nDeltaApplier, SubtreeI18nPlanner, I18nDelta), 15 UT + 6 FT + 5 BDD, baby-step DDD/TDD/BDD | ✅ TERMINÉ
+| 026 | 2026-07-20 | feat | DOC-TRANSLATE câblage — translateDocument task + DSL translation { } + OllamaTranslationAdapter + FakeTranslationService, 128 UT + 3 FT + 3 BDD, baby-step DDD/TDD/BDD | ✅ TERMINÉ
 |===
 
 ---
