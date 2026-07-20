@@ -399,3 +399,38 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the converted EPUB file should exist
     And the converted EPUB should render the bibliography as a bibliography element
+
+  @doc13 @template
+  Scenario: applyDocumentTemplate substitutes variables from DSL
+    Given a new document project with a template DSL
+    When I am executing the task 'applyDocumentTemplate'
+    Then the build should succeed
+    And the generated document should contain '= My Doc'
+    And the generated document should contain ':author: Jane'
+
+  @doc13 @template
+  Scenario: applyDocumentTemplate fails on missing variable by default
+    Given a new document project with a template DSL and a missing variable
+    When I am executing the task 'applyDocumentTemplate'
+    Then the build should fail
+    And the output should contain 'missing'
+
+  @doc13 @template
+  Scenario: applyDocumentTemplate keeps placeholder when failOnMissingVariable is false
+    Given a new document project with a template DSL and failOnMissingVariable set to false
+    When I am executing the task 'applyDocumentTemplate'
+    Then the build should succeed
+    And the generated document should contain '{{body}}'
+
+  @doc14 @batch
+  Scenario: batchConvertDocuments converts all adoc files in a directory
+    Given a new document project with a batch DSL
+    When I am executing the task 'batchConvertDocuments'
+    Then the build should succeed
+    And the output should contain 'batchConvertDocuments'
+
+  @doc14 @batch
+  Scenario: batchConvertDocuments task is listed in document group
+    Given a new document project
+    When I am executing the task 'tasks' with group 'document'
+    Then the output should contain 'batchConvertDocuments'

@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-20 (session 024 — DOC-TRANSLATE US-5, EPIC CLOS, 1480 tests bakery 0 régression)
-_Session terminee_ : 024 — DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC, 8 pts), baby-step DDD/TDD/BDD
-_Prochaine session_ : 025 — À déterminer (BACKLOG.adoc)
+_Derniere mise a jour_ : 2026-07-20 (session 025 — DOC-13 + DOC-14 + DOC-15 TERMINÉS, duplications bakery corrigées)
+_Session terminee_ : 025 — DOC-13 Templates + DOC-14 Batch + DOC-15 Hardening + Fix Duplications, baby-step DDD/TDD/BDD
+_Prochaine session_ : 026 — À déterminer (BACKLOG.adoc)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -93,6 +93,9 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-9b | Enrichissement images — rendu HTML/PDF/EPUB `image::photo.png[]` + EPUB advanced (tableaux/code/listes XHTML) | ✅ TERMINÉ (session 018 HTML/PDF + session 019 EPUB image + session 020 EPUB advanced) | P3
 | DOC-8.5 | Publication Maven Central document-gradle 0.0.1 | ✅ TERMINÉ (session 018, bundle 4d15e522) | P1
 | DOC-TRANSLATE | Pipeline traduction AsciiDoc — refacto transverse bakery→document (5 US, ~34 pts) | ✅ TERMINÉ (session 024 — US-1, US-2, US-3, US-4 & US-5 TERMINÉES, EPIC CLOS) | P1
+| DOC-13 | Document Templates — substitution variables AsciiDoc ({{variable}}) sans LLM | ✅ TERMINÉ (session 025 — US-1, US-2 & US-3 TERMINÉES, 15 UT + 4 FT + 3 BDD) | P1
+| DOC-14 | Batch Pipeline — conversion multi-documents (répertoire → N formats) | ✅ TERMINÉ (session 025 — US-1 & US-2 TERMINÉES, 2 FT + 2 BDD) | P2
+| DOC-15 | Cross-borough Hardening — compile + tests document + bakery | ✅ TERMINÉ (session 025 — compile OK, tests OK) | P2
 |===
 
 '''
@@ -150,6 +153,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 021 | 2026-07-20 | fix + feat | Fix compile (jacksonObjectMapper → ObjectMapper, 3 fichiers) + DOC-TRANSLATE US-1 (PivotModel + AsciiDocParser + TextTranslatableClassifier, 31 UT) + US-2 (PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer, 22 UT), 53 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
 | 022 | 2026-07-20 | feat | DOC-TRANSLATE US-3 (ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier, 39 UT), 92 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
 | 023 | 2026-07-20 | feat | DOC-TRANSLATE US-4 (I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan + tree types, 36 UT), 128 UT translation GREEN, baby-step DDD/TDD/BDD | ✅ TERMINE
+| 024 | 2026-07-20 | feat | DOC-TRANSLATE US-5 (Câblage bakery consommateur, clôture EPIC, 8 pts), 1480 tests bakery 0 régression, baby-step DDD/TDD/BDD | ✅ TERMINE
+| 025 | 2026-07-20 | feat + fix | DOC-13 Templates + DOC-14 Batch + DOC-15 Hardening + Fix Duplications bakery (I18nDeltaApplier, SubtreeI18nPlanner, I18nDelta), 15 UT + 6 FT + 5 BDD, baby-step DDD/TDD/BDD | ✅ TERMINE
 |===
 
 '''

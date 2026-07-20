@@ -1,0 +1,75 @@
+= Session 025 — DOC-13 Templates + DOC-14 Batch + DOC-15 Hardening + Fix Duplications
+:date: 2026-07-20
+:type: feat + fix
+:status: ✅ TERMINÉ
+
+== Résumé
+
+Session multi-EPIC : correction des duplications post-DOC-TRANSLATE (bakery),
+livraison de 3 nouveaux EPICs document-gradle (DOC-13, DOC-14, DOC-15).
+
+== Fix Duplications (bakery-gradle)
+
+- Suppression `bakery/i18n/I18nDeltaApplier.kt` → délégué à `document.translation.delta.I18nDeltaApplier`
+- Suppression `bakery/tree/SubtreeI18nPlanner.kt` → délégué à `document.translation.plan.SubtreeI18nPlanner`
+- Suppression `bakery/tree/I18nDelta.kt` (devenu dead code)
+- Mise à jour `MigrateContentI18nTask.kt` (imports document)
+- Mise à jour `I18nDeltaWireSteps.kt` (imports document)
+- Mise à jour `ThemeResolverSteps.kt` (types document pour delta, bakery pour theme)
+- Tests bakery OK : `bakery.i18n.*` + `bakery.tree.*` + `bakery.pivot.*` → BUILD SUCCESSFUL
+
+== DOC-13 — Document Templates (AsciiDoc variable substitution)
+
+*US-1* — Domain model :
+- `TemplateEngine` — substitution `{{variable}}` avec failOnMissing
+- `TemplateConfig` — value object
+- 15 UT GREEN
+
+*US-2* — Gradle task + DSL :
+- `ApplyDocumentTemplateTask` — @DisableCachingByDefault
+- `TemplateDsl` — nested DSL block `template { }`
+- Wiring dans `DocumentExtension` + `DocumentPlugin`
+- CLI override : `-Pdocument.templateFile=...` + `-Pdocument.templateVars=key=val,...`
+- 4 FT GREEN
+
+*US-3* — Cucumber BDD :
+- 3 scénarios : substitution, missing variable, failOnMissing=false
+- Feature file + steps + world
+
+== DOC-14 — Batch Pipeline (multi-document conversion)
+
+*US-1* — Domain model :
+- `BatchConvertDocumentsTask` — walk directory, convert all .adoc
+- `BatchDsl` — nested DSL block `batch { }`
+- 2 FT GREEN
+
+*US-2* — Cucumber BDD :
+- 2 scénarios : batch conversion, task listing
+
+== DOC-15 — Cross-borough Hardening
+
+- `./gradlew compileKotlin` document → BUILD SUCCESSFUL
+- `./gradlew test --tests "document.template.*" --tests "document.translation.*"` → 143 UT GREEN
+- `./gradlew compileKotlin` bakery → BUILD SUCCESSFUL
+- `./gradlew test --tests "bakery.i18n.*" --tests "bakery.tree.*" --tests "bakery.pivot.*"` → BUILD SUCCESSFUL
+
+== Fichiers modifiés
+
+*document-gradle* :
+- `src/main/kotlin/document/template/` — 3 nouveaux fichiers (TemplateEngine, TemplateConfig, ApplyDocumentTemplateTask, TemplateDsl)
+- `src/main/kotlin/document/batch/` — 2 nouveaux fichiers (BatchConvertDocumentsTask, BatchDsl)
+- `src/main/kotlin/document/DocumentExtension.kt` — +template +batch DSL blocks
+- `src/main/kotlin/document/DocumentPlugin.kt` — +registerApplyDocumentTemplate +registerBatchConvertDocuments
+- `src/test/kotlin/document/template/TemplateEngineTest.kt` — 15 UT
+- `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +6 FT (4 template + 2 batch)
+- `src/test/resources/features/document.feature` — +5 scénarios (3 template + 2 batch)
+- `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +4 steps
+- `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +4 world methods
+
+*bakery-gradle* :
+- Suppression : `I18nDeltaApplier.kt`, `SubtreeI18nPlanner.kt`, `I18nDelta.kt`
+- Modification : `MigrateContentI18nTask.kt`, `I18nDeltaWireSteps.kt`, `ThemeResolverSteps.kt`
+
+== Prochaine session
+
+026 — À déterminer (BACKLOG.adoc)

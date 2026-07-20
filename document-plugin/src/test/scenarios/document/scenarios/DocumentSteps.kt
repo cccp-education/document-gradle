@@ -877,4 +877,28 @@ class DocumentSteps(private val world: DocumentWorld) {
     fun cleanup() {
         world.cleanup()
     }
+
+    @Given("a new document project with a template DSL")
+    fun createNewDocumentProjectWithTemplateDsl() {
+        world.createGradleProjectWithTemplateDsl()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a template DSL and a missing variable")
+    fun createNewDocumentProjectWithTemplateDslAndMissingVariable() {
+        world.createGradleProjectWithTemplateDslAndMissingVariable()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a template DSL and failOnMissingVariable set to false")
+    fun createNewDocumentProjectWithTemplateDslAndFailOnMissingFalse() {
+        world.createGradleProjectWithTemplateDslAndFailOnMissingFalse()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with a batch DSL")
+    fun createNewDocumentProjectWithBatchDsl() {
+        world.createGradleProjectWithBatchDsl()
+        assertThat(world.projectDir).exists()
+    }
 }

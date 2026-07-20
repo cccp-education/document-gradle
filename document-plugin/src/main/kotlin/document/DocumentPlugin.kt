@@ -1,5 +1,9 @@
 package document
 
+import document.batch.BatchConvertDocumentsTask
+import document.batch.BatchDsl
+import document.template.ApplyDocumentTemplateTask
+import document.template.TemplateDsl
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -59,6 +63,18 @@ class DocumentPlugin : Plugin<Project> {
                 title = project.objects.property(String::class.java),
                 author = project.objects.property(String::class.java),
             ),
+            template = TemplateDsl(
+                templateFile = project.objects.property(String::class.java),
+                variables = project.objects.mapProperty(String::class.java, String::class.java),
+                failOnMissingVariable = project.objects.property(Boolean::class.java),
+                outputFileName = project.objects.property(String::class.java),
+            ),
+            batch = BatchDsl(
+                sourceDir = project.objects.property(String::class.java),
+                outputDir = project.objects.property(String::class.java),
+                formats = project.objects.listProperty(String::class.java),
+                recursive = project.objects.property(Boolean::class.java),
+            ),
         )
 
         // Conventions (defauts)
@@ -92,6 +108,12 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-12 extension — book DSL conventions (mirror of legacy flat properties)
         ext.book.title.convention("Untitled Book")
         ext.book.author.convention("Unknown Author")
+        // DOC-13 — template DSL conventions
+        ext.template.failOnMissingVariable.convention(true)
+        ext.template.outputFileName.convention("document")
+        ext.template.variables.convention(emptyMap())
+        ext.batch.formats.convention(listOf("html"))
+        ext.batch.recursive.convention(true)
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -129,6 +151,8 @@ class DocumentPlugin : Plugin<Project> {
         registerSerializeDocumentConfig(project, ext)
         registerDeserializeDocumentConfig(project, ext)
         registerReleaseNotesGenerate(project, ext)
+        registerApplyDocumentTemplate(project, ext)
+        registerBatchConvertDocuments(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -315,4 +339,56 @@ class DocumentPlugin : Plugin<Project> {
             val (type, label) = entry.split("=", limit = 2)
             type.trim() to label.trim()
         }
+
+    private fun registerApplyDocumentTemplate(project: Project, ext: DocumentExtension) {
+        project.tasks.register("applyDocumentTemplate", ApplyDocumentTemplateTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Applies variable substitution to an AsciiDoc template ({{variable}} syntax). — DOC-13"
+            val cliTemplate = cliProp(project, "templateFile").map { project.layout.projectDirectory.file(it) }
+            task.templateFile.set(cliTemplate.orElse(project.layout.projectDirectory.file(ext.template.templateFile)))
+            task.variables.set(
+                cliProp(project, "templateVars")
+                    .map { parseTemplateVarsCli(it) }
+                    .orElse(ext.template.variables),
+            )
+            task.failOnMissingVariable.set(
+                cliProp(project, "templateFailOnMissing").map { it.toBoolean() }
+                    .orElse(ext.template.failOnMissingVariable),
+            )
+            task.outputFile.set(
+                project.layout.buildDirectory.file(
+                    project.providers.gradleProperty("document.templateOutputFileName")
+                        .orElse(ext.template.outputFileName)
+                        .map { "docs/document/$it.adoc" },
+                ),
+            )
+        }
+    }
+
+    private fun parseTemplateVarsCli(raw: String): Map<String, String> =
+        raw.split(",").associate { entry ->
+            val (key, value) = entry.split("=", limit = 2)
+            key.trim() to value.trim()
+        }
+
+    private fun registerBatchConvertDocuments(project: Project, ext: DocumentExtension) {
+        project.tasks.register("batchConvertDocuments", BatchConvertDocumentsTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Batch-converts all AsciiDoc files in a directory to the specified formats. — DOC-14"
+            task.sourceDir.set(
+                cliProp(project, "batchSourceDir").map { project.layout.projectDirectory.dir(it) }
+                    .orElse(ext.batch.sourceDir.map { project.layout.projectDirectory.dir(it) }),
+            )
+            task.outputDir.convention(project.layout.buildDirectory.dir("docs/batch"))
+            task.formats.set(
+                cliProp(project, "batchFormats")
+                    .map { it.split(",").map { f -> f.trim() } }
+                    .orElse(ext.batch.formats),
+            )
+            task.recursive.set(
+                cliProp(project, "batchRecursive").map { it.toBoolean() }
+                    .orElse(ext.batch.recursive),
+            )
+        }
+    }
 }

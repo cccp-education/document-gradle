@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 025
+:session: 026
 :date: 2026-07-20
-:status: EPIC DOC-TRANSLATE CLOS (5/5 US, 128 UT document + 1480 tests bakery 0 régression)
+:status: DOC-13 + DOC-14 + DOC-15 TERMINÉS, duplications bakery corrigées
 :max-lines: 70
 
 == Quick Start
@@ -9,33 +9,37 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.translation.*"  # 128 UT GREEN
+./gradlew test --tests "document.template.*" --tests "document.translation.*"  # 143 UT GREEN
 ```
 
 == Contexte de fin
 
-EPIC DOC-TRANSLATE : 5/5 US TERMINÉES. EPIC CLOS.
-- US-1 ✅ : PivotModel + AsciiDocParser + TextTranslatableClassifier (31 UT)
-- US-2 ✅ : PivotYamlRenderer + AsciiDocRenderer + JbakeNativeRenderer (22 UT)
-- US-3 ✅ : ContentTranslationService + PlantUmlTranslationAdapter + PlantUmlClassifier (39 UT)
-- US-4 ✅ : I18nDeltaApplier + ContentChecksum + SubtreeI18nPlanner + SiteTranslationPlan (36 UT)
-- US-5 ✅ : Câblage bakery consommateur — imports bakery.pivot/i18n → document.translation, 1480 tests 0 échec
+Session 025 — 3 EPICs livrés + fix duplications bakery :
+- DOC-13 ✅ : Document Templates (TemplateEngine, ApplyDocumentTemplateTask, DSL template { })
+- DOC-14 ✅ : Batch Pipeline (BatchConvertDocumentsTask, DSL batch { })
+- DOC-15 ✅ : Cross-borough Hardening (compile + tests document + bakery OK)
+- Fix duplications ✅ : I18nDeltaApplier, SubtreeI18nPlanner, I18nDelta supprimés de bakery
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
+. `./gradlew test --tests "document.template.*"` → 15 UT GREEN
 . `./gradlew test --tests "document.translation.*"` → 128 UT GREEN
 . Prochain EPIC : à déterminer (BACKLOG.adoc)
 
-== Fichiers touchés S024
+== Fichiers touchés S025
 
-. `bakery-gradle/bakery-plugin/build.gradle.kts` — +implementation document-plugin:0.0.1
-. `bakery-gradle/bakery-plugin/src/main/kotlin/bakery/` — 12 suppressions + 7 modifications + 2 créations
-. `bakery-gradle/bakery-plugin/src/test/` — 14 suppressions + 16 modifications
-. `bakery-gradle/bakery-plugin/src/test/resources/i18n-fixtures/cheroliv-com/` — fixture + golden master + traductions EN
-. `document-gradle/document-plugin/` — publishToMavenLocal (jar avec document.translation.*)
-. `BACKLOG.adoc` — EPIC DOC-TRANSLATE CLOS
-. `PROMPT_REPRISE.adoc` — ce fichier
-. `INDEX.adoc` — MAJ session 024
-. `SESSIONS_HISTORY.adoc` — MAJ session 024
-. `.agents/sessions/024-translate-us5.adoc` — NOUVEAU
+*document-gradle* :
+. `src/main/kotlin/document/template/` — 4 nouveaux fichiers
+. `src/main/kotlin/document/batch/` — 2 nouveaux fichiers
+. `src/main/kotlin/document/DocumentExtension.kt` — +template +batch DSL
+. `src/main/kotlin/document/DocumentPlugin.kt` — +2 register
+. `src/test/kotlin/document/template/TemplateEngineTest.kt` — 15 UT
+. `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +6 FT
+. `src/test/resources/features/document.feature` — +5 scénarios
+. `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +4 steps
+. `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +4 methods
+
+*bakery-gradle* :
+. Suppression : `I18nDeltaApplier.kt`, `SubtreeI18nPlanner.kt`, `I18nDelta.kt`
+. Modification : `MigrateContentI18nTask.kt`, `I18nDeltaWireSteps.kt`, `ThemeResolverSteps.kt`

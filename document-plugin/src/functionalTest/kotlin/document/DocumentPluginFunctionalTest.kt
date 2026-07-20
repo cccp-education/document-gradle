@@ -1733,4 +1733,170 @@ class DocumentPluginFunctionalTest {
             """.trimIndent()
         )
     }
+
+    @Test
+    fun `applyDocumentTemplate substitutes variables from DSL`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-template\"\n")
+        projectDir.resolve("template.adoc").writeText("= {{title}}\n:author: {{author}}\n\n{{body}}")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "My Doc")
+                    variables.put("author", "Jane")
+                    variables.put("body", "Hello world.")
+                    outputFileName.set("my-doc")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("applyDocumentTemplate")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":applyDocumentTemplate")?.outcome)
+        val output = projectDir.resolve("build/docs/document/my-doc.adoc")
+        assertTrue(output.exists(), "output file must exist at ${output.absolutePath}")
+        val content = output.readText()
+        assertTrue(content.contains("= My Doc"))
+        assertTrue(content.contains(":author: Jane"))
+        assertTrue(content.contains("Hello world."))
+    }
+
+    @Test
+    fun `applyDocumentTemplate fails on missing variable by default`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-template\"\n")
+        projectDir.resolve("template.adoc").writeText("= {{title}}\n\n{{missing}}")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "Doc")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("applyDocumentTemplate")
+            .withPluginClasspath()
+            .buildAndFail()
+
+        assertTrue(result.output.contains("missing") || result.output.contains("Missing"), "must report missing variable")
+    }
+
+    @Test
+    fun `applyDocumentTemplate keeps placeholder when failOnMissingVariable is false`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-template\"\n")
+        projectDir.resolve("template.adoc").writeText("= {{title}}\n\n{{body}}")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "Doc")
+                    failOnMissingVariable.set(false)
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("applyDocumentTemplate")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":applyDocumentTemplate")?.outcome)
+        val output = projectDir.resolve("build/docs/document/document.adoc")
+        assertTrue(output.exists())
+        val content = output.readText()
+        assertTrue(content.contains("= Doc"))
+        assertTrue(content.contains("{{body}}"))
+    }
+
+    @Test
+    fun `applyDocumentTemplate task is listed in document group`() {
+        val projectDir = newTempDir()
+        setupTestProject(projectDir)
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("tasks", "--group", "document")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("applyDocumentTemplate"), "applyDocumentTemplate must be listed")
+    }
+
+    @Test
+    fun `batchConvertDocuments converts all adoc files in a directory`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-batch\"\n")
+        val srcDir = projectDir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("chapter1.adoc").writeText("= Chapter 1\n\nContent.")
+        srcDir.resolve("chapter2.adoc").writeText("= Chapter 2\n\nContent.")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                batch {
+                    sourceDir.set("src/docs")
+                    formats.set(listOf("html", "pdf"))
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("batchConvertDocuments")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":batchConvertDocuments")?.outcome)
+        val outDir = projectDir.resolve("build/docs/batch")
+        assertTrue(outDir.resolve("chapter1.html").exists())
+        assertTrue(outDir.resolve("chapter1.pdf").exists())
+        assertTrue(outDir.resolve("chapter2.html").exists())
+        assertTrue(outDir.resolve("chapter2.pdf").exists())
+    }
+
+    @Test
+    fun `batchConvertDocuments task is listed in document group`() {
+        val projectDir = newTempDir()
+        setupTestProject(projectDir)
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("tasks", "--group", "document")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("batchConvertDocuments"), "batchConvertDocuments must be listed")
+    }
 }

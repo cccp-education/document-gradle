@@ -1153,4 +1153,98 @@ class DocumentWorld {
         buildResult = null
         lastConfigJson = null
     }
+
+    fun createGradleProjectWithTemplateDsl(): File {
+        val dir = Files.createTempDirectory("doc-bdd-tmpl").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("template.adoc").writeText("= {{title}}\n:author: {{author}}\n\n{{body}}")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "My Doc")
+                    variables.put("author", "Jane")
+                    variables.put("body", "Hello world.")
+                    outputFileName.set("my-doc")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithTemplateDslAndMissingVariable(): File {
+        val dir = Files.createTempDirectory("doc-bdd-tmpl-miss").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("template.adoc").writeText("= {{title}}\n\n{{missing}}")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "Doc")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithTemplateDslAndFailOnMissingFalse(): File {
+        val dir = Files.createTempDirectory("doc-bdd-tmpl-soft").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        dir.resolve("template.adoc").writeText("= {{title}}\n\n{{body}}")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                template {
+                    templateFile.set("template.adoc")
+                    variables.put("title", "Doc")
+                    failOnMissingVariable.set(false)
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithBatchDsl(): File {
+        val dir = Files.createTempDirectory("doc-bdd-batch").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("chapter1.adoc").writeText("= Chapter 1\n\nContent.")
+        srcDir.resolve("chapter2.adoc").writeText("= Chapter 2\n\nContent.")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                batch {
+                    sourceDir.set("src/docs")
+                    formats.set(listOf("html", "pdf"))
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
 }

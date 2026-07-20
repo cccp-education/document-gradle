@@ -1,5 +1,7 @@
 package document
 
+import document.batch.BatchDsl
+import document.template.TemplateDsl
 import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -113,18 +115,31 @@ abstract class DocumentExtension {
     lateinit var book: BookDsl
         private set
 
+    /**
+     * Nested DSL block `template { }` (DOC-13 — AsciiDoc template substitution).
+     */
+    lateinit var template: TemplateDsl
+        private set
+
+    lateinit var batch: BatchDsl
+        private set
+
     internal fun initNested(
         enrich: DocumentEnrichDsl,
         outputs: DocumentOutputsDsl,
         metadata: DocumentMetadataDsl,
         releaseNotes: ReleaseNotesDsl,
         book: BookDsl,
+        template: TemplateDsl,
+        batch: BatchDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
         this.metadata = metadata
         this.releaseNotes = releaseNotes
         this.book = book
+        this.template = template
+        this.batch = batch
     }
 
     /**
@@ -167,6 +182,17 @@ abstract class DocumentExtension {
      */
     fun book(action: Action<BookDsl>) {
         action.execute(book)
+    }
+
+    /**
+     * Nested DSL block `template { }` (DOC-13 — AsciiDoc template substitution).
+     */
+    fun template(action: Action<TemplateDsl>) {
+        action.execute(template)
+    }
+
+    fun batch(action: Action<BatchDsl>) {
+        action.execute(batch)
     }
 
     fun formats(vararg formats: DocumentFormat) {
