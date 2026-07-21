@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 027
-:date: 2026-07-20
-:status: DOC-TRANSLATE câblé (translateDocument task + DSL + Ollama adapter). 128 UT + 3 FT + 3 BDD.
+:session: 028
+:date: 2026-07-21
+:status: DocumentTranslator extrait (refacto DDD). 142 UT + 3 FT + 3 BDD. Bakery 0 régression.
 :max-lines: 70
 
 == Quick Start
@@ -9,40 +9,30 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.translation.*"  # 128 UT GREEN
+./gradlew test --tests "document.translation.*"  # 142 UT GREEN
 ./gradlew functionalTest --tests "document.DocumentPluginFunctionalTest.translateDocument*"  # 3 FT GREEN
 ```
 
 == Contexte de fin
 
-Session 026 — Câblage translateDocument :
-- DSL `translation { }` dans DocumentExtension (sourceLanguage, targetLanguage, sourceFile, llmMode)
-- Tâche `translateDocument` dans DocumentPlugin (parse → traduire → render)
-- `OllamaTranslationAdapter` (langchain4j, port 11437, gemma4:31b-cloud)
-- `FakeTranslationService` extrait dans main (réutilisable par bakery)
-- `AsciiDocParser.parseFrontmatter` enrichi (author, jbake-*)
-- `AsciiDocRenderer.renderFrontmatter` enrichi (author, jbake-*)
+Session 027 — Refacto DDD DocumentTranslator :
+- `DocumentTranslator` domain service pur (sans I/O fichier) extrait de ContentTranslationService
+- `ContentTranslationService.translateSingleFile()` + `translateArticle()` déléguent à DocumentTranslator
+- `TranslateDocumentTask.translate()` utilise DocumentTranslator directement
+- 14 nouveaux tests unitaires DocumentTranslatorTest
+- Bakery MigrateContentI18nTaskTest 23/23 PASS, DeltaFunctionalTest 4/4 PASS
+- Zéro régression cross-borough
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
-. `./gradlew test --tests "document.translation.*"` → 128 UT GREEN
-. Prochain EPIC : US-4 — Bakery consommateur pur (appelle translateDocument au lieu de migrateContentI18n)
-. Ou : Traduire les 104 articles cheroliv.com FR→EN via translateDocument
+. `./gradlew test --tests "document.translation.*"` → 142 UT GREEN
+. Option B : Traduire les 104 articles cheroliv.com FR→EN via translateDocument (dogfooding)
 
-== Fichiers touchés S026
+== Fichiers touchés S027
 
 *document-gradle* :
-. `src/main/kotlin/document/translation/TranslationDsl.kt` — nouveau
-. `src/main/kotlin/document/translation/OllamaTranslationAdapter.kt` — nouveau
-. `src/main/kotlin/document/translation/FakeTranslationService.kt` — nouveau
-. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — nouveau
-. `src/main/kotlin/document/DocumentExtension.kt` — +translation DSL
-. `src/main/kotlin/document/DocumentPlugin.kt` — +registerTranslateDocument
-. `src/main/kotlin/document/translation/AsciiDocParser.kt` — parseFrontmatter enrichi
-. `src/main/kotlin/document/translation/AsciiDocRenderer.kt` — renderFrontmatter enrichi
-. `src/test/kotlin/document/translation/TranslateDocumentTaskTest.kt` — 5 UT
-. `src/functionalTest/kotlin/document/DocumentPluginFunctionalTest.kt` — +3 FT
-. `src/test/resources/features/document.feature` — +3 scénarios @doc-translate
-. `src/test/scenarios/document/scenarios/DocumentSteps.kt` — +4 steps
-. `src/test/scenarios/document/scenarios/DocumentWorld.kt` — +2 factories
+. `src/main/kotlin/document/translation/DocumentTranslator.kt` — nouveau (service domaine pur)
+. `src/main/kotlin/document/translation/ContentTranslationService.kt` — refacto (délégation)
+. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — refacto (DocumentTranslator)
+. `src/test/kotlin/document/translation/DocumentTranslatorTest.kt` — nouveau (14 UT)

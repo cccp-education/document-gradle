@@ -1,0 +1,72 @@
+= Session 027 — DocumentTranslator Domain Service (Refacto DDD)
+
+:date: 2026-07-21
+:status: ✅ TERMINÉ
+:epic: DOC-TRANSLATE (extension)
+
+== Objectif
+
+Extraire un `DocumentTranslator` domain service pur (sans I/O fichier) du pipeline
+de traduction, pour que bakery puisse le consommer directement au lieu d'utiliser
+`ContentTranslationService.translateFiles()`.
+
+== Réalisé
+
+=== DDD — DocumentTranslator.kt
+
+- Nouveau fichier : `src/main/kotlin/document/translation/DocumentTranslator.kt`
+- Service domaine pur : `translate(asciidoc: String, srcLang, tgtLang): String`
+- Délégue `translateArticle()` (parse → translateArticle → render)
+- Supporte JBake native headers (détection `isJbakeNative`)
+- Supporte PlantUML via `PlantUmlTranslationAdapter` optionnel
+- Baby-step DDD : extrait de `ContentTranslationService` sans casser l'existant
+
+=== Refacto — ContentTranslationService
+
+- `translateSingleFile()` délègue à `documentTranslator.translate()`
+- `translateArticle()` délègue à `documentTranslator.translateArticle()`
+- Suppression de ~100 lignes de logique dupliquée (translateBlock, translateInline, doTranslate)
+- `documentTranslator` instancié en lazy val
+
+=== Refacto — TranslateDocumentTask
+
+- `translate()` utilise `DocumentTranslator` au lieu de `ContentTranslationService`
+- Simplification : parse + translateArticle + render → translate() en un appel
+
+=== TDD — DocumentTranslatorTest.kt (14 tests)
+
+- translate parses and translates a simple AsciiDoc article
+- translate preserves non-translatable blocks like source code
+- translate preserves frontmatter structure
+- translate handles empty document gracefully
+- translate handles lists and admonitions
+- translate handles JBake native header format
+- translate handles tables
+- translate handles inline code as non-translatable
+- translate handles bold text
+- translate handles links
+- translate handles plantuml blocks when adapter is wired
+- translate preserves plantuml blocks when no adapter is wired
+- translate handles translation failure gracefully
+- translate handles horizontal rules
+
+== Tests
+
+- document translation UT : 128 + 14 = 142 PASS
+- document functionalTest translateDocument* : 3 PASS
+- bakery MigrateContentI18nTaskTest : 23/23 PASS
+- bakery MigrateContentI18nDeltaFunctionalTest : 4/4 PASS
+- bakery i18n.* : tous PASS
+- Cucumber @doc-translate : 3 scénarios (inchangés, refacto interne)
+- Zéro régression cross-borough
+
+== Fichiers modifiés
+
+- `src/main/kotlin/document/translation/DocumentTranslator.kt` — nouveau
+- `src/main/kotlin/document/translation/ContentTranslationService.kt` — refacto
+- `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — refacto
+- `src/test/kotlin/document/translation/DocumentTranslatorTest.kt` — nouveau
+
+== Prochaine session
+
+Option B — Traduire 104 articles cheroliv.com FR→EN via translateDocument (dogfooding).

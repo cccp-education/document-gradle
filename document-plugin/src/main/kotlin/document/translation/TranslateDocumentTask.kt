@@ -59,14 +59,9 @@ abstract class TranslateDocumentTask : DefaultTask() {
             else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 
-        val parser = AsciiDocParser()
-        val renderer = AsciiDocRenderer()
-        val service = ContentTranslationService(translationService, parser, renderer)
-
+        val translator = DocumentTranslator(translationService)
         val original = source.readText()
-        val article = parser.parse(original)
-        val translated = service.translateArticle(article, srcLang, tgtLang)
-        val rendered = renderer.render(translated)
+        val rendered = translator.translate(original, srcLang, tgtLang)
 
         output.parentFile.mkdirs()
         output.writeText(rendered)
