@@ -9,7 +9,7 @@ group = "education.cccp"
 version = libs.plugins.document.get().version
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.6"))
+    implementation(platform("education.cccp:workspace-bom:0.0.11"))
 
     implementation(kotlin("stdlib-jdk8"))
 
