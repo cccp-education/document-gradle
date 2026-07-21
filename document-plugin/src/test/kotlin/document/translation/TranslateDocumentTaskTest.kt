@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TranslateDocumentTaskTest {
@@ -198,5 +199,62 @@ NOTE: Ceci est une note importante.
         assertTrue(content.contains("Ceci est une note importante. [EN]"))
         assertTrue(content.contains("Puce un [EN]"))
         assertTrue(content.contains("Puce deux [EN]"))
+    }
+
+    @Test
+    fun `translateDocument preserves cheroliv com JBake native article`() {
+        val source = tempDir.resolve("0011_gradle_configuration_ide_jbake_content_post.adoc")
+        source.writeText("""= Gradle: dossier resources visible dans l'IDE
+@CherOliv
+2019-08-16
+:jbake-title: Gradle: dossier resources visible dans l'IDE
+:jbake-tags: blog, methodologie, projet, cascade, classique, predictitive, management
+:jbake-type: post
+:jbake-status: published
+:jbake-date: 2019-08-16
+:summary: ajouter un dossier au classpath d'un build gradle
+
+Dans un projet applicatif piloté par le gestionnaire de build Gradle +
+il est plus agréable d'avoir la visibilité sur tous les dossiers +
+participant au développement de l'application.
+
+[source,groovy,numbered]
+----
+plugins {
+    id "java"
+    id "groovy"
+}
+----
+""")
+        val output = tempDir.resolve("output.adoc")
+
+        val parser = AsciiDocParser()
+        val renderer = JbakeNativeRenderer()
+        val fake = FakeTranslationService(" [EN]")
+        val service = ContentTranslationService(fake, parser, renderer)
+
+        val original = source.readText()
+        val article = parser.parse(original)
+        val translated = service.translateArticle(article, "fr", "en")
+        val rendered = renderer.render(translated)
+
+        output.writeText(rendered)
+
+        assertTrue(output.exists())
+        val content = output.readText()
+        val firstLine = content.lineSequence().firstOrNull()
+        assertTrue(firstLine?.startsWith("= ") == true, "expected JBake native header (= ...) on first line, got: $firstLine")
+        assertTrue(content.contains("@CherOliv"))
+        assertTrue(content.contains("2019-08-16"))
+        assertTrue(content.contains(":jbake-type: post"))
+        assertTrue(content.contains(":jbake-status: published"))
+        assertTrue(content.contains(":jbake-date: 2019-08-16"))
+        assertTrue(content.contains(":summary:"))
+        assertTrue(content.contains("plugins {"))
+        assertTrue(content.contains("id \"java\""))
+        assertTrue(content.contains("Dans un projet applicatif piloté par le gestionnaire de build Gradle"))
+        assertTrue(content.contains("[EN]"), "expected fake translation marker in body")
+        assertFalse(content.contains("title="), "must not emit broken YAML frontmatter")
+        assertFalse(content.contains("~~~~~~"), "must not emit broken YAML separator")
     }
 }

@@ -456,3 +456,14 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the translated document should contain 'public class Hello {}'
     And the translated document should contain 'Some text after code. [EN]'
+
+  @doc-translate @translation @jbake-native
+  Scenario: translateDocument preserves cheroliv.com JBake native article structure
+    Given a new document project with translation DSL and a JBake native article
+    When I am executing the task 'translateDocument'
+    Then the build should succeed
+    And the translated document should contain '@CherOliv'
+    And the translated document should contain ':jbake-type: post'
+    And the translated document should contain ':jbake-status: published'
+    And the translated document should contain 'plugins {'
+    And the translated document should not contain '~~~~~~'

@@ -6,6 +6,7 @@ import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DocumentTranslatorTest {
@@ -316,6 +317,48 @@ Ce texte ne sera pas traduit.
     }
 
     @Test
+    fun `translate preserves cheroliv com JBake native article structure`() {
+        val source = """= Gradle: dossier resources visible dans l'IDE
+@CherOliv
+2019-08-16
+:jbake-title: Gradle: dossier resources visible dans l'IDE
+:jbake-tags: blog, methodologie, projet, cascade, classique, predictitive, management
+:jbake-type: post
+:jbake-status: published
+:jbake-date: 2019-08-16
+:summary: ajouter un dossier au classpath d'un build gradle
+
+Dans un projet applicatif piloté par le gestionnaire de build Gradle +
+il est plus agréable d'avoir la visibilité sur tous les dossiers.
+
+[source,groovy,numbered]
+----
+plugins {
+    id "java"
+    id "groovy"
+}
+----
+"""
+
+        val result = translator.translate(source, "fr", "en")
+
+        assertTrue(result.startsWith("= Gradle: dossier resources visible dans l'IDE [EN]"), "expected translated title on first line, got: ${result.lineSequence().firstOrNull()}")
+        assertTrue(result.contains("@CherOliv"))
+        assertTrue(result.contains("2019-08-16"))
+        assertTrue(result.contains(":jbake-title:"))
+        assertTrue(result.contains(":jbake-tags:"))
+        assertTrue(result.contains(":jbake-type: post"))
+        assertTrue(result.contains(":jbake-status: published"))
+        assertTrue(result.contains(":jbake-date: 2019-08-16"))
+        assertTrue(result.contains(":summary:"))
+        assertTrue(result.contains("il est plus agréable d'avoir la visibilité sur tous les dossiers. [EN]"))
+        assertTrue(result.contains("plugins {"))
+        assertTrue(result.contains("id \"java\""))
+        assertFalse(result.contains("title="), "must not emit broken YAML frontmatter")
+        assertFalse(result.contains("~~~~~~"), "must not emit broken YAML separator")
+    }
+
+    @Test
     fun `translate handles horizontal rules`() {
         val source = """title=HR
 date=2026-07-20
@@ -339,5 +382,28 @@ Texte section deux.
         assertTrue(result.contains("---"))
         assertTrue(result.contains("Texte section un. [EN]"))
         assertTrue(result.contains("Texte section deux. [EN]"))
+    }
+
+    @Test
+    fun `translate translates jbake summary and description attributes`() {
+        val source = """= Article avec Resume
+@CherOliv
+2026-07-21
+:jbake-title: Article avec Resume
+:jbake-type: post
+:jbake-status: published
+:jbake-date: 2026-07-21
+:jbake-summary: Un resume court de l article en francais
+:jbake-description: Une description longue de l article en francais avec des details
+
+Corps de l article.
+"""
+
+        val result = translator.translate(source, "fr", "en")
+
+        assertTrue(result.contains(":jbake-summary: Un resume court de l article en francais [EN]"),
+            "jbake-summary must be translated, got: ${result.lines().find { it.contains(":jbake-summary:") }}")
+        assertTrue(result.contains(":jbake-description: Une description longue de l article en francais avec des details [EN]"),
+            "jbake-description must be translated, got: ${result.lines().find { it.contains(":jbake-description:") }}")
     }
 }

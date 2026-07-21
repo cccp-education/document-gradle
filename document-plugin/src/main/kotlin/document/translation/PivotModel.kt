@@ -76,6 +76,10 @@ sealed class PivotInline {
         val label: String,
         override val translatable: Boolean
     ) : PivotInline()
+
+    data object LineBreak : PivotInline() {
+        override val translatable: Boolean = false
+    }
 }
 
 data class PivotFrontmatter(

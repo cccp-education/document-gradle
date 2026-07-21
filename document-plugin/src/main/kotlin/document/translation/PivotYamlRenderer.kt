@@ -120,6 +120,10 @@ class PivotYamlRenderer {
                 sb.append("$indent${INDENT_1}label: ${yamlString(inline.label)}\n")
                 sb.append("$indent${INDENT_1}translatable: ${inline.translatable}\n")
             }
+            is PivotInline.LineBreak -> {
+                sb.append("$indent- type: line_break\n")
+                sb.append("$indent${INDENT_1}translatable: false\n")
+            }
         }
     }
 

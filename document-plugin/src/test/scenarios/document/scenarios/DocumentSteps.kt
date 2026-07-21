@@ -914,6 +914,19 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with translation DSL and a JBake native article")
+    fun createNewDocumentProjectWithTranslationDslAndJbakeNativeArticle() {
+        world.createGradleProjectWithTranslationDslAndJbakeNativeArticle()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the translated document should not contain {string}")
+    fun translatedDocumentShouldNotContain(unexpected: String) {
+        val output = world.projectDir!!.resolve("build/docs/document/document-en.adoc")
+        assertThat(output).exists()
+        assertThat(output.readText()).doesNotContain(unexpected)
+    }
+
     @Then("the translated document should contain {string}")
     fun translatedDocumentShouldContain(expected: String) {
         val output = world.projectDir!!.resolve("build/docs/document/document-en.adoc")

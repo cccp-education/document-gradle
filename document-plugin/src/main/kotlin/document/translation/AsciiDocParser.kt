@@ -156,6 +156,11 @@ class AsciiDocParser {
                     blocks.add(block)
                     i = next
                 }
+                isMarkdownFence(line) -> {
+                    val (block, next) = parseMarkdownFencedBlock(lines, i)
+                    blocks.add(block)
+                    i = next
+                }
                 line.startsWith("[") && line.endsWith("]") && !line.startsWith("[cols") -> {
                     val kind = line.removeSurrounding("[", "]").trim()
                     if (kind in ADMONITION_KINDS) {
@@ -228,6 +233,19 @@ class AsciiDocParser {
         if (trimmed == "----") return true
         if (trimmed == "====") return true
         return false
+    }
+
+    private fun isMarkdownFence(line: String): Boolean = line.trim().startsWith("```")
+
+    private fun parseMarkdownFencedBlock(lines: List<String>, start: Int): Pair<PivotBlock.Source, Int> {
+        val fenceLine = lines[start].trim()
+        val language = fenceLine.removePrefix("```").trim()
+        var i = start + 1
+        val contentStart = i
+        while (i < lines.size && !lines[i].trim().startsWith("```")) i++
+        val content = lines.subList(contentStart, i).joinToString("\n")
+        if (i < lines.size) i++
+        return PivotBlock.Source(language, content) to i
     }
 
     private fun parseAdmonition(lines: List<String>, start: Int, kind: String): Pair<PivotBlock.Admonition, Int> {
@@ -345,7 +363,7 @@ class AsciiDocParser {
     }
 
     private fun parseParagraph(lines: List<String>, start: Int): Pair<PivotBlock.Paragraph?, Int> {
-        val sb = StringBuilder()
+        val collectedLines = mutableListOf<String>()
         var i = start
         while (i < lines.size && lines[i].isNotBlank() &&
             !lines[i].startsWith("=") && !isUnorderedListMarker(lines[i]) &&
@@ -353,16 +371,34 @@ class AsciiDocParser {
             !lines[i].startsWith("[") &&
             !lines[i].startsWith("|===") && !lines[i].startsWith("---") &&
             !lines[i].startsWith("----")) {
-            if (sb.isNotEmpty()) sb.append(" ")
-            sb.append(lines[i].trim())
+            collectedLines.add(lines[i].trim())
             i++
         }
-        if (sb.isEmpty()) {
+        if (collectedLines.isEmpty()) {
             val next = if (i < lines.size) i + 1 else i
             return null to next
         }
-        val inline = parseInline(sb.toString())
+        val inline = buildParagraphInlines(collectedLines)
         return PivotBlock.Paragraph(inline) to i
+    }
+
+    private fun buildParagraphInlines(lines: List<String>): List<PivotInline> {
+        val result = mutableListOf<PivotInline>()
+        for ((idx, line) in lines.withIndex()) {
+            val isLastLine = idx == lines.size - 1
+            val hasLineBreak = line.endsWith("+") && !isLastLine
+            val stripped = if (hasLineBreak) line.removeSuffix("+").trimEnd() else line
+            if (stripped.isNotEmpty()) {
+                if (result.isNotEmpty() && result.last() !is PivotInline.LineBreak) {
+                    result.add(PivotInline.Text(" ", true))
+                }
+                result.addAll(parseInline(stripped))
+            }
+            if (hasLineBreak) {
+                result.add(PivotInline.LineBreak)
+            }
+        }
+        return result
     }
 
     private fun parseInline(text: String): List<PivotInline> {

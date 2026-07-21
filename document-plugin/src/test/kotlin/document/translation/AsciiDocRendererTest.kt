@@ -184,4 +184,27 @@ Content here.
         assertTrue(rendered.startsWith("title=Empty"))
         assertTrue(rendered.contains("~~~~~~"))
     }
+
+    @Test
+    fun `roundtrip preserves plus line continuations`() {
+        val original = """title=Continuation Test
+date=2026-01-01
+type=page
+status=published
+~~~~~~
+
+depuis le dossier ou est le fichier +
+ouvrir un terminal et copier coller +
+resultat attendu.
+"""
+        val article = parser.parse(original)
+        val rendered = renderer.render(article)
+
+        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
+            "Roundtrip should preserve + continuation on first line")
+        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
+            "Roundtrip should preserve + continuation on second line")
+        assertTrue(rendered.contains("resultat attendu."),
+            "Roundtrip should preserve last line without +")
+    }
 }

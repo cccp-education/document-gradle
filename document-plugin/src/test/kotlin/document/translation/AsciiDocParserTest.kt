@@ -670,4 +670,75 @@ class AsciiDocParserTest {
         assertTrue(src.content.contains("echo hello"))
         assertTrue(article.blocks[3] is PivotBlock.Paragraph)
     }
+
+    @Test
+    fun `parses markdown fenced code block as source block`() {
+        val adoc = """
+            = Gradle cli: surcharger un paramètre
+            @CherOliv
+            2020-09-22
+            :jbake-type: post
+            :jbake-status: published
+
+            ===== Surcharger un parametre par la ligne de commande :
+
+            ```
+            $ ./gradlew -Pparam_component=CUSTOM
+            ```
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val blocks = article.blocks
+        assertTrue(blocks.any { it is PivotBlock.Source }, "expected a Source block for fenced markdown code, got: $blocks")
+        val src = blocks.filterIsInstance<PivotBlock.Source>().first()
+        assertTrue(src.content.contains("./gradlew -Pparam_component=CUSTOM"), "expected code content preserved, got: ${src.content}")
+        assertTrue(blocks.none { it is PivotBlock.Paragraph && (it.inline.joinToString("") { if (it is PivotInline.Text) it.text else "" }).contains("```") },
+            "fenced markers must not leak into paragraph text")
+    }
+
+    @Test
+    fun `parses paragraph with plus line continuation as LineBreak inline`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            depuis le dossier ou est le fichier +
+            ouvrir un terminal et copier coller pour executer le script +
+            resultat attendu.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val para = article.blocks[0] as PivotBlock.Paragraph
+        val lineBreaks = para.inline.filterIsInstance<PivotInline.LineBreak>()
+        assertEquals(2, lineBreaks.size, "Expected 2 LineBreak inlines for two + continuations")
+        assertTrue(para.inline.any { it is PivotInline.Text && it.text.contains("depuis le dossier") })
+        assertTrue(para.inline.any { it is PivotInline.Text && it.text.contains("ouvrir un terminal") })
+        assertTrue(para.inline.any { it is PivotInline.Text && it.text.contains("resultat attendu") })
+    }
+
+    @Test
+    fun `parses paragraph with single plus at end of last line as literal text`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            une seule ligne avec un plus a la fin +
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val para = article.blocks[0] as PivotBlock.Paragraph
+        val lineBreaks = para.inline.filterIsInstance<PivotInline.LineBreak>()
+        assertEquals(0, lineBreaks.size, "Single line with + at end should not produce LineBreak")
+        val text = para.inline.filterIsInstance<PivotInline.Text>().joinToString("") { it.text }
+        assertTrue(text.contains("plus a la fin +"), "Trailing + on last line should be preserved as literal text")
+    }
 }

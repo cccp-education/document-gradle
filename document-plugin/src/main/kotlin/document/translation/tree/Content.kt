@@ -31,4 +31,5 @@ private fun PivotInline.textValue(): String = when (this) {
     is PivotInline.Bold -> text
     is PivotInline.Code -> text
     is PivotInline.Link -> label
+    is PivotInline.LineBreak -> "\n"
 }

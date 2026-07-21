@@ -153,4 +153,67 @@ class JbakeNativeRendererTest {
         assertTrue(rendered.contains(":jbake-tags: blog"),
             "Expected tags preserved, got: ${rendered.take(300)}")
     }
+
+    @Test
+    fun `renders paragraph with LineBreak as plus continuation lines`() {
+        val article = PivotArticle(
+            frontmatter = PivotFrontmatter(
+                title = "LineBreak Test",
+                date = "2020-01-15",
+                type = "post",
+                status = "published",
+                author = "CherOliv",
+                jbakeAttributes = mapOf(
+                    "title" to "LineBreak Test",
+                    "type" to "post",
+                    "status" to "published",
+                    "date" to "2020-01-15"
+                )
+            ),
+            blocks = listOf(
+                PivotBlock.Paragraph(listOf(
+                    PivotInline.Text("depuis le dossier ou est le fichier", true),
+                    PivotInline.LineBreak,
+                    PivotInline.Text("ouvrir un terminal et copier coller", true),
+                    PivotInline.LineBreak,
+                    PivotInline.Text("resultat attendu.", true)
+                ))
+            )
+        )
+
+        val rendered = renderer.render(article)
+
+        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
+            "Expected first line with + continuation, got: ${rendered.take(300)}")
+        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
+            "Expected second line with + continuation, got: ${rendered.take(300)}")
+        assertTrue(rendered.contains("resultat attendu."),
+            "Expected last line without +, got: ${rendered.take(300)}")
+    }
+
+    @Test
+    fun `jbake native roundtrip preserves plus line continuations`() {
+        val adoc = """
+            = Continuation Test
+            @CherOliv
+            2020-01-15
+            :jbake-type: post
+            :jbake-status: published
+            :jbake-date: 2020-01-15
+
+            depuis le dossier ou est le fichier +
+            ouvrir un terminal et copier coller +
+            resultat attendu.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+        val rendered = renderer.render(article)
+
+        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
+            "Roundtrip should preserve + continuation on first line")
+        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
+            "Roundtrip should preserve + continuation on second line")
+        assertTrue(rendered.contains("resultat attendu."),
+            "Roundtrip should preserve last line without +")
+    }
 }

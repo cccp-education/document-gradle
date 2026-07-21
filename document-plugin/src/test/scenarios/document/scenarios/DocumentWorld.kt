@@ -1324,4 +1324,50 @@ Some text after code.
         projectDir = dir
         return dir
     }
+
+    fun createGradleProjectWithTranslationDslAndJbakeNativeArticle(): File {
+        val dir = Files.createTempDirectory("doc-bdd-translate-jbake").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("article.adoc").writeText("""= Gradle: dossier resources visible dans l'IDE
+@CherOliv
+2019-08-16
+:jbake-title: Gradle: dossier resources visible dans l'IDE
+:jbake-tags: blog, methodologie, projet, cascade, classique, predictitive, management
+:jbake-type: post
+:jbake-status: published
+:jbake-date: 2019-08-16
+:summary: ajouter un dossier au classpath d'un build gradle
+
+Dans un projet applicatif piloté par le gestionnaire de build Gradle +
+il est plus agréable d'avoir la visibilité sur tous les dossiers +
+participant au développement de l'application.
+
+[source,groovy,numbered]
+----
+plugins {
+    id "java"
+    id "groovy"
+}
+----
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    sourceFile.set("src/docs/article.adoc")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
 }

@@ -45,8 +45,32 @@ class AsciiDocRenderer : ArticleRenderer {
     }
 
     private fun renderParagraph(p: PivotBlock.Paragraph, sb: StringBuilder) {
-        val line = p.inline.joinToString("") { renderInline(it) }
-        sb.appendLine(line)
+        val lines = splitParagraphLines(p.inline)
+        for ((idx, line) in lines.withIndex()) {
+            if (idx < lines.size - 1) {
+                sb.appendLine("$line +")
+            } else {
+                sb.appendLine(line)
+            }
+        }
+    }
+
+    private fun splitParagraphLines(inlines: List<PivotInline>): List<String> {
+        val lines = mutableListOf<String>()
+        val current = StringBuilder()
+        for (inline in inlines) {
+            when (inline) {
+                is PivotInline.LineBreak -> {
+                    lines.add(current.toString().trimEnd())
+                    current.clear()
+                }
+                else -> current.append(renderInline(inline))
+            }
+        }
+        if (current.isNotEmpty() || lines.isEmpty()) {
+            lines.add(current.toString().trimEnd())
+        }
+        return lines
     }
 
     private fun renderList(list: PivotBlock.ListBlock, sb: StringBuilder) {
@@ -110,5 +134,6 @@ class AsciiDocRenderer : ArticleRenderer {
                 "link:${inline.url}[${inline.label}]"
             }
         }
+        is PivotInline.LineBreak -> ""
     }
 }

@@ -40,7 +40,14 @@ class DocumentTranslator(
         targetLanguage: String
     ): PivotFrontmatter {
         val translatedTitle = doTranslate(fm.title, sourceLanguage, targetLanguage)
-        return fm.copy(title = translatedTitle)
+        val translatedJbakeAttrs = fm.jbakeAttributes.toMutableMap()
+        translatedJbakeAttrs["summary"]?.let {
+            translatedJbakeAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage)
+        }
+        translatedJbakeAttrs["description"]?.let {
+            translatedJbakeAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage)
+        }
+        return fm.copy(title = translatedTitle, jbakeAttributes = translatedJbakeAttrs)
     }
 
     private fun translateBlock(
@@ -116,6 +123,7 @@ class DocumentTranslator(
                 inline.copy(label = doTranslate(inline.label, sourceLanguage, targetLanguage))
             } else inline
         }
+        is PivotInline.LineBreak -> inline
     }
 
     private fun doTranslate(text: String, sourceLanguage: String, targetLanguage: String): String {
