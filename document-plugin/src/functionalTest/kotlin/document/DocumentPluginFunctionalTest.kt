@@ -2016,4 +2016,180 @@ Some text after code.
         assertTrue(content.contains("public class Hello {}"))
         assertTrue(content.contains("Some text after code. [EN]"))
     }
+
+    @Test
+    fun `translateDocumentBatch task is registered`() {
+        val projectDir = newTempDir()
+        setupTestProject(projectDir)
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("tasks", "--group", "document")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("translateDocumentBatch"), "translateDocumentBatch must be listed")
+    }
+
+    @Test
+    fun `translateDocumentBatch translates all adoc files from source dir to output dir via fake LLM`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-batch-translate\"\n")
+        val srcDir = projectDir.resolve("src/docs/blog")
+        srcDir.mkdirs()
+        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Introduction
+
+Texte un en francais.
+""")
+        srcDir.resolve("article2.adoc").writeText("""title=Article Deux
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Section
+
+Texte deux en francais.
+""")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs/blog")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("translateDocumentBatch")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
+        val outDir = projectDir.resolve("build/docs/translation")
+        assertTrue(outDir.resolve("article1.adoc").exists(), "article1.adoc must be translated")
+        assertTrue(outDir.resolve("article2.adoc").exists(), "article2.adoc must be translated")
+        assertTrue(outDir.resolve("article1.adoc").readText().contains("Article Un [EN]"))
+        assertTrue(outDir.resolve("article2.adoc").readText().contains("Article Deux [EN]"))
+    }
+
+    @Test
+    fun `translateDocumentBatch preserves subdirectory structure`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-batch-subdirs\"\n")
+        val srcDir = projectDir.resolve("src/docs")
+        srcDir.resolve("2019").mkdirs()
+        srcDir.resolve("2026").mkdirs()
+        srcDir.resolve("2019/old.adoc").writeText("""title=Old
+date=2019-01-01
+type=page
+status=published
+~~~~~~
+
+Vieux texte.
+""")
+        srcDir.resolve("2026/new.adoc").writeText("""title=New
+date=2026-07-22
+type=page
+status=published
+~~~~~~
+
+Nouveau texte.
+""")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("translateDocumentBatch")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
+        val outDir = projectDir.resolve("build/docs/translation")
+        assertTrue(outDir.resolve("2019/old.adoc").exists(), "subdir structure 2019/old.adoc must be preserved")
+        assertTrue(outDir.resolve("2026/new.adoc").exists(), "subdir structure 2026/new.adoc must be preserved")
+    }
+
+    @Test
+    fun `translateDocumentBatch skips excluded paths`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-batch-exclude\"\n")
+        val srcDir = projectDir.resolve("src/docs")
+        srcDir.resolve("blog").mkdirs()
+        srcDir.resolve("draft").mkdirs()
+        srcDir.resolve("blog/keep.adoc").writeText("""title=Keep
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+Garder.
+""")
+        srcDir.resolve("draft/skip.adoc").writeText("""title=Skip
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+Passer.
+""")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs")
+                    batchExcludePaths.set("draft")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("translateDocumentBatch")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
+        val outDir = projectDir.resolve("build/docs/translation")
+        assertTrue(outDir.resolve("blog/keep.adoc").exists(), "blog/keep.adoc must be translated")
+        assertTrue(!outDir.resolve("draft/skip.adoc").exists(), "draft/skip.adoc must be excluded")
+    }
 }

@@ -920,6 +920,31 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with batch translation DSL")
+    fun createNewDocumentProjectWithBatchTranslationDsl() {
+        world.createGradleProjectWithBatchTranslationDsl()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with batch translation DSL and excluded drafts")
+    fun createNewDocumentProjectWithBatchTranslationDslAndExcludedDrafts() {
+        world.createGradleProjectWithBatchTranslationDslAndExcludedDrafts()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Then("the batch translated output should contain file {string} with content {string}")
+    fun batchTranslatedOutputShouldContainFileWithContent(relPath: String, expected: String) {
+        val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
+        assertThat(output).exists()
+        assertThat(output.readText()).contains(expected)
+    }
+
+    @Then("the batch translated output should not contain file {string}")
+    fun batchTranslatedOutputShouldNotContainFile(relPath: String) {
+        val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
+        assertThat(output).doesNotExist()
+    }
+
     @Then("the translated document should not contain {string}")
     fun translatedDocumentShouldNotContain(unexpected: String) {
         val output = world.projectDir!!.resolve("build/docs/document/document-en.adoc")

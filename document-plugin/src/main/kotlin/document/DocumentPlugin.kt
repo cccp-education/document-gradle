@@ -5,6 +5,7 @@ import document.batch.BatchDsl
 import document.template.ApplyDocumentTemplateTask
 import document.template.TemplateDsl
 import document.translation.TranslateDocumentTask
+import document.translation.TranslateDocumentBatchTask
 import document.translation.TranslationDsl
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -83,6 +84,9 @@ class DocumentPlugin : Plugin<Project> {
                 sourceFile = project.objects.property(String::class.java),
                 outputFileName = project.objects.property(String::class.java),
                 llmMode = project.objects.property(String::class.java),
+                batchSourceDir = project.objects.property(String::class.java),
+                batchOutputDir = project.objects.property(String::class.java),
+                batchExcludePaths = project.objects.property(String::class.java),
             ),
         )
 
@@ -127,6 +131,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.targetLanguage.convention("en")
         ext.translation.llmMode.convention("ollama")
         ext.translation.outputFileName.convention("document")
+        ext.translation.batchSourceDir.convention("")
+        ext.translation.batchOutputDir.convention("")
+        ext.translation.batchExcludePaths.convention("")
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -167,6 +174,7 @@ class DocumentPlugin : Plugin<Project> {
         registerApplyDocumentTemplate(project, ext)
         registerBatchConvertDocuments(project, ext)
         registerTranslateDocument(project, ext)
+        registerTranslateDocumentBatch(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -422,6 +430,26 @@ class DocumentPlugin : Plugin<Project> {
                         .map { "docs/document/$it-${ext.translation.targetLanguage.get()}.adoc" },
                 ),
             )
+        }
+    }
+
+    private fun registerTranslateDocumentBatch(project: Project, ext: DocumentExtension) {
+        project.tasks.register("translateDocumentBatch", TranslateDocumentBatchTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Batch-translates all AsciiDoc files in a directory from source language to target language via LLM. — DOC-TRANSLATE-BATCH"
+            val cliSourceDir = cliProp(project, "translateBatchSourceDir").map { project.layout.projectDirectory.dir(it) }
+            task.sourceDir.set(cliSourceDir.orElse(ext.translation.batchSourceDir.map { project.layout.projectDirectory.dir(it) }))
+            task.outputDir.set(
+                project.layout.buildDirectory.dir(
+                    project.providers.gradleProperty("document.translateBatchOutputDir")
+                        .orElse(ext.translation.batchOutputDir)
+                        .map { if (it.isBlank()) "docs/translation" else it },
+                ),
+            )
+            task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
+            task.targetLanguage.set(cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage))
+            task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+            task.excludePaths.set(cliProp(project, "translateBatchExcludePaths").orElse(ext.translation.batchExcludePaths))
         }
     }
 }

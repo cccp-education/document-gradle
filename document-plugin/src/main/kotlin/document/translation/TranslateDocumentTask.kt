@@ -55,7 +55,7 @@ abstract class TranslateDocumentTask : DefaultTask() {
 
         val translationService: TranslationService = when (mode.lowercase()) {
             "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
-            "ollama" -> OllamaTranslationAdapter()
+            "ollama" -> PooledOllamaTranslationAdapter.create()
             else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 

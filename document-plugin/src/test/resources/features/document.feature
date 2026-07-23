@@ -467,3 +467,25 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the translated document should contain ':jbake-status: published'
     And the translated document should contain 'plugins {'
     And the translated document should not contain '~~~~~~'
+
+  @doc-translate @translation @batch
+  Scenario: translateDocumentBatch task is registered
+    Given a new document project
+    When I am executing the task 'tasks' with group 'document'
+    Then the output should contain 'translateDocumentBatch'
+
+  @doc-translate @translation @batch
+  Scenario: translateDocumentBatch translates all adoc files from source dir to output dir
+    Given a new document project with batch translation DSL
+    When I am executing the task 'translateDocumentBatch'
+    Then the build should succeed
+    And the batch translated output should contain file 'article1.adoc' with content 'Article Un [EN]'
+    And the batch translated output should contain file 'article2.adoc' with content 'Article Deux [EN]'
+
+  @doc-translate @translation @batch
+  Scenario: translateDocumentBatch skips excluded paths
+    Given a new document project with batch translation DSL and excluded drafts
+    When I am executing the task 'translateDocumentBatch'
+    Then the build should succeed
+    And the batch translated output should contain file 'blog/keep.adoc' with content 'Keep [EN]'
+    And the batch translated output should not contain file 'draft/skip.adoc'

@@ -1370,4 +1370,91 @@ plugins {
         projectDir = dir
         return dir
     }
+
+    fun createGradleProjectWithBatchTranslationDsl(): File {
+        val dir = Files.createTempDirectory("doc-bdd-batch-translate").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
+        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Introduction
+
+Texte un en francais.
+""")
+        srcDir.resolve("article2.adoc").writeText("""title=Article Deux
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+== Section
+
+Texte deux en francais.
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs/blog")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithBatchTranslationDslAndExcludedDrafts(): File {
+        val dir = Files.createTempDirectory("doc-bdd-batch-translate-exclude").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs").apply { mkdirs() }
+        srcDir.resolve("blog").mkdirs()
+        srcDir.resolve("draft").mkdirs()
+        srcDir.resolve("blog/keep.adoc").writeText("""title=Keep
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+Garder.
+""")
+        srcDir.resolve("draft/skip.adoc").writeText("""title=Skip
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+Passer.
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs")
+                    batchExcludePaths.set("draft")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
 }
