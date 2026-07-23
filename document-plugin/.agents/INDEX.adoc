@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-21 (session 027 — DocumentTranslator domain service refacto DDD)
-_Session terminee_ : 027 — DocumentTranslator extrait (142 UT + 3 FT + 3 BDD), bakery 0 régression
-_Prochaine session_ : 028 — Option B : Traduire 104 articles cheroliv.com FR→EN via translateDocument
+_Derniere mise a jour_ : 2026-07-24 (session 028 — PooledOllamaTranslationAdapter rotation 11437-11465)
+_Session terminee_ : 028 — PooledOllamaTranslationAdapter (149 UT + 3 FT + 3 BDD), bakery 0 régression
+_Prochaine session_ : 029 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch
 
 '''
 == REGLES ABSOLUES (resume)

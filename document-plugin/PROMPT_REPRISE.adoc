@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 028
-:date: 2026-07-21
-:status: DocumentTranslator extrait (refacto DDD). 142 UT + 3 FT + 3 BDD. Bakery 0 régression.
+:session: 029
+:date: 2026-07-24
+:status: PooledOllamaTranslationAdapter livré (rotation 11437-11465). 149 UT + 3 FT + 3 BDD. Bakery 0 régression.
 :max-lines: 70
 
 == Quick Start
@@ -9,30 +9,36 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.translation.*"  # 142 UT GREEN
+./gradlew test --tests "document.translation.*"  # 149 UT GREEN
 ./gradlew functionalTest --tests "document.DocumentPluginFunctionalTest.translateDocument*"  # 3 FT GREEN
 ```
 
 == Contexte de fin
 
-Session 027 — Refacto DDD DocumentTranslator :
-- `DocumentTranslator` domain service pur (sans I/O fichier) extrait de ContentTranslationService
-- `ContentTranslationService.translateSingleFile()` + `translateArticle()` déléguent à DocumentTranslator
-- `TranslateDocumentTask.translate()` utilise DocumentTranslator directement
-- 14 nouveaux tests unitaires DocumentTranslatorTest
-- Bakery MigrateContentI18nTaskTest 23/23 PASS, DeltaFunctionalTest 4/4 PASS
-- Zéro régression cross-borough
+Session 028 — PooledOllamaTranslationAdapter + rotation CI/CD :
+- `PooledOllamaTranslationAdapter` : TranslationService avec round-robin sur 29 ports (11437-11465)
+- Fallback : si un port échoue → suivant, tous épuisés → Failure
+- `create()` factory : DEFAULT_PORT_RANGE = 11437..11465, model = gemma4:31b-cloud
+- Câblé dans `TranslateDocumentTask` + `TranslateDocumentBatchTask` (remplace single-endpoint)
+- 7 nouveaux UT PooledOllamaTranslationAdapterTest
+- N0 i18n-contracts : `OllamaConfig` (portStart/portEnd Jackson-compatible) + `OllamaDeviceKey` (toString masqué)
+- CI workflow `translate-i18n-content.yml` + `translate-cheroliv-com.yml` dans office
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
-. `./gradlew test --tests "document.translation.*"` → 142 UT GREEN
-. Option B : Traduire les 104 articles cheroliv.com FR→EN via translateDocument (dogfooding)
+. `./gradlew test --tests "document.translation.*"` → 149 UT GREEN
+. Option B : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch (dogfooding)
+. Option C : CI-4 site.yml avec 29 Device Keys → workflow_dispatch translate-cheroliv-com
 
-== Fichiers touchés S027
+== Fichiers touchés S028
 
 *document-gradle* :
-. `src/main/kotlin/document/translation/DocumentTranslator.kt` — nouveau (service domaine pur)
-. `src/main/kotlin/document/translation/ContentTranslationService.kt` — refacto (délégation)
-. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — refacto (DocumentTranslator)
-. `src/test/kotlin/document/translation/DocumentTranslatorTest.kt` — nouveau (14 UT)
+. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — nouveau (rotation round-robin)
+. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — câblage PooledOllamaTranslationAdapter
+. `src/main/kotlin/document/translation/TranslateDocumentBatchTask.kt` — câblage PooledOllamaTranslationAdapter
+. `src/test/kotlin/document/translation/PooledOllamaTranslationAdapterTest.kt` — nouveau (7 UT)
+
+*i18n-contracts (workspace-bom)* :
+. `OllamaConfig.kt` — nouveau (portStart/portEnd, portRange dérivé, baseUrls)
+. `OllamaDeviceKey.kt` — nouveau (toString masqué ssh-ed25519***[N chars])
