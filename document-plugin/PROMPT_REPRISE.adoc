@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 029
 :date: 2026-07-24
-:status: PooledOllamaTranslationAdapter livré (rotation 11437-11465). 149 UT + 3 FT + 3 BDD. Bakery 0 régression.
+:status: PooledOllamaTranslationAdapter livré — pool de connexion round-robin 29 ports (11437-11465). 149 UT + 3 FT + 3 BDD. Bakery 0 régression.
 :max-lines: 70
 
 == Quick Start
@@ -12,6 +12,26 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew test --tests "document.translation.*"  # 149 UT GREEN
 ./gradlew functionalTest --tests "document.DocumentPluginFunctionalTest.translateDocument*"  # 3 FT GREEN
 ```
+
+== Technique de pool de connexion Ollama
+
+`PooledOllamaTranslationAdapter` implémente `TranslationService` (contrat N0 i18n-contracts)
+avec un pool de connexion round-robin sur les 29 ports 11437-11465 :
+
+- Chaque port = une instance Ollama Docker avec sa propre Device Key SSH ed25519
+- Chaque Device Key = un compte Ollama Pro distinct (17€/mois en annuel)
+- Rotation : `AtomicInteger` incrémenté à chaque appel → `index % 29`
+- Fallback : si un port échoue (Connection refused, rate-limit 429, timeout) → port suivant
+- Tous les ports épuisés → `TranslationResult.Failure`
+- `create()` factory : `DEFAULT_PORT_RANGE = 11437..11465`, model = `gemma4:31b-cloud`
+- Ports 11434-11436 JAMAIS utilisés (comptes Google personnels, intouchables)
+
+== Cible : cheroliv.com
+
+Le site `office/sites/cheroliv.com` contient 104 articles de blog en AsciiDoc (FR).
+Objectif : traduire FR→EN via `translateDocumentBatch`, puis 10 langues.
+Les articles sont des documents AsciiDoc → traités par document-gradle (N2 WRITE + PUBLISH).
+Le pipeline : `AsciiDocParser` → `DocumentTranslator` → `PooledOllamaTranslationAdapter` → `JbakeNativeRenderer`.
 
 == Contexte de fin
 
@@ -28,13 +48,13 @@ Session 028 — PooledOllamaTranslationAdapter + rotation CI/CD :
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
 . `./gradlew test --tests "document.translation.*"` → 149 UT GREEN
-. Option B : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch (dogfooding)
-. Option C : CI-4 site.yml avec 29 Device Keys → workflow_dispatch translate-cheroliv-com
+. Dogfooding : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch
+. CI-4 : `site.yml` cheroliv.com avec 29 vraies Device Keys → workflow_dispatch translate-cheroliv-com
 
 == Fichiers touchés S028
 
 *document-gradle* :
-. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — nouveau (rotation round-robin)
+. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — nouveau (pool round-robin 29 ports)
 . `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — câblage PooledOllamaTranslationAdapter
 . `src/main/kotlin/document/translation/TranslateDocumentBatchTask.kt` — câblage PooledOllamaTranslationAdapter
 . `src/test/kotlin/document/translation/PooledOllamaTranslationAdapterTest.kt` — nouveau (7 UT)
