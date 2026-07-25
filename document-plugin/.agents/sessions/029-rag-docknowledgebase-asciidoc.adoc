@@ -1,0 +1,55 @@
+= Session 029 — RAG DocKnowledgeBase AsciiDoc + Correction articles EN cheroliv.com
+:date: 2026-07-25
+:type: feat + fix
+:score: 9/10
+
+== Objectif
+
+Câbler la réalité augmentée (doc officielle AsciiDoc) dans le pipeline de traduction document-gradle, et corriger les 3 articles EN cassés de cheroliv.com.
+
+== Contexte
+
+Les LLM sont entraînés massivement sur Markdown et confondent AsciiDoc avec Markdown, produisant des traductions qui cassent la syntaxe AsciiDoc (PlantUML blocks fusionnés, tableaux écrasés, `[source]` vidés). Le PivotModel protège la structure, mais le LLM a besoin de la doc officielle sous les yeux pour ne pas retomber en Markdown.
+
+== Travail réalisé
+
+=== 1. DocKnowledgeBase (document.rag)
+
+- `DocKnowledgeBase.kt` — keyword matching in-memory sur la doc officielle AsciiDoc
+- `resources/docs/asciidoc-syntax-quick-reference.adoc` — syntaxe canonique (source blocks, tables, monospace, admonitions, PlantUML, etc.)
+- Factory `DocKnowledgeBase.forAsciiDoc()` charge la doc depuis les resources
+
+=== 2. Câblage PooledOllamaTranslationAdapter
+
+- `buildPrompt()` injecte les sections pertinentes de la doc AsciiDoc avant le prompt de traduction
+- Le LLM reçoit "AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):" suivi des règles pertinentes
+- Paramètre `docKnowledgeBase` avec défaut `DocKnowledgeBase.forAsciiDoc()`
+
+=== 3. Correction articles EN cheroliv.com
+
+3 articles cassés (prompt leakage "Please provide the text", PlantUML blocks fusionnés, mots FR résiduels) :
+- `0100_jbake_supabase_springboot_hybride_post.adoc` — rewrite complet (20 PlantUML blocks, 6 leakages, 10 mots FR)
+- `0105_integrer_graphify_workflow_gradle_post.adoc` — rewrite complet (4 PlantUML blocks, 2 leakages, 15 mots FR)
+- `0115_anonymiseur_dataset_mvp0_realite_augmentee_llm_post.adoc` — rewrite complet (3 leakages, 6 phrases FR)
+
+106 autres articles EN vérifiés : zéro prompt leakage résiduel.
+
+== Fichiers modifiés
+
+*document-gradle* :
+- `src/main/kotlin/document/rag/DocKnowledgeBase.kt` — nouveau
+- `src/main/resources/docs/asciidoc-syntax-quick-reference.adoc` — nouveau
+- `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — modifié (injection DocKnowledgeBase)
+
+*cheroliv.com* :
+- `content-i18n/en/0100_jbake_supabase_springboot_hybride_post.adoc` — corrigé
+- `content-i18n/en/0105_integrer_graphify_workflow_gradle_post.adoc` — corrigé
+- `content-i18n/en/0115_anonymiseur_dataset_mvp0_realite_augmentee_llm_post.adoc` — corrigé
+
+== Compilation
+
+`./gradlew -p document-plugin compileKotlin` → BUILD SUCCESSFUL
+
+== Prochaine session
+
+030 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase activé

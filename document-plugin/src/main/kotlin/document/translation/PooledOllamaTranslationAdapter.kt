@@ -4,6 +4,7 @@ import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
 import dev.langchain4j.model.ollama.OllamaChatModel
+import document.rag.DocKnowledgeBase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -14,6 +15,7 @@ class PooledOllamaTranslationAdapter(
     internal val baseUrls: List<String>,
     internal val model: String = DEFAULT_MODEL,
     internal val timeout: Duration = Duration.ofMinutes(5),
+    internal val docKnowledgeBase: DocKnowledgeBase = DocKnowledgeBase.forAsciiDoc(),
 ) : TranslationService {
 
     private val log = LoggerFactory.getLogger(PooledOllamaTranslationAdapter::class.java)
@@ -60,12 +62,22 @@ class PooledOllamaTranslationAdapter(
         return TranslationResult.Failure(reason)
     }
 
-    private fun buildPrompt(request: TranslationRequest): String =
-        """You are a professional translator. Translate the following text from ${request.sourceLanguage} to ${request.targetLanguage}.
-Output only the translated text — no explanation, no commentary, no alternatives, no options.
+    private fun buildPrompt(request: TranslationRequest): String {
+        val docContext = docKnowledgeBase.queryContext(request.sourceText)
+        val docSection = if (docContext.isNotBlank()) {
+            """AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):
+$docContext
 
-Text to translate:
+"""
+        } else ""
+
+        return """${docSection}Translate from ${request.sourceLanguage} to ${request.targetLanguage}.
+Preserve ALL backtick code spans (`...`) exactly as-is — never modify backtick content, spacing, or position.
+This text may be a fragment of a larger sentence — translate the fragment without requesting more context.
+Output ONLY the translated text with zero explanation, commentary, introduction, or options.
+
 ${request.sourceText}"""
+    }
 
     companion object {
         const val DEFAULT_MODEL = "gemma4:31b-cloud"

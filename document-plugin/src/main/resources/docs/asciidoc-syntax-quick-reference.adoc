@@ -1,0 +1,268 @@
+= AsciiDoc Syntax Quick Reference
+
+== Paragraphs
+
+Paragraphs don't require special markup in AsciiDoc.
+A paragraph is defined by one or more consecutive lines of text.
+Line breaks within a paragraph are not displayed.
+
+Leave at least one empty line to begin a new paragraph.
+
+== Text Formatting
+
+Constrained bold: *bold*
+Unconstrained bold: **b**old
+Constrained italic: _italic_
+Unconstrained italic: __i__talic
+Constrained monospace: `monospace`
+Unconstrained monospace: ``m``onospace
+Literal monospace: `+http://localhost:8080+` or `+/issue/{id}+`
+Mixed: `*_bold italic monospace_*`
+
+Highlight: #text#
+Custom role: [.myrole]#text#
+Superscript: ^super^script
+Subscript: ~sub~script
+
+== Section Titles
+
+= Document Title (Level 0)
+== Level 1 Section
+=== Level 2 Section
+==== Level 3 Section
+===== Level 4 Section
+====== Level 5 Section
+
+Discrete heading (not a section):
+[discrete]
+=== Independent Heading
+
+== Links
+
+Autolink: https://asciidoctor.org
+Link with label: https://asciidoctor.org[Asciidoctor]
+Mailto: mailto:devel@discuss.example.org[Discuss]
+Relative link: link:index.html[Docs]
+Cross reference: See <<paragraphs>> or <<section-titles,sections>>
+
+== Lists
+
+Unordered:
+* Item
+** Nested
+*** Deeper
+
+Ordered:
+. Step 1
+. Step 2
+.. Step 2a
+
+Checklist:
+* [*] checked
+* [x] also checked
+* [ ] not checked
+
+Description list:
+Term:: Description
+Second term::
+Description on next line
+
+== Images
+
+Block image: image::sunset.jpg[Sunset]
+Inline image: image:play.png[]
+With title: .A mountain sunset
+image::sunset.jpg[Sunset,200,100]
+
+== Source Code Blocks
+
+Source block with syntax highlighting:
+[source,ruby]
+----
+require 'sinatra'
+get '/hi' do
+  "Hello World!"
+end
+----
+
+Implied source block (language alone):
+[,ruby]
+----
+require 'sinatra'
+----
+
+Listing block (no highlighting):
+----
+GEM
+  remote: https://rubygems.org/
+  specs:
+    asciidoctor (2.0.15)
+----
+
+Literal block:
+....
+error: 1954 Forbidden search
+Would you like to try again? y/n
+....
+
+Source block with callouts:
+[source,ruby]
+----
+require 'sinatra' // <1>
+get '/hi' do // <2>
+  "Hello World!" // <3>
+end
+----
+<1> Library import
+<2> URL mapping
+<3> HTTP response body
+
+== Tables
+
+Basic table:
+[cols="1,1"]
+|===
+|Header Col 1 |Header Col 2
+
+|Cell 1,1
+|Cell 1,2
+
+|Cell 2,1
+|Cell 2,2
+|===
+
+Table with column widths:
+[cols="1,1,2"]
+|===
+|Name |Category |Description
+
+|Firefox
+|Browser
+|Mozilla Firefox is an open source web browser.
+|===
+
+Table with AsciiDoc content in cells:
+[cols="2,2,5a"]
+|===
+|Firefox
+|Browser
+|Mozilla Firefox is an open source web browser.
+
+It's designed for:
+
+* standards compliance
+* performance
+* portability
+|===
+
+CSV table:
+[%header,format=csv]
+|===
+Artist,Track,Genre
+Baauer,Harlem Shake,Hip Hop
+|===
+
+== Admonitions
+
+NOTE: An admonition draws the reader's attention.
+IMPORTANT: Don't forget the children!
+TIP: Look for the warp zone under the bridge.
+CAUTION: Slippery when wet.
+WARNING: The software is untested.
+
+Admonition block:
+[NOTE]
+====
+An admonition block may contain compound content.
+====
+
+== Blockquotes
+
+[quote,Author Name,Attribution]
+____
+Quoted text.
+Another paragraph in quote.
+____
+
+== Sidebars
+
+.Optional Title
+****
+Sidebars are used to visually separate auxiliary bits of content.
+****
+
+== Example Blocks
+
+====
+Here's a sample AsciiDoc document.
+====
+
+== Document Header
+
+= Document Title
+Author Name <author@email.org>
+v2.0, 2019-03-22
+:toc:
+:homepage: https://example.org
+
+== Includes
+
+include::basics.adoc[]
+include::filename.txt[tag=definition]
+include::filename.txt[lines=5..10]
+
+== Comments
+
+// Single line comment
+
+////
+Multi-line
+comment
+////
+
+== Passthroughs
+
+Inline passthrough: pass:[<em>raw HTML</em>]
+Passthrough block:
+++++
+<p>Raw HTML content</p>
+++++
+
+== Horizontal Rule
+
+'''
+
+== Hard Line Breaks
+
+Roses are red, +
+violets are blue.
+
+[%hardbreaks]
+A ruby is red.
+Java is black.
+
+== Open Blocks
+
+--
+An open block can be an anonymous container.
+--
+
+[source]
+--
+puts "I'm a source block!"
+--
+
+== Collapsible Blocks
+
+[%collapsible]
+====
+Hidden content revealed on click.
+====
+
+== Keyboard, Button, Menu Macros
+
+Requires :experimental: attribute.
+
+kbd:[Ctrl+T] — keyboard shortcut
+btn:[OK] — button
+menu:File[Save] — menu path

@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 029
-:date: 2026-07-24
-:status: PooledOllamaTranslationAdapter livré — pool de connexion round-robin 29 ports (11437-11465). 149 UT + 3 FT + 3 BDD. Bakery 0 régression.
+:session: 030
+:date: 2026-07-25
+:status: DocKnowledgeBase AsciiDoc câblé dans PooledOllamaTranslationAdapter. 3 articles EN cheroliv.com corrigés.
 :max-lines: 70
 
 == Quick Start
@@ -26,6 +26,13 @@ avec un pool de connexion round-robin sur les 29 ports 11437-11465 :
 - `create()` factory : `DEFAULT_PORT_RANGE = 11437..11465`, model = `gemma4:31b-cloud`
 - Ports 11434-11436 JAMAIS utilisés (comptes Google personnels, intouchables)
 
+== Réalité augmentée DocKnowledgeBase
+
+`DocKnowledgeBase` (document.rag) injecte la doc officielle AsciiDoc dans le prompt de traduction :
+- Keyword matching in-memory sur `resources/docs/asciidoc-syntax-quick-reference.adoc`
+- Le LLM reçoit "AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):" + sections pertinentes
+- Contrecarre la tendance du LLM à retomber en Markdown
+
 == Cible : cheroliv.com
 
 Le site `office/sites/cheroliv.com` contient 104 articles de blog en AsciiDoc (FR).
@@ -35,30 +42,28 @@ Le pipeline : `AsciiDocParser` → `DocumentTranslator` → `PooledOllamaTransla
 
 == Contexte de fin
 
-Session 028 — PooledOllamaTranslationAdapter + rotation CI/CD :
-- `PooledOllamaTranslationAdapter` : TranslationService avec round-robin sur 29 ports (11437-11465)
-- Fallback : si un port échoue → suivant, tous épuisés → Failure
-- `create()` factory : DEFAULT_PORT_RANGE = 11437..11465, model = gemma4:31b-cloud
-- Câblé dans `TranslateDocumentTask` + `TranslateDocumentBatchTask` (remplace single-endpoint)
-- 7 nouveaux UT PooledOllamaTranslationAdapterTest
-- N0 i18n-contracts : `OllamaConfig` (portStart/portEnd Jackson-compatible) + `OllamaDeviceKey` (toString masqué)
-- CI workflow `translate-i18n-content.yml` + `translate-cheroliv-com.yml` dans office
+Session 029 — DocKnowledgeBase AsciiDoc + correction articles EN :
+- `DocKnowledgeBase.kt` — keyword matching in-memory sur doc officielle AsciiDoc
+- `resources/docs/asciidoc-syntax-quick-reference.adoc` — syntaxe canonique
+- `PooledOllamaTranslationAdapter.buildPrompt()` injecte la doc avant traduction
+- 3 articles EN cheroliv.com corrigés (0100, 0105, 0115) — PlantUML blocks, prompt leakage, mots FR
+- 106 autres articles EN vérifiés : zéro prompt leakage
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
 . `./gradlew test --tests "document.translation.*"` → 149 UT GREEN
-. Dogfooding : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch
+. Dogfooding : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
 . CI-4 : `site.yml` cheroliv.com avec 29 vraies Device Keys → workflow_dispatch translate-cheroliv-com
 
-== Fichiers touchés S028
+== Fichiers touchés S029
 
 *document-gradle* :
-. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — nouveau (pool round-robin 29 ports)
-. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — câblage PooledOllamaTranslationAdapter
-. `src/main/kotlin/document/translation/TranslateDocumentBatchTask.kt` — câblage PooledOllamaTranslationAdapter
-. `src/test/kotlin/document/translation/PooledOllamaTranslationAdapterTest.kt` — nouveau (7 UT)
+. `src/main/kotlin/document/rag/DocKnowledgeBase.kt` — nouveau
+. `src/main/resources/docs/asciidoc-syntax-quick-reference.adoc` — nouveau
+. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — modifié (injection DocKnowledgeBase)
 
-*i18n-contracts (workspace-bom)* :
-. `OllamaConfig.kt` — nouveau (portStart/portEnd, portRange dérivé, baseUrls)
-. `OllamaDeviceKey.kt` — nouveau (toString masqué ssh-ed25519***[N chars])
+*cheroliv.com* :
+. `content-i18n/en/0100_jbake_supabase_springboot_hybride_post.adoc` — corrigé
+. `content-i18n/en/0105_integrer_graphify_workflow_gradle_post.adoc` — corrigé
+. `content-i18n/en/0115_anonymiseur_dataset_mvp0_realite_augmentee_llm_post.adoc` — corrigé
