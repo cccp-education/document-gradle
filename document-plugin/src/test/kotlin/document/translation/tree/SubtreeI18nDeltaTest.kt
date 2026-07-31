@@ -7,6 +7,7 @@ import document.translation.PivotInline
 import document.translation.tree.SiteNode.Article
 import document.translation.tree.SiteNode.Section
 import document.translation.tree.SiteNode.Site
+import document.translation.delta.ArticleModification
 import document.translation.plan.SubtreeI18nPlanner
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

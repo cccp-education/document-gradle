@@ -73,6 +73,41 @@ class PooledOllamaTranslationAdapterTest {
     }
 
     @Test
+    fun `refusal responses are rejected by filter`() {
+        val adapter = PooledOllamaTranslationAdapter(
+            baseUrls = listOf("http://localhost:1"),
+            model = "gemma4:31b-cloud",
+            timeout = Duration.ofMillis(100)
+        )
+        val refusals = listOf(
+            "Please provide the text you would like me to translate.",
+            "Here is the translation of your text.",
+            "I'd be happy to translate the fragment for you.",
+            "As an AI language model, I can help you with that.",
+        )
+        refusals.forEach {
+            assertTrue(adapter.isRefusalOrMetaResponse(it), "must reject: $it")
+        }
+    }
+
+    @Test
+    fun `real translations are not rejected by filter`() {
+        val adapter = PooledOllamaTranslationAdapter(
+            baseUrls = listOf("http://localhost:1"),
+            model = "gemma4:31b-cloud",
+            timeout = Duration.ofMillis(100)
+        )
+        val translations = listOf(
+            "Install the Kitty terminal and configure Zsh as the default shell under Xubuntu.",
+            "The spatial dimension says where to route.",
+            "Note the three-layer depth: root files, sessions folder, archives folder.",
+        )
+        translations.forEach {
+            assertTrue(!adapter.isRefusalOrMetaResponse(it), "must not reject: $it")
+        }
+    }
+
+    @Test
     fun `default port range starts at 11437 not 11434`() {
         val adapter = PooledOllamaTranslationAdapter.create()
         val urls = adapter.baseUrls

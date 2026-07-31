@@ -139,6 +139,9 @@ class AsciiDocParser {
             if (line.isBlank()) { i++; continue }
 
             when {
+                line.trim() == "'''" -> {
+                    i++
+                }
                 line.startsWith("====") && isAdmonitionDelimiter(line) -> {
                     i++
                 }
@@ -151,7 +154,7 @@ class AsciiDocParser {
                     blocks.add(heading)
                     i++
                 }
-                line.startsWith("[source") || line.startsWith("[plantuml]") -> {
+                line.startsWith("[source") || line.startsWith("[plantuml") -> {
                     val (block, next) = parseSourceBlock(lines, i)
                     blocks.add(block)
                     i = next
@@ -212,20 +215,20 @@ class AsciiDocParser {
         val header = lines[start]
         val language = when {
             header.startsWith("[source") -> Regex("\\[source,?\\s*(\\w*)\\]").find(header)?.groupValues?.get(1)?.trim() ?: ""
-            header.startsWith("[plantuml]") -> "plantuml"
+            header.startsWith("[plantuml") -> "plantuml"
             else -> ""
         }
         var i = start + 1
         while (i < lines.size && lines[i].trim() != "----") i++
         if (i >= lines.size) {
-            return PivotBlock.Source(language, "") to i
+            return PivotBlock.Source(language, "", header) to i
         }
         i++
         val contentStart = i
         while (i < lines.size && !isSourceClosingDelimiter(lines[i])) i++
         val content = lines.subList(contentStart, i).joinToString("\n")
         if (i < lines.size) i++
-        return PivotBlock.Source(language, content) to i
+        return PivotBlock.Source(language, content, header) to i
     }
 
     private fun isSourceClosingDelimiter(line: String): Boolean {
@@ -245,10 +248,18 @@ class AsciiDocParser {
         while (i < lines.size && !lines[i].trim().startsWith("```")) i++
         val content = lines.subList(contentStart, i).joinToString("\n")
         if (i < lines.size) i++
-        return PivotBlock.Source(language, content) to i
+        return PivotBlock.Source(language, content, lines[start]) to i
     }
 
     private fun parseAdmonition(lines: List<String>, start: Int, kind: String): Pair<PivotBlock.Admonition, Int> {
+        if (start + 1 >= lines.size) {
+            return PivotBlock.Admonition(kind, emptyList()) to start + 1
+        }
+        if (!lines[start + 1].startsWith("====")) {
+            val (para, next) = parseParagraph(lines, start + 1)
+            val blocks = if (para != null) listOf(para) else emptyList()
+            return PivotBlock.Admonition(kind, blocks) to next
+        }
         var i = start + 1
         while (i < lines.size && !lines[i].startsWith("====")) i++
         i++

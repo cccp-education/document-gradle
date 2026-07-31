@@ -116,8 +116,12 @@ class AsciiDocRenderer : ArticleRenderer {
     }
 
     private fun renderSource(src: PivotBlock.Source, sb: StringBuilder) {
-        val lang = if (src.language.isNotEmpty()) ",${src.language}" else ""
-        sb.appendLine("[source$lang]")
+        if (src.header.isNotEmpty()) {
+            sb.appendLine(src.header)
+        } else {
+            val lang = if (src.language.isNotEmpty()) ",${src.language}" else ""
+            sb.appendLine("[source$lang]")
+        }
         sb.appendLine("----")
         sb.appendLine(src.content)
         sb.appendLine("----")

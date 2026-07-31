@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 class BatchDocumentTranslator(
-    private val documentTranslator: DocumentTranslator,
+    private val documentTranslator: ArticleTranslator,
 ) {
     private val log = LoggerFactory.getLogger(BatchDocumentTranslator::class.java)
 
@@ -35,6 +35,11 @@ class BatchDocumentTranslator(
             val relPath = file.relativeTo(sourceDir).path
             val outputFile = outputDir.resolve(relPath)
             log.info("[translateBatch] [{}/{}] {} -> {}", idx + 1, adocFiles.size, relPath, outputFile.path)
+            if (request.skipExisting && outputFile.isFile && outputFile.length() > 0) {
+                log.info("[translateBatch] [{}/{}] SKIP existing: {}", idx + 1, adocFiles.size, relPath)
+                translated.add(relPath)
+                continue
+            }
             try {
                 val original = file.readText()
                 val rendered = documentTranslator.translate(original, srcLang, tgtLang)
@@ -44,7 +49,7 @@ class BatchDocumentTranslator(
             } catch (e: Exception) {
                 val msg = "$relPath: ${e.message}"
                 errors.add(msg)
-                log.warn("[translateBatch] ERROR: {}", msg)
+                log.warn("[translateBatch] ERROR: {}", msg, e)
             }
         }
 

@@ -49,6 +49,14 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
     @get:Optional
     abstract val excludePaths: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val treeMode: Property<Boolean>
+
+    @get:Input
+    @get:Optional
+    abstract val skipExisting: Property<Boolean>
+
     @TaskAction
     fun translateBatch() {
         val logger = LoggerFactory.getLogger(TranslateDocumentBatchTask::class.java)
@@ -57,22 +65,27 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
         val srcLang = sourceLanguage.get()
         val tgtLang = targetLanguage.get()
         val mode = llmMode.get()
+        val tree = treeMode.getOrElse(false)
+        val skip = skipExisting.getOrElse(false)
         val excludesRaw = excludePaths.get().trim()
         val excludes = if (excludesRaw.isEmpty()) emptySet()
             else excludesRaw.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
 
-        logger.info("translateDocumentBatch — {} ({}→{}) excludes={}", src.absolutePath, srcLang, tgtLang, excludes)
+        logger.info("translateDocumentBatch — {} ({}→{}) treeMode={} skipExisting={} excludes={}", src.absolutePath, srcLang, tgtLang, tree, skip, excludes)
 
         val translationService: TranslationService = when (mode.lowercase()) {
-            "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
+            "fake" -> if (tree) NumberedFakeTranslationService() else FakeTranslationService(" [${tgtLang.uppercase()}]")
             "ollama" -> PooledOllamaTranslationAdapter.create()
             else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 
-        val documentTranslator = DocumentTranslator(translationService)
-        val batchTranslator = BatchDocumentTranslator(documentTranslator)
+        val batchTranslator = if (tree) {
+            BatchDocumentTranslator(TreeTranslationAdapter(translationService))
+        } else {
+            BatchDocumentTranslator(DocumentTranslator(translationService))
+        }
         val result = batchTranslator.translateBatch(
-            BatchTranslationRequest(src, out, srcLang, tgtLang, excludes),
+            BatchTranslationRequest(src, out, srcLang, tgtLang, excludes, skip),
         )
 
         logger.info("translateDocumentBatch done — {} translated, {} errors", result.count, result.errors.size)

@@ -19,6 +19,19 @@ class PivotYamlRenderer {
         sb.append("${indent}${INDENT_1}date: ${yamlString(fm.date)}\n")
         sb.append("${indent}${INDENT_1}type: ${yamlString(fm.type)}\n")
         sb.append("${indent}${INDENT_1}status: ${yamlString(fm.status)}\n")
+        sb.append("${indent}${INDENT_1}author: ${yamlString(fm.author)}\n")
+        if (fm.jbakeAttributes.isNotEmpty()) {
+            sb.append("${indent}${INDENT_1}jbake_attributes:\n")
+            fm.jbakeAttributes.forEach { (k, v) ->
+                sb.append("${indent}${INDENT_1}${INDENT_1}${yamlString(k)}: ${yamlString(v)}\n")
+            }
+        }
+        if (fm.asciidocAttributes.isNotEmpty()) {
+            sb.append("${indent}${INDENT_1}asciidoc_attributes:\n")
+            fm.asciidocAttributes.forEach { (k, v) ->
+                sb.append("${indent}${INDENT_1}${INDENT_1}${yamlString(k)}: ${yamlString(v)}\n")
+            }
+        }
     }
 
     private fun renderBlock(block: PivotBlock, sb: StringBuilder, indent: String, isLast: Boolean) {

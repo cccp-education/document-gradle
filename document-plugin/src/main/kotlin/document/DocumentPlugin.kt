@@ -450,6 +450,12 @@ class DocumentPlugin : Plugin<Project> {
             task.targetLanguage.set(cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage))
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
             task.excludePaths.set(cliProp(project, "translateBatchExcludePaths").orElse(ext.translation.batchExcludePaths))
+            task.treeMode.set(
+                cliProp(project, "translateBatchTree")
+                    .orElse(project.providers.gradleProperty("document.translateBatchTree"))
+                    .map { it.toBoolean() }
+                    .orElse(false),
+            )
         }
     }
 }

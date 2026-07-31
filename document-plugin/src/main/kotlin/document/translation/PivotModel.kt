@@ -43,7 +43,8 @@ sealed class PivotBlock {
 
     data class Source(
         val language: String,
-        val content: String
+        val content: String,
+        val header: String = ""
     ) : PivotBlock() {
         override val translatable: Boolean = false
     }

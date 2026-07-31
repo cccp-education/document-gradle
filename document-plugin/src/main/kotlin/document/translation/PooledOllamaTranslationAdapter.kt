@@ -46,9 +46,10 @@ class PooledOllamaTranslationAdapter(
                     withContext(Dispatchers.IO) { chatModel.chat(prompt) }
                 }
                 val cleaned = raw.trim().trim('"', '\u00AB', '\u00BB', '`', '\n')
-                if (cleaned.isBlank()) {
-                    log.warn("[PooledOllamaTranslationAdapter] {} returned blank response, trying next", baseUrl)
-                    lastError = RuntimeException("Blank response from $baseUrl")
+                if (cleaned.isBlank() || isRefusalOrMetaResponse(cleaned)) {
+                    val reason = if (cleaned.isBlank()) "Blank response" else "Refusal/meta response"
+                    log.warn("[PooledOllamaTranslationAdapter] {} returned {}, trying next", baseUrl, reason)
+                    lastError = RuntimeException("$reason from $baseUrl")
                     continue
                 }
                 return TranslationResult.Success(cleaned)
@@ -60,6 +61,41 @@ class PooledOllamaTranslationAdapter(
         val reason = lastError?.message ?: "All ${chatModels.size} endpoints failed"
         log.error("[PooledOllamaTranslationAdapter] All endpoints exhausted: {}", reason)
         return TranslationResult.Failure(reason)
+    }
+
+    internal fun isRefusalOrMetaResponse(text: String): Boolean {
+        val lower = text.lowercase()
+        val patterns = listOf(
+            "please provide the text",
+            "please provide the source text",
+            "please provide more text",
+            "please share the text",
+            "please send me the text",
+            "please paste the text",
+            "please give me the text",
+            "please provide the content",
+            "the text you would like me to translate",
+            "text you want me to translate",
+            "text you wish to translate",
+            "please provide a text",
+            "i would be happy to translate",
+            "i'd be happy to translate",
+            "here is the translation",
+            "the translation is",
+            "translate the following text",
+            "please provide the french text",
+            "you haven't provided any text",
+            "no text was provided",
+            "no source text",
+            "it looks like you didn't provide",
+            "looks like you didn't provide",
+            "as an ai language model",
+            "i am an ai language model",
+            "i'm an ai language model",
+            "cannot translate",
+            "can't translate",
+        )
+        return patterns.any { lower.contains(it) }
     }
 
     private fun buildPrompt(request: TranslationRequest): String {

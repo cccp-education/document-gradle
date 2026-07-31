@@ -281,6 +281,32 @@ class AsciiDocParserTest {
     }
 
     @Test
+    fun `parses inline admonition without block delimiters`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            [NOTE]
+            Le fine-tune n'est pas un remplacement du RAG. Il reste pertinent pour les donnees qui changent souvent.
+
+            == Heading after
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val adm = article.blocks[0] as PivotBlock.Admonition
+        assertEquals("NOTE", adm.kind)
+        assertEquals(1, adm.blocks.size)
+        val para = adm.blocks[0] as PivotBlock.Paragraph
+        assertTrue(para.inline.any { it is PivotInline.Text && it.text.contains("remplacement") })
+        val heading = article.blocks[1] as PivotBlock.Heading
+        assertEquals("Heading after", heading.text)
+    }
+
+    @Test
     fun `parses hr separator`() {
         val adoc = """
             title=Test

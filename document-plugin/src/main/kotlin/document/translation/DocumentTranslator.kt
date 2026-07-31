@@ -11,9 +11,9 @@ class DocumentTranslator(
     private val renderer: ArticleRenderer = AsciiDocRenderer(),
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
     private val plantUmlAdapter: PlantUmlTranslationAdapter? = null
-) {
+) : ArticleTranslator {
 
-    fun translate(
+    override fun translate(
         asciidoc: String,
         sourceLanguage: String,
         targetLanguage: String

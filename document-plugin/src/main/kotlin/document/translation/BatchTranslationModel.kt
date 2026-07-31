@@ -8,6 +8,7 @@ data class BatchTranslationRequest(
     val sourceLanguage: String,
     val targetLanguage: String,
     val excludeRelativePaths: Set<String> = emptySet(),
+    val skipExisting: Boolean = false,
 )
 
 data class BatchTranslationResult(
