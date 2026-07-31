@@ -1,0 +1,26 @@
+= Session 030 — Alliance i18n : Suppression DocumentI18nBridge (code mort)
+:date: 2026-07-31
+:type: refactoring
+:score: 9/10
+
+== Contexte
+
+`DocumentI18nBridge.kt` était du code mort : zéro référence dans le code
+de production ou de test. Document utilise déjà `TranslationService` du BOM
+directement via `DocumentTranslator` et `ContentTranslationService`.
+
+== Actions
+
+. Suppression de `DocumentI18nBridge.kt`
+. Vérification : `./gradlew compileKotlin` BUILD SUCCESSFUL
+
+== Impact
+
+- -1 fichier (code mort)
+- Document était déjà aligné sur le contrat `TranslationService` du BOM
+- La suppression nettoie le code sans perte de fonctionnalité
+- Fait partie de l'alliance i18n cross-borough (bakery + slider + plantuml + document)
+
+== Prochaine session
+
+S031 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch

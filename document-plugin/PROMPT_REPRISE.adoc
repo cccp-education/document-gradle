@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 030
-:date: 2026-07-25
-:status: DocKnowledgeBase AsciiDoc câblé dans PooledOllamaTranslationAdapter. 3 articles EN cheroliv.com corrigés.
+:session: 031
+:date: 2026-07-31
+:status: Alliance i18n cross-borough — DocumentI18nBridge supprimé (code mort). Document utilise déjà TranslationService du BOM.
 :max-lines: 70
 
 == Quick Start
@@ -13,57 +13,19 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew functionalTest --tests "document.DocumentPluginFunctionalTest.translateDocument*"  # 3 FT GREEN
 ```
 
-== Technique de pool de connexion Ollama
-
-`PooledOllamaTranslationAdapter` implémente `TranslationService` (contrat N0 i18n-contracts)
-avec un pool de connexion round-robin sur les 29 ports 11437-11465 :
-
-- Chaque port = une instance Ollama Docker avec sa propre Device Key SSH ed25519
-- Chaque Device Key = un compte Ollama Pro distinct (17€/mois en annuel)
-- Rotation : `AtomicInteger` incrémenté à chaque appel → `index % 29`
-- Fallback : si un port échoue (Connection refused, rate-limit 429, timeout) → port suivant
-- Tous les ports épuisés → `TranslationResult.Failure`
-- `create()` factory : `DEFAULT_PORT_RANGE = 11437..11465`, model = `gemma4:31b-cloud`
-- Ports 11434-11436 JAMAIS utilisés (comptes Google personnels, intouchables)
-
-== Réalité augmentée DocKnowledgeBase
-
-`DocKnowledgeBase` (document.rag) injecte la doc officielle AsciiDoc dans le prompt de traduction :
-- Keyword matching in-memory sur `resources/docs/asciidoc-syntax-quick-reference.adoc`
-- Le LLM reçoit "AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):" + sections pertinentes
-- Contrecarre la tendance du LLM à retomber en Markdown
-
-== Cible : cheroliv.com
-
-Le site `office/sites/cheroliv.com` contient 104 articles de blog en AsciiDoc (FR).
-Objectif : traduire FR→EN via `translateDocumentBatch`, puis 10 langues.
-Les articles sont des documents AsciiDoc → traités par document-gradle (N2 WRITE + PUBLISH).
-Le pipeline : `AsciiDocParser` → `DocumentTranslator` → `PooledOllamaTranslationAdapter` → `JbakeNativeRenderer`.
-
 == Contexte de fin
 
-Session 029 — DocKnowledgeBase AsciiDoc + correction articles EN :
-- `DocKnowledgeBase.kt` — keyword matching in-memory sur doc officielle AsciiDoc
-- `resources/docs/asciidoc-syntax-quick-reference.adoc` — syntaxe canonique
-- `PooledOllamaTranslationAdapter.buildPrompt()` injecte la doc avant traduction
-- 3 articles EN cheroliv.com corrigés (0100, 0105, 0115) — PlantUML blocks, prompt leakage, mots FR
-- 106 autres articles EN vérifiés : zéro prompt leakage
+Session 030 — Alliance i18n : suppression DocumentI18nBridge (code mort, zéro référence).
+Document utilise déjà `TranslationService` du BOM directement via `DocumentTranslator`
+et `ContentTranslationService`. compileKotlin ✅.
 
 == Reprendre à
 
 . `./gradlew compileKotlin` — BUILD SUCCESSFUL
-. `./gradlew test --tests "document.translation.*"` → 149 UT GREEN
 . Dogfooding : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
 . CI-4 : `site.yml` cheroliv.com avec 29 vraies Device Keys → workflow_dispatch translate-cheroliv-com
 
-== Fichiers touchés S029
+== Fichiers touchés S030
 
 *document-gradle* :
-. `src/main/kotlin/document/rag/DocKnowledgeBase.kt` — nouveau
-. `src/main/resources/docs/asciidoc-syntax-quick-reference.adoc` — nouveau
-. `src/main/kotlin/document/translation/PooledOllamaTranslationAdapter.kt` — modifié (injection DocKnowledgeBase)
-
-*cheroliv.com* :
-. `content-i18n/en/0100_jbake_supabase_springboot_hybride_post.adoc` — corrigé
-. `content-i18n/en/0105_integrer_graphify_workflow_gradle_post.adoc` — corrigé
-. `content-i18n/en/0115_anonymiseur_dataset_mvp0_realite_augmentee_llm_post.adoc` — corrigé
+. `src/main/kotlin/document/DocumentI18nBridge.kt` — supprimé (code mort)
