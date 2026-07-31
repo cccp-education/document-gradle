@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-31 (session 030 — Alliance i18n : suppression DocumentI18nBridge code mort)
-_Session terminee_ : 030 — Alliance i18n cross-borough ✅
-_Prochaine session_ : 031 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
+_Derniere mise a jour_ : 2026-07-31 (session 031 — Tree translation mode livré, 244 PASS, commit 82ada3b pushé)
+_Session terminee_ : 031 — Tree translation mode ✅
+_Prochaine session_ : 032 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
 
 '''
 == REGLES ABSOLUES (resume)
