@@ -1,0 +1,29 @@
+= COMPLETED_TASKS_ARCHIVE — Août 2026
+
+== Document-gradle (New Orleans 🟢)
+
+=== Session 032 (2026-08-01) — Dogfooding batch 61 articles cheroliv.com + fixes parser AsciiDoc
+
+*Fix 1 — DescriptionList + BlockMacro* (fusion en un paragraphe au round-trip) :
+- `PivotModel.kt` : `PivotBlock.DescriptionList` + `DescriptionItem` (term/definition) + `PivotBlock.BlockMacro` (name/target/attributes)
+- `AsciiDocParser.kt` : `isDescriptionListItem`, `parseDescriptionList`, `isBlockMacro`, `parseBlockMacro`, skip commentaires `//`, termes multi-mots (check `!before.contains(" ")` retiré)
+- `JbakeNativeRenderer.kt` / `AsciiDocRenderer.kt` / `PivotYamlRenderer.kt` : `renderDescriptionList` + `renderBlockMacro`
+- `TreeTranslationAdapter.kt` : collect/apply `DescriptionList` (leaves term + definition, subPath `-30-itemIdx`/0/1)
+- `DocumentTranslator.kt` : branches DescriptionList/BlockMacro ; `tree/Content.kt` : inlineOf
+
+*Fix 2 — Délimiteurs source + titres de bloc* (troncature, article 0084 533→70 lignes, 0082 373→134) :
+- `parseSourceBlock` réécrit : `firstBlockDelimiterAfterHeader` détecte `----`/`====`/`....`
+- `isSourceDelimiterLine` : lignes uniformes de `-`/`=`/`.` (>=4)
+- `isBlockTitleLine` : `.titre` entre `[source,...]` et le délimiteur (skip)
+- `isSourceClosingDelimiter` permissif (rétro-compat test `====` en fermeture)
+
+*Tests* : PivotModelTest (+2), AsciiDocParserTest (+17), AsciiDocRendererTest (+5), JbakeNativeRendererTest (+4), document.feature (+2 scénarios @description-list + @block-macro), DocumentSteps (+1 Given +1 Then), DocumentWorld (+2 factories). Suite `document.translation.*` GREEN.
+
+*Dogfooding* : 61 articles cheroliv.com FR→EN via `translateDocumentBatch` tree mode, mode Ollama réel.
+- Runtime : `gemma4:31b-cloud`, ports 11440/11441/11442 (round-robin 11437-11465), échecs 11438/11450 gérés par le pool
+- 17 mois : 2022-01 (1), 2022-05 (5), 2022-12 (1), 2023-01 (1), 2023-11 (1), 2024-06 (1), 2024-07 (1), 2024-11 (1), 2025-05 (1), 2025-07 (9), 2025-09 (6), 2025-10 (2), 2025-11 (2), 2026-01 (2), 2026-04 (13), 2026-05 (12), 2027-04 (1) + 0098 sans date
+- Vérification : 61/61 OK — 0 `[EN]`, 0 fuite de prompt, sections `==` conservées, diff source confirmé
+
+*Diagnostic* : le fake mode reproduit les troncatures → outil de diagnostic des bugs parser (pas un problème LLM).
+
+*Infra* : `document-plugin/gradle.properties` + `org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m` (daemon OOM cucumber).

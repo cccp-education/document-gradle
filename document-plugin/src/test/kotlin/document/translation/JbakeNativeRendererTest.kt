@@ -216,4 +216,68 @@ class JbakeNativeRendererTest {
         assertTrue(rendered.contains("resultat attendu."),
             "Roundtrip should preserve last line without +")
     }
+
+    @Test
+    fun `jbake native roundtrip preserves description list`() {
+        val adoc = """
+            = DL Test
+            @CherOliv
+            2020-01-15
+            :jbake-type: post
+            :jbake-status: published
+            :jbake-date: 2020-01-15
+
+            https://a.com[label]:: First definition.
+            https://b.com[label]:: Second definition.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+        val rendered = renderer.render(article)
+        val reparsed = parser.parse(rendered)
+
+        assertEquals(article.blocks.size, reparsed.blocks.size)
+        assertTrue(reparsed.blocks[0] is PivotBlock.DescriptionList)
+    }
+
+    @Test
+    fun `jbake native roundtrip preserves block macro`() {
+        val adoc = """
+            = Macro Test
+            @CherOliv
+            2020-01-15
+            :jbake-type: post
+            :jbake-status: published
+            :jbake-date: 2020-01-15
+
+            image::diagram.png[Architecture]
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+        val rendered = renderer.render(article)
+        val reparsed = parser.parse(rendered)
+
+        assertEquals(article.blocks.size, reparsed.blocks.size)
+        assertTrue(reparsed.blocks[0] is PivotBlock.BlockMacro)
+    }
+
+    @Test
+    fun `jbake native description list renders each item on its own line`() {
+        val adoc = """
+            = DL Test
+            @CherOliv
+            2020-01-15
+            :jbake-type: post
+            :jbake-status: published
+            :jbake-date: 2020-01-15
+
+            term1:: def1
+            term2:: def2
+            term3:: def3
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+        val rendered = renderer.render(article)
+        val lines = rendered.lines().filter { it.contains("::") }
+        assertEquals(3, lines.size, "Each description list item should be on its own line")
+    }
 }

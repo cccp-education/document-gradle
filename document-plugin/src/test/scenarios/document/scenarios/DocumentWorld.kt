@@ -1457,4 +1457,70 @@ Passer.
         projectDir = dir
         return dir
     }
+
+    fun createGradleProjectWithBatchTranslationDslAndDescriptionListContent(): File {
+        val dir = Files.createTempDirectory("doc-bdd-batch-dl").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
+        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+https://a.com[label]:: First definition.
+https://b.com[label]:: Second definition.
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs/blog")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
+
+    fun createGradleProjectWithBatchTranslationDslAndBlockMacroContent(): File {
+        val dir = Files.createTempDirectory("doc-bdd-batch-macro").toFile()
+        dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
+        val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
+        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+date=2026-07-20
+type=page
+status=published
+~~~~~~
+
+image::a.png[First]
+image::b.png[Second]
+""")
+        dir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                translation {
+                    batchSourceDir.set("src/docs/blog")
+                    sourceLanguage.set("fr")
+                    targetLanguage.set("en")
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent()
+        )
+        projectDir = dir
+        return dir
+    }
 }

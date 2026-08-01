@@ -93,6 +93,17 @@ class DocumentTranslator(
                 block
             }
         }
+        is PivotBlock.DescriptionList -> {
+            block.copy(
+                items = block.items.map { item ->
+                    DescriptionItem(
+                        term = translateInlines(item.term, sourceLanguage, targetLanguage),
+                        definition = translateInlines(item.definition, sourceLanguage, targetLanguage)
+                    )
+                }
+            )
+        }
+        is PivotBlock.BlockMacro -> block
         is PivotBlock.Hr -> block
     }
 

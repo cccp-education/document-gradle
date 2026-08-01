@@ -49,9 +49,32 @@ sealed class PivotBlock {
         override val translatable: Boolean = false
     }
 
+    data class DescriptionList(
+        val items: List<DescriptionItem>
+    ) : PivotBlock() {
+        override val translatable: Boolean
+            get() = items.any { it.translatable }
+    }
+
+    data class BlockMacro(
+        val name: String,
+        val target: String,
+        val attributes: String = ""
+    ) : PivotBlock() {
+        override val translatable: Boolean = false
+    }
+
     data object Hr : PivotBlock() {
         override val translatable: Boolean = false
     }
+}
+
+data class DescriptionItem(
+    val term: List<PivotInline>,
+    val definition: List<PivotInline>
+) {
+    val translatable: Boolean
+        get() = term.any { it.translatable } || definition.any { it.translatable }
 }
 
 sealed class PivotInline {

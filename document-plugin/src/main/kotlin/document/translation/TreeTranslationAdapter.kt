@@ -128,7 +128,13 @@ class TreeTranslationAdapter(
                         collectBlock(inner, blockIndex, subPath + listOf(-20 - innerIdx), out)
                     }
                 }
-                is PivotBlock.Source, is PivotBlock.Hr -> Unit
+                is PivotBlock.DescriptionList -> {
+                    block.items.forEachIndexed { itemIdx, item ->
+                        collectInlines(item.term, blockIndex, subPath + listOf(-30 - itemIdx, 0), out)
+                        collectInlines(item.definition, blockIndex, subPath + listOf(-30 - itemIdx, 1), out)
+                    }
+                }
+                is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> Unit
             }
         }
 
@@ -186,7 +192,15 @@ class TreeTranslationAdapter(
                 rows = block.rows.map { row -> row.map { applyInlines(it) } },
             )
             is PivotBlock.Admonition -> block.copy(blocks = block.blocks.map { applyBlock(it) })
-            is PivotBlock.Source, is PivotBlock.Hr -> block
+            is PivotBlock.DescriptionList -> block.copy(
+                items = block.items.map { item ->
+                    DescriptionItem(
+                        term = applyInlines(item.term),
+                        definition = applyInlines(item.definition)
+                    )
+                }
+            )
+            is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> block
         }
 
         private fun applyInlines(inlines: List<PivotInline>): List<PivotInline> = inlines.map { inline ->

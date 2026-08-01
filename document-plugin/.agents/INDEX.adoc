@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-07-31 (session 031 — Tree translation mode livré, 244 PASS, commit 82ada3b pushé)
-_Session terminee_ : 031 — Tree translation mode ✅
-_Prochaine session_ : 032 — Dogfooding : traduire 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
+_Derniere mise a jour_ : 2026-08-01 (session 032 — Dogfooding batch 61 articles cheroliv.com + fixes parser, 61/61 traduits)
+_Session terminee_ : 032 — Dogfooding batch 61 articles cheroliv.com + 2 fixes parser AsciiDoc ✅
+_Prochaine session_ : 033 — Suivi dogfooding (autres sites), synthèse, publication Maven Central si requis
 
 '''
 == REGLES ABSOLUES (resume)
@@ -158,6 +158,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 025 | 2026-07-20 | feat + fix | DOC-13 Templates + DOC-14 Batch + DOC-15 Hardening + Fix Duplications bakery (I18nDeltaApplier, SubtreeI18nPlanner, I18nDelta), 15 UT + 6 FT + 5 BDD, baby-step DDD/TDD/BDD | ✅ TERMINE
 | 026 | 2026-07-20 | feat | DOC-TRANSLATE câblage — translateDocument task + DSL translation { } + OllamaTranslationAdapter + FakeTranslationService, 128 UT + 3 FT + 3 BDD, baby-step DDD/TDD/BDD | ✅ TERMINE
 | 027 | 2026-07-21 | refacto | DocumentTranslator domain service — extraction DDD pure (sans I/O), ContentTranslationService + TranslateDocumentTask déléguent, 14 UT DocumentTranslatorTest, bakery 0 régression, baby-step DDD/TDD/BDD | ✅ TERMINE
+| 031 | 2026-07-31 | feat | Tree translation mode — ArticleTranslator interface, TreeTranslationAdapter (whole-article single LLM call via YAML round-trip), PivotYamlParser, NumberedFakeTranslationService, PooledOllamaTranslationAdapter refusal detection (+12 patterns), TranslateDocumentBatchTask treeMode+skipExisting, DocumentPlugin CLI -Pdocument.translateBatchTree, CI JDK 24→25. 244 PASS (186 UT + 29 FT + 29 Cucumber). Commit 82ada3b pushé. | ✅ TERMINE
+| 032 | 2026-08-01 | feat + fix | Dogfooding translateDocumentBatch — 61 articles cheroliv.com FR→EN traduits via Ollama réel (gemma4:31b-cloud) + 2 fixes parser AsciiDoc : (1) DescriptionList + BlockMacro fusionnés en paragraphe (PivotModel/parser/renderers/TreeTranslationAdapter), (2) blocs [plantuml] délimités `....` + titres de bloc avalés (parseSourceBlock → 0084 533→70 lignes, 0082 373→134). 61/61 traduits, 0 placeholder. Fake mode = outil de diagnostic (reproduit les bugs parser). | ✅ TERMINE
 |===
 
 '''

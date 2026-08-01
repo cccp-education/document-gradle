@@ -1,0 +1,55 @@
+= Session 032 — Dogfooding : traduction batch 61 articles cheroliv.com + fixes parser AsciiDoc
+:date: 2026-08-01
+:type: feat + fix
+:score: 9/10
+
+== Contexte
+
+Dogfooding du pipeline `translateDocumentBatch` (tree mode) sur le site cheroliv.com :
+traduire les 61 articles FR→EN encore placeholders (`i18n/en/content/blog/` identiques
+à leur source `jbake/content/blog/`).
+
+== Actions
+
+=== 1. Fix parser AsciiDoc — DescriptionList + BlockMacro (S032a)
+
+Le round-trip parser→render fusionnait les lignes de description list (`term:: def`)
+et les block macros (`image::`/`video::`) en un seul paragraphe.
+
+- `PivotModel.kt` : ajout `PivotBlock.DescriptionList` + `DescriptionItem` + `PivotBlock.BlockMacro` (name/target/attributes)
+- `AsciiDocParser.kt` : `isDescriptionListItem`, `parseDescriptionList`, `isBlockMacro`, `parseBlockMacro`, skip commentaires `//`, termes multi-mots
+- `JbakeNativeRenderer.kt` / `AsciiDocRenderer.kt` / `PivotYamlRenderer.kt` : `renderDescriptionList` + `renderBlockMacro`
+- `TreeTranslationAdapter.kt` : collect/apply `DescriptionList` (leaves term + definition)
+- `DocumentTranslator.kt` : traduction item par item
+
+Tests : PivotModelTest (+2), AsciiDocParserTest (+~14), AsciiDocRendererTest (+5), JbakeNativeRendererTest (+4).
+
+=== 2. Fix parser AsciiDoc — délimiteurs source `....` + titres de bloc (S032b)
+
+Découverts pendant le batch réel (fake mode a reproduit la troncature → bug parser, pas LLM) :
+
+- **Bug 4-dot** : les blocs `[plantuml]` délimités par `....` (au lieu de `----`) n'étaient pas reconnus
+  → `parseSourceBlock` avalait tout le reste du document (article 0084 : 533→70 lignes, 12→4 sections).
+  Fix : `firstBlockDelimiterAfterHeader` détecte le délimiteur réel (`,` `-`, `=`, `.`).
+- **Bug titres de bloc** : `.Structure HTML initiale` entre `[source,html]` et `----` cassait la détection
+  → tout le reste avalé (article 0082 : 373→134 lignes, 7→2 sections). Fix : `isBlockTitleLine` skippé.
+
+Tests : AsciiDocParserTest (+3 : plantuml 4-dot, non-swallowing, source block avec titre).
+
+=== 3. Dogfooding — batch Ollama réel 61 articles
+
+- Runtime : `gemma4:31b-cloud` sur ports 11440/11441/11442 (round-robin), échec 11438/11450 géré par le pool
+- Commandes : `./gradlew translateDocumentBatch -Pdocument.translateBatchSourceDir=/tmp/opencode/leaf-batch/<mois> -Pdocument.translateBatchOutputDir=<abs i18n/en> -Pdocument.translateLlmMode=ollama -Pdocument.translateBatchTree=true`
+- 17 mois traités : 2022-01, 2022-05, 2022-12, 2023-01, 2023-11, 2024-06, 2024-07, 2024-11, 2025-05, 2025-07, 2025-09, 2025-10, 2025-11, 2026-01, 2026-04, 2026-05, 2027-04 (+0098 sans date)
+- Vérification : 61/61 OK — 0 `[EN]`, 0 fuite de prompt, sections conservées, diff source confirmé
+- Tâche `translateDocumentBatch` exécutée depuis la racine `document-gradle` (le plugin est consommé depuis mavenLocal)
+
+== Impact
+
+- 61 articles cheroliv.com traduits EN réel (0 placeholder restant)
+- Parser AsciiDoc : description lists + block macros + délimiteurs 4-dot + titres de bloc
+- Aucun commit ni push effectué sans permission (session cloturée à la fin)
+
+== Prochaine session
+
+S033 — Synthèse dogfooding, publication Maven Central document-gradle si nécessaire, suite batch (autres sites).

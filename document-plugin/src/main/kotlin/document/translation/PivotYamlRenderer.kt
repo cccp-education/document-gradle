@@ -42,6 +42,8 @@ class PivotYamlRenderer {
             is PivotBlock.ListBlock -> renderList(block, sb, indent)
             is PivotBlock.Table -> renderTable(block, sb, indent)
             is PivotBlock.Admonition -> renderAdmonition(block, sb, indent)
+            is PivotBlock.DescriptionList -> renderDescriptionList(block, sb, indent)
+            is PivotBlock.BlockMacro -> renderBlockMacro(block, sb, indent)
             is PivotBlock.Source -> renderSource(block, sb, indent)
             PivotBlock.Hr -> renderHr(sb, indent)
         }
@@ -108,6 +110,29 @@ class PivotYamlRenderer {
 
     private fun renderHr(sb: StringBuilder, indent: String) {
         sb.append("type: hr\n")
+        sb.append("$indent${INDENT_1}translatable: false\n")
+    }
+
+    private fun renderDescriptionList(dl: PivotBlock.DescriptionList, sb: StringBuilder, indent: String) {
+        sb.append("type: description_list\n")
+        sb.append("$indent${INDENT_1}translatable: ${dl.translatable}\n")
+        sb.append("$indent${INDENT_1}items:\n")
+        for (item in dl.items) {
+            sb.append("$indent${INDENT_1}${INDENT_1}- term:\n")
+            for (inline in item.term) {
+                renderInline(inline, sb, "$indent${INDENT_1}${INDENT_1}${INDENT_1}")
+            }
+            sb.append("$indent${INDENT_1}${INDENT_1}${INDENT_1}definition:\n")
+            for (inline in item.definition) {
+                renderInline(inline, sb, "$indent${INDENT_1}${INDENT_1}${INDENT_1}")
+            }
+        }
+    }
+
+    private fun renderBlockMacro(macro: PivotBlock.BlockMacro, sb: StringBuilder, indent: String) {
+        sb.append("type: block_macro\n")
+        sb.append("$indent${INDENT_1}name: ${yamlScalar(macro.name)}\n")
+        sb.append("$indent${INDENT_1}target: ${yamlScalar(macro.target)}\n")
         sb.append("$indent${INDENT_1}translatable: false\n")
     }
 

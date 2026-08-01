@@ -142,6 +142,9 @@ class AsciiDocParser {
                 line.trim() == "'''" -> {
                     i++
                 }
+                line.trim().startsWith("//") -> {
+                    i++
+                }
                 line.startsWith("====") && isAdmonitionDelimiter(line) -> {
                     i++
                 }
@@ -189,6 +192,15 @@ class AsciiDocParser {
                     blocks.add(list)
                     i = next
                 }
+                isDescriptionListItem(line) -> {
+                    val (dl, next) = parseDescriptionList(lines, i)
+                    blocks.add(dl)
+                    i = next
+                }
+                isBlockMacro(line) -> {
+                    blocks.add(parseBlockMacro(line))
+                    i++
+                }
                 else -> {
                     val (para, next) = parseParagraph(lines, i)
                     if (para != null) blocks.add(para)
@@ -219,23 +231,42 @@ class AsciiDocParser {
             else -> ""
         }
         var i = start + 1
-        while (i < lines.size && lines[i].trim() != "----") i++
-        if (i >= lines.size) {
-            return PivotBlock.Source(language, "", header) to i
+        val delimiter = firstBlockDelimiterAfterHeader(lines, i)
+        if (delimiter != null) {
+            i = delimiter.second
+            val contentStart = i
+            while (i < lines.size && !isSourceClosingDelimiter(lines[i])) i++
+            val content = lines.subList(contentStart, i).joinToString("\n")
+            if (i < lines.size) i++
+            return PivotBlock.Source(language, content, header) to i
         }
-        i++
-        val contentStart = i
-        while (i < lines.size && !isSourceClosingDelimiter(lines[i])) i++
-        val content = lines.subList(contentStart, i).joinToString("\n")
-        if (i < lines.size) i++
-        return PivotBlock.Source(language, content, header) to i
+        return PivotBlock.Source(language, "", header) to lines.size
     }
+
+    private fun firstBlockDelimiterAfterHeader(lines: List<String>, from: Int): Pair<String, Int>? {
+        var i = from
+        while (i < lines.size) {
+            val line = lines[i].trim()
+            if (isSourceDelimiterLine(line)) return line to i + 1
+            if (isBlockTitleLine(line)) { i++; continue }
+            if (line.isNotBlank()) return null
+            i++
+        }
+        return null
+    }
+
+    private fun isBlockTitleLine(line: String): Boolean =
+        line.startsWith(".") && !line.startsWith("..") && line.length > 1
 
     private fun isSourceClosingDelimiter(line: String): Boolean {
         val trimmed = line.trim()
-        if (trimmed == "----") return true
-        if (trimmed == "====") return true
-        return false
+        if (trimmed.isEmpty()) return false
+        return isSourceDelimiterLine(trimmed)
+    }
+
+    private fun isSourceDelimiterLine(line: String): Boolean {
+        if (line.length < 4) return false
+        return line.all { it == '-' } || line.all { it == '=' } || line.all { it == '.' }
     }
 
     private fun isMarkdownFence(line: String): Boolean = line.trim().startsWith("```")
@@ -459,6 +490,57 @@ class AsciiDocParser {
             remaining = remaining.substring(nextMatch.range.last + 1)
         }
         return segments
+    }
+
+    private fun isDescriptionListItem(line: String): Boolean {
+        val trimmed = line.trim()
+        if (trimmed.startsWith("//")) return false
+        if (trimmed.startsWith("=")) return false
+        if (trimmed.startsWith("|")) return false
+        if (trimmed.startsWith("* ") || trimmed.startsWith(". ")) return false
+        if (isNumberedListMarker(trimmed)) return false
+        if (isBlockMacro(trimmed)) return false
+        val colonIdx = trimmed.indexOf("::")
+        if (colonIdx < 0) return false
+        val before = trimmed.substring(0, colonIdx)
+        if (before.isBlank()) return false
+        if (before.startsWith("[") && !before.contains("]")) return false
+        return true
+    }
+
+    private fun parseDescriptionList(lines: List<String>, start: Int): Pair<PivotBlock.DescriptionList, Int> {
+        val items = mutableListOf<DescriptionItem>()
+        var i = start
+        while (i < lines.size && isDescriptionListItem(lines[i])) {
+            val line = lines[i].trim()
+            val colonIdx = line.indexOf("::")
+            val termText = line.substring(0, colonIdx).trim()
+            val defText = line.substring(colonIdx + 2).trim()
+            val term = parseInline(termText)
+            val definition = if (defText.isNotEmpty()) parseInline(defText) else emptyList()
+            items.add(DescriptionItem(term, definition))
+            i++
+        }
+        return PivotBlock.DescriptionList(items) to i
+    }
+
+    private fun isBlockMacro(line: String): Boolean {
+        val trimmed = line.trim()
+        return Regex("^(image|video)::\\S").containsMatchIn(trimmed)
+    }
+
+    private fun parseBlockMacro(line: String): PivotBlock.BlockMacro {
+        val trimmed = line.trim()
+        val match = Regex("^(image|video)::([^\\[]+)(?:\\[(.*)\\])?$").find(trimmed)
+        return if (match != null) {
+            PivotBlock.BlockMacro(
+                name = match.groupValues[1],
+                target = match.groupValues[2],
+                attributes = match.groupValues[3]
+            )
+        } else {
+            PivotBlock.BlockMacro(name = "image", target = trimmed.substringAfter("::"))
+        }
     }
 
     companion object {

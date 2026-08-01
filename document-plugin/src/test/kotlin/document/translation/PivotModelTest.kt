@@ -44,6 +44,37 @@ class PivotModelTest {
     }
 
     @Test
+    fun `description list block holds items with term and definition`() {
+        val block = PivotBlock.DescriptionList(
+            items = listOf(
+                DescriptionItem(
+                    term = listOf(PivotInline.Link("https://a.com", "label", translatable = true)),
+                    definition = listOf(PivotInline.Text("definition text", translatable = true))
+                )
+            )
+        )
+
+        assertEquals(1, block.items.size)
+        assertEquals("label", (block.items[0].term[0] as PivotInline.Link).label)
+        assertEquals("definition text", (block.items[0].definition[0] as PivotInline.Text).text)
+        assertEquals(true, block.translatable)
+    }
+
+    @Test
+    fun `description list with non-translatable items is non-translatable`() {
+        val block = PivotBlock.DescriptionList(
+            items = listOf(
+                DescriptionItem(
+                    term = listOf(PivotInline.Code("code", translatable = false)),
+                    definition = listOf(PivotInline.Code("code", translatable = false))
+                )
+            )
+        )
+
+        assertEquals(false, block.translatable)
+    }
+
+    @Test
     fun `article aggregates frontmatter and ordered blocks`() {
         val article = PivotArticle(
             frontmatter = PivotFrontmatter(

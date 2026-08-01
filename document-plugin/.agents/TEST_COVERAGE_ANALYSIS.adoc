@@ -1,6 +1,19 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-07-20
-:session: 021
+:date: 2026-08-01
+:session: 032
+
+== Session 032 — Dogfooding + fixes parser AsciiDoc (DescriptionList/BlockMacro + délimiteurs 4-dot/titres)
+
+*Couverture translation* : suite `document.translation.*` GREEN après les fixes.
+*Tous les tests unitaires/functional/cucumber de traduction passent.*
+*4 échecs Cucumber préexistants* (bookPipeline + applyDocumentTemplate × 3) — non liés aux fixes, avant S032.
+
+Tests ajoutés S032 :
+- PivotModelTest (+2) : DescriptionList
+- AsciiDocParserTest (+17) : description lists (liens, texte, multi-mots, vide, non-fusion, suivis de paragraphe, commentaires), block macros image/video, source block 4-dot `....`, non-swallowing après `....`, source block avec titre `.titre`
+- AsciiDocRendererTest (+5) : round-trip description list + block macro, chaque item sur sa ligne
+- JbakeNativeRendererTest (+4) : rendu description list + block macro
+- document.feature (+2 scénarios @description-list + @block-macro) : batch output lines par ligne
 
 == Pyramide de tests — Session 021 (Fix compile + DOC-TRANSLATE US-1 & US-2)
 

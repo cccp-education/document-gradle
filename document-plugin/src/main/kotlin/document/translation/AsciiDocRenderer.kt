@@ -34,6 +34,8 @@ class AsciiDocRenderer : ArticleRenderer {
             is PivotBlock.ListBlock -> renderList(block, sb)
             is PivotBlock.Table -> renderTable(block, sb)
             is PivotBlock.Admonition -> renderAdmonition(block, sb)
+            is PivotBlock.DescriptionList -> renderDescriptionList(block, sb)
+            is PivotBlock.BlockMacro -> renderBlockMacro(block, sb)
             is PivotBlock.Source -> renderSource(block, sb)
             is PivotBlock.Hr -> sb.appendLine("---")
         }
@@ -125,6 +127,19 @@ class AsciiDocRenderer : ArticleRenderer {
         sb.appendLine("----")
         sb.appendLine(src.content)
         sb.appendLine("----")
+    }
+
+    private fun renderDescriptionList(dl: PivotBlock.DescriptionList, sb: StringBuilder) {
+        for (item in dl.items) {
+            val term = item.term.joinToString("") { renderInline(it) }
+            val def = item.definition.joinToString("") { renderInline(it) }
+            sb.appendLine("$term:: $def")
+        }
+    }
+
+    private fun renderBlockMacro(macro: PivotBlock.BlockMacro, sb: StringBuilder) {
+        val attrs = if (macro.attributes.isNotEmpty()) "[${macro.attributes}]" else ""
+        sb.appendLine("${macro.name}::${macro.target}$attrs")
     }
 
     private fun renderInline(inline: PivotInline): String = when (inline) {

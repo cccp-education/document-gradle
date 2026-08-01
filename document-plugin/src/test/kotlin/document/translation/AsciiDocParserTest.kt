@@ -610,6 +610,103 @@ class AsciiDocParserTest {
     }
 
     @Test
+    fun `parses plantuml block delimited by four dots`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            == Architecture
+
+            [plantuml]
+            ....
+            @startuml
+            package "Core" {
+              [Validator] as V
+            }
+            @enduml
+            ....
+
+            == Methodologie
+
+            Texte apres le bloc.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val src = article.blocks.filterIsInstance<PivotBlock.Source>().first()
+        assertEquals("plantuml", src.language)
+        assertTrue(src.content.contains("@startuml"))
+        assertTrue(src.content.contains("[Validator] as V"))
+        assertTrue(src.content.contains("@enduml"))
+        assertTrue(article.blocks.any { it is PivotBlock.Heading && it.text == "Methodologie" },
+            "expected heading after the 4-dot plantuml block, got: ${article.blocks}")
+    }
+
+    @Test
+    fun `parses 4-dot plantuml block without swallowing following content`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            [plantuml]
+            ....
+            @startuml
+            A --> B
+            @enduml
+            ....
+
+            == Section suivante
+
+            == Section encore apres
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        assertEquals(3, article.blocks.size)
+        assertTrue(article.blocks[0] is PivotBlock.Source)
+        assertTrue(article.blocks[1] is PivotBlock.Heading && (article.blocks[1] as PivotBlock.Heading).text == "Section suivante")
+        assertTrue(article.blocks[2] is PivotBlock.Heading && (article.blocks[2] as PivotBlock.Heading).text == "Section encore apres")
+    }
+
+    @Test
+    fun `parses source block with block title between header and delimiter`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            == Probleme
+
+            [source,html]
+            .Structure HTML initiale
+            ----
+            <section id="home" class="hero-section">
+            </section>
+            ----
+
+            == Conclusion
+
+            Texte final.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val src = article.blocks.filterIsInstance<PivotBlock.Source>().first()
+        assertEquals("html", src.language)
+        assertTrue(src.content.contains("hero-section"))
+        assertTrue(article.blocks.any { it is PivotBlock.Heading && it.text == "Conclusion" },
+            "expected heading after titled source block, got: ${article.blocks}")
+    }
+
+    @Test
     fun `parses multiple blocks in sequence`() {
         val adoc = """
             title=Test
@@ -766,5 +863,238 @@ class AsciiDocParserTest {
         assertEquals(0, lineBreaks.size, "Single line with + at end should not produce LineBreak")
         val text = para.inline.filterIsInstance<PivotInline.Text>().joinToString("") { it.text }
         assertTrue(text.contains("plus a la fin +"), "Trailing + on last line should be preserved as literal text")
+    }
+
+    @Test
+    fun `parses description list with link terms and text definitions`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            https://undraw.co/[undraw.co]:: Open source illustrations.
+            https://absurd.design/[absurd.design]:: Absurd illustrations that make sense.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(2, dl.items.size)
+        val item0 = dl.items[0]
+        assertEquals("undraw.co", (item0.term[0] as PivotInline.Link).label)
+        assertEquals("Open source illustrations.", (item0.definition[0] as PivotInline.Text).text)
+        val item1 = dl.items[1]
+        assertEquals("absurd.design", (item1.term[0] as PivotInline.Link).label)
+        assertEquals("Absurd illustrations that make sense.", (item1.definition[0] as PivotInline.Text).text)
+        assertTrue(dl.translatable)
+    }
+
+    @Test
+    fun `parses description list with plain text terms`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            Tools:: A collection of useful tools.
+            Colors:: The super fast color palette generator.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(2, dl.items.size)
+        assertEquals("Tools", (dl.items[0].term[0] as PivotInline.Text).text)
+        assertEquals("A collection of useful tools.", (dl.items[0].definition[0] as PivotInline.Text).text)
+        assertEquals("Colors", (dl.items[1].term[0] as PivotInline.Text).text)
+    }
+
+    @Test
+    fun `parses description list with multi-word terms`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            Google Material Design:: Google's design system for unified interfaces.
+            Apple Human Interface Guidelines:: Apple's recommendations for iOS and macOS.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(2, dl.items.size)
+        assertEquals("Google Material Design", (dl.items[0].term[0] as PivotInline.Text).text)
+        assertEquals("Apple Human Interface Guidelines", (dl.items[1].term[0] as PivotInline.Text).text)
+    }
+
+    @Test
+    fun `parses description list with empty definition`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            term::
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(1, dl.items.size)
+        assertEquals("term", (dl.items[0].term[0] as PivotInline.Text).text)
+        assertEquals(0, dl.items[0].definition.size)
+    }
+
+    @Test
+    fun `parses block macro image`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            image::diagram.png[Architecture diagram]
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val macro = article.blocks[0] as PivotBlock.BlockMacro
+        assertEquals("image", macro.name)
+        assertEquals("diagram.png", macro.target)
+        assertEquals("Architecture diagram", macro.attributes)
+        assertEquals(false, macro.translatable)
+    }
+
+    @Test
+    fun `parses block macro video`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            video::iSWjmVcfQGg[youtube]
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val macro = article.blocks[0] as PivotBlock.BlockMacro
+        assertEquals("video", macro.name)
+        assertEquals("iSWjmVcfQGg", macro.target)
+        assertEquals("youtube", macro.attributes)
+    }
+
+    @Test
+    fun `parses block macro without attributes`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            image::screenshot.png
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        val macro = article.blocks[0] as PivotBlock.BlockMacro
+        assertEquals("image", macro.name)
+        assertEquals("screenshot.png", macro.target)
+        assertEquals("", macro.attributes)
+    }
+
+    @Test
+    fun `description list items are not merged into a single paragraph`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            https://a.com[label]:: First definition.
+            https://b.com[label]:: Second definition.
+            https://c.com[label]:: Third definition.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        assertEquals(1, article.blocks.size)
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(3, dl.items.size)
+    }
+
+    @Test
+    fun `block macro lines are not merged into a single paragraph`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            image::a.png[First]
+            image::b.png[Second]
+            image::c.png[Third]
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        assertEquals(3, article.blocks.size)
+        assertTrue(article.blocks.all { it is PivotBlock.BlockMacro })
+    }
+
+    @Test
+    fun `description list followed by paragraph are separate blocks`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            term:: definition
+
+            A regular paragraph after the description list.
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        assertEquals(2, article.blocks.size)
+        assertTrue(article.blocks[0] is PivotBlock.DescriptionList)
+        assertTrue(article.blocks[1] is PivotBlock.Paragraph)
+    }
+
+    @Test
+    fun `comment line with double colon is not a description list item`() {
+        val adoc = """
+            title=Test
+            date=2026-01-01
+            type=page
+            status=published
+            ~~~~~~
+
+            // this is a comment with :: inside
+            real:: definition
+        """.trimIndent()
+
+        val article = parser.parse(adoc)
+
+        assertEquals(1, article.blocks.size)
+        val dl = article.blocks[0] as PivotBlock.DescriptionList
+        assertEquals(1, dl.items.size)
+        assertEquals("real", (dl.items[0].term[0] as PivotInline.Text).text)
     }
 }

@@ -18,6 +18,8 @@ data class Content(val pivot: PivotArticle) {
         is PivotBlock.Table -> block.header.flatten() + block.rows.flatten().flatten()
         is PivotBlock.Admonition -> block.blocks.flatMap { inlineOf(it) }
         is PivotBlock.Heading -> emptyList()
+        is PivotBlock.DescriptionList -> block.items.flatMap { it.term + it.definition }
+        is PivotBlock.BlockMacro -> emptyList()
         is PivotBlock.Source -> emptyList()
         is PivotBlock.Hr -> emptyList()
     }

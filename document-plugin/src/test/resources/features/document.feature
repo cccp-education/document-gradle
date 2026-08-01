@@ -489,3 +489,21 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     Then the build should succeed
     And the batch translated output should contain file 'blog/keep.adoc' with content 'Keep [EN]'
     And the batch translated output should not contain file 'draft/skip.adoc'
+
+  @doc-translate @translation @batch @description-list
+  Scenario: translateDocumentBatch preserves description list items on separate lines
+    Given a new document project with batch translation DSL and description list content
+    When I am executing the task 'translateDocumentBatch'
+    Then the build should succeed
+    And the batch translated output should contain file 'article1.adoc' with content 'https://a.com[label [EN]]:: First definition. [EN]'
+    And the batch translated output should contain file 'article1.adoc' with content 'https://b.com[label [EN]]:: Second definition. [EN]'
+    And the batch translated output file 'article1.adoc' should have 2 lines containing '::'
+
+  @doc-translate @translation @batch @block-macro
+  Scenario: translateDocumentBatch preserves block macros on separate lines
+    Given a new document project with batch translation DSL and block macro content
+    When I am executing the task 'translateDocumentBatch'
+    Then the build should succeed
+    And the batch translated output should contain file 'article1.adoc' with content 'image::a.png[First]'
+    And the batch translated output should contain file 'article1.adoc' with content 'image::b.png[Second]'
+    And the batch translated output file 'article1.adoc' should have 2 lines containing 'image::'

@@ -207,4 +207,72 @@ resultat attendu.
         assertTrue(rendered.contains("resultat attendu."),
             "Roundtrip should preserve last line without +")
     }
+
+    @Test
+    fun `roundtrip preserves description list`() {
+        val original = """title=DL Test
+date=2026-01-01
+type=page
+status=published
+~~~~~~
+
+https://a.com[label]:: First definition.
+https://b.com[label]:: Second definition.
+"""
+        val article = parser.parse(original)
+        val rendered = renderer.render(article)
+        val reparsed = parser.parse(rendered)
+        assertEquals(article, reparsed, "Roundtrip should preserve description list")
+    }
+
+    @Test
+    fun `roundtrip preserves block macro`() {
+        val original = """title=Macro Test
+date=2026-01-01
+type=page
+status=published
+~~~~~~
+
+image::diagram.png[Architecture]
+"""
+        val article = parser.parse(original)
+        val rendered = renderer.render(article)
+        val reparsed = parser.parse(rendered)
+        assertEquals(article, reparsed, "Roundtrip should preserve block macro")
+    }
+
+    @Test
+    fun `description list renders each item on its own line`() {
+        val original = """title=DL Test
+date=2026-01-01
+type=page
+status=published
+~~~~~~
+
+term1:: def1
+term2:: def2
+term3:: def3
+"""
+        val article = parser.parse(original)
+        val rendered = renderer.render(article)
+        val lines = rendered.lines().filter { it.contains("::") }
+        assertEquals(3, lines.size, "Each description list item should be on its own line")
+    }
+
+    @Test
+    fun `block macro renders on its own line`() {
+        val original = """title=Macro Test
+date=2026-01-01
+type=page
+status=published
+~~~~~~
+
+image::a.png[First]
+image::b.png[Second]
+"""
+        val article = parser.parse(original)
+        val rendered = renderer.render(article)
+        val macroLines = rendered.lines().filter { it.startsWith("image::") }
+        assertEquals(2, macroLines.size, "Each block macro should be on its own line")
+    }
 }

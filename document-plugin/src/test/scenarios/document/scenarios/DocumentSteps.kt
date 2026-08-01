@@ -932,6 +932,18 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with batch translation DSL and description list content")
+    fun createNewDocumentProjectWithBatchTranslationDslAndDescriptionListContent() {
+        world.createGradleProjectWithBatchTranslationDslAndDescriptionListContent()
+        assertThat(world.projectDir).exists()
+    }
+
+    @Given("a new document project with batch translation DSL and block macro content")
+    fun createNewDocumentProjectWithBatchTranslationDslAndBlockMacroContent() {
+        world.createGradleProjectWithBatchTranslationDslAndBlockMacroContent()
+        assertThat(world.projectDir).exists()
+    }
+
     @Then("the batch translated output should contain file {string} with content {string}")
     fun batchTranslatedOutputShouldContainFileWithContent(relPath: String, expected: String) {
         val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
@@ -943,6 +955,15 @@ class DocumentSteps(private val world: DocumentWorld) {
     fun batchTranslatedOutputShouldNotContainFile(relPath: String) {
         val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
         assertThat(output).doesNotExist()
+    }
+
+    @Then("the batch translated output file {string} should have {int} lines containing {string}")
+    fun batchTranslatedOutputFileShouldHaveLinesContaining(relPath: String, expectedCount: Int, substring: String) {
+        val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
+        assertThat(output).exists()
+        val count = output.readText().lines().count { it.contains(substring) }
+        assertThat(count).`as`("Expected $expectedCount lines containing '$substring' in $relPath, got $count")
+            .isEqualTo(expectedCount)
     }
 
     @Then("the translated document should not contain {string}")

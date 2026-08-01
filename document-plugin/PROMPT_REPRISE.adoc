@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 032
-:date: 2026-07-31
-:status: Tree translation mode livré — ArticleTranslator interface, TreeTranslationAdapter (whole-article single LLM call), PivotYamlParser round-trip, NumberedFakeTranslationService, PooledOllamaTranslationAdapter refusal detection (+12 patterns), TranslateDocumentBatchTask treeMode+skipExisting, CI JDK 24→25. 244 PASS (186 UT + 29 FT + 29 Cucumber), 0 fail. Commit 82ada3b pushé.
+:session: 033
+:date: 2026-08-01
+:status: Session 032 terminée — Dogfooding batch 61 articles cheroliv.com FR→EN (Ollama réel) + 2 fixes parser AsciiDoc (DescriptionList/BlockMacro + délimiteurs 4-dot/titres de bloc). 61/61 traduits, 0 placeholder. Commit session à faire (permission utilisateur).
 :max-lines: 70
 
 == Quick Start
@@ -9,35 +9,37 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.translation.*"  # 186 UT GREEN
-./gradlew functionalTest  # 29 FT GREEN
-./gradlew cucumberTest  # 29 Cucumber GREEN
+./gradlew test --tests "document.translation.*"  # GREEN
+./gradlew functionalTest  # GREEN
+./gradlew cucumberTest  # GREEN (sauf 4 scénarios applyDocumentTemplate/bookPipeline préexistants)
 ```
 
 == Contexte de fin
 
-Session 031 — Tree translation mode : ArticleTranslator interface (leaf-by-leaf vs whole-article),
-TreeTranslationAdapter (1 LLM call per document via YAML round-trip), PivotYamlParser,
-NumberedFakeTranslationService, PooledOllamaTranslationAdapter refusal detection (+12 patterns),
-TranslateDocumentBatchTask treeMode+skipExisting, DocumentPlugin CLI -Pdocument.translateBatchTree.
-CI JDK 24→25. Fix SubtreeI18nDeltaTest import manquant.
-244 PASS (186 UT + 29 FT + 29 Cucumber), 0 fail. Commit 82ada3b pushé.
+Session 032 — Dogfooding `translateDocumentBatch` (tree mode) sur cheroliv.com :
+61 articles FR→EN traduits via Ollama réel (gemma4:31b-cloud, round-robin ports 11440/11441/11442).
+2 fixes parser découverts pendant le batch (fake mode reproduisait les troncatures → bug parser) :
+- DescriptionList (`term:: def`) + BlockMacro (`image::`/`video::`) fusionnés en un paragraphe → PivotModel/parser/renderers/TreeTranslationAdapter
+- Blocs `[plantuml]` délimités par `....` non reconnus → parseSourceBlock avalait le reste (0084 : 533→70 lignes)
+- Titres de bloc `.titre` entre `[source,html]` et `----` → idem (0082 : 373→134 lignes)
 
 == Reprendre à
 
-. `./gradlew compileKotlin` — BUILD SUCCESSFUL
-. Dogfooding : Traduire les 104 articles cheroliv.com FR→EN via translateDocumentBatch avec DocKnowledgeBase
+. `git status` + commit/push session 032 (permission utilisateur obtenue)
+. S033 — Suivi dogfooding : autres sites i18n, synthèse, publication Maven Central si requis
 . CI-4 : `site.yml` cheroliv.com avec 29 vraies Device Keys → workflow_dispatch translate-cheroliv-com
 
-== Fichiers touchés S031
+== Fichiers touchés S032
 
 *document-gradle* :
-. `ArticleTranslator.kt` — nouvelle interface contrat (leaf-by-leaf vs whole-article)
-. `TreeTranslationAdapter.kt` — stratégie whole-article (1 LLM call, YAML round-trip)
-. `PivotYamlParser.kt` — parse YAML PivotYamlRenderer → PivotArticle
-. `NumberedFakeTranslationService.kt` — fake déterministe mode tree
-. `PooledOllamaTranslationAdapter.kt` — détection refus/meta-response LLM (+12 patterns)
-. `TranslateDocumentBatchTask.kt` — treeMode + skipExisting
-. `DocumentPlugin.kt` — CLI -Pdocument.translateBatchTree
-. `.github/workflows/test.yml` — JDK 24→25
-. `SubtreeI18nDeltaTest.kt` — fix import ArticleModification manquant
+. `PivotModel.kt` — DescriptionList + DescriptionItem + BlockMacro
+. `AsciiDocParser.kt` — description lists, block macros, skip `//`, délimiteurs source multi (----/====/....), titres de bloc
+. `JbakeNativeRenderer.kt` / `AsciiDocRenderer.kt` / `PivotYamlRenderer.kt` — renderDescriptionList + renderBlockMacro
+. `TreeTranslationAdapter.kt` — collect/apply DescriptionList
+. `DocumentTranslator.kt` — branches DescriptionList/BlockMacro
+. `tree/Content.kt` — inlineOf
+. `gradle.properties` — jvmargs -Xmx2g (daemon OOM cucumber)
+. Tests : PivotModelTest, AsciiDocParserTest, AsciiDocRendererTest, JbakeNativeRendererTest, document.feature, DocumentSteps, DocumentWorld
+
+*cheroliv.com* (repo office) :
+. 61 articles `i18n/en/content/blog/**` traduits EN réel
