@@ -1,0 +1,68 @@
+= Session 033 — Cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE
+:date: 2026-08-02
+:type: cadrage
+:epics: DOC-TABLE-VALIDATE, DOC-PLANTUML-VALIDATE
+:status: ✅ TERMINÉ
+
+== Objectif
+
+Cadrer 2 nouveaux EPICs transverses de validation syntaxique post-traduction
+dans document-gradle (N2), le bounded context naturel pour la manipulation
+d'AsciiDoc.
+
+== EPIC DOC-TABLE-VALIDATE — Validation syntaxique des tableaux AsciiDoc post-traduction
+
+*Points* : ~25 pts, 5 US
+*Priorité* : P1
+*Sessions projetées* : S033-S035
+
+.Motivation
+Le `DocumentTranslator` traduit les cellules de tableau une par une via LLM
+(`translateInlines`), mais rien ne vérifie que le tableau rendu par
+`AsciiDocRenderer` reste syntaxiquement valide. Un LLM peut produire un contenu
+de cellule qui casse les délimiteurs (`|`, `|===`), désaligne le nombre de
+colonnes, ou corrompt les `cols` specs.
+
+.US
+- VALIDATE-1 : `TableSyntaxValidator` — cohérence cols, délimiteurs, homogénéité colonnes
+- VALIDATE-2 : Intégration dans `DocumentTranslator.translateBlock(Table)`
+- VALIDATE-3 : Mode STRICT/LENIENT/OFF + DSL `translation { tableValidation { } }`
+- VALIDATE-4 : Rapport consolidé `table-validation-report.json` en mode batch
+- VALIDATE-5 : Cucumber BDD — 5 scénarios
+
+== EPIC DOC-PLANTUML-VALIDATE — Validation syntaxique des diagrammes PlantUML post-traduction (DRY)
+
+*Points* : ~21 pts, 5 US
+*Priorité* : P1
+*Sessions projetées* : S036-S038
+
+.Motivation
+Le `PlantUmlTranslationAdapter` traduit les labels dans les blocs `[plantuml]`
+mais rien ne vérifie que le diagramme reste syntaxiquement valide après
+substitution. Un LLM peut produire un label qui casse la syntaxe PlantUML.
+
+.Stratégie DRY
+- plantuml-gradle (HTOWN) expose `PlantumlService.validateSyntax()` via
+  `net.sourceforge.plantuml.SourceStringReader` (vrai parser PlantUML)
+- Disponible via `education.cccp:plantuml-plugin:0.0.2` sur Maven Central
+- Le BOM (`workspace-bom:0.0.13`) versionne déjà `plantuml-plugin`
+- document-gradle ajoute `implementation(libs.plantuml.plugin)`
+- Wrapper DDD `PlantUmlSyntaxValidator` adapte `SyntaxValidationResult` (HTOWN)
+  → `PlantUmlValidationResult` (document) avec contexte enrichi
+- Prêt pour extraction future en `plantuml-validation-contracts` N0
+
+.US
+- VALIDATE-1 : Ajout dépendance `plantuml-plugin` dans build.gradle.kts
+- VALIDATE-2 : `PlantUmlSyntaxValidator` wrapper DDD
+- VALIDATE-3 : Intégration dans `PlantUmlTranslationAdapter.translate()`
+- VALIDATE-4 : Mode STRICT/LENIENT/OFF — même enum `ValidationMode` que TABLE-VALIDATE
+- VALIDATE-5 : Cucumber BDD — 5 scénarios
+
+== Fichiers modifiés
+
+- `BACKLOG.adoc` : +217 lignes (2 EPICs complets avec US, DAG, projections)
+- `.agents/INDEX.adoc` : +2 EPICs dans la roadmap, mise à jour date + prochaine session
+
+== Prochaine session
+
+S034 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration DocumentTranslator)

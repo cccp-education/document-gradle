@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-07-20 (session 023 — US-4 TERMINÉE, 128 UT translation GREEN. US-5 next.)
+_Date revision_ : 2026-08-02 (session 032 — Dogfooding batch 61 articles cheroliv.com + cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -563,3 +563,218 @@ Par :
 
 Verifier que le bloc `maven-publish` + `signing` dans `build.gradle.kts` contient
 bien la section `<relocation>` conditionnelle via `-Prem relocationGroup=...`.
+
+'''
+== EPIC DOC-TABLE-VALIDATE — Validation syntaxique des tableaux AsciiDoc post-traduction
+
+_Cadré Session 033 (2026-08-02)._
+
+[CAUTION]
+====
+**Motivation** : le `DocumentTranslator` traduit les cellules de tableau une par une
+via LLM (`translateInlines`), mais rien ne vérifie que le tableau rendu par
+`AsciiDocRenderer` reste syntaxiquement valide. Un LLM peut produire un contenu de
+cellule qui casse les délimiteurs (`|`, `|===`), désaligne le nombre de colonnes,
+ou corrompt les `cols` specs. Le bug #0124 de la session 032 (DescriptionList+BlockMacro
+fusionnés) a été découvert pendant le dogfooding batch — une table corrompue par
+traduction passerait inaperçue jusqu'au rendu JBake → page cassée en prod.
+
+**Bénéfices** :
+. Filet de sécurité pour tous les consommateurs de `document-gradle` (bakery, runner, slider, etc.)
+. Détection précoce des corruptions LLM avant publication
+. Rapport consolidé en mode batch pour diagnostic rapide
+. Boundary claire : Document = garant de la syntaxe AsciiDoc produite
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-TABLE-VALIDATE-1
+| *`TableSyntaxValidator`* — value object DDD pur. Vérifie :
+  - Cohérence `cols` vs nombre de colonnes header/rows (si `cols="2,3"` → 2 colonnes attendues)
+  - Délimiteurs intacts : pas de `\|` parasite dans les cellules, pas de `|===` dans le contenu
+  - Nombre de colonnes homogène : header et chaque row ont le même nombre de cellules
+  - Retourne `TableValidationResult` sealed (Valid / Invalid avec `articleTitle`, `tableIndex`, `reason`)
+| UT : 15-20 (cols mismatch, delimiter corruption, column count mismatch, valid table)
+| 5
+| —
+
+| DOC-TABLE-VALIDATE-2
+| *Intégration dans `DocumentTranslator.translateBlock(Table)`* — après traduction
+  des cellules, appeler `TableSyntaxValidator.validate()` sur le bloc traduit.
+  Si `Invalid` : wrapper dans `TranslationWarning` (ne pas bloquer la traduction
+  des autres blocs). Logger le warning avec contexte (article, table index, reason).
+| UT : 8-10 (mock validator, warning propagation, valid table no-op)
+| 5
+| VALIDATE-1
+
+| DOC-TABLE-VALIDATE-3
+| *Mode `--strict` vs `--lenient`* — DSL `translation { tableValidation { mode = STRICT } }`.
+  - `STRICT` : `Invalid` → `TranslationException`, fail build
+  - `LENIENT` (défaut) : `Invalid` → warning log + continuer
+  - `OFF` : pas de validation (rétrocompatibilité)
+| UT : 5-8 (strict throws, lenient warns, off skips) + FT : 2 (CLI -Pdocument.translateTableValidation=strict/lenient/off)
+| 5
+| VALIDATE-2
+
+| DOC-TABLE-VALIDATE-4
+| *Intégration dans `translateDocumentBatch`* — rapport consolidé
+  `table-validation-report.json` produit dans l'output dir. Contient :
+  `[{article, tableIndex, status, reason}]`. Agrégé par `BatchDocumentTranslator`.
+| UT : 5-8 (report generation, empty report, multi-article aggregation) + FT : 1 (batch avec tables corrompues)
+| 5
+| VALIDATE-3
+
+| DOC-TABLE-VALIDATE-5
+| *Cucumber BDD* — scénarios end-to-end :
+  - `@table-validation @valid` — table simple FR→EN, validation passe
+  - `@table-validation @corrupted-delimiter` — LLM injecte `\|` dans une cellule → LENIENT warn, STRICT fail
+  - `@table-validation @column-mismatch` — LLM produit une colonne en trop → Invalid
+  - `@table-validation @cols-mismatch` — `cols="2,3"` mais 3 colonnes dans les rows
+  - `@table-validation @batch-report` — batch 3 articles, 1 table corrompue → rapport JSON
+| BDD : 5 scénarios
+| 5
+| VALIDATE-4
+|===
+
+_Total_ : ~25 pts, 5 US.
+
+=== Dépendances (DAG)
+
+----
+VALIDATE-1 (TableSyntaxValidator) ─→ VALIDATE-2 (DocumentTranslator) ─→ VALIDATE-3 (strict/lenient) ─→ VALIDATE-4 (batch report) ─→ VALIDATE-5 (Cucumber)
+----
+
+=== Projection sessions
+
+* *S033* — VALIDATE-1 + VALIDATE-2 (10 pts, TableSyntaxValidator + intégration DocumentTranslator)
+* *S034* — VALIDATE-3 + VALIDATE-4 (10 pts, strict/lenient + batch report)
+* *S035* — VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
+
+Projection conservatrice : 3 sessions, ~25 pts, méthodo baby step DDD/TDD/BDD.
+
+'''
+== EPIC DOC-PLANTUML-VALIDATE — Validation syntaxique des diagrammes PlantUML post-traduction (DRY via plantuml-gradle + BOM)
+
+_Cadré Session 033 (2026-08-02)._
+
+[CAUTION]
+====
+**Motivation** : le `PlantUmlTranslationAdapter` traduit les labels dans les blocs
+`[plantuml]` mais rien ne vérifie que le diagramme reste syntaxiquement valide après
+substitution. Un LLM peut produire un label qui casse la syntaxe PlantUML (guillemets
+non échappés, identifiants réservés, `@startuml`/`@enduml` corrompus).
+
+**DRY** : plantuml-gradle (HTOWN) expose déjà `PlantumlService.validateSyntax()` qui
+utilise `net.sourceforge.plantuml.SourceStringReader` (le vrai parser PlantUML).
+Ce validateur est self-contained, sans dépendance Gradle, et disponible via
+`education.cccp:plantuml-plugin:0.0.2` sur Maven Central. Le BOM (`workspace-bom:0.0.13`)
+versionne déjà `plantuml-plugin` comme dépendance.
+
+**Stratégie DRY** :
+. `document-gradle` ajoute `implementation(libs.plantuml.plugin)` (déjà dans le BOM)
+. `PlantUmlTranslationAdapter` appelle `PlantumlService().validateSyntax()` après traduction
+. Zéro duplication de logique de parsing PlantUML — single source of truth chez HTOWN
+. Si un jour `plantuml-contracts` N0 est créé dans le BOM, le contrat de validation
+  y sera extrait (actuellement : pas de contrat N0 dédié, le service HTOWN fait office)
+
+**Bénéfices** :
+. Filet de sécurité pour la traduction des diagrammes PlantUML dans les documents
+. Réutilisation du validateur natif PlantUML (SourceStringReader) — pas de regex maison
+. Cohérence cross-borough : même validateur utilisé par `validatePlantumlSyntax` (HTOWN)
+  et par `translateDocument` (document)
+. Prêt pour extraction future en `plantuml-validation-contracts` N0 si le besoin émerge
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-PLANTUML-VALIDATE-1
+| *Ajout dépendance `plantuml-plugin`* — `implementation(libs.plantuml.plugin)` dans
+  `build.gradle.kts` de document-plugin. Le BOM versionne déjà `plantuml-plugin:0.0.2`.
+  Vérifier que la compilation passe (pas de conflit de dépendances transitives).
+  `PlantumlService` et `SyntaxValidationResult` sont accessibles.
+| Compile OK + 1 FT (vérifie que PlantumlService est instanciable)
+| 3
+| —
+
+| DOC-PLANTUML-VALIDATE-2
+| *`PlantUmlSyntaxValidator` wrapper DDD* — value object dans
+  `document.translation.plantuml`. Wrappe `PlantumlService.validateSyntax()`.
+  Adapte `SyntaxValidationResult` (HTOWN) → `PlantUmlValidationResult` (document)
+  avec contexte enrichi : `articleTitle`, `blockIndex`, `strategy` (TranslateLabels/
+  PreserveTechnical/BorrowVocabulary). Le wrapper est nécessaire pour :
+  - Découpler le domaine document du domaine plantuml (dependency inversion)
+  - Enrichir l'erreur avec le contexte documentaire (quel article, quel bloc)
+  - Préparer l'extraction future en contrat N0
+| UT : 8-10 (valid diagram, missing @startuml, syntax error, strategy context)
+| 5
+| VALIDATE-1
+
+| DOC-PLANTUML-VALIDATE-3
+| *Intégration dans `PlantUmlTranslationAdapter.translate()`* — après traduction
+  des labels, appeler `PlantUmlSyntaxValidator.validate()` sur le bloc traduit.
+  Si `Invalid` : logger le warning avec contexte (article, block index, strategy).
+  Ne pas bloquer la traduction des autres blocs (mode lenient par défaut).
+| UT : 5-8 (valid after translation, corrupted by LLM, preserveTechnical skip)
+| 5
+| VALIDATE-2
+
+| DOC-PLANTUML-VALIDATE-4
+| *Mode `--strict` vs `--lenient`* — DSL `translation { plantumlValidation { mode = STRICT } }`.
+  Cohérent avec DOC-TABLE-VALIDATE-3 (même enum `ValidationMode { STRICT, LENIENT, OFF }`).
+  - `STRICT` : `Invalid` → `TranslationException`, fail build
+  - `LENIENT` (défaut) : `Invalid` → warning log + continuer
+  - `OFF` : pas de validation (rétrocompatibilité)
+| UT : 3-5 (strict throws, lenient warns, off skips) + FT : 1 (CLI -Pdocument.translatePlantumlValidation=strict)
+| 3
+| VALIDATE-3
+
+| DOC-PLANTUML-VALIDATE-5
+| *Cucumber BDD* — scénarios end-to-end :
+  - `@plantuml-validation @valid` — diagramme simple FR→EN, validation passe
+  - `@plantuml-validation @corrupted-tags` — LLM corrompt `@startuml` → Invalid
+  - `@plantuml-validation @broken-label` — guillemets non échappés dans un label → Invalid
+  - `@plantuml-validation @preserve-technical` — stratégie PreserveTechnical, pas de validation (no-op)
+  - `@plantuml-validation @strict-mode` — mode STRICT, diagramme corrompu → exception
+| BDD : 5 scénarios
+| 5
+| VALIDATE-4
+|===
+
+_Total_ : ~21 pts, 5 US.
+
+=== Dépendances (DAG)
+
+----
+VALIDATE-1 (dépendance plantuml-plugin) ─→ VALIDATE-2 (PlantUmlSyntaxValidator wrapper) ─→ VALIDATE-3 (intégration adapter) ─→ VALIDATE-4 (strict/lenient) ─→ VALIDATE-5 (Cucumber)
+----
+
+=== Note DRY — Extraction future en contrat N0
+
+Aujourd'hui le validateur est consommé directement depuis `plantuml-plugin:0.0.2`
+(implementation). Si d'autres boroughs (codex, slider, bakery) ont besoin de valider
+du PlantUML, un contrat N0 `plantuml-validation-contracts` pourra être extrait dans
+le BOM avec :
+- `PlantUmlSyntaxValidator` interface
+- `PlantUmlValidationResult` sealed class
+- `ValidationMode` enum
+
+Le wrapper `PlantUmlSyntaxValidator` dans document-gradle est conçu pour cette
+extraction future : il ne dépend que de `PlantumlService.validateSyntax()` et
+adapte le résultat. Le jour où le contrat N0 existe, il suffira de changer
+l'implémentation du wrapper.
+
+=== Projection sessions
+
+* *S036* — VALIDATE-1 + VALIDATE-2 (8 pts, dépendance + wrapper DDD)
+* *S037* — VALIDATE-3 + VALIDATE-4 (8 pts, intégration adapter + strict/lenient)
+* *S038* — VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
+
+Projection conservatrice : 3 sessions, ~21 pts, méthodo baby step DDD/TDD/BDD.

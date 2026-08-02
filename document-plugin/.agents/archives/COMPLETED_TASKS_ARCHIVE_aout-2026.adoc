@@ -2,6 +2,34 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 033 (2026-08-02) — Cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE
+
+*EPIC DOC-TABLE-VALIDATE* (~25 pts, 5 US, P1) :
+- VALIDATE-1 : `TableSyntaxValidator` — cohérence `cols` vs colonnes, délimiteurs intacts, homogénéité
+- VALIDATE-2 : Intégration dans `DocumentTranslator.translateBlock(Table)` post-traduction
+- VALIDATE-3 : Mode STRICT/LENIENT/OFF + DSL `translation { tableValidation { } }`
+- VALIDATE-4 : Rapport consolidé `table-validation-report.json` en mode batch
+- VALIDATE-5 : Cucumber BDD — 5 scénarios
+
+*EPIC DOC-PLANTUML-VALIDATE* (~21 pts, 5 US, P1) :
+- VALIDATE-1 : Ajout dépendance `implementation(libs.plantuml.plugin)` (déjà versionnée BOM 0.0.13)
+- VALIDATE-2 : `PlantUmlSyntaxValidator` wrapper DDD — adapte `PlantumlService.validateSyntax()` (HTOWN)
+- VALIDATE-3 : Intégration dans `PlantUmlTranslationAdapter.translate()` post-traduction
+- VALIDATE-4 : Mode STRICT/LENIENT/OFF — même enum `ValidationMode` que TABLE-VALIDATE
+- VALIDATE-5 : Cucumber BDD — 5 scénarios
+
+*Stratégie DRY* : plantuml-gradle expose `PlantumlService.validateSyntax()` via
+`net.sourceforge.plantuml.SourceStringReader`. Le BOM versionne déjà `plantuml-plugin:0.0.2`.
+Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
+
+*Fichiers modifiés* :
+- `BACKLOG.adoc` : +217 lignes (2 EPICs complets avec US, DAG, projections, note DRY)
+- `.agents/INDEX.adoc` : +2 EPICs roadmap, date + prochaine session
+- `.agents/sessions/033-cadrage-table-plantuml-validation.adoc` : rapport de session
+- `PROMPT_REPRISE.adoc` : session 034
+- `.agents/SESSIONS_HISTORY.adoc` : entrée S033
+- `.agents/archives/COMPLETED_TASKS_ARCHIVE_aout-2026.adoc` : ce fichier
+
 === Session 032 (2026-08-01) — Dogfooding batch 61 articles cheroliv.com + fixes parser AsciiDoc
 
 *Fix 1 — DescriptionList + BlockMacro* (fusion en un paragraphe au round-trip) :

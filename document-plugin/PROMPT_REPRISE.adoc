@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 033
-:date: 2026-08-01
-:status: Session 032 terminée — Dogfooding batch 61 articles cheroliv.com FR→EN (Ollama réel) + 2 fixes parser AsciiDoc (DescriptionList/BlockMacro + délimiteurs 4-dot/titres de bloc). 61/61 traduits, 0 placeholder. Commit session à faire (permission utilisateur).
+:session: 034
+:date: 2026-08-02
+:status: Session 033 terminée — Cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE (2 EPICs, ~46 pts, 10 US). BACKLOG.adoc +217 lignes, INDEX.adoc mis à jour. Commit + push fait.
 :max-lines: 70
 
 == Quick Start
@@ -11,35 +11,35 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
 ./gradlew test --tests "document.translation.*"  # GREEN
 ./gradlew functionalTest  # GREEN
-./gradlew cucumberTest  # GREEN (sauf 4 scénarios applyDocumentTemplate/bookPipeline préexistants)
+./gradlew cucumberTest  # GREEN
 ```
 
 == Contexte de fin
 
-Session 032 — Dogfooding `translateDocumentBatch` (tree mode) sur cheroliv.com :
-61 articles FR→EN traduits via Ollama réel (gemma4:31b-cloud, round-robin ports 11440/11441/11442).
-2 fixes parser découverts pendant le batch (fake mode reproduisait les troncatures → bug parser) :
-- DescriptionList (`term:: def`) + BlockMacro (`image::`/`video::`) fusionnés en un paragraphe → PivotModel/parser/renderers/TreeTranslationAdapter
-- Blocs `[plantuml]` délimités par `....` non reconnus → parseSourceBlock avalait le reste (0084 : 533→70 lignes)
-- Titres de bloc `.titre` entre `[source,html]` et `----` → idem (0082 : 373→134 lignes)
+Session 033 — Cadrage de 2 EPICs transverses de validation syntaxique post-traduction :
+
+. *DOC-TABLE-VALIDATE* (~25 pts, 5 US) — Validation syntaxique des tableaux AsciiDoc
+  après traduction LLM. `TableSyntaxValidator` vérifie cohérence `cols`, délimiteurs
+  intacts, homogénéité colonnes. Modes STRICT/LENIENT/OFF. Rapport batch JSON.
+
+. *DOC-PLANTUML-VALIDATE* (~21 pts, 5 US) — Validation syntaxique des diagrammes
+  PlantUML après traduction. DRY via `PlantumlService.validateSyntax()` de
+  plantuml-gradle (HTOWN, `net.sourceforge.plantuml.SourceStringReader`).
+  Dépendance `implementation(libs.plantuml.plugin)` déjà versionnée par le BOM.
+  Wrapper DDD `PlantUmlSyntaxValidator` prêt pour extraction future en contrat N0.
 
 == Reprendre à
 
-. `git status` + commit/push session 032 (permission utilisateur obtenue)
-. S033 — Suivi dogfooding : autres sites i18n, synthèse, publication Maven Central si requis
-. CI-4 : `site.yml` cheroliv.com avec 29 vraies Device Keys → workflow_dispatch translate-cheroliv-com
+. `git status` + `git pull` (vérifier que le commit S033 est bien sur origin/main)
+. S034 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration DocumentTranslator)
+. Baby-step TDD/BDD : 15-20 UT TableSyntaxValidator → 8-10 UT DocumentTranslator integration
 
-== Fichiers touchés S032
+== Fichiers touchés S033
 
 *document-gradle* :
-. `PivotModel.kt` — DescriptionList + DescriptionItem + BlockMacro
-. `AsciiDocParser.kt` — description lists, block macros, skip `//`, délimiteurs source multi (----/====/....), titres de bloc
-. `JbakeNativeRenderer.kt` / `AsciiDocRenderer.kt` / `PivotYamlRenderer.kt` — renderDescriptionList + renderBlockMacro
-. `TreeTranslationAdapter.kt` — collect/apply DescriptionList
-. `DocumentTranslator.kt` — branches DescriptionList/BlockMacro
-. `tree/Content.kt` — inlineOf
-. `gradle.properties` — jvmargs -Xmx2g (daemon OOM cucumber)
-. Tests : PivotModelTest, AsciiDocParserTest, AsciiDocRendererTest, JbakeNativeRendererTest, document.feature, DocumentSteps, DocumentWorld
-
-*cheroliv.com* (repo office) :
-. 61 articles `i18n/en/content/blog/**` traduits EN réel
+. `BACKLOG.adoc` — +217 lignes (2 EPICs complets : US, DAG, projections, note DRY)
+. `.agents/INDEX.adoc` — +2 EPICs roadmap, date + prochaine session
+. `.agents/sessions/033-cadrage-table-plantuml-validation.adoc` — rapport de session
+. `PROMPT_REPRISE.adoc` — ce fichier
+. `.agents/SESSIONS_HISTORY.adoc` — entrée S033
+. `.agents/archives/COMPLETED_TASKS_ARCHIVE_aout-2026.adoc` — archive S033
