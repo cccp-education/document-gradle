@@ -141,7 +141,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 006 | 2026-06-30 | architecture | Pattern Plugin Indépendant + Racine Consommateur (article #0124), Gradle 9.3.0→9.6.1, @DisableCachingByDefault | ✅ TERMINE
 | 007 | 2026-07-01 | feat | DOC-9 enrichDocument — Asciidoctor Diagram inline, passthrough, includes récursifs, 79 tests | ✅ TERMINE
 | 008 | 2026-07-01 | feat | DOC-10 Theme DSL — DocumentTheme value object, nested DSL theme { }, 4 propriétés PDF/HTML/EPUB/logo, 103 tests | ✅ TERMINE
-| 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule, -22 lignes build+catalog) + DOC-8 i18n-contracts 0.0.2 + opencode-session-contracts 0.0.2 câblés, DocumentI18nBridge créé, compile SUCCESS | ✅ TERMINE
+| 009 | 2026-07-03 | dev | CNV-6 migration (4 conventions pattern capsule, -22 lignes build+catalog) + DOC-8 i18n-contracts 0.0.2 + pipeline-contracts 0.0.2 câblés. DocumentI18nBridge supprimé en S030 (code mort), opencode-session-contracts retiré en S035 (dépendance morte). | ✅ TERMINE
 | 010 | 2026-07-03 | feat | DOC-6 N3 runner-gradle integration — DocumentMetadata, DocumentArtifactEntry, DocumentRetrieveResult, DocumentArtifactCollector, CollectDocumentRetrieveTask, 135 tests (+32) | ✅ TERMINE
 | 011 | 2026-07-04 | feat | DOC-7 CI + Publication Maven Central / Plugin Portal — nmcp settings 1.5.0, BOM 0.0.6, POM name/description, workflow CI test.yml, scénario BDD + functional test POM, 137 tests (+2) | ✅ TERMINE
 | 012 | 2026-07-04 | feat | DOC-11 Book Pipeline Codex -> Document — BookAssembler, AssembleBookTask, bookPipeline composite, 5 scénarios BDD, 155 tests (+18), baby-step DDD/TDD/BDD | ✅ TERMINE

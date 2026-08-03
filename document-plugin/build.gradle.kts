@@ -30,10 +30,9 @@ dependencies {
     // PlantUML — composition (contenant→contenu), compileOnly legitime
     compileOnly(libs.plantuml.plugin)
 
-    // N0 contracts — i18n (internationalisation documents) + opencode-session (traçabilité release notes)
+    // N0 contracts — i18n (internationalisation documents)
     // + pipeline-contracts (release notes generator, MEM-2 DOC-8)
     implementation(libs.i18n.contracts)
-    implementation(libs.opencode.session.contracts)
     implementation(libs.pipeline.contracts)
 
     // Coroutines — ContentTranslationService parallel translation

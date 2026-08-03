@@ -367,7 +367,7 @@ Le plugin est consommable par tout projet Gradle externe via
 - ✅ `education.ccp:document-plugin:0.0.1` publié sur Maven Central (bundle 4d15e522)
 - ✅ POM complet : name, description, licence Apache 2.0, developer, SCM
 - ✅ Aucune dépendance -SNAPSHOT
-- ✅ Dépendances `education.ccp:*` (i18n-contracts, opencode-session-contracts, pipeline-contracts) sur Central
+- ✅ Dépendances `education.ccp:*` (i18n-contracts, pipeline-contracts) sur Central
 - ✅ conventions-gradle 0.0.2 publié (bug fix SCM double .git) + 15 boroughs harmonisés
 
 '''
