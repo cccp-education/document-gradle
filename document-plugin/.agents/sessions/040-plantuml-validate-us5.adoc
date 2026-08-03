@@ -1,0 +1,63 @@
+= Session 040 — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, clôture EPIC)
+:date: 2026-08-03
+:type: feat
+:score: 9/10
+
+== Objectif
+
+Implémenter les 5 scénarios Cucumber BDD pour la validation syntaxique
+des diagrammes PlantUML post-traduction. Clôturer l'EPIC DOC-PLANTUML-VALIDATE
+(5/5 US, ~21 pts).
+
+== Livrables
+
+. `plantuml_validation.feature` — 5 scénarios BDD :
+  - `@valid` — diagramme valide passe la validation
+  - `@corrupted-tags` — validator alwaysInvalid → LENIENT warn
+  - `@broken-label` — label corrompu → LENIENT warn
+  - `@preserve-technical` — stratégie PreserveTechnical skip validation
+  - `@strict-mode` — validator alwaysInvalid + STRICT → TranslationException
+
+. `PlantUmlValidationSteps.kt` — step definitions (package `document.plantumlvalidation`)
+  - Isolé dans un package séparé pour éviter `DuplicateStepDefinitionException`
+    avec `TableValidationSteps` (même package `document.translation.validation`)
+  - Steps uniques : `"I translate the article with plantUML from {string} to {string}"`,
+    `"the plantUML translation should succeed"`, etc.
+
+. `PlantUmlValidationCucumberRunner.kt` — runner JUnit5 Suite
+  - GLUE = `document.plantumlvalidation`
+  - FILTER_TAGS = `@plantuml-validation`
+
+. `build.gradle.kts` — `plantumlValidationCucumberTest` task
+  - `CucumberTaskSpec` dans `cucumberConventions.additionalTasks`
+
+== Résultats
+
+- `plantumlValidationCucumberTest` → *5/5 PASS*
+- `tableValidationCucumberTest` → *6/6 PASS* (0 régression)
+- `tableTranslationCucumberTest` → *8/8 PASS* (0 régression)
+- `test --tests "document.translation.*"` → *BUILD SUCCESSFUL*
+- 1 échec préexistant (`DocumentConverterTest.convertToEpub`) — confirmé sur `main`
+  avant les changements de cette session
+
+== EPIC DOC-PLANTUML-VALIDATE — CLÔTURÉ (5/5 US, ~21 pts)
+
+- VALIDATE-1 ✅ (dépendance plantuml-plugin, S038)
+- VALIDATE-2 ✅ (PlantUmlSyntaxValidator wrapper DDD, S038)
+- VALIDATE-3 ✅ (intégration PlantUmlTranslationAdapter, S039)
+- VALIDATE-4 ✅ (strict/lenient/off DSL, S039)
+- VALIDATE-5 ✅ (Cucumber BDD 5 scénarios, S040)
+
+== Fichiers créés
+
+- `src/test/resources/features/plantuml_validation.feature`
+- `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationSteps.kt`
+- `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationCucumberRunner.kt`
+
+== Fichiers modifiés
+
+- `build.gradle.kts` — +1 CucumberTaskSpec `plantumlValidationCucumberTest`
+
+== Prochaine session
+
+S041 — À définir (tous les EPICs sont terminés, backlog vide).

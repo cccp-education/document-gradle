@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 040
+:session: 041
 :date: 2026-08-03
-:status: Session 039 terminée — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 (intégration PlantUmlTranslationAdapter + strict/lenient/off DSL, 24 UT GREEN)
+:status: Session 040 terminée — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, 5/5 PASS, EPIC CLÔTURÉ)
 :max-lines: 70
 
 == Quick Start
@@ -10,56 +10,51 @@
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
 ./gradlew test --tests "document.translation.*"  # BUILD SUCCESSFUL
-./gradlew tableTranslationCucumberTest  # 8/8 PASS
+./gradlew plantumlValidationCucumberTest  # 5/5 PASS
 ./gradlew tableValidationCucumberTest  # 6/6 PASS
+./gradlew tableTranslationCucumberTest  # 8/8 PASS
 ```
 
 == Contexte de fin
 
-Session 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 (8 pts) :
+Session 040 — DOC-PLANTUML-VALIDATE-5 (5 pts) :
 
-. *PlantUmlSyntaxValidator* — refacto object → interface DDD (companion.create())
-. *PlantUmlTranslationAdapter* — +plantUmlValidator +plantUmlValidationMode +validateTranslatedPlantUml()
-. *DocumentTranslator* — +plantUmlValidationMode +plantUmlValidationResults + collecte depuis adapter
-. *BatchDocumentTranslator* — +plantuml-validation-report.json
-. *PlantUmlValidationConfig* — nouveau, mode Property<String>
-. *PlantUmlValidationReport* — nouveau, toJson()
-. *TranslationDsl* — +plantUmlValidation
-. *DocumentPlugin* — wiring CLI -Pdocument.translatePlantUmlValidation
-. *TranslateDocumentTask* + *TranslateDocumentBatchTask* — +plantUmlValidationMode
-. *Tests* — 24/24 PASS (8 UT adapter + 5 UT translator + 10 UT validator + 1 UT availability)
+. *plantuml_validation.feature* — 5 scénarios BDD (@valid, @corrupted-tags, @broken-label, @preserve-technical, @strict-mode)
+. *PlantUmlValidationSteps.kt* — step definitions (package `document.plantumlvalidation`, isolé pour éviter DuplicateStepDefinitionException)
+. *PlantUmlValidationCucumberRunner.kt* — runner JUnit5 Suite
+. *build.gradle.kts* — +1 CucumberTaskSpec `plantumlValidationCucumberTest`
 
-== Backlog — DOC-PLANTUML-VALIDATE en cours (16/21 pts)
+== EPIC DOC-PLANTUML-VALIDATE — CLÔTURÉ (5/5 US, ~21 pts)
 
 - VALIDATE-1 ✅ (dépendance plantuml-plugin)
 - VALIDATE-2 ✅ (PlantUmlSyntaxValidator wrapper DDD)
 - VALIDATE-3 ✅ (intégration PlantUmlTranslationAdapter)
 - VALIDATE-4 ✅ (strict/lenient/off DSL)
-- VALIDATE-5 ⬜ (Cucumber BDD, 5 scénarios)
+- VALIDATE-5 ✅ (Cucumber BDD, 5 scénarios)
+
+== Backlog — Tous les EPICs sont terminés
+
+- DOC-0 → DOC-15 ✅
+- DOC-TRANSLATE ✅
+- DOC-TRANSLATE-CABLE ✅
+- DOC-TABLE-VALIDATE ✅
+- DOC-PLANTUML-VALIDATE ✅
 
 == Reprendre à
 
 . `git status` + `git pull`
-. S040 — DOC-PLANTUML-VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
-. 5 scénarios : @valid, @corrupted-tags, @broken-label, @preserve-technical, @strict-mode
+. S041 — À définir (backlog vide, tous les EPICs terminés)
+. Maintenance possible : fix EPUB test flaky, upgrade dépendances, etc.
 
-== Fichiers touchés S039
+== Fichiers touchés S040
 
 *document-gradle* :
-. `src/main/kotlin/document/translation/validation/PlantUmlSyntaxValidator.kt` — object → interface DDD
-. `src/main/kotlin/document/translation/validation/PlantUmlValidationConfig.kt` — nouveau
-. `src/main/kotlin/document/translation/validation/PlantUmlValidationReport.kt` — nouveau
-. `src/main/kotlin/document/translation/plantuml/PlantUmlTranslationAdapter.kt` — +validation
-. `src/main/kotlin/document/translation/DocumentTranslator.kt` — +plantUmlValidationMode
-. `src/main/kotlin/document/translation/BatchDocumentTranslator.kt` — +plantuml report
-. `src/main/kotlin/document/translation/TranslationDsl.kt` — +plantUmlValidation
-. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — +plantUmlValidationMode
-. `src/main/kotlin/document/translation/TranslateDocumentBatchTask.kt` — +plantUmlValidationMode
-. `src/main/kotlin/document/DocumentPlugin.kt` — wiring plantUmlValidation
-. `src/test/kotlin/document/translation/plantuml/PlantUmlTranslationAdapterValidationTest.kt` — nouveau, 8 UT
-. `src/test/kotlin/document/translation/DocumentTranslatorPlantUmlValidationTest.kt` — nouveau, 5 UT
-. `src/test/kotlin/document/translation/validation/PlantUmlSyntaxValidatorTest.kt` — adapté interface
-. `.agents/sessions/039-plantuml-validate-us3-us4.adoc` — rapport de session
+. `src/test/resources/features/plantuml_validation.feature` — nouveau, 5 scénarios
+. `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationSteps.kt` — nouveau
+. `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationCucumberRunner.kt` — nouveau
+. `build.gradle.kts` — +1 CucumberTaskSpec
+. `.agents/sessions/040-plantuml-validate-us5.adoc` — rapport de session
 . `PROMPT_REPRISE.adoc` — ce fichier
-. `.agents/INDEX.adoc` — session 039, roadmap
-. `.agents/SESSIONS_HISTORY.adoc` — entrée S039
+. `.agents/INDEX.adoc` — session 040, roadmap, EPIC clôturé
+. `.agents/SESSIONS_HISTORY.adoc` — entrée S040
+. `.agents/TEST_COVERAGE_ANALYSIS.adoc` — couverture Cucumber plantuml

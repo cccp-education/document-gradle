@@ -1,8 +1,49 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-01
-:session: 032
+:date: 2026-08-03
+:session: 040
 
-== Session 032 — Dogfooding + fixes parser AsciiDoc (DescriptionList/BlockMacro + délimiteurs 4-dot/titres)
+== Session 040 — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, clôture EPIC)
+
+*Couverture plantuml validation* : suite `document.translation.*` GREEN.
+*1 échec EPUB préexistant* (DocumentConverterTest.convertToEpub) — non lié à cette session.
+
+Tests ajoutés S040 :
+- `plantuml_validation.feature` — 5 scénarios Cucumber BDD (@valid, @corrupted-tags, @broken-label, @preserve-technical, @strict-mode)
+- `PlantUmlValidationSteps.kt` — step definitions (package `document.plantumlvalidation`)
+- `PlantUmlValidationCucumberRunner.kt` — runner JUnit5 Suite
+
+Total : +5 Cucumber BDD, 5/5 PASS.
+
+=== Pyramide de tests — Session 040
+
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+
+| Cucumber BDD (plantuml validation)
+| 5
+| ✅ PASS
+| `plantuml_validation.feature` + `PlantUmlValidationSteps.kt`
+
+| Cucumber BDD (table validation)
+| 6
+| ✅ PASS
+| `table_validation.feature` (0 régression)
+
+| Cucumber BDD (table translation)
+| 8
+| ✅ PASS
+| `table_translation.feature` (0 régression)
+
+| Unit (translation)
+| ~244
+| ✅ PASS
+| `document.translation.*` (0 régression)
+|===
+
+*Total Cucumber BDD : 19 scénarios (5 plantuml + 6 table validation + 8 table translation), 0 échec.*
+
+== Session 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4
 
 *Couverture translation* : suite `document.translation.*` GREEN après les fixes.
 *Tous les tests unitaires/functional/cucumber de traduction passent.*

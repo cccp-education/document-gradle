@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-08-03 (session 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4, intégration PlantUmlTranslationAdapter + strict/lenient/off DSL, 24 UT GREEN)
-_Session terminee_ : 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 ✅
-_Prochaine session_ : 040 — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, 5 scénarios, clôture EPIC)
+_Derniere mise a jour_ : 2026-08-03 (session 040 — DOC-PLANTUML-VALIDATE-5, Cucumber BDD 5/5 PASS, EPIC CLÔTURÉ)
+_Session terminee_ : 040 — DOC-PLANTUML-VALIDATE-5 ✅
+_Prochaine session_ : 041 — À définir (tous les EPICs terminés, backlog vide)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -98,7 +98,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-14 | Batch Pipeline — conversion multi-documents (répertoire → N formats) | ✅ TERMINÉ (session 025 — US-1 & US-2 TERMINÉES, 2 FT + 2 BDD) | P2
 | DOC-15 | Cross-borough Hardening — compile + tests document + bakery | ✅ TERMINÉ (session 025 — compile OK, tests OK) | P2
 | DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | ✅ TERMINÉ (session 037 — VALIDATE-5 Cucumber BDD, 6/6 PASS, EPIC CLÔTURÉ) | P1
-| DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | 🔵 EN COURS (4/5 US — VALIDATE-1 ✅ S038, VALIDATE-2 ✅ S038, VALIDATE-3 ✅ S039, VALIDATE-4 ✅ S039) | P1
+| DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | ✅ TERMINÉ (session 040 — 5/5 US, EPIC CLÔTURÉ) | P1
 |===
 
 '''
@@ -169,6 +169,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 037 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-5 — Cucumber BDD 6 scénarios @table-validation (valid, corrupted-delimiter, strict, column-mismatch, cols-mismatch, batch-report). TableValidationSteps + TableValidationCucumberRunner + CorruptingTranslationService. 6/6 PASS. EPIC DOC-TABLE-VALIDATE CLÔTURÉ (5/5 US). | ✅ TERMINE
 | 038 | 2026-08-03 | feat | DOC-PLANTUML-VALIDATE-1 + VALIDATE-2 — dépendance plantuml-plugin (implementation) + PlantUmlSyntaxValidator wrapper DDD + PlantUmlValidationResult sealed. 10 UT PlantUmlSyntaxValidator + 1 UT PlantumlServiceAvailability. 11/11 PASS. | ✅ TERMINE
 | 039 | 2026-08-03 | feat | DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 — intégration PlantUmlTranslationAdapter.translate() + mode strict/lenient/off DSL. PlantUmlSyntaxValidator refacto object→interface DDD. PlantUmlValidationConfig + PlantUmlValidationReport. 24 UT GREEN. | ✅ TERMINE
+| 040 | 2026-08-03 | feat | DOC-PLANTUML-VALIDATE-5 — Cucumber BDD 5 scénarios @plantuml-validation (valid, corrupted-tags, broken-label, preserve-technical, strict-mode). PlantUmlValidationSteps + PlantUmlValidationCucumberRunner. 5/5 PASS. EPIC DOC-PLANTUML-VALIDATE CLÔTURÉ (5/5 US). | ✅ TERMINE
 |===
 
 '''
@@ -189,7 +190,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
 | Chiraq 🟤 | readme-gradle | N2 | 003
-| New Orleans 🟢 | document-gradle | N2 | 016
+| New Orleans 🟢 | document-gradle | N2 | 040
 | Atlanta | agile-gradle | N4 | 000
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000

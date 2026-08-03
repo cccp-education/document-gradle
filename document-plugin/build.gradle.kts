@@ -71,6 +71,12 @@ cucumberConventions {
             tags = listOf("@table-validation"),
             runnerClass = "document.translation.validation.TableValidationCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "plantumlValidationCucumberTest",
+            features = listOf("src/test/resources/features/plantuml_validation.feature"),
+            tags = listOf("@plantuml-validation"),
+            runnerClass = "document.plantumlvalidation.PlantUmlValidationCucumberRunner",
+        ),
     )
 }
 
