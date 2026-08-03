@@ -1,0 +1,322 @@
+= PLAN TRANSVERSE — DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE
+:date: 2026-08-03
+:sessions: S035 → S040
+:total-pts: ~46
+:methodo: baby-step DDD/TDD/BDD (unit → functional → cucumber)
+
+== Vue d'ensemble
+
+2 EPICs de validation syntaxique post-traduction, partageant les mêmes patterns :
+`ValidationMode` enum, `ValidationResult` sealed, intégration pipeline, batch report, Cucumber BDD.
+
+[cols="1,3,2,2,2"]
+|===
+| Session | EPIC | US | Pts | Prompt clé
+| S035 | TABLE | VALIDATE-1 + VALIDATE-2 | 10 | `@xp implemente TableSyntaxValidator + integration DocumentTranslator`
+| S036 | TABLE | VALIDATE-3 + VALIDATE-4 | 10 | `@xp implemente strict/lenient/off + batch report`
+| S037 | TABLE | VALIDATE-5 | 5 | `@xp implemente Cucumber BDD table-validation`
+| S038 | PLANTUML | VALIDATE-1 + VALIDATE-2 | 8 | `@xp implemente plantuml-plugin dependency + PlantUmlSyntaxValidator wrapper`
+| S039 | PLANTUML | VALIDATE-3 + VALIDATE-4 | 8 | `@xp implemente integration PlantUmlTranslationAdapter + strict/lenient`
+| S040 | PLANTUML | VALIDATE-5 | 5 | `@xp implemente Cucumber BDD plantuml-validation`
+|===
+
+== Patterns partagés (DRY cross-EPIC)
+
+.`ValidationMode` enum — commun aux 2 EPICs
+[source,kotlin]
+----
+enum class ValidationMode { STRICT, LENIENT, OFF }
+----
+
+.`ValidationResult` sealed — pattern commun
+[source,kotlin]
+----
+sealed class ValidationResult {
+    data class Valid : ValidationResult()
+    data class Invalid(val reason: String, val context: Map<String, String>) : ValidationResult()
+}
+----
+
+.Structure de test — 3 niveaux systématiques
+- UT : value objects purs, sans dépendance externe
+- FT : Gradle TestKit, vérifie le wiring CLI
+- BDD : Cucumber, scénarios end-to-end avec fake LLM
+
+== S035 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (10 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-TABLE-VALIDATE-1 + VALIDATE-2 dans document-gradle.
+
+Contexte : le modèle Table.kt (Table/Row/Cell/ColSpec/HAlign/VAlign) et
+parseTableStructured() existent déjà (session 034, 46 tests verts).
+
+Baby-step DDD/TDD/BDD :
+
+1. VALIDATE-1 — TableSyntaxValidator (5 pts, ~15-20 UT) :
+   - Créer document/translation/validation/TableSyntaxValidator.kt
+   - Value object DDD pur, zéro dépendance externe
+   - Méthode : fun validate(table: Table): TableValidationResult
+   - TableValidationResult sealed : Valid / Invalid(articleTitle, tableIndex, reason)
+   - Règles :
+     a) Cohérence cols : si table.cols.isNotEmpty(), header.size == cols.size
+        et chaque row.size == cols.size
+     b) Délimiteurs intacts : pas de "|===" dans le contenu des cellules
+     c) Nombre de colonnes homogène : header.size == rows[0].size == rows[N].size
+     d) Pas de cellule vide dans le header (warning, pas erreur)
+   - Tests : 15-20 UT (cols mismatch, delimiter corruption, column count mismatch,
+     valid table, empty table, single cell, header empty cell warning)
+
+2. VALIDATE-2 — Intégration DocumentTranslator (5 pts, ~8-10 UT) :
+   - Dans DocumentTranslator.translateBlock(), après traduction d'un PivotBlock.Table :
+     a) Convertir le PivotBlock.Table traduit en Table via parseTableStructured()
+     b) Appeler TableSyntaxValidator.validate()
+     c) Si Invalid : logger un warning avec contexte (article title, table index, reason)
+        Ne PAS bloquer la traduction des autres blocs
+     d) Si Valid : continuer normalement
+   - Tests : 8-10 UT (mock validator, warning propagation, valid table no-op,
+     table with corrupted delimiter after translation, table with column mismatch)
+
+Vérification : ./gradlew test --tests "document.translation.validation.*" --offline
+Doit être GREEN. Zéro régression sur document.translation.*.
+```
+
+=== Fichiers à créer/modifier
+
+- `document/translation/validation/TableSyntaxValidator.kt` — nouveau
+- `document/translation/validation/TableValidationResult.kt` — nouveau
+- `document/translation/validation/ValidationMode.kt` — nouveau (partagé avec PLANTUML)
+- `document/translation/DocumentTranslator.kt` — modifier translateBlock(Table)
+- `TableSyntaxValidatorTest.kt` — nouveau, 15-20 UT
+- `DocumentTranslatorTableValidationTest.kt` — nouveau, 8-10 UT
+
+== S036 — DOC-TABLE-VALIDATE-3 + VALIDATE-4 (10 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-TABLE-VALIDATE-3 + VALIDATE-4 dans document-gradle.
+
+Contexte : TableSyntaxValidator + intégration DocumentTranslator existent (S035).
+
+Baby-step DDD/TDD/BDD :
+
+1. VALIDATE-3 — Mode strict/lenient/off (5 pts, ~5-8 UT + 2 FT) :
+   - DSL : translation { tableValidation { mode = STRICT } }
+   - DocumentExtension.kt : ajouter tableValidation { } nested block
+   - STRICT : Invalid → TranslationException, fail build
+   - LENIENT (défaut) : Invalid → warning log + continuer
+   - OFF : pas de validation (rétrocompatibilité)
+   - Tests : 5-8 UT (strict throws, lenient warns, off skips, default lenient)
+   - FT : 2 tests Gradle TestKit (CLI -Pdocument.translateTableValidation=strict/lenient/off)
+
+2. VALIDATE-4 — Rapport batch (5 pts, ~5-8 UT + 1 FT) :
+   - BatchDocumentTranslator : agréger les résultats de validation
+   - Produire table-validation-report.json dans l'output dir
+   - Format : [{article, tableIndex, status, reason}]
+   - Tests : 5-8 UT (report generation, empty report, multi-article aggregation,
+     mixed valid/invalid, JSON structure)
+   - FT : 1 test (batch avec tables corrompues → rapport JSON)
+
+Vérification : ./gradlew test --tests "document.translation.validation.*" --offline GREEN
+              ./gradlew functionalTest --offline GREEN
+```
+
+=== Fichiers à créer/modifier
+
+- `document/DocumentExtension.kt` — ajouter tableValidation { } DSL
+- `document/translation/validation/TableValidationConfig.kt` — nouveau
+- `document/translation/BatchDocumentTranslator.kt` — modifier (agrégation)
+- `document/translation/validation/TableValidationReport.kt` — nouveau
+- `TableValidationConfigTest.kt` — nouveau, 5-8 UT
+- `TableValidationReportTest.kt` — nouveau, 5-8 UT
+- `TableValidationFunctionalTest.kt` — nouveau, 2 FT
+- `TableValidationBatchFunctionalTest.kt` — nouveau, 1 FT
+
+== S037 — DOC-TABLE-VALIDATE-5 (5 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-TABLE-VALIDATE-5 Cucumber BDD dans document-gradle.
+
+Contexte : tout le pipeline TABLE-VALIDATE est implémenté (S034→S036).
+
+Baby-step BDD :
+
+1. Feature : src/test/resources/features/table_validation.feature
+   Tag @table-validation
+   5 scénarios :
+   - @valid : table simple FR→EN via FakeTranslationService, validation passe
+   - @corrupted-delimiter : LLM injecte "|===" dans une cellule → LENIENT warn, STRICT fail
+   - @column-mismatch : LLM produit une colonne en trop → Invalid
+   - @cols-mismatch : cols="2,3" mais 3 colonnes dans les rows → Invalid
+   - @batch-report : batch 3 articles, 1 table corrompue → rapport JSON
+
+2. Steps : document/translation/validation/TableValidationSteps.kt
+   - Given/When/Then pour chaque scénario
+   - Utiliser FakeTranslationService avec corruption injectée
+
+3. Runner : document/translation/validation/TableValidationCucumberRunner.kt
+   - glue = document.translation.validation
+   - tag = @table-validation
+
+4. build.gradle.kts : ajouter tableValidationCucumberTest dans cucumberConventions.additionalTasks
+
+Vérification : ./gradlew tableValidationCucumberTest --offline → 5/5 PASS
+```
+
+=== Fichiers à créer/modifier
+
+- `table_validation.feature` — nouveau, 5 scénarios
+- `TableValidationSteps.kt` — nouveau
+- `TableValidationCucumberRunner.kt` — nouveau
+- `build.gradle.kts` — +tableValidationCucumberTest
+
+== S038 — DOC-PLANTUML-VALIDATE-1 + VALIDATE-2 (8 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-PLANTUML-VALIDATE-1 + VALIDATE-2 dans document-gradle.
+
+Contexte : plantuml-gradle (HTOWN) expose PlantumlService.validateSyntax() via
+SourceStringReader natif. Le BOM versionne déjà plantuml-plugin:0.0.2.
+document-gradle a déjà compileOnly(libs.plantuml.plugin).
+
+Baby-step DDD/TDD/BDD :
+
+1. VALIDATE-1 — Dépendance plantuml-plugin (3 pts) :
+   - Remplacer compileOnly(libs.plantuml.plugin) par implementation(libs.plantuml.plugin)
+   - Vérifier compileKotlin (pas de conflit transitif)
+   - 1 FT : vérifier que PlantumlService est instanciable
+   - Note : plantuml-plugin:0.0.2 est déjà sur Maven Central, versionné par le BOM
+
+2. VALIDATE-2 — PlantUmlSyntaxValidator wrapper DDD (5 pts, ~8-10 UT) :
+   - Créer document/translation/validation/PlantUmlSyntaxValidator.kt
+   - Wrapper autour de PlantumlService.validateSyntax()
+   - Adapte SyntaxValidationResult (HTOWN) → PlantUmlValidationResult (document)
+   - PlantUmlValidationResult sealed : Valid / Invalid(articleTitle, blockIndex, strategy, reason)
+   - Contexte enrichi : articleTitle, blockIndex, strategy (TranslateLabels/PreserveTechnical/BorrowVocabulary)
+   - Réutiliser ValidationMode de TABLE-VALIDATE (déjà dans validation/)
+   - Tests : 8-10 UT (valid diagram, missing @startuml, syntax error, strategy context,
+     empty diagram, complex diagram with notes)
+
+Vérification : ./gradlew test --tests "document.translation.validation.PlantUmlSyntaxValidatorTest" --offline GREEN
+              ./gradlew compileKotlin --offline BUILD SUCCESSFUL
+```
+
+=== Fichiers à créer/modifier
+
+- `build.gradle.kts` — compileOnly → implementation plantuml.plugin
+- `document/translation/validation/PlantUmlSyntaxValidator.kt` — nouveau
+- `document/translation/validation/PlantUmlValidationResult.kt` — nouveau
+- `PlantUmlSyntaxValidatorTest.kt` — nouveau, 8-10 UT
+- `PlantumlServiceAvailabilityTest.kt` — nouveau, 1 FT
+
+== S039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 (8 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 dans document-gradle.
+
+Contexte : PlantUmlSyntaxValidator + dépendance plantuml-plugin existent (S038).
+
+Baby-step DDD/TDD/BDD :
+
+1. VALIDATE-3 — Intégration PlantUmlTranslationAdapter (5 pts, ~5-8 UT) :
+   - Dans PlantUmlTranslationAdapter.translate(), après traduction des labels :
+     a) Appeler PlantUmlSyntaxValidator.validate() sur le bloc traduit
+     b) Si Invalid : logger warning avec contexte (article, block index, strategy)
+     c) Si Valid : continuer normalement
+     d) Stratégie PreserveTechnical : skip validation (no-op, le bloc n'est pas modifié)
+   - Tests : 5-8 UT (valid after translation, corrupted @startuml by LLM,
+     broken label with unescaped quotes, preserveTechnical skip,
+     borrowVocabulary valid, translateLabels corrupted)
+
+2. VALIDATE-4 — Mode strict/lenient/off (3 pts, ~3-5 UT + 1 FT) :
+   - DSL : translation { plantumlValidation { mode = STRICT } }
+   - Cohérent avec TABLE-VALIDATE-3 (même ValidationMode enum)
+   - STRICT : Invalid → TranslationException, fail build
+   - LENIENT (défaut) : Invalid → warning log + continuer
+   - OFF : pas de validation (rétrocompatibilité)
+   - Tests : 3-5 UT (strict throws, lenient warns, off skips)
+   - FT : 1 test (CLI -Pdocument.translatePlantumlValidation=strict)
+
+Vérification : ./gradlew test --tests "document.translation.validation.*" --offline GREEN
+              ./gradlew functionalTest --offline GREEN
+```
+
+=== Fichiers à créer/modifier
+
+- `document/translation/plantuml/PlantUmlTranslationAdapter.kt` — modifier translate()
+- `document/DocumentExtension.kt` — ajouter plantumlValidation { } DSL
+- `document/translation/validation/PlantUmlValidationConfig.kt` — nouveau
+- `PlantUmlTranslationAdapterValidationTest.kt` — nouveau, 5-8 UT
+- `PlantUmlValidationConfigTest.kt` — nouveau, 3-5 UT
+- `PlantUmlValidationFunctionalTest.kt` — nouveau, 1 FT
+
+== S040 — DOC-PLANTUML-VALIDATE-5 (5 pts)
+
+=== Prompt
+
+```
+@xp implemente DOC-PLANTUML-VALIDATE-5 Cucumber BDD dans document-gradle.
+
+Contexte : tout le pipeline PLANTUML-VALIDATE est implémenté (S038→S039).
+
+Baby-step BDD :
+
+1. Feature : src/test/resources/features/plantuml_validation.feature
+   Tag @plantuml-validation
+   5 scénarios :
+   - @valid : diagramme simple FR→EN via FakeTranslationService, validation passe
+   - @corrupted-tags : LLM corrompt @startuml → Invalid
+   - @broken-label : guillemets non échappés dans un label → Invalid
+   - @preserve-technical : stratégie PreserveTechnical, pas de validation (no-op)
+   - @strict-mode : mode STRICT, diagramme corrompu → exception
+
+2. Steps : document/translation/validation/PlantUmlValidationSteps.kt
+   - Given/When/Then pour chaque scénario
+   - Utiliser FakeTranslationService avec corruption injectée
+
+3. Runner : document/translation/validation/PlantUmlValidationCucumberRunner.kt
+   - glue = document.translation.validation
+   - tag = @plantuml-validation
+
+4. build.gradle.kts : ajouter plantumlValidationCucumberTest dans cucumberConventions.additionalTasks
+
+Vérification : ./gradlew plantumlValidationCucumberTest --offline → 5/5 PASS
+```
+
+=== Fichiers à créer/modifier
+
+- `plantuml_validation.feature` — nouveau, 5 scénarios
+- `PlantUmlValidationSteps.kt` — nouveau
+- `PlantUmlValidationCucumberRunner.kt` — nouveau
+- `build.gradle.kts` — +plantumlValidationCucumberTest
+
+== Vérification finale cross-EPIC (post S040)
+
+```
+./gradlew test --tests "document.translation.validation.*" --offline  # ~60-70 UT GREEN
+./gradlew functionalTest --offline                                     # ~4 FT GREEN
+./gradlew tableTranslationCucumberTest --offline                       # 8/8 PASS
+./gradlew tableValidationCucumberTest --offline                        # 5/5 PASS
+./gradlew plantumlValidationCucumberTest --offline                     # 5/5 PASS
+```
+
+== Points d'attention transverses
+
+. *ValidationMode* — créé dans S035, réutilisé tel quel dans S038 (pas de duplication)
+. *ValidationResult sealed* — pattern commun, chaque EPIC a sa propre sealed class
+   (contexte différent : TableValidationResult vs PlantUmlValidationResult)
+. *DSL translation { }* — les 2 blocs tableValidation { } et plantumlValidation { }
+   cohabitent dans DocumentExtension.kt
+. *Batch report* — seul TABLE-VALIDATE a un batch report (VALIDATE-4).
+   PLANTUML n'en a pas (les diagrammes sont moins nombreux, le log suffit)
+. *Dépendance plantuml-plugin* — passe de compileOnly à implementation (S038).
+   Vérifier que ça ne casse pas les tests existants (PlantUmlTranslationAdapter
+   utilise déjà plantuml-plugin en compileOnly)

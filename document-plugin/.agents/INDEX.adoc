@@ -6,7 +6,7 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-08-03 (session 034 — Table POJO DDD + parseTableStructured + TDD/BDD, 46 tests)
+_Derniere mise a jour_ : 2026-08-03 (session 034 — Table POJO DDD + parseTableStructured + TDD/BDD, 46 tests + audit contrats BOM + plan transverse S035→S040)
 _Session terminee_ : 034 — Table POJO DDD + parseTableStructured + TDD/BDD ✅
 _Prochaine session_ : 035 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration DocumentTranslator)
 

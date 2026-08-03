@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 035
 :date: 2026-08-03
-:status: Session 034 terminée — Table POJO DDD + parseTableStructured + TDD/BDD (46 tests). Fondation DOC-TABLE-VALIDATE posée.
+:status: Session 034 terminée — Table POJO DDD + parseTableStructured + TDD/BDD (46 tests) + audit contrats BOM (opencode-session-contracts préservé, vision MEM-4). Plan transverse S035→S040 livré.
 :max-lines: 70
 
 == Quick Start
@@ -28,25 +28,40 @@ Session 034 — Fondation DDD pour l'EPIC DOC-TABLE-VALIDATE :
 . *Tests* — 19 UT TableTest + 19 UT AsciiDocParserTableTest + 8 Cucumber
   table_translation.feature. 46/46 PASS, zéro régression.
 
+. *Audit contrats BOM* — opencode-session-contracts préservé (vision MEM-4
+  "Protocole Thin Client opencode↔Gradle", consommé par codebase-gradle).
+  Dépendance conservée pour roadmap.
+
 == Reprendre à
 
-. `git status` + `git pull` (vérifier que le commit S034 est bien sur origin/main)
+. `git status` + `git pull`
+. Lire `.agents/PLAN_TRANSVERSE_VALIDATE.adoc` — plan complet S035→S040
 . S035 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration DocumentTranslator)
+. Prompt : `@xp implemente DOC-TABLE-VALIDATE-1 + VALIDATE-2 dans document-gradle`
 . Baby-step TDD/BDD : 15-20 UT TableSyntaxValidator → 8-10 UT DocumentTranslator integration
+
+== Plan transverse
+
+Voir `.agents/PLAN_TRANSVERSE_VALIDATE.adoc` — 6 sessions, ~46 pts :
+- S035→S037 : DOC-TABLE-VALIDATE (25 pts)
+- S038→S040 : DOC-PLANTUML-VALIDATE (21 pts)
+- Patterns partagés : ValidationMode enum, ValidationResult sealed, DSL translation { }
 
 == Fichiers touchés S034
 
 *document-gradle* :
 . `Table.kt` — nouveau, 200 lignes (modèle DDD)
 . `AsciiDocParser.kt` — +parseTableStructured, +parseColSpecs, +parseStructuredRows, +splitStructuredCells, +parseCellPrefix, +isCellPrefixLine, parseInline → internal
-. `build.gradle.kts` — +tableTranslationCucumberTest task
+. `build.gradle.kts` — +tableTranslationCucumberTest task, commentaire opencode-session mis à jour
+. `libs.versions.toml` — opencode-session-contracts préservé
 . `TableTest.kt` — nouveau, 19 tests unitaires
 . `AsciiDocParserTableTest.kt` — nouveau, 19 tests unitaires
 . `table_translation.feature` — nouveau, 8 scénarios Cucumber
 . `TableTranslationSteps.kt` — nouveau, steps Cucumber
 . `TableTranslationCucumberRunner.kt` — nouveau, runner Cucumber
 . `.agents/sessions/034-table-pojo-ddd.adoc` — rapport de session
+. `.agents/PLAN_TRANSVERSE_VALIDATE.adoc` — plan S035→S040
 . `PROMPT_REPRISE.adoc` — ce fichier
 . `.agents/INDEX.adoc` — session 034, roadmap
-. `.agents/SESSIONS_HISTORY.adoc` — entrée S034
+. `.agents/SESSIONS_HISTORY.adoc` — entrée S034 + revert opencode-session-contracts
 . `.agents/archives/COMPLETED_TASKS_ARCHIVE_aout-2026.adoc` — archive S034
