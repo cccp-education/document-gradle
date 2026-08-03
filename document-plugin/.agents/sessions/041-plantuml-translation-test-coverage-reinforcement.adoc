@@ -1,0 +1,36 @@
+= Session 041 — Renfort couverture tests PlantUML translation (multi-blocs + notes/legends/skinparam + concurrence)
+:date: 2026-08-04
+:type: TDD
+:epic: DOC-PLANTUML (renfort couverture)
+:score: 9/10
+
+== Contexte
+
+Analyse cross-borough des gaps de couverture sur la traduction d'articles
+contenant du PlantUML. 3 gaps identifiés et résolus dans document-gradle.
+
+== Baby steps
+
+=== DocumentTranslatorTest (+3 UT)
+
+- `translate handles multiple plantuml blocks with different strategies in one article` :
+  article avec 2 blocs plantuml (PreserveTechnical class diagram + TranslateLabels use case).
+  Vérifie que le bloc technique est préservé ET les labels du second sont traduits.
+- `translate handles plantuml with note and legend` :
+  article avec `note left of` et `legend right`/`endlegend`. Vérifie que les
+  keywords sont préservés et les labels traduits.
+- `translate handles plantuml with skinparam` :
+  article avec `skinparam backgroundColor` et `skinparam defaultFontName`.
+  Vérifie que les skinparams sont préservés et les labels traduits.
+
+=== ContentTranslationServiceTest (+1 UT)
+
+- `concurrent translation of articles with plantuml blocks is thread-safe` :
+  5 articles avec blocs plantuml traduits en parallèle. Vérifie que
+  `filesTranslated=5`, `errors=0`, et chaque label est traduit.
+
+== Résultats
+
+- DocumentTranslatorTest : 18/18 PASS (+3)
+- ContentTranslationServiceTest : 13/13 PASS (+1)
+- compileTestKotlin : BUILD SUCCESSFUL

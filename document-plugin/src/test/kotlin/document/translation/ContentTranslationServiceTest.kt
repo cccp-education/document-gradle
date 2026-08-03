@@ -326,6 +326,39 @@ public class Hello {}
         assertEquals("java", source.language)
         assertEquals("public class Hello {}", source.content)
     }
+
+    @Test
+    fun `concurrent translation of articles with plantuml blocks is thread-safe`() {
+        val fake = FakeTranslationService(" [EN]")
+        val adapter = document.translation.plantuml.PlantUmlTranslationAdapter(fake)
+        val service = ContentTranslationService(fake, parser, renderer, plantUmlAdapter = adapter)
+
+        val langDir = tempDir.resolve("i18n/en")
+        langDir.mkdirs()
+        for (i in 1..5) {
+            langDir.resolve("article-$i.adoc").writeText("""= Article $i
+@CherOliv
+2026-07-21
+:jbake-type: post
+
+[plantuml]
+----
+@startuml
+class "Service$i"
+@enduml
+----
+""")
+        }
+
+        val result = service.translate(langDir, "fr", "en")
+
+        assertEquals(5, result.filesTranslated.size)
+        assertEquals(0, result.errors.size)
+        for (i in 1..5) {
+            val content = langDir.resolve("article-$i.adoc").readText()
+            assertTrue(content.contains("\"Service$i [EN]\""), "article $i label translated")
+        }
+    }
 }
 
 class FakeTranslationService(private val suffix: String) : TranslationService {

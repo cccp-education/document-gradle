@@ -406,4 +406,104 @@ Corps de l article.
         assertTrue(result.contains(":jbake-description: Une description longue de l article en francais avec des details [EN]"),
             "jbake-description must be translated, got: ${result.lines().find { it.contains(":jbake-description:") }}")
     }
+
+    @Test
+    fun `translate handles multiple plantuml blocks with different strategies in one article`() {
+        val source = """= Article mixte
+@CherOliv
+2026-07-21
+:jbake-type: post
+:jbake-status: published
+
+== Diagramme technique
+
+[plantuml]
+----
+@startuml
+class OrderService
+class PaymentGateway
+OrderService --> PaymentGateway
+@enduml
+----
+
+== Diagramme avec labels
+
+[plantuml]
+----
+@startuml
+"Client" --> (Passer commande)
+"Gestionnaire" --> (Valider)
+@enduml
+----
+"""
+
+        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+
+        val result = translatorWithPlantUml.translate(source, "fr", "en")
+
+        assertTrue(result.contains("class OrderService"), "technical block preserved")
+        assertTrue(result.contains("OrderService --> PaymentGateway"), "technical block preserved")
+        assertTrue(result.contains("\"Client [EN]\""), "label translated")
+        assertTrue(result.contains("\"Gestionnaire [EN]\""), "label translated")
+        assertTrue(result.contains("@startuml"), "structure preserved")
+        assertTrue(result.contains("@enduml"), "structure preserved")
+    }
+
+    @Test
+    fun `translate handles plantuml with note and legend`() {
+        val source = """= Diagramme avec note
+@CherOliv
+2026-07-21
+:jbake-type: post
+
+[plantuml]
+----
+@startuml
+class "Utilisateur"
+note left of "Utilisateur" : "Un acteur du systeme"
+legend right
+  "Legende du diagramme"
+endlegend
+@enduml
+----
+"""
+
+        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+
+        val result = translatorWithPlantUml.translate(source, "fr", "en")
+
+        assertTrue(result.contains("\"Utilisateur [EN]\""), "actor label translated")
+        assertTrue(result.contains("note left of"), "note keyword preserved")
+        assertTrue(result.contains("legend right"), "legend keyword preserved")
+        assertTrue(result.contains("@startuml"), "structure preserved")
+    }
+
+    @Test
+    fun `translate handles plantuml with skinparam`() {
+        val source = """= Diagramme skinparam
+@CherOliv
+2026-07-21
+:jbake-type: post
+
+[plantuml]
+----
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam defaultFontName "Arial"
+class "Utilisateur"
+@enduml
+----
+"""
+
+        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+
+        val result = translatorWithPlantUml.translate(source, "fr", "en")
+
+        assertTrue(result.contains("skinparam backgroundColor"), "skinparam preserved")
+        assertTrue(result.contains("skinparam defaultFontName"), "skinparam preserved")
+        assertTrue(result.contains("\"Utilisateur [EN]\""), "label translated")
+    }
 }

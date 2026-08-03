@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 041
-:date: 2026-08-03
-:status: Session 040 terminée — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, 5/5 PASS, EPIC CLÔTURÉ)
+:session: 042
+:date: 2026-08-04
+:status: Session 041 terminée — Renfort couverture tests PlantUML translation (+4 UT)
 :max-lines: 70
 
 == Quick Start
@@ -10,24 +10,20 @@
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
 ./gradlew test --tests "document.translation.*"  # BUILD SUCCESSFUL
-./gradlew plantumlValidationCucumberTest  # 5/5 PASS
-./gradlew tableValidationCucumberTest  # 6/6 PASS
-./gradlew tableTranslationCucumberTest  # 8/8 PASS
 ```
 
 == Contexte de fin
 
-Session 040 — DOC-PLANTUML-VALIDATE-5 (5 pts) :
+Session 041 — Renfort couverture tests PlantUML translation :
+- DocumentTranslatorTest +3 UT (multi-blocs mixed strategies, note/legend, skinparam)
+- ContentTranslationServiceTest +1 UT (concurrence thread-safe)
+- 18/18 DocumentTranslatorTest PASS, 13/13 ContentTranslationServiceTest PASS
 
-. *plantuml_validation.feature* — 5 scénarios BDD (@valid, @corrupted-tags, @broken-label, @preserve-technical, @strict-mode)
-. *PlantUmlValidationSteps.kt* — step definitions (package `document.plantumlvalidation`, isolé pour éviter DuplicateStepDefinitionException)
-. *PlantUmlValidationCucumberRunner.kt* — runner JUnit5 Suite
-. *build.gradle.kts* — +1 CucumberTaskSpec `plantumlValidationCucumberTest`
+== Reprendre à
 
-== EPIC DOC-PLANTUML-VALIDATE — CLÔTURÉ (5/5 US, ~21 pts)
-
-- VALIDATE-1 ✅ (dépendance plantuml-plugin)
-- VALIDATE-2 ✅ (PlantUmlSyntaxValidator wrapper DDD)
+. `git status` dans document-gradle
+. Tous les EPICs sont clos, backlog vide
+. Prochaine étape : à définir
 - VALIDATE-3 ✅ (intégration PlantUmlTranslationAdapter)
 - VALIDATE-4 ✅ (strict/lenient/off DSL)
 - VALIDATE-5 ✅ (Cucumber BDD, 5 scénarios)
