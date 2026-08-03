@@ -1,0 +1,59 @@
+= Session 037 — DOC-TABLE-VALIDATE-5 (Cucumber BDD, clôture EPIC)
+:date: 2026-08-03
+:status: ✅ TERMINÉ
+:epic: DOC-TABLE-VALIDATE (VALIDATE-5)
+:points: 5
+
+== Objectif
+
+Implémenter les scénarios Cucumber BDD end-to-end pour la validation syntaxique
+des tableaux AsciiDoc post-traduction. Clôture de l'EPIC DOC-TABLE-VALIDATE (5/5 US).
+
+== Livrables
+
+=== VALIDATE-5 — Cucumber BDD (5 pts)
+
+- `table_validation.feature` — 6 scénarios @table-validation :
+  - @valid : table simple FR→EN via FakeTranslationService, validation passe
+  - @corrupted-delimiter : LLM injecte `|===` dans une cellule → LENIENT warn
+  - @corrupted-delimiter @strict : mode STRICT → TranslationException
+  - @column-mismatch : header 3 colonnes, body 2 colonnes → Invalid
+  - @cols-mismatch : cols="2,3" mais 1 colonne dans les rows → Invalid
+  - @batch-report : batch 3 articles, 1 table corrompue → rapport JSON
+
+- `TableValidationSteps.kt` — step definitions (package document.translation.validation)
+- `TableValidationCucumberRunner.kt` — runner JUnit5 Suite, tag @table-validation
+- `CorruptingTranslationService.kt` — test helper, injecte corruptions ciblées
+- `build.gradle.kts` — +tableValidationCucumberTest dans cucumberConventions.additionalTasks
+
+=== Tests — Baby-step BDD
+
+- 6/6 scénarios PASS
+- Zéro régression : tableTranslationCucumberTest 8/8 PASS, test validation.* 42/42 PASS
+
+== Fichiers modifiés
+
+- `src/test/resources/features/table_validation.feature` (nouveau, 6 scénarios)
+- `src/test/kotlin/document/translation/validation/TableValidationSteps.kt` (nouveau)
+- `src/test/kotlin/document/translation/validation/TableValidationCucumberRunner.kt` (nouveau)
+- `src/test/kotlin/document/translation/validation/CorruptingTranslationService.kt` (nouveau)
+- `build.gradle.kts` (+tableValidationCucumberTest)
+
+== Vérification
+
+- `./gradlew tableValidationCucumberTest --offline` → 6/6 PASS, BUILD SUCCESSFUL
+- `./gradlew tableTranslationCucumberTest --offline` → 8/8 PASS (zéro régression)
+- `./gradlew test --tests "document.translation.validation.*" --offline` → 42/42 PASS
+
+== EPIC DOC-TABLE-VALIDATE — CLÔTURÉ
+
+5/5 US terminées (~25 pts) :
+- VALIDATE-1 ✅ TableSyntaxValidator (S035)
+- VALIDATE-2 ✅ Intégration DocumentTranslator (S035)
+- VALIDATE-3 ✅ Mode strict/lenient/off (S036)
+- VALIDATE-4 ✅ Rapport batch JSON (S036)
+- VALIDATE-5 ✅ Cucumber BDD (S037)
+
+== Prochaine session
+
+S038 — DOC-PLANTUML-VALIDATE-1 + VALIDATE-2 : dépendance plantuml-plugin + PlantUmlSyntaxValidator wrapper DDD (8 pts).

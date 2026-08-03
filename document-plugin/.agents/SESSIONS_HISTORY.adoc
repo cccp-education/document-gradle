@@ -2,6 +2,7 @@
 
 |===
 | # | Date | Type | Sujet | Score
+| 037 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-5 — Cucumber BDD 6 scénarios @table-validation (valid, corrupted-delimiter, strict, column-mismatch, cols-mismatch, batch-report). TableValidationSteps + TableValidationCucumberRunner + CorruptingTranslationService. 6/6 PASS. EPIC DOC-TABLE-VALIDATE CLÔTURÉ (5/5 US). | 9/10
 | 036 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-3 + VALIDATE-4 — strict/lenient/off DSL + batch report JSON. TableValidationConfig + TableValidationReport + TranslationException + DocumentTranslator mode handling + BatchDocumentTranslator aggregation. 7 UT + 6 UT + 3 FT. 16/16 PASS. | 9/10
 | 035 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-1 + VALIDATE-2 — TableSyntaxValidator (cohérence cols, délimiteurs, homogénéité colonnes) + intégration DocumentTranslator. 19 UT + 9 UT. 28/28 PASS. | 9/10
 | 034 | 2026-08-03 | feat | DOC-TABLE-VALIDATE fondation — Table POJO DDD (Table/Row/Cell/ColSpec/HAlign/VAlign, extractTranslatable, reinject, toAsciiDoc, toHtml) + AsciiDocParser.parseTableStructured (\|, a|, h|, spans, alignments, col specs) + 19 UT TableTest + 19 UT AsciiDocParserTableTest + 8 Cucumber table_translation.feature. 46/46 PASS, zéro régression. | 9/10

@@ -2,6 +2,24 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 037 (2026-08-03) — DOC-TABLE-VALIDATE-5 (Cucumber BDD, clôture EPIC)
+
+*VALIDATE-5 — Cucumber BDD* (5 pts) :
+- `table_validation.feature` — 6 scénarios @table-validation (valid, corrupted-delimiter, strict, column-mismatch, cols-mismatch, batch-report)
+- `TableValidationSteps.kt` — step definitions (package document.translation.validation)
+- `TableValidationCucumberRunner.kt` — runner JUnit5 Suite, tag @table-validation
+- `CorruptingTranslationService.kt` — test helper, injecte corruptions ciblées
+- `build.gradle.kts` — +tableValidationCucumberTest dans cucumberConventions.additionalTasks
+
+*EPIC DOC-TABLE-VALIDATE CLÔTURÉ* — 5/5 US (~25 pts) :
+- VALIDATE-1 ✅ TableSyntaxValidator (S035)
+- VALIDATE-2 ✅ Intégration DocumentTranslator (S035)
+- VALIDATE-3 ✅ Mode strict/lenient/off (S036)
+- VALIDATE-4 ✅ Rapport batch JSON (S036)
+- VALIDATE-5 ✅ Cucumber BDD (S037)
+
+*Tests* : 6/6 scénarios PASS, zéro régression (tableTranslationCucumberTest 8/8, test validation.* 42/42).
+
 === Session 036 (2026-08-03) — DOC-TABLE-VALIDATE-3 + VALIDATE-4 (strict/lenient/off + batch report)
 
 *VALIDATE-3 — Mode strict/lenient/off* (5 pts) :
