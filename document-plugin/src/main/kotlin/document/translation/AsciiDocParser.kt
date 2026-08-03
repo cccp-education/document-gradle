@@ -307,6 +307,176 @@ class AsciiDocParser {
         return match?.groupValues?.get(1)
     }
 
+    fun parseTableStructured(lines: List<String>, start: Int, cols: String?): Pair<Table, Int> {
+        val colSpecs = parseColSpecs(cols)
+        var i = start
+        if (lines[i].startsWith("[cols=")) i++
+        if (i < lines.size && lines[i].startsWith("|===")) i++
+        val cellLines = mutableListOf<String>()
+        while (i < lines.size && !lines[i].startsWith("|===")) {
+            cellLines.add(lines[i])
+            i++
+        }
+        if (i < lines.size) i++
+
+        val rows = parseStructuredRows(cellLines)
+        val header = if (rows.isNotEmpty()) listOf(rows.first()) else emptyList()
+        val body = if (rows.size > 1) rows.drop(1) else emptyList()
+        return Table(colSpecs, header, body) to i
+    }
+
+    private fun parseColSpecs(raw: String?): List<ColSpec> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return raw.split(",").map { spec -> parseSingleColSpec(spec.trim()) }
+    }
+
+    private fun parseSingleColSpec(spec: String): ColSpec {
+        var remaining = spec
+        var halign: HAlign? = null
+        var valign: VAlign? = null
+        var width: Int? = null
+
+        if (remaining.startsWith(".<")) { valign = VAlign.TOP; remaining = remaining.removePrefix(".<") }
+        else if (remaining.startsWith(".^")) { valign = VAlign.MIDDLE; remaining = remaining.removePrefix(".^") }
+        else if (remaining.startsWith(".>")) { valign = VAlign.BOTTOM; remaining = remaining.removePrefix(".>") }
+
+        if (remaining.startsWith("<")) { halign = HAlign.LEFT; remaining = remaining.removePrefix("<") }
+        else if (remaining.startsWith("^")) { halign = HAlign.CENTER; remaining = remaining.removePrefix("^") }
+        else if (remaining.startsWith(">")) { halign = HAlign.RIGHT; remaining = remaining.removePrefix(">") }
+
+        if (remaining.isNotEmpty()) {
+            val digits = remaining.takeWhile { it.isDigit() }
+            if (digits.isNotEmpty()) {
+                width = digits.toIntOrNull()
+            }
+        }
+        return ColSpec(width, halign, valign)
+    }
+
+    private fun parseStructuredRows(cellLines: List<String>): List<Row> {
+        val rows = mutableListOf<Row>()
+        var currentCells = mutableListOf<Cell>()
+        for (line in cellLines) {
+            if (line.isBlank()) {
+                if (currentCells.isNotEmpty()) {
+                    rows.add(Row(currentCells.toList()))
+                    currentCells = mutableListOf()
+                }
+                continue
+            }
+            if (!line.startsWith("|") && !isCellPrefixLine(line)) {
+                if (currentCells.isNotEmpty()) {
+                    val lastCell = currentCells.removeAt(currentCells.size - 1)
+                    val lastText = (lastCell.inline.lastOrNull() as? PivotInline.Text)?.text.orEmpty()
+                    val rest = lastCell.inline.dropLast(1)
+                    val mergedText = if (lastText.isEmpty()) line.trim() else "$lastText ${line.trim()}"
+                    val newInline = rest + listOf(
+                        PivotInline.Text(mergedText, translatable = TextTranslatableClassifier.isTranslatable(mergedText)),
+                    )
+                    currentCells.add(lastCell.copy(inline = newInline))
+                }
+                continue
+            }
+            val cells = splitStructuredCells(line)
+            for (cellContent in cells) {
+                val prefix = parseCellPrefix(cellContent)
+                val inline = parseInline(prefix.content.trim())
+                currentCells.add(
+                    Cell(
+                        inline = inline,
+                        colSpan = prefix.colSpan,
+                        rowSpan = prefix.rowSpan,
+                        halign = prefix.halign,
+                        valign = prefix.valign,
+                    ),
+                )
+            }
+        }
+        if (currentCells.isNotEmpty()) rows.add(Row(currentCells.toList()))
+        return rows
+    }
+
+    private fun isCellPrefixLine(line: String): Boolean {
+        val trimmed = line.trimStart()
+        return CELL_PREFIX_LINE_PATTERN.containsMatchIn(trimmed)
+    }
+
+    private val CELL_PREFIX_LINE_PATTERN = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?\\|")
+
+    private fun splitStructuredCells(line: String): List<String> {
+        if (!line.startsWith("|")) return listOf(line)
+        val result = mutableListOf<String>()
+        var current = StringBuilder()
+        val content = line.removePrefix("|")
+        var inCode = false
+        var i = 0
+        while (i < content.length) {
+            val ch = content[i]
+            if (ch == '\\' && i + 1 < content.length && content[i + 1] == '|') {
+                current.append('|')
+                i += 2
+                continue
+            }
+            if (ch == '`') inCode = !inCode
+            if (ch == '|' && !inCode && !isCellPrefix(current.toString())) {
+                result.add(current.toString())
+                current = StringBuilder()
+            } else {
+                current.append(ch)
+            }
+            i++
+        }
+        result.add(current.toString())
+        return result
+    }
+
+    private fun isCellPrefix(s: String): Boolean {
+        val trimmed = s.trimStart()
+        if (trimmed.isEmpty()) return false
+        return CELL_PREFIX_PATTERN.matches(trimmed)
+    }
+
+    private val CELL_PREFIX_PATTERN = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?$")
+
+    private fun parseCellPrefix(raw: String): CellPrefix {
+        var remaining = raw.trimStart()
+        var colSpan = 1
+        var rowSpan = 1
+        var halign: HAlign? = null
+        var valign: VAlign? = null
+
+        val spanMatch = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?").find(remaining)
+        if (spanMatch != null && spanMatch.value.isNotEmpty()) {
+            val colStr = spanMatch.groupValues[1]
+            val rowStr = spanMatch.groupValues[3]
+            if (colStr.isNotEmpty()) colSpan = colStr.toInt()
+            if (rowStr.isNotEmpty()) rowSpan = rowStr.toInt()
+            remaining = remaining.removePrefix(spanMatch.value)
+        }
+
+        if (remaining.startsWith("<")) { halign = HAlign.LEFT; remaining = remaining.removePrefix("<") }
+        else if (remaining.startsWith("^")) { halign = HAlign.CENTER; remaining = remaining.removePrefix("^") }
+        else if (remaining.startsWith(">")) { halign = HAlign.RIGHT; remaining = remaining.removePrefix(">") }
+
+        if (remaining.startsWith(".<")) { valign = VAlign.TOP; remaining = remaining.removePrefix(".<") }
+        else if (remaining.startsWith(".^")) { valign = VAlign.MIDDLE; remaining = remaining.removePrefix(".^") }
+        else if (remaining.startsWith(".>")) { valign = VAlign.BOTTOM; remaining = remaining.removePrefix(".>") }
+
+        if (remaining.startsWith("a|")) remaining = remaining.removePrefix("a|")
+        else if (remaining.startsWith("h|")) remaining = remaining.removePrefix("h|")
+        else if (remaining.startsWith("|")) remaining = remaining.removePrefix("|")
+
+        return CellPrefix(colSpan, rowSpan, halign, valign, remaining)
+    }
+
+    private data class CellPrefix(
+        val colSpan: Int,
+        val rowSpan: Int,
+        val halign: HAlign?,
+        val valign: VAlign?,
+        val content: String,
+    )
+
     private fun parseTable(lines: List<String>, start: Int, cols: String?): Pair<PivotBlock.Table, Int> {
         var i = start
         if (lines[i].startsWith("[cols=")) i++
@@ -443,7 +613,7 @@ class AsciiDocParser {
         return result
     }
 
-    private fun parseInline(text: String): List<PivotInline> {
+    internal fun parseInline(text: String): List<PivotInline> {
         val segments = mutableListOf<PivotInline>()
         var remaining = text
         while (remaining.isNotEmpty()) {
