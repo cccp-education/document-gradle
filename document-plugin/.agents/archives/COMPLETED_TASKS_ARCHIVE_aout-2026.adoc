@@ -2,6 +2,43 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 036 (2026-08-03) — DOC-TABLE-VALIDATE-3 + VALIDATE-4 (strict/lenient/off + batch report)
+
+*VALIDATE-3 — Mode strict/lenient/off* (5 pts) :
+- `TableValidationConfig.kt` — DSL `mode: Property<String>`
+- `TranslationDsl.kt` — +`tableValidation: TableValidationConfig`
+- `DocumentPlugin.kt` — init + convention `"LENIENT"` + wiring CLI `-Pdocument.translateTableValidation`
+- `DocumentTranslator.kt` — +`tableValidationMode` param, `tableValidationResults` list, STRICT→throw/LENIENT→warn/OFF→skip
+- `TranslationException.kt` — exception métier
+- `TranslateDocumentTask.kt` / `TranslateDocumentBatchTask.kt` — +`tableValidationMode` input
+
+*VALIDATE-4 — Rapport batch* (5 pts) :
+- `TableValidationReport.kt` — `TableValidationReportEntry` + `TableValidationReport` (Jackson JSON)
+- `BatchDocumentTranslator.kt` — agrégation `tableValidationResults` + écriture `table-validation-report.json`
+
+*Tests* : 7 UT TableValidationConfigTest + 6 UT TableValidationReportTest + 3 FT TableValidationFunctionalTest. 16/16 PASS.
+
+=== Session 035 (2026-08-03) — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration)
+
+*VALIDATE-1 — TableSyntaxValidator* (5 pts) :
+- `TableSyntaxValidator.kt` — cohérence cols, délimiteurs `|===`, homogénéité colonnes, header empty cell warning
+- `TableValidationResult.kt` — sealed Valid / Invalid(articleTitle, tableIndex, reason)
+- `ValidationMode.kt` — enum STRICT, LENIENT, OFF
+
+*VALIDATE-2 — Intégration DocumentTranslator* (5 pts) :
+- `DocumentTranslator.kt` — `validateTranslatedTable()` + `toDddTable()` après traduction
+- `AsciiDocParser.kt` — `parseColSpecs` private → internal
+
+*Tests* : 19 UT TableSyntaxValidatorTest + 9 UT DocumentTranslatorTableValidationTest. 28/28 PASS.
+
+=== Session 034 (2026-08-03) — Table POJO DDD + parseTableStructured + TDD/BDD
+
+*Fondation DDD* :
+- `Table.kt` — Table/Row/Cell/ColSpec/HAlign/VAlign, extractTranslatable, reinject, toAsciiDoc, toHtml
+- `AsciiDocParser.kt` — parseTableStructured, parseColSpecs, parseStructuredRows, splitStructuredCells, parseCellPrefix
+
+*Tests* : 19 UT TableTest + 19 UT AsciiDocParserTableTest + 8 Cucumber table_translation.feature. 46/46 PASS.
+
 === Session 033 (2026-08-02) — Cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE
 
 *EPIC DOC-TABLE-VALIDATE* (~25 pts, 5 US, P1) :

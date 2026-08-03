@@ -1,0 +1,60 @@
+= Session 036 — DOC-TABLE-VALIDATE-3 + VALIDATE-4 (strict/lenient/off + batch report)
+:date: 2026-08-03
+:status: ✅ TERMINÉ
+:epic: DOC-TABLE-VALIDATE (VALIDATE-3 + VALIDATE-4)
+:points: 10
+
+== Objectif
+
+Implémenter les modes de validation STRICT/LENIENT/OFF pour les tableaux AsciiDoc
+post-traduction, le DSL `translation { tableValidation { mode = ... } }`, et le
+rapport batch `table-validation-report.json`.
+
+== Livrables
+
+=== VALIDATE-3 — Mode strict/lenient/off (5 pts)
+
+- `TableValidationConfig.kt` — DSL `mode: Property<String>`
+- `TranslationDsl.kt` — +`tableValidation: TableValidationConfig`
+- `DocumentPlugin.kt` — init + convention `"LENIENT"` + wiring CLI `-Pdocument.translateTableValidation`
+- `DocumentTranslator.kt` — +`tableValidationMode` param, `tableValidationResults` list, STRICT→throw/LENIENT→warn/OFF→skip
+- `TranslationException.kt` — exception métier
+- `TranslateDocumentTask.kt` — +`tableValidationMode` input + wiring
+- `TranslateDocumentBatchTask.kt` — +`tableValidationMode` input + wiring
+
+=== VALIDATE-4 — Rapport batch (5 pts)
+
+- `TableValidationReport.kt` — `TableValidationReportEntry` + `TableValidationReport` (Jackson JSON)
+- `BatchDocumentTranslator.kt` — agrégation `tableValidationResults` + écriture `table-validation-report.json`
+
+=== Tests — Baby-step DDD/TDD/BDD
+
+- 7 UT `TableValidationConfigTest` — LENIENT warn, STRICT throw, OFF skip, default, column mismatch, valid table, accumulation
+- 6 UT `TableValidationReportTest` — fromResults, empty, toJson, empty JSON, null reason
+- 3 FT `TableValidationFunctionalTest` — LENIENT succeeds, STRICT valid, OFF skips
+- 16/16 PASS, zéro régression `document.translation.*`
+
+== Fichiers modifiés
+
+- `validation/TableValidationConfig.kt` (nouveau)
+- `validation/TableValidationReport.kt` (nouveau)
+- `TranslationException.kt` (nouveau)
+- `TranslationDsl.kt` (+tableValidation)
+- `DocumentPlugin.kt` (+init tableValidation, +convention, +wiring CLI)
+- `DocumentTranslator.kt` (+tableValidationMode, +tableValidationResults, +mode handling)
+- `BatchDocumentTranslator.kt` (+agrégation validation results, +report JSON)
+- `TranslateDocumentTask.kt` (+tableValidationMode input)
+- `TranslateDocumentBatchTask.kt` (+tableValidationMode input)
+- `TableValidationConfigTest.kt` (nouveau, 7 UT)
+- `TableValidationReportTest.kt` (nouveau, 6 UT)
+- `TableValidationFunctionalTest.kt` (nouveau, 3 FT)
+
+== Vérification
+
+- `./gradlew test --tests "document.translation.*"` → BUILD SUCCESSFUL
+- `./gradlew functionalTest --tests "document.translation.validation.*"` → 3/3 PASS
+- `./gradlew tableTranslationCucumberTest` → 8/8 PASS
+
+== Prochaine session
+
+S037 — DOC-TABLE-VALIDATE-5 : Cucumber BDD (5 scénarios, clôture EPIC).

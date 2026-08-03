@@ -1,5 +1,6 @@
 package document.translation
 
+import document.translation.validation.TableValidationReport
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -30,6 +31,7 @@ class BatchDocumentTranslator(
 
         val translated = mutableListOf<String>()
         val errors = mutableListOf<String>()
+        val allValidationResults = mutableListOf<document.translation.validation.TableValidationResult.Invalid>()
 
         for ((idx, file) in adocFiles.withIndex()) {
             val relPath = file.relativeTo(sourceDir).path
@@ -46,11 +48,23 @@ class BatchDocumentTranslator(
                 outputFile.parentFile.mkdirs()
                 outputFile.writeText(rendered)
                 translated.add(relPath)
+                if (documentTranslator is DocumentTranslator) {
+                    allValidationResults.addAll(documentTranslator.tableValidationResults)
+                    documentTranslator.tableValidationResults.clear()
+                }
             } catch (e: Exception) {
                 val msg = "$relPath: ${e.message}"
                 errors.add(msg)
                 log.warn("[translateBatch] ERROR: {}", msg, e)
             }
+        }
+
+        if (allValidationResults.isNotEmpty()) {
+            val report = TableValidationReport.fromResults(allValidationResults)
+            val reportFile = outputDir.resolve("table-validation-report.json")
+            reportFile.parentFile.mkdirs()
+            reportFile.writeText(report.toJson())
+            log.info("[translateBatch] table validation report written: {}", reportFile.absolutePath)
         }
 
         log.info("[translateBatch] done — {} translated, {} errors", translated.size, errors.size)

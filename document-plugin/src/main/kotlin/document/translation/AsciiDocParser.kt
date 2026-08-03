@@ -325,7 +325,7 @@ class AsciiDocParser {
         return Table(colSpecs, header, body) to i
     }
 
-    private fun parseColSpecs(raw: String?): List<ColSpec> {
+    internal fun parseColSpecs(raw: String?): List<ColSpec> {
         if (raw.isNullOrBlank()) return emptyList()
         return raw.split(",").map { spec -> parseSingleColSpec(spec.trim()) }
     }

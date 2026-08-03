@@ -1,5 +1,6 @@
 package document.translation
 
+import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationService
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
@@ -33,6 +34,10 @@ abstract class TranslateDocumentTask : DefaultTask() {
     @get:Optional
     abstract val llmMode: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val tableValidationMode: Property<String>
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
@@ -42,6 +47,7 @@ abstract class TranslateDocumentTask : DefaultTask() {
         sourceLanguage.convention("fr")
         targetLanguage.convention("en")
         llmMode.convention("ollama")
+        tableValidationMode.convention("LENIENT")
     }
 
     @TaskAction
@@ -52,6 +58,11 @@ abstract class TranslateDocumentTask : DefaultTask() {
         val srcLang = sourceLanguage.get()
         val tgtLang = targetLanguage.get()
         val mode = llmMode.get()
+        val validationMode = try {
+            ValidationMode.valueOf(tableValidationMode.get().uppercase())
+        } catch (_: IllegalArgumentException) {
+            ValidationMode.LENIENT
+        }
 
         val translationService: TranslationService = when (mode.lowercase()) {
             "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
@@ -59,7 +70,7 @@ abstract class TranslateDocumentTask : DefaultTask() {
             else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 
-        val translator = DocumentTranslator(translationService)
+        val translator = DocumentTranslator(translationService, tableValidationMode = validationMode)
         val original = source.readText()
         val rendered = translator.translate(original, srcLang, tgtLang)
 

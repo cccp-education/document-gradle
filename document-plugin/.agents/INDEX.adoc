@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-08-03 (session 034 — Table POJO DDD + parseTableStructured + TDD/BDD, 46 tests + audit contrats BOM + plan transverse S035→S040)
-_Session terminee_ : 034 — Table POJO DDD + parseTableStructured + TDD/BDD ✅
-_Prochaine session_ : 035 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 (TableSyntaxValidator + intégration DocumentTranslator)
+_Derniere mise a jour_ : 2026-08-03 (session 036 — DOC-TABLE-VALIDATE-3 + VALIDATE-4, strict/lenient/off + batch report, 16 tests)
+_Session terminee_ : 036 — DOC-TABLE-VALIDATE-3 + VALIDATE-4 ✅
+_Prochaine session_ : 037 — DOC-TABLE-VALIDATE-5 (Cucumber BDD, 5 scénarios, clôture EPIC)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -97,7 +97,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-13 | Document Templates — substitution variables AsciiDoc ({{variable}}) sans LLM | ✅ TERMINÉ (session 025 — US-1, US-2 & US-3 TERMINÉES, 15 UT + 4 FT + 3 BDD) | P1
 | DOC-14 | Batch Pipeline — conversion multi-documents (répertoire → N formats) | ✅ TERMINÉ (session 025 — US-1 & US-2 TERMINÉES, 2 FT + 2 BDD) | P2
 | DOC-15 | Cross-borough Hardening — compile + tests document + bakery | ✅ TERMINÉ (session 025 — compile OK, tests OK) | P2
-| DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | 🟡 EN COURS (session 034 — fondation Table POJO DDD posée) | P1
+| DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | 🟡 EN COURS (session 036 — VALIDATE-3 + VALIDATE-4 terminés, 4/5 US) | P1
 | DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | 🔴 CADRÉ (session 033) | P1
 |===
 
@@ -162,6 +162,10 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 027 | 2026-07-21 | refacto | DocumentTranslator domain service — extraction DDD pure (sans I/O), ContentTranslationService + TranslateDocumentTask déléguent, 14 UT DocumentTranslatorTest, bakery 0 régression, baby-step DDD/TDD/BDD | ✅ TERMINE
 | 031 | 2026-07-31 | feat | Tree translation mode — ArticleTranslator interface, TreeTranslationAdapter (whole-article single LLM call via YAML round-trip), PivotYamlParser, NumberedFakeTranslationService, PooledOllamaTranslationAdapter refusal detection (+12 patterns), TranslateDocumentBatchTask treeMode+skipExisting, DocumentPlugin CLI -Pdocument.translateBatchTree, CI JDK 24→25. 244 PASS (186 UT + 29 FT + 29 Cucumber). Commit 82ada3b pushé. | ✅ TERMINE
 | 032 | 2026-08-01 | feat + fix | Dogfooding translateDocumentBatch — 61 articles cheroliv.com FR→EN traduits via Ollama réel (gemma4:31b-cloud) + 2 fixes parser AsciiDoc : (1) DescriptionList + BlockMacro fusionnés en paragraphe (PivotModel/parser/renderers/TreeTranslationAdapter), (2) blocs [plantuml] délimités `....` + titres de bloc avalés (parseSourceBlock → 0084 533→70 lignes, 0082 373→134). 61/61 traduits, 0 placeholder. Fake mode = outil de diagnostic (reproduit les bugs parser). | ✅ TERMINE
+| 033 | 2026-08-02 | cadrage | DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE — 2 EPICs transverses de validation syntaxique post-traduction (~46 pts, 10 US). BACKLOG.adoc +217 lignes, INDEX.adoc +2 EPICs roadmap. | ✅ TERMINE
+| 034 | 2026-08-03 | feat | DOC-TABLE-VALIDATE fondation — Table POJO DDD (Table/Row/Cell/ColSpec/HAlign/VAlign) + AsciiDocParser.parseTableStructured + 19 UT TableTest + 19 UT AsciiDocParserTableTest + 8 Cucumber table_translation.feature. 46/46 PASS. | ✅ TERMINE
+| 035 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-1 + VALIDATE-2 — TableSyntaxValidator (cohérence cols, délimiteurs, homogénéité colonnes) + intégration DocumentTranslator. 19 UT + 9 UT. 28/28 PASS. | ✅ TERMINE
+| 036 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-3 + VALIDATE-4 — strict/lenient/off DSL + batch report JSON. TableValidationConfig + TableValidationReport + TranslationException + DocumentTranslator mode handling + BatchDocumentTranslator aggregation. 7 UT + 6 UT + 3 FT. 16/16 PASS. | ✅ TERMINE
 |===
 
 '''

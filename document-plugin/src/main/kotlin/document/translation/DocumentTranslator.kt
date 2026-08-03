@@ -1,17 +1,26 @@
 package document.translation
 
 import document.translation.plantuml.PlantUmlTranslationAdapter
+import document.translation.validation.TableSyntaxValidator
+import document.translation.validation.TableValidationResult
+import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import org.slf4j.LoggerFactory
 
 class DocumentTranslator(
     private val translationService: TranslationService,
     private val parser: AsciiDocParser = AsciiDocParser(),
     private val renderer: ArticleRenderer = AsciiDocRenderer(),
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
-    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null
+    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
+    private val tableValidationMode: ValidationMode = ValidationMode.LENIENT,
 ) : ArticleTranslator {
+
+    private val log = LoggerFactory.getLogger(DocumentTranslator::class.java)
+
+    val tableValidationResults: MutableList<TableValidationResult.Invalid> = mutableListOf()
 
     override fun translate(
         asciidoc: String,
@@ -30,7 +39,16 @@ class DocumentTranslator(
         targetLanguage: String
     ): PivotArticle {
         val translatedFrontmatter = translateFrontmatter(article.frontmatter, sourceLanguage, targetLanguage)
-        val translatedBlocks = article.blocks.map { translateBlock(it, sourceLanguage, targetLanguage) }
+        var tableIndex = 0
+        val translatedBlocks = article.blocks.map { block ->
+            if (block is PivotBlock.Table) {
+                val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, tableIndex)
+                tableIndex++
+                result
+            } else {
+                translateBlock(block, sourceLanguage, targetLanguage)
+            }
+        }
         return PivotArticle(translatedFrontmatter, translatedBlocks)
     }
 
@@ -53,7 +71,9 @@ class DocumentTranslator(
     private fun translateBlock(
         block: PivotBlock,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
+        articleTitle: String = "",
+        tableIndex: Int = 0
     ): PivotBlock = when (block) {
         is PivotBlock.Heading -> {
             val translated = doTranslate(block.text, sourceLanguage, targetLanguage)
@@ -70,7 +90,7 @@ class DocumentTranslator(
             )
         }
         is PivotBlock.Table -> {
-            block.copy(
+            val translated = block.copy(
                 header = block.header.map { cells ->
                     translateInlines(cells, sourceLanguage, targetLanguage)
                 },
@@ -80,6 +100,8 @@ class DocumentTranslator(
                     }
                 }
             )
+            validateTranslatedTable(translated, articleTitle, tableIndex)
+            translated
         }
         is PivotBlock.Admonition -> {
             block.copy(
@@ -135,6 +157,44 @@ class DocumentTranslator(
             } else inline
         }
         is PivotInline.LineBreak -> inline
+    }
+
+    private fun validateTranslatedTable(
+        table: PivotBlock.Table,
+        articleTitle: String,
+        tableIndex: Int,
+    ) {
+        if (tableValidationMode == ValidationMode.OFF) return
+        val dddTable = toDddTable(table)
+        val result = TableSyntaxValidator.validate(dddTable, articleTitle, tableIndex)
+        if (result is TableValidationResult.Invalid) {
+            tableValidationResults.add(result)
+            val msg = "Table validation failed in article '$articleTitle' table #$tableIndex: ${result.reason}"
+            when (tableValidationMode) {
+                ValidationMode.STRICT -> throw TranslationException(msg)
+                ValidationMode.LENIENT -> log.warn(msg)
+                ValidationMode.OFF -> {}
+            }
+        }
+    }
+
+    private fun toDddTable(table: PivotBlock.Table): Table {
+        val colSpecs = parser.parseColSpecs(table.cols)
+        val colCount = colSpecs.size
+        val allHeaderCells = table.header
+
+        val headerRows: List<Row>
+        val bodyRows: List<Row>
+
+        if (colCount > 0 && allHeaderCells.isNotEmpty()) {
+            val chunked = allHeaderCells.chunked(colCount).map { cells -> Row(cells.map { Cell(it) }) }
+            headerRows = listOf(chunked.first())
+            bodyRows = chunked.drop(1) + table.rows.map { row -> Row(row.map { cells -> Cell(cells) }) }
+        } else {
+            headerRows = if (allHeaderCells.isNotEmpty()) listOf(Row(allHeaderCells.map { Cell(it) })) else emptyList()
+            bodyRows = table.rows.map { row -> Row(row.map { cells -> Cell(cells) }) }
+        }
+        return Table(colSpecs, headerRows, bodyRows)
     }
 
     private fun doTranslate(text: String, sourceLanguage: String, targetLanguage: String): String {

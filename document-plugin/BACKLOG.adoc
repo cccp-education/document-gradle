@@ -601,6 +601,7 @@ traduction passerait inaperçue jusqu'au rendu JBake → page cassée en prod.
 | UT : 15-20 (cols mismatch, delimiter corruption, column count mismatch, valid table)
 | 5
 | —
+| ✅ TERMINÉ (session 035)
 
 | DOC-TABLE-VALIDATE-2
 | *Intégration dans `DocumentTranslator.translateBlock(Table)`* — après traduction
@@ -610,6 +611,7 @@ traduction passerait inaperçue jusqu'au rendu JBake → page cassée en prod.
 | UT : 8-10 (mock validator, warning propagation, valid table no-op)
 | 5
 | VALIDATE-1
+| ✅ TERMINÉ (session 035)
 
 | DOC-TABLE-VALIDATE-3
 | *Mode `--strict` vs `--lenient`* — DSL `translation { tableValidation { mode = STRICT } }`.
@@ -619,6 +621,7 @@ traduction passerait inaperçue jusqu'au rendu JBake → page cassée en prod.
 | UT : 5-8 (strict throws, lenient warns, off skips) + FT : 2 (CLI -Pdocument.translateTableValidation=strict/lenient/off)
 | 5
 | VALIDATE-2
+| ✅ TERMINÉ (session 036)
 
 | DOC-TABLE-VALIDATE-4
 | *Intégration dans `translateDocumentBatch`* — rapport consolidé
@@ -627,6 +630,7 @@ traduction passerait inaperçue jusqu'au rendu JBake → page cassée en prod.
 | UT : 5-8 (report generation, empty report, multi-article aggregation) + FT : 1 (batch avec tables corrompues)
 | 5
 | VALIDATE-3
+| ✅ TERMINÉ (session 036)
 
 | DOC-TABLE-VALIDATE-5
 | *Cucumber BDD* — scénarios end-to-end :
@@ -650,11 +654,13 @@ VALIDATE-1 (TableSyntaxValidator) ─→ VALIDATE-2 (DocumentTranslator) ─→ 
 
 === Projection sessions
 
-* *S033* — VALIDATE-1 + VALIDATE-2 (10 pts, TableSyntaxValidator + intégration DocumentTranslator)
-* *S034* — VALIDATE-3 + VALIDATE-4 (10 pts, strict/lenient + batch report)
-* *S035* — VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
+* *S033* — Cadrage EPICs ✅ TERMINÉ
+* *S034* — Fondation Table POJO DDD ✅ TERMINÉ
+* *S035* — VALIDATE-1 + VALIDATE-2 (10 pts, TableSyntaxValidator + intégration DocumentTranslator) ✅ TERMINÉ
+* *S036* — VALIDATE-3 + VALIDATE-4 (10 pts, strict/lenient + batch report) ✅ TERMINÉ
+* *S037* — VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
 
-Projection conservatrice : 3 sessions, ~25 pts, méthodo baby step DDD/TDD/BDD.
+Projection conservatrice : 5 sessions, ~25 pts, méthodo baby step DDD/TDD/BDD.
 
 '''
 == EPIC DOC-PLANTUML-VALIDATE — Validation syntaxique des diagrammes PlantUML post-traduction (DRY via plantuml-gradle + BOM)
