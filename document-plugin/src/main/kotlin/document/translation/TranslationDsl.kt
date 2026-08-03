@@ -1,5 +1,6 @@
 package document.translation
 
+import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import org.gradle.api.provider.Property
 
@@ -13,4 +14,5 @@ class TranslationDsl(
     val batchOutputDir: Property<String>,
     val batchExcludePaths: Property<String>,
     val tableValidation: TableValidationConfig,
+    val plantUmlValidation: PlantUmlValidationConfig,
 )

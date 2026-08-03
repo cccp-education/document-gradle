@@ -26,6 +26,7 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
         llmMode.convention("ollama")
         excludePaths.convention("")
         tableValidationMode.convention("LENIENT")
+        plantUmlValidationMode.convention("LENIENT")
     }
 
     @get:InputDirectory
@@ -63,6 +64,10 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
     @get:Optional
     abstract val tableValidationMode: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val plantUmlValidationMode: Property<String>
+
     @TaskAction
     fun translateBatch() {
         val logger = LoggerFactory.getLogger(TranslateDocumentBatchTask::class.java)
@@ -81,8 +86,13 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
         } catch (_: IllegalArgumentException) {
             ValidationMode.LENIENT
         }
+        val plantUmlValidationMode = try {
+            ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
+        } catch (_: IllegalArgumentException) {
+            ValidationMode.LENIENT
+        }
 
-        logger.info("translateDocumentBatch — {} ({}→{}) treeMode={} skipExisting={} excludes={} tableValidation={}", src.absolutePath, srcLang, tgtLang, tree, skip, excludes, validationMode)
+        logger.info("translateDocumentBatch — {} ({}→{}) treeMode={} skipExisting={} excludes={} tableValidation={} plantUmlValidation={}", src.absolutePath, srcLang, tgtLang, tree, skip, excludes, validationMode, plantUmlValidationMode)
 
         val translationService: TranslationService = when (mode.lowercase()) {
             "fake" -> if (tree) NumberedFakeTranslationService() else FakeTranslationService(" [${tgtLang.uppercase()}]")
@@ -93,7 +103,7 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
         val batchTranslator = if (tree) {
             BatchDocumentTranslator(TreeTranslationAdapter(translationService))
         } else {
-            BatchDocumentTranslator(DocumentTranslator(translationService, tableValidationMode = validationMode))
+            BatchDocumentTranslator(DocumentTranslator(translationService, tableValidationMode = validationMode, plantUmlValidationMode = plantUmlValidationMode))
         }
         val result = batchTranslator.translateBatch(
             BatchTranslationRequest(src, out, srcLang, tgtLang, excludes, skip),

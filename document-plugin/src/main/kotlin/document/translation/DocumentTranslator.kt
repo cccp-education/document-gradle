@@ -1,6 +1,7 @@
 package document.translation
 
 import document.translation.plantuml.PlantUmlTranslationAdapter
+import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableSyntaxValidator
 import document.translation.validation.TableValidationResult
 import document.translation.validation.ValidationMode
@@ -16,11 +17,13 @@ class DocumentTranslator(
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
     private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
     private val tableValidationMode: ValidationMode = ValidationMode.LENIENT,
+    private val plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT,
 ) : ArticleTranslator {
 
     private val log = LoggerFactory.getLogger(DocumentTranslator::class.java)
 
     val tableValidationResults: MutableList<TableValidationResult.Invalid> = mutableListOf()
+    val plantUmlValidationResults: MutableList<PlantUmlValidationResult.Invalid> = mutableListOf()
 
     override fun translate(
         asciidoc: String,
@@ -40,13 +43,20 @@ class DocumentTranslator(
     ): PivotArticle {
         val translatedFrontmatter = translateFrontmatter(article.frontmatter, sourceLanguage, targetLanguage)
         var tableIndex = 0
+        var plantUmlIndex = 0
         val translatedBlocks = article.blocks.map { block ->
-            if (block is PivotBlock.Table) {
-                val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, tableIndex)
-                tableIndex++
-                result
-            } else {
-                translateBlock(block, sourceLanguage, targetLanguage)
+            when {
+                block is PivotBlock.Table -> {
+                    val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, tableIndex)
+                    tableIndex++
+                    result
+                }
+                block is PivotBlock.Source && block.language == "plantuml" -> {
+                    val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, plantUmlIndex = plantUmlIndex)
+                    plantUmlIndex++
+                    result
+                }
+                else -> translateBlock(block, sourceLanguage, targetLanguage)
             }
         }
         return PivotArticle(translatedFrontmatter, translatedBlocks)
@@ -73,7 +83,8 @@ class DocumentTranslator(
         sourceLanguage: String,
         targetLanguage: String,
         articleTitle: String = "",
-        tableIndex: Int = 0
+        tableIndex: Int = 0,
+        plantUmlIndex: Int = 0,
     ): PivotBlock = when (block) {
         is PivotBlock.Heading -> {
             val translated = doTranslate(block.text, sourceLanguage, targetLanguage)
@@ -110,7 +121,10 @@ class DocumentTranslator(
         }
         is PivotBlock.Source -> {
             if (block.language == "plantuml" && plantUmlAdapter != null) {
-                plantUmlAdapter.translate(block, sourceLanguage, targetLanguage)
+                val result = plantUmlAdapter.translate(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
+                plantUmlValidationResults.addAll(plantUmlAdapter.plantUmlValidationResults)
+                plantUmlAdapter.plantUmlValidationResults.clear()
+                result
             } else {
                 block
             }

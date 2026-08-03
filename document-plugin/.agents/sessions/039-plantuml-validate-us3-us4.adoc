@@ -1,0 +1,88 @@
+= Session 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4
+:date: 2026-08-03
+:status: ✅ TERMINÉ
+:score: 9/10
+
+== Objectif
+
+Intégration `PlantUmlTranslationAdapter.translate()` avec `PlantUmlSyntaxValidator`
+(VALIDATE-3) + mode strict/lenient/off DSL (VALIDATE-4).
+
+== Livrables
+
+=== VALIDATE-3 — Intégration PlantUmlTranslationAdapter.translate()
+
+. *PlantUmlSyntaxValidator* — refacto `object` → `interface` DDD avec `companion object.create()`
+  pour permettre l'injection de dépendance (mock dans les tests).
+. *PlantUmlTranslationAdapter* — ajout `plantUmlValidator` + `plantUmlValidationMode` +
+  `plantUmlValidationResults` + `validateTranslatedPlantUml()`.
+  Validation après traduction pour les stratégies TranslateLabels et BorrowVocabulary.
+  PreserveTechnical = skip validation.
+. *DocumentTranslator* — ajout `plantUmlValidationMode` + `plantUmlValidationResults`.
+  Passage du contexte (articleTitle, blockIndex) à l'adapter.
+  Collecte des résultats depuis l'adapter après chaque bloc.
+. *BatchDocumentTranslator* — collecte `plantUmlValidationResults` +
+  génération `plantuml-validation-report.json`.
+
+=== VALIDATE-4 — Mode strict/lenient/off DSL
+
+. *PlantUmlValidationConfig* — nouveau, `mode: Property<String>`.
+. *PlantUmlValidationReport* — nouveau, `PlantUmlValidationReportEntry` + `toJson()`.
+. *TranslationDsl* — ajout `plantUmlValidation: PlantUmlValidationConfig`.
+. *DocumentPlugin* — wiring `plantUmlValidation.mode` convention "LENIENT" +
+  CLI `-Pdocument.translatePlantUmlValidation=strict/lenient/off`.
+. *TranslateDocumentTask* — ajout `plantUmlValidationMode` property.
+. *TranslateDocumentBatchTask* — ajout `plantUmlValidationMode` property.
+
+== Tests
+
+. *PlantUmlTranslationAdapterValidationTest* — 8 UT :
+  - valid diagram passes validation
+  - corrupted diagram produces Invalid in lenient mode (fake validator)
+  - corrupted diagram throws TranslationException in strict mode
+  - PreserveTechnical skips validation
+  - BorrowVocabulary validates after translation
+  - OFF mode skips validation entirely
+  - non-plantuml block unchanged
+  - strategy context propagated in validation result
+
+. *DocumentTranslatorPlantUmlValidationTest* — 5 UT :
+  - LENIENT mode warns but does not throw
+  - STRICT mode throws TranslationException
+  - OFF mode skips validation
+  - valid diagram passes validation
+  - multiple plantUML blocks accumulate results
+
+. *PlantUmlSyntaxValidatorTest* — 10 UT (inchangés, adaptés à l'interface)
+
+. *PlantumlServiceAvailabilityTest* — 1 UT (inchangé)
+
+Total : 24 nouveaux tests, 24/24 PASS.
+
+== Fichiers modifiés
+
+*document-gradle/document-plugin* :
+. `src/main/kotlin/document/translation/validation/PlantUmlSyntaxValidator.kt` — object → interface DDD
+. `src/main/kotlin/document/translation/validation/PlantUmlValidationConfig.kt` — nouveau
+. `src/main/kotlin/document/translation/validation/PlantUmlValidationReport.kt` — nouveau
+. `src/main/kotlin/document/translation/plantuml/PlantUmlTranslationAdapter.kt` — +validation
+. `src/main/kotlin/document/translation/DocumentTranslator.kt` — +plantUmlValidationMode + collecte
+. `src/main/kotlin/document/translation/BatchDocumentTranslator.kt` — +plantuml report
+. `src/main/kotlin/document/translation/TranslationDsl.kt` — +plantUmlValidation
+. `src/main/kotlin/document/translation/TranslateDocumentTask.kt` — +plantUmlValidationMode
+. `src/main/kotlin/document/translation/TranslateDocumentBatchTask.kt` — +plantUmlValidationMode
+. `src/main/kotlin/document/DocumentPlugin.kt` — wiring plantUmlValidation
+. `src/test/kotlin/document/translation/plantuml/PlantUmlTranslationAdapterValidationTest.kt` — nouveau, 8 UT
+. `src/test/kotlin/document/translation/DocumentTranslatorPlantUmlValidationTest.kt` — nouveau, 5 UT
+. `src/test/kotlin/document/translation/validation/PlantUmlSyntaxValidatorTest.kt` — adapté interface
+
+== Vérification
+
+- `./gradlew compileKotlin` — BUILD SUCCESSFUL
+- `./gradlew test --tests "document.translation.*"` — BUILD SUCCESSFUL, 0 fail
+- `./gradlew tableTranslationCucumberTest tableValidationCucumberTest` — BUILD SUCCESSFUL, 14/14 PASS
+- 3 tests EPUB préexistants échouent (DocumentConverterTest, non liés à cette session)
+
+== Prochaine session
+
+S040 — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, 5 scénarios, clôture EPIC)

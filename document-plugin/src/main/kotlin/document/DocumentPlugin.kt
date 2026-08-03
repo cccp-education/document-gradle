@@ -7,6 +7,7 @@ import document.template.TemplateDsl
 import document.translation.TranslateDocumentTask
 import document.translation.TranslateDocumentBatchTask
 import document.translation.TranslationDsl
+import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -91,6 +92,9 @@ class DocumentPlugin : Plugin<Project> {
                 tableValidation = TableValidationConfig(
                     mode = project.objects.property(String::class.java),
                 ),
+                plantUmlValidation = PlantUmlValidationConfig(
+                    mode = project.objects.property(String::class.java),
+                ),
             ),
         )
 
@@ -139,6 +143,7 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.batchOutputDir.convention("")
         ext.translation.batchExcludePaths.convention("")
         ext.translation.tableValidation.mode.convention("LENIENT")
+        ext.translation.plantUmlValidation.mode.convention("LENIENT")
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -429,6 +434,7 @@ class DocumentPlugin : Plugin<Project> {
             task.targetLanguage.set(cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage))
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
             task.tableValidationMode.set(cliProp(project, "translateTableValidation").orElse(ext.translation.tableValidation.mode))
+            task.plantUmlValidationMode.set(cliProp(project, "translatePlantUmlValidation").orElse(ext.translation.plantUmlValidation.mode))
             task.outputFile.set(
                 project.layout.buildDirectory.file(
                     project.providers.gradleProperty("document.translateOutputFileName")
@@ -456,6 +462,7 @@ class DocumentPlugin : Plugin<Project> {
             task.targetLanguage.set(cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage))
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
             task.tableValidationMode.set(cliProp(project, "translateTableValidation").orElse(ext.translation.tableValidation.mode))
+            task.plantUmlValidationMode.set(cliProp(project, "translatePlantUmlValidation").orElse(ext.translation.plantUmlValidation.mode))
             task.excludePaths.set(cliProp(project, "translateBatchExcludePaths").orElse(ext.translation.batchExcludePaths))
             task.treeMode.set(
                 cliProp(project, "translateBatchTree")

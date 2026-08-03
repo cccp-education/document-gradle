@@ -27,8 +27,8 @@ dependencies {
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
     compileOnly(libs.planner.plugin)
 
-    // PlantUML — composition (contenant→contenu), compileOnly legitime
-    compileOnly(libs.plantuml.plugin)
+    // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
+    implementation(libs.plantuml.plugin)
 
     // N0 contracts — i18n (internationalisation documents)
     // + opencode-session (traçabilité release notes, vision MEM-4 — non implémenté, gardé pour roadmap)

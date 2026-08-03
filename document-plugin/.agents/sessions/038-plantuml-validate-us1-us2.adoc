@@ -1,0 +1,38 @@
+= Session 038 — DOC-PLANTUML-VALIDATE-1 + VALIDATE-2
+:date: 2026-08-03
+:status: TERMINÉ
+:epic: DOC-PLANTUML-VALIDATE
+:points: 8/21
+
+== Objectif
+
+DOC-PLANTUML-VALIDATE-1 (3 pts) + VALIDATE-2 (5 pts) :
+- Ajout dépendance `implementation(libs.plantuml.plugin)` (remplace compileOnly)
+- `PlantUmlSyntaxValidator` wrapper DDD autour de `PlantumlService.validateSyntax()`
+- `PlantUmlValidationResult` sealed class avec contexte enrichi
+
+== Fichiers créés/modifiés
+
+*Production* :
+. `build.gradle.kts` — compileOnly → implementation plantuml.plugin
+. `document/translation/validation/PlantUmlValidationResult.kt` — nouveau, sealed Valid/Invalid(articleTitle, blockIndex, strategy, reason)
+. `document/translation/validation/PlantUmlSyntaxValidator.kt` — nouveau, wrapper PlantumlService.validateSyntax()
+
+*Tests* :
+. `PlantUmlSyntaxValidatorTest.kt` — 10 UT (valid simple, notes, sequence, activity, missing @startuml, missing @enduml, empty, strategy context, PreserveTechnical, complex)
+. `PlantUmlServiceAvailabilityTest.kt` — 1 UT (instanciation + validation)
+
+== Résultats
+
+- compileKotlin : BUILD SUCCESSFUL
+- PlantUmlSyntaxValidatorTest : 10/10 PASS
+- PlantUmlServiceAvailabilityTest : 1/1 PASS
+- document.translation.* : BUILD SUCCESSFUL, zéro régression
+- tableTranslationCucumberTest : 8/8 PASS
+- tableValidationCucumberTest : 6/6 PASS
+
+== Prochaine session
+
+S039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 (8 pts) :
+- Intégration PlantUmlTranslationAdapter.translate()
+- Mode strict/lenient/off DSL

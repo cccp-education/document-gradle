@@ -2,6 +2,8 @@
 
 |===
 | # | Date | Type | Sujet | Score
+| 039 | 2026-08-03 | feat | DOC-PLANTUML-VALIDATE-3 + VALIDATE-4 — intégration PlantUmlTranslationAdapter.translate() + mode strict/lenient/off DSL. PlantUmlSyntaxValidator refacto object→interface DDD. PlantUmlValidationConfig + PlantUmlValidationReport. 24 UT GREEN. | 9/10
+| 038 | 2026-08-03 | feat | DOC-PLANTUML-VALIDATE-1 + VALIDATE-2 — dépendance plantuml-plugin (implementation) + PlantUmlSyntaxValidator wrapper DDD + PlantUmlValidationResult sealed. 10 UT PlantUmlSyntaxValidator + 1 UT PlantumlServiceAvailability. 11/11 PASS. | 9/10
 | 037 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-5 — Cucumber BDD 6 scénarios @table-validation (valid, corrupted-delimiter, strict, column-mismatch, cols-mismatch, batch-report). TableValidationSteps + TableValidationCucumberRunner + CorruptingTranslationService. 6/6 PASS. EPIC DOC-TABLE-VALIDATE CLÔTURÉ (5/5 US). | 9/10
 | 036 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-3 + VALIDATE-4 — strict/lenient/off DSL + batch report JSON. TableValidationConfig + TableValidationReport + TranslationException + DocumentTranslator mode handling + BatchDocumentTranslator aggregation. 7 UT + 6 UT + 3 FT. 16/16 PASS. | 9/10
 | 035 | 2026-08-03 | feat | DOC-TABLE-VALIDATE-1 + VALIDATE-2 — TableSyntaxValidator (cohérence cols, délimiteurs, homogénéité colonnes) + intégration DocumentTranslator. 19 UT + 9 UT. 28/28 PASS. | 9/10

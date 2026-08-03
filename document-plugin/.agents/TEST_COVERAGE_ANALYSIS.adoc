@@ -423,3 +423,38 @@ FakeDocumentLlmProvider, DocumentLlmProviderFactory.
 - CLI categories format : `key=label,key2=label2` (parseCategoriesCli helper)
 - Parser Conventional Commit regex stricte → custom categories ne mappent que sur types reconnus
 - `./gradlew test` : 38s, `./gradlew functionalTest` : 27s, `./gradlew cucumberTest` : 6m1s
+
+== Session 039 — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4
+
+*Couverture plantuml validation* : suite `document.translation.*` GREEN.
+*3 échecs EPUB préexistants* (DocumentConverterTest) — non liés à cette session.
+
+Tests ajoutés S039 :
+- PlantUmlTranslationAdapterValidationTest (+8 UT) : valid, corrupted lenient, corrupted strict, PreserveTechnical skip, BorrowVocabulary, OFF skip, non-plantuml, strategy context
+- DocumentTranslatorPlantUmlValidationTest (+5 UT) : LENIENT warn, STRICT throw, OFF skip, valid pass, multiple blocks accumulate
+- PlantUmlSyntaxValidatorTest (10 UT, adaptés interface DDD)
+- PlantumlServiceAvailabilityTest (1 UT, inchangé)
+
+Total : +13 nouveaux tests, 24/24 PASS (incluant les 10 UT validator + 1 UT availability).
+
+=== Pyramide de tests — Session 039
+
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+
+| Unit (plantuml validation adapter + translator)
+| 13
+| ✅ PASS
+| `PlantUmlTranslationAdapterValidationTest.kt` + `DocumentTranslatorPlantUmlValidationTest.kt`
+
+| Unit (plantuml syntax validator)
+| 11
+| ✅ PASS
+| `PlantUmlSyntaxValidatorTest.kt` + `PlantumlServiceAvailabilityTest.kt`
+
+| Cucumber BDD
+| 14
+| ✅ PASS
+| `tableTranslationCucumberTest` (8) + `tableValidationCucumberTest` (6)
+|===

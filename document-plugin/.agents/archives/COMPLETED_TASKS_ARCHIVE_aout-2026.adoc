@@ -2,6 +2,23 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 039 (2026-08-03) — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4
+
+*VALIDATE-3 — Intégration PlantUmlTranslationAdapter* (5 pts) :
+- `PlantUmlSyntaxValidator` — refacto object → interface DDD (companion.create())
+- `PlantUmlTranslationAdapter` — +plantUmlValidator +plantUmlValidationMode +validateTranslatedPlantUml()
+- `DocumentTranslator` — +plantUmlValidationMode +plantUmlValidationResults + collecte depuis adapter
+- `BatchDocumentTranslator` — +plantuml-validation-report.json
+
+*VALIDATE-4 — Mode strict/lenient/off DSL* (3 pts) :
+- `PlantUmlValidationConfig` — nouveau, mode Property<String>
+- `PlantUmlValidationReport` — nouveau, toJson()
+- `TranslationDsl` — +plantUmlValidation
+- `DocumentPlugin` — wiring CLI -Pdocument.translatePlantUmlValidation
+- `TranslateDocumentTask` + `TranslateDocumentBatchTask` — +plantUmlValidationMode
+
+*Tests* : 24/24 PASS (8 UT adapter + 5 UT translator + 10 UT validator + 1 UT availability)
+
 === Session 037 (2026-08-03) — DOC-TABLE-VALIDATE-5 (Cucumber BDD, clôture EPIC)
 
 *VALIDATE-5 — Cucumber BDD* (5 pts) :

@@ -1,5 +1,7 @@
 package document.translation
 
+import document.translation.validation.PlantUmlValidationReport
+import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableValidationReport
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -31,7 +33,8 @@ class BatchDocumentTranslator(
 
         val translated = mutableListOf<String>()
         val errors = mutableListOf<String>()
-        val allValidationResults = mutableListOf<document.translation.validation.TableValidationResult.Invalid>()
+        val allTableValidationResults = mutableListOf<document.translation.validation.TableValidationResult.Invalid>()
+        val allPlantUmlValidationResults = mutableListOf<PlantUmlValidationResult.Invalid>()
 
         for ((idx, file) in adocFiles.withIndex()) {
             val relPath = file.relativeTo(sourceDir).path
@@ -49,8 +52,10 @@ class BatchDocumentTranslator(
                 outputFile.writeText(rendered)
                 translated.add(relPath)
                 if (documentTranslator is DocumentTranslator) {
-                    allValidationResults.addAll(documentTranslator.tableValidationResults)
+                    allTableValidationResults.addAll(documentTranslator.tableValidationResults)
                     documentTranslator.tableValidationResults.clear()
+                    allPlantUmlValidationResults.addAll(documentTranslator.plantUmlValidationResults)
+                    documentTranslator.plantUmlValidationResults.clear()
                 }
             } catch (e: Exception) {
                 val msg = "$relPath: ${e.message}"
@@ -59,12 +64,20 @@ class BatchDocumentTranslator(
             }
         }
 
-        if (allValidationResults.isNotEmpty()) {
-            val report = TableValidationReport.fromResults(allValidationResults)
+        if (allTableValidationResults.isNotEmpty()) {
+            val report = TableValidationReport.fromResults(allTableValidationResults)
             val reportFile = outputDir.resolve("table-validation-report.json")
             reportFile.parentFile.mkdirs()
             reportFile.writeText(report.toJson())
             log.info("[translateBatch] table validation report written: {}", reportFile.absolutePath)
+        }
+
+        if (allPlantUmlValidationResults.isNotEmpty()) {
+            val report = PlantUmlValidationReport.fromResults(allPlantUmlValidationResults)
+            val reportFile = outputDir.resolve("plantuml-validation-report.json")
+            reportFile.parentFile.mkdirs()
+            reportFile.writeText(report.toJson())
+            log.info("[translateBatch] plantuml validation report written: {}", reportFile.absolutePath)
         }
 
         log.info("[translateBatch] done — {} translated, {} errors", translated.size, errors.size)

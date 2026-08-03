@@ -38,6 +38,10 @@ abstract class TranslateDocumentTask : DefaultTask() {
     @get:Optional
     abstract val tableValidationMode: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val plantUmlValidationMode: Property<String>
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
@@ -48,6 +52,7 @@ abstract class TranslateDocumentTask : DefaultTask() {
         targetLanguage.convention("en")
         llmMode.convention("ollama")
         tableValidationMode.convention("LENIENT")
+        plantUmlValidationMode.convention("LENIENT")
     }
 
     @TaskAction
@@ -63,6 +68,11 @@ abstract class TranslateDocumentTask : DefaultTask() {
         } catch (_: IllegalArgumentException) {
             ValidationMode.LENIENT
         }
+        val plantUmlValidationMode = try {
+            ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
+        } catch (_: IllegalArgumentException) {
+            ValidationMode.LENIENT
+        }
 
         val translationService: TranslationService = when (mode.lowercase()) {
             "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
@@ -70,7 +80,7 @@ abstract class TranslateDocumentTask : DefaultTask() {
             else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 
-        val translator = DocumentTranslator(translationService, tableValidationMode = validationMode)
+        val translator = DocumentTranslator(translationService, tableValidationMode = validationMode, plantUmlValidationMode = plantUmlValidationMode)
         val original = source.readText()
         val rendered = translator.translate(original, srcLang, tgtLang)
 
