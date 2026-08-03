@@ -1,0 +1,46 @@
+= Session 034 — Table POJO DDD + parseTableStructured + TDD/BDD
+:date: 2026-08-03
+:status: ✅ TERMINÉ
+:epic: DOC-TABLE-VALIDATE (VALIDATE-1 fondation)
+
+== Objectif
+
+Créer le modèle de données `Table` POJO pour la validation syntaxique des tableaux
+AsciiDoc post-traduction. Fondation DDD pour l'EPIC DOC-TABLE-VALIDATE.
+
+== Livrables
+
+=== Table.kt — Modèle DDD
+- `Table(cols, header, body)` / `Row(cells)` / `Cell(inline, colSpan, rowSpan, halign, valign)`
+- `ColSpec(width, halign, valign)` + `HAlign`/`VAlign` enums
+- `extractTranslatable()` → `List<TranslatableSegment>` (texte seul, positions)
+- `reinject(translations)` → `Table` (réinjecte sans toucher au formatage)
+- `toAsciiDoc()` / `toHtml()` (round-trip + validation bakery)
+
+=== AsciiDocParser.parseTableStructured()
+- `\|` (échappement pipe), `a|`/`h|` (style cellule)
+- `2+|`/`.3+|` (spans), `<|`/`^|`/`>|` (alignement horizontal)
+- `.<|`/`.^|`/`.>|` (alignement vertical)
+- `[cols="<1,^2,>3"]` → `List<ColSpec>` avec width + halign
+- `parseColSpecs()` / `parseSingleColSpec()` / `parseCellPrefix()` / `splitStructuredCells()`
+
+=== Tests — Baby-step DDD/TDD/BDD
+- 19 UT `TableTest` (modèle : extract, reinject, toAsciiDoc, toHtml, ColSpec, empty)
+- 19 UT `AsciiDocParserTableTest` (parser : cols, spans, alignments, escaped pipe, a|, h|, round-trip)
+- 8 Cucumber `table_translation.feature` (pipeline extract→reinject→AsciiDoc→HTML, edge cases)
+- 46/46 PASS, zéro régression `document.translation.*`
+
+== Fichiers modifiés
+
+- `Table.kt` (nouveau, 200 lignes)
+- `AsciiDocParser.kt` (+parseTableStructured, +parseColSpecs, +parseStructuredRows, +splitStructuredCells, +parseCellPrefix, +isCellPrefixLine, parseInline → internal)
+- `build.gradle.kts` (+tableTranslationCucumberTest task)
+- `TableTest.kt` (nouveau, 19 tests)
+- `AsciiDocParserTableTest.kt` (nouveau, 19 tests)
+- `table_translation.feature` (nouveau, 8 scénarios)
+- `TableTranslationSteps.kt` (nouveau, steps Cucumber)
+- `TableTranslationCucumberRunner.kt` (nouveau, runner Cucumber)
+
+== Prochaine session
+
+S035 — DOC-TABLE-VALIDATE-1 + VALIDATE-2 : `TableSyntaxValidator` (cohérence cols, délimiteurs, homogénéité colonnes) + intégration `DocumentTranslator`.
