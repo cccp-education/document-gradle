@@ -5,6 +5,8 @@ import document.translation.delta.BlockChecksumEntry
 import document.translation.delta.BlockDelta
 import document.translation.delta.BlockTranslationStatus
 import document.translation.plantuml.PlantUmlTranslationAdapter
+import document.translation.validation.PlantUmlValidationResult
+import document.translation.validation.TableValidationResult
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
@@ -180,6 +182,18 @@ class ContentTranslationService(
         sourceLanguage: String,
         targetLanguage: String
     ): PivotArticle = documentTranslator.translateArticle(article, sourceLanguage, targetLanguage)
+
+    fun drainTableValidationResults(): List<TableValidationResult.Invalid> {
+        val results = documentTranslator.tableValidationResults.toList()
+        documentTranslator.tableValidationResults.clear()
+        return results
+    }
+
+    fun drainPlantUmlValidationResults(): List<PlantUmlValidationResult.Invalid> {
+        val results = documentTranslator.plantUmlValidationResults.toList()
+        documentTranslator.plantUmlValidationResults.clear()
+        return results
+    }
 }
 
 data class ContentTranslationResult(
