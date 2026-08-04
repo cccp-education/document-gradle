@@ -1,5 +1,9 @@
 package document.translation
 
+import document.translation.delta.BlockChecksum
+import document.translation.delta.BlockChecksumEntry
+import document.translation.delta.BlockDelta
+import document.translation.delta.BlockTranslationStatus
 import document.translation.plantuml.PlantUmlTranslationAdapter
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
@@ -141,6 +145,42 @@ class ContentTranslationService(
         val original = file.readText()
         val rendered = documentTranslator.translate(original, sourceLanguage, targetLanguage)
         file.writeText(rendered)
+    }
+
+    fun translateSingleFileWithBlockDelta(
+        sourceFile: File,
+        targetFile: File,
+        previousBlockChecksums: Map<String, BlockChecksumEntry>,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): Map<String, BlockChecksumEntry> {
+        val sourceText = sourceFile.readText()
+        val sourceArticle = parser.parse(sourceText)
+        val currentBlockHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
+        println("[block-delta] source blocks: ${sourceArticle.blocks.size}, hashes: $currentBlockHashes")
+        println("[block-delta] previous entries: $previousBlockChecksums, target exists: ${targetFile.exists()}")
+        if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
+            println("[block-delta] fresh path — translating all")
+            val rendered = documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
+            targetFile.writeText(rendered)
+            return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
+        }
+        val previousTranslatedArticle = parser.parse(targetFile.readText())
+        println("[block-delta] previous translated blocks: ${previousTranslatedArticle.blocks.size}")
+        previousTranslatedArticle.blocks.forEachIndexed { i, b -> println("[block-delta]   prev[$i] = $b") }
+        val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
+        println("[block-delta] delta: modified=${delta.modifiedBlocks}, preserved=${delta.preservedBlocks}")
+        if (delta.isEmpty()) {
+            return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
+        }
+        val translatedArticle = documentTranslator.translateArticleWithDelta(
+            sourceArticle, previousTranslatedArticle, delta, sourceLanguage, targetLanguage
+        )
+        println("[block-delta] translated blocks: ${translatedArticle.blocks.size}")
+        translatedArticle.blocks.forEachIndexed { i, b -> println("[block-delta]   result[$i] = $b") }
+        val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+        targetFile.writeText(outputRenderer.render(translatedArticle))
+        return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
     }
 
     internal fun translateArticle(

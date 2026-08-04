@@ -1,5 +1,6 @@
 package document.translation
 
+import document.translation.delta.BlockDelta
 import document.translation.plantuml.PlantUmlTranslationAdapter
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableSyntaxValidator
@@ -57,6 +58,50 @@ class DocumentTranslator(
                     result
                 }
                 else -> translateBlock(block, sourceLanguage, targetLanguage)
+            }
+        }
+        return PivotArticle(translatedFrontmatter, translatedBlocks)
+    }
+
+    internal fun translateArticleWithDelta(
+        sourceArticle: PivotArticle,
+        previousTranslated: PivotArticle,
+        delta: BlockDelta,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): PivotArticle {
+        if (delta.isEmpty()) return previousTranslated
+        val translatedFrontmatter = translateFrontmatter(sourceArticle.frontmatter, sourceLanguage, targetLanguage)
+        val preservedIndices = delta.preservedBlocks.toSet()
+        val tableIndexByOriginalIndex = mutableMapOf<Int, Int>()
+        val plantUmlIndexByOriginalIndex = mutableMapOf<Int, Int>()
+        var tableIndex = 0
+        var plantUmlIndex = 0
+        for ((idx, block) in sourceArticle.blocks.withIndex()) {
+            if (block is PivotBlock.Table) {
+                tableIndexByOriginalIndex[idx] = tableIndex
+                tableIndex++
+            }
+            if (block is PivotBlock.Source && block.language == "plantuml") {
+                plantUmlIndexByOriginalIndex[idx] = plantUmlIndex
+                plantUmlIndex++
+            }
+        }
+        val translatedBlocks = sourceArticle.blocks.mapIndexed { idx, block ->
+            if (idx.toString() in preservedIndices) {
+                previousTranslated.blocks.getOrNull(idx) ?: translateBlock(block, sourceLanguage, targetLanguage)
+            } else {
+                when {
+                    block is PivotBlock.Table -> {
+                        val ti = tableIndexByOriginalIndex[idx] ?: 0
+                        translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, ti)
+                    }
+                    block is PivotBlock.Source && block.language == "plantuml" -> {
+                        val pi = plantUmlIndexByOriginalIndex[idx] ?: 0
+                        translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, plantUmlIndex = pi)
+                    }
+                    else -> translateBlock(block, sourceLanguage, targetLanguage)
+                }
             }
         }
         return PivotArticle(translatedFrontmatter, translatedBlocks)

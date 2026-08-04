@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 042
+:session: 043
 :date: 2026-08-04
-:status: Session 041 terminée — Renfort couverture tests PlantUML translation (+4 UT)
+:status: Session 042 terminée — Support EPIC BKY-I18N-MASS : BlockChecksum/BlockDelta (MASS-1) + translateArticleWithDelta/translateSingleFileWithBlockDelta (MASS-2)
 :max-lines: 70
 
 == Quick Start
@@ -14,43 +14,24 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 
 == Contexte de fin
 
-Session 041 — Renfort couverture tests PlantUML translation :
-- DocumentTranslatorTest +3 UT (multi-blocs mixed strategies, note/legend, skinparam)
-- ContentTranslationServiceTest +1 UT (concurrence thread-safe)
-- 18/18 DocumentTranslatorTest PASS, 13/13 ContentTranslationServiceTest PASS
+Session 042 (cross-borough bakery BKY-I18N-MASS) — delta bloc livré :
+- `document/translation/delta/BlockChecksum.kt` : `BlockTranslationStatus` (TRANSLATED/PENDING),
+  `BlockChecksumEntry` parse/serialize (legacy `"hash"`→PENDING), `sha256`/`computeForBlocks`
+- `document/translation/delta/BlockDelta.kt` : `compute(previous, current)` → modified/preserved
+  (statut ≠ TRANSLATED → re-traduit). 26 UT BlockDeltaTest PASS
+- `DocumentTranslator.translateArticleWithDelta` (internal→public, preserve blocs indexés,
+  shift table/plantuml, isEmpty→retourne previous). 4 UT DocumentTranslatorBlockDeltaTest PASS
+- `ContentTranslationService.translateSingleFileWithBlockDelta` (public, fresh/delta path,
+  écrit target). 1 UT BlockDeltaWireDebugTest PASS
+- compileKotlin + publishToMavenLocal OK
 
 == Reprendre à
 
 . `git status` dans document-gradle
-. Tous les EPICs sont clos, backlog vide
-. Prochaine étape : à définir
-- VALIDATE-3 ✅ (intégration PlantUmlTranslationAdapter)
-- VALIDATE-4 ✅ (strict/lenient/off DSL)
-- VALIDATE-5 ✅ (Cucumber BDD, 5 scénarios)
+. Tous les EPICs document-gradle sont clos ; les changements S042 supportent bakery
+. Prochaine étape : à définir (bakery suit l'EPIC BKY-I18N-MASS, MASS-2 issue en cours S192)
 
-== Backlog — Tous les EPICs sont terminés
+== Note cross-borough
 
-- DOC-0 → DOC-15 ✅
-- DOC-TRANSLATE ✅
-- DOC-TRANSLATE-CABLE ✅
-- DOC-TABLE-VALIDATE ✅
-- DOC-PLANTUML-VALIDATE ✅
-
-== Reprendre à
-
-. `git status` + `git pull`
-. S041 — À définir (backlog vide, tous les EPICs terminés)
-. Maintenance possible : fix EPUB test flaky, upgrade dépendances, etc.
-
-== Fichiers touchés S040
-
-*document-gradle* :
-. `src/test/resources/features/plantuml_validation.feature` — nouveau, 5 scénarios
-. `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationSteps.kt` — nouveau
-. `src/test/kotlin/document/plantumlvalidation/PlantUmlValidationCucumberRunner.kt` — nouveau
-. `build.gradle.kts` — +1 CucumberTaskSpec
-. `.agents/sessions/040-plantuml-validate-us5.adoc` — rapport de session
-. `PROMPT_REPRISE.adoc` — ce fichier
-. `.agents/INDEX.adoc` — session 040, roadmap, EPIC clôturé
-. `.agents/SESSIONS_HISTORY.adoc` — entrée S040
-. `.agents/TEST_COVERAGE_ANALYSIS.adoc` — couverture Cucumber plantuml
+Le `println` de debug `[block-delta]` dans `ContentTranslationService.translateSingleFileWithBlockDelta`
+est à retirer une fois l'issue bakery fixée (S192 bakery) — aucun impact fonctionnel.

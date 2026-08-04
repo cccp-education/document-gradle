@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-08-03 (session 040 — DOC-PLANTUML-VALIDATE-5, Cucumber BDD 5/5 PASS, EPIC CLÔTURÉ)
-_Session terminee_ : 040 — DOC-PLANTUML-VALIDATE-5 ✅
-_Prochaine session_ : 041 — À définir (tous les EPICs terminés, backlog vide)
+_Derniere mise a jour_ : 2026-08-04 (session 042 — support EPIC BKY-I18N-MASS : BlockChecksum/BlockDelta MASS-1 + translateArticleWithDelta/translateSingleFileWithBlockDelta MASS-2)
+_Session terminee_ : 042 — Support BKY-I18N-MASS (domaine delta-bloc)
+_Prochaine session_ : 043 — À définir (tous les EPICs document-gradle terminés)
 
 '''
 == REGLES ABSOLUES (resume)

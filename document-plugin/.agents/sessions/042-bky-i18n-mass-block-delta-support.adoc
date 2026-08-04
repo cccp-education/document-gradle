@@ -1,0 +1,57 @@
+= Session 042 — EPIC BKY-I18N-MASS support — BlockChecksum + BlockDelta (MASS-1) + translateArticleWithDelta / translateSingleFileWithBlockDelta (MASS-2)
+:date: 2026-08-04
+:type: DDD + TDD
+:epic: cross-borough (bakery BKY-I18N-MASS)
+:score: 8/10
+
+== Contexte
+
+Document-gradle fournit le domaine delta-bloc pour l'EPIC bakery BKY-I18N-MASS
+(mass-translation N langues + préservation des diagrammes traduits entre lots).
+Session cross-borough : MASS-1 (domaine DDD pur) + MASS-2 (câblage traducteur).
+
+== Baby steps
+
+=== MASS-1 — BlockChecksum + BlockDelta (DDD pur)
+
+- `document/translation/delta/BlockChecksum.kt` :
+  - `BlockTranslationStatus` enum (`TRANSLATED`, `PENDING`)
+  - `BlockChecksumEntry(hash, status)` — `parse("hash:STATUS")` + `serialize()`,
+    format legacy `"hash"` seul → `PENDING` (rétro-compatible)
+  - `BlockChecksum.sha256(block)` SHA-256 + `computeForBlocks(blocks)` → `Map<idx, hash>`
+    (heading, paragraph, list, table, admonition, source, descriptionList ;
+    `Hr`/`BlockMacro` non-checksummés)
+- `document/translation/delta/BlockDelta.kt` :
+  - `BlockDelta(modifiedBlocks, preservedBlocks)` + `isEmpty()`
+  - `compute(previous: Map<String,BlockChecksumEntry>, current: Map<String,String>)` —
+    modifié si absent / hash différent / statut ≠ `TRANSLATED`, sinon préservé.
+- Tests : `BlockDeltaTest` 26 UT (block unchanged/modified, diagram preserved,
+  statut PENDING re-traduit, format legacy, sérialisation round-trip).
+
+=== MASS-2 — câblage traducteur
+
+- `DocumentTranslator.translateArticleWithDelta(sourceArticle, previousTranslated, delta, ...)`
+  (internal→public) : préserve les blocs indexés dans `delta.preservedBlocks`
+  (depuis `previousTranslated`), re-traduit les blocs modifiés. Dispatch table/plantuml
+  par index original (`tableIndexByOriginalIndex`/`plantUmlIndexByOriginalIndex`).
+  `delta.isEmpty()` → retourne `previousTranslated` (Economie d'Encre).
+- `ContentTranslationService.translateSingleFileWithBlockDelta(sourceFile, targetFile,
+  previousBlockChecksums, srcLang, tgtLang): Map<String,BlockChecksumEntry>` (public) :
+  fresh path si previous vide / target absent — delta path sinon (parse target →
+  `BlockDelta.compute` → re-traduit modifiés, préserve traduits). Écrit `targetFile`.
+- Tests : `DocumentTranslatorBlockDeltaTest` 4 UT, `BlockDeltaWireDebugTest` 1.
+
+== Résultats
+
+- BlockDeltaTest : 26/26 PASS
+- DocumentTranslatorBlockDeltaTest : 4/4 PASS
+- BlockDeltaWireDebugTest : 1/1 PASS
+- compileKotlin + publishToMavenLocal : BUILD SUCCESSFUL
+
+== Note (consommateur bakery)
+
+Le câblage `MigrateContentI18nTask` (bakery) consomme `translateSingleFileWithBlockDelta`.
+Issue en cours côté bakery (MASS-2 FT rouge) : copy loop `MigrateContentI18nTask:124-129`
+écrase la cible avant traduction — hors périmètre document-gradle, suivi S192 bakery.
+Les `println` de debug `[block-delta]` dans `translateSingleFileWithBlockDelta` sont à
+retirer une fois l'issue fixée (bakery S192).

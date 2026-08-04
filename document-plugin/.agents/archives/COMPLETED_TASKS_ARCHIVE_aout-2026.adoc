@@ -2,6 +2,27 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 042 (2026-08-04) — Support EPIC BKY-I18N-MASS (cross-borough) : BlockChecksum/BlockDelta + câblage delta-bloc
+
+*MASS-1 — Domaine delta-bloc (DDD pur)* :
+- `document/translation/delta/BlockChecksum.kt` : `BlockTranslationStatus` (TRANSLATED/PENDING),
+  `BlockChecksumEntry(hash, status)` parse/serialize (legacy `"hash"`→PENDING),
+  `sha256(block)` + `computeForBlocks(blocks)` → `Map<idx, hash>`
+- `document/translation/delta/BlockDelta.kt` : `compute(previous, current)` → modified/preserved
+  (statut ≠ TRANSLATED → re-traduit). Précise : diagramme `[plantuml]` traduit préservé si le texte environnant change
+- Tests : `BlockDeltaTest` 26/26 PASS
+
+*MASS-2 — Câblage traducteur* :
+- `DocumentTranslator.translateArticleWithDelta(sourceArticle, previousTranslated, delta, ...)`
+  (internal→public) : preserve blocs indexés, re-traduit modifiés, dispatch table/plantuml par index, isEmpty→retourne previous
+- `ContentTranslationService.translateSingleFileWithBlockDelta(sourceFile, targetFile, previousBlockChecksums, ...)`
+  (public) : fresh path / delta path, écrit target
+- Tests : `DocumentTranslatorBlockDeltaTest` 4/4 + `BlockDeltaWireDebugTest` 1/1 PASS
+
+*Note* : les `println` de debug `[block-delta]` dans `translateSingleFileWithBlockDelta` sont à retirer
+une fois l'issue bakery fixée (MASS-2 FT rouge côté `MigrateContentI18nTask`, suivi S192 bakery).
+compileKotlin + publishToMavenLocal OK.
+
 === Session 039 (2026-08-03) — DOC-PLANTUML-VALIDATE-3 + VALIDATE-4
 
 *VALIDATE-3 — Intégration PlantUmlTranslationAdapter* (5 pts) :
