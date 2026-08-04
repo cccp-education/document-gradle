@@ -48,8 +48,6 @@ Second paragraph.
             sourceLanguage = "fr",
             targetLanguage = "en"
         )
-        println("First run checksums: $firstChecksums")
-        println("First run target:\n${targetFile.readText()}")
 
         sourceFile.writeText("""= Intro
 
@@ -62,15 +60,13 @@ First paragraph modified.
 Second paragraph.
 """)
 
-        val secondChecksums = service.translateSingleFileWithBlockDelta(
+        service.translateSingleFileWithBlockDelta(
             sourceFile = sourceFile,
             targetFile = targetFile,
             previousBlockChecksums = firstChecksums,
             sourceLanguage = "fr",
             targetLanguage = "en"
         )
-        println("Second run checksums: $secondChecksums")
-        println("Second run target:\n${targetFile.readText()}")
 
         val content = targetFile.readText()
         assertTrue(content.contains("First paragraph modified. [EN]"))
