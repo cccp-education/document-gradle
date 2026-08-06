@@ -784,3 +784,31 @@ l'implémentation du wrapper.
 * *S038* — VALIDATE-5 (5 pts, Cucumber BDD, clôture EPIC)
 
 Projection conservatrice : 3 sessions, ~21 pts, méthodo baby step DDD/TDD/BDD.
+
+'''
+== 🟠 EPIC DOC-CR3 — Revue CR-GLOBALE-003 : Création de Contenu Solide
+
+_Source_ : `GLOBAL_CODE_REVIEW.adoc` (workspace root) — session CR-GLOBALE-003 (2026-08-04).
+_Focus_ : solidité de la chaîne documentaire multi-format.
+
+[cols="1,3,2", options="header"]
+|===
+| EPIC | Description | Priorité
+
+| DOC-CR3-1
+| **Réutiliser l'instance AsciidoctorJ** — `DocumentConverter.kt:106,128` crée un
+`Asciidoctor.Factory.create()` par conversion (startup JRuby à chaque appel). Pour 5 formats = 5 startups.
+Injecter/partager une instance ( lifecycle plugin) ou pool. Gain perf significatif sur le bookPipeline.
+| 🟠 P1
+
+| DOC-CR3-2
+| **Auditer `SafeMode.UNSAFE` systématique** — `DocumentConverter.buildOptions` force `UNSAFE`
+sur tous les backends. Justifiable en local, mais à documenter/limiter (include resolution, macros).
+Ajouter une garde configurable `safeMode` DSL si du contenu externe est ingéré.
+| 🟡 P2
+
+| DOC-CR3-3
+| **Supprimer le code mort** — `DocumentI18nBridge` et `DocumentGenerationGraph.graph` sont morts
+(confirmé CR-GLOBALE-002). Décider : câbler ou expulser. Expulser recommandé sauf besoin explicite.
+| 🟡 P2
+|===
