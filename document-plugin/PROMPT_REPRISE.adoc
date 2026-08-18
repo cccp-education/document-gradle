@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 043
-:date: 2026-08-04
-:status: Session 042 terminée — Support EPIC BKY-I18N-MASS : BlockChecksum/BlockDelta (MASS-1) + translateArticleWithDelta/translateSingleFileWithBlockDelta (MASS-2)
+:session: 044
+:date: 2026-08-19
+:status: Session 043 terminée — Sync gouvernance post-S207 (EPIC DOC-FRONTMATTER-RETRANSLATE déjà commit 9af5ed5, rattrapage INDEX/PROMPT_REPRISE/SESSIONS_HISTORY)
 :max-lines: 70
 
 == Quick Start
@@ -14,24 +14,36 @@ cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 
 == Contexte de fin
 
-Session 042 (cross-borough bakery BKY-I18N-MASS) — delta bloc livré :
-- `document/translation/delta/BlockChecksum.kt` : `BlockTranslationStatus` (TRANSLATED/PENDING),
-  `BlockChecksumEntry` parse/serialize (legacy `"hash"`→PENDING), `sha256`/`computeForBlocks`
-- `document/translation/delta/BlockDelta.kt` : `compute(previous, current)` → modified/preserved
-  (statut ≠ TRANSLATED → re-traduit). 26 UT BlockDeltaTest PASS
-- `DocumentTranslator.translateArticleWithDelta` (internal→public, preserve blocs indexés,
-  shift table/plantuml, isEmpty→retourne previous). 4 UT DocumentTranslatorBlockDeltaTest PASS
-- `ContentTranslationService.translateSingleFileWithBlockDelta` (public, fresh/delta path,
-  écrit target). 1 UT BlockDeltaWireDebugTest PASS
-- compileKotlin + publishToMavenLocal OK
+Session 043 (gouvernance pure, rattrapage) :
+- S207 déjà commitée (`9af5ed5`) — EPIC DOC-FRONTMATTER-RETRANSLATE
+  (`FrontmatterStaleDetector` + `retranslateFrontmatter()` +
+  `RetranslateFrontmatterTask` + BDD 6 scénarios + wiring DocumentPlugin).
+  Bump document-plugin 0.0.2 → 0.0.3 Central (bundle `1c27a917`).
+- PROMPT_REPRISE/INDEX/SESSIONS_HISTORY étaient en retard de 5 sessions
+  (pointaient S042). Rattrapage effectué.
+- Aucun code modifié S043 — pure gouvernance.
+
+== EPICs — tous clos
+
+- DOC-TABLE-VALIDATE ✅ (S037)
+- DOC-PLANTUML-VALIDATE ✅ (S040)
+- DOC-TRANSLATE ✅ (S024)
+- DOC-FRONTMATTER-RETRANSLATE ✅ (S207)
+- DOC-CR3 🟠 (revue code, 3 items P1/P2 non traités) :
+  * DOC-CR3-1 : Réutiliser instance AsciidoctorJ (P1)
+  * DOC-CR3-2 : Auditer SafeMode.UNSAFE systématique (P2)
+  * DOC-CR3-3 : Supprimer code mort DocumentI18nBridge/DocumentGenerationGraph (P2)
 
 == Reprendre à
 
 . `git status` dans document-gradle
-. Tous les EPICs document-gradle sont clos ; les changements S042 supportent bakery
-. Prochaine étape : à définir (bakery suit l'EPIC BKY-I18N-MASS, MASS-2 issue en cours S192)
+. Tous les EPICs document-gradle sont clos ; DOC-CR3 (revue code) reste
+  à traiter si priorité remonte (P1/P2).
+. Support cross-borough bakery BKY-I18N-MASS MASS-6 si besoin (delta bloc,
+  validation STRICT déjà en place).
 
 == Note cross-borough
 
-Le `println` de debug `[block-delta]` dans `ContentTranslationService.translateSingleFileWithBlockDelta`
-est à retirer une fois l'issue bakery fixée (S192 bakery) — aucun impact fonctionnel.
+Le `println` de debug `[block-delta]` dans
+`ContentTranslationService.translateSingleFileWithBlockDelta` a été
+retiré S192 bakery (issue 191-1 fermée).

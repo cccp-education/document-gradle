@@ -1,0 +1,33 @@
+= Session 043 — Sync gouvernance post-S207 (EPIC DOC-FRONTMATTER-RETRANSLATE déjà commit)
+:date: 2026-08-19
+:type: gouvernance (rattrapage)
+:score: 7/10
+
+== Objectif
+
+Rattraper le retard de gouvernance document-gradle. S207 (EPIC
+DOC-FRONTMATTER-RETRANSLATE + bump 0.0.3) déjà commitée (`9af5ed5`)
+mais INDEX/PROMPT_REPRISE/SESSIONS_HISTORY non mis à jour.
+
+== Constats
+
+. **S207 déjà commitée** : `9af5ed5` — EPIC DOC-FRONTMATTER-RETRANSLATE
+  (`FrontmatterStaleDetector` object pur DDD + `retranslateFrontmatter()`
+  + `RetranslateFrontmatterTask` + BDD Cucumber 6 scénarios + wiring
+  `DocumentPlugin`). Bump document-plugin 0.0.2 → 0.0.3 Central (bundle
+  `1c27a917`).
+. **PROMPT_REPRISE périmé** : pointait S043/S042 (BKY-I18N-MASS MASS-1/2
+  cross-borough). Retard de 5 sessions.
+. **INDEX périmé** : s'arrêtait S042 dans les sessions récentes.
+. **Aucun code modifié cette session** — pure gouvernance.
+
+== Clôture
+
+Mise à jour INDEX/PROMPT_REPRISE/SESSIONS_HISTORY pour refléter S207
+terminée. Tous les EPICs document-gradle sont clos (DOC-TABLE-VALIDATE ✅,
+DOC-PLANTUML-VALIDATE ✅, DOC-TRANSLATE ✅, DOC-FRONTMATTER-RETRANSLATE ✅).
+Reste DOC-CR3 (revue code, 3 items P1/P2 non traités).
+
+== Fichiers touchés
+
+Aucun fichier source modifié. Gouvernance uniquement.

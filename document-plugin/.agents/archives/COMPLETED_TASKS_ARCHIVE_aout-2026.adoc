@@ -2,6 +2,24 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 043 (2026-08-19) — Sync gouvernance post-S207
+
+*Type* : gouvernance (rattrapage)
+*Score* : 7/10
+
+*Résumé* : Rattrapage retard gouvernance (INDEX/PROMPT_REPRISE/SESSIONS_HISTORY
+en retard de 5 sessions). S207 déjà commitée (`9af5ed5`) — EPIC
+DOC-FRONTMATTER-RETRANSLATE :
+- `FrontmatterStaleDetector` (object pur DDD) — détecte stale summary/description/title
+- `ContentTranslationService.retranslateFrontmatter()` — re-traduit frontmatter stale
+- `RetranslateFrontmatterTask` — tâche Gradle parcourt l'arbre cible
+- BDD Cucumber `frontmatter_retranslate.feature` (6 scénarios) + runner dédié
+- Wiring `DocumentPlugin.registerRetranslateFrontmatter`
+- Bump document-plugin 0.0.2 → 0.0.3 Central (bundle `1c27a917`)
+- Dogfood fake LLM : 44 fichiers stale re-traduits
+
+*Aucun code modifié S043* — pure gouvernance. Tous EPICs document clos.
+
 === Session 042 (2026-08-04) — Support EPIC BKY-I18N-MASS (cross-borough) : BlockChecksum/BlockDelta + câblage delta-bloc
 
 *MASS-1 — Domaine delta-bloc (DDD pur)* :
