@@ -468,6 +468,14 @@ Feature: Document plugin (DOC-1 stub + DOC-2 IA generation)
     And the translated document should contain 'plugins {'
     And the translated document should not contain '~~~~~~'
 
+  @doc-translate @translation @jbake-native
+  Scenario: translateDocument translates asciidoc summary and description attributes without jbake prefix
+    Given a new document project with translation DSL and asciidoc attributes
+    When I am executing the task 'translateDocument'
+    Then the build should succeed
+    And the translated document should contain ':summary: Un resume court en francais sans prefixe jbake [EN]'
+    And the translated document should contain ':description: Une description longue en francais sans prefixe jbake [EN]'
+
   @doc-translate @translation @batch
   Scenario: translateDocumentBatch task is registered
     Given a new document project

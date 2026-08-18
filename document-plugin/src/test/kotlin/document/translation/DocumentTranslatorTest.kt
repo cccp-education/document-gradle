@@ -408,6 +408,29 @@ Corps de l article.
     }
 
     @Test
+    fun `translate translates asciidoc summary and description attributes`() {
+        val source = """= Article avec Resume AsciiDoc
+@CherOliv
+2026-08-18
+:jbake-title: Article avec Resume AsciiDoc
+:jbake-type: post
+:jbake-status: published
+:jbake-date: 2026-08-18
+:summary: Un resume court en francais sans prefixe jbake
+:description: Une description longue en francais sans prefixe jbake
+
+Corps de l article.
+"""
+
+        val result = translator.translate(source, "fr", "en")
+
+        assertTrue(result.contains(":summary: Un resume court en francais sans prefixe jbake [EN]"),
+            "asciidoc :summary: must be translated, got: ${result.lines().find { it.contains(":summary:") }}")
+        assertTrue(result.contains(":description: Une description longue en francais sans prefixe jbake [EN]"),
+            "asciidoc :description: must be translated, got: ${result.lines().find { it.contains(":description:") }}")
+    }
+
+    @Test
     fun `translate handles multiple plantuml blocks with different strategies in one article`() {
         val source = """= Article mixte
 @CherOliv

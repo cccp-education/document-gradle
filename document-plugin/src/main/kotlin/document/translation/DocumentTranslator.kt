@@ -120,7 +120,18 @@ class DocumentTranslator(
         translatedJbakeAttrs["description"]?.let {
             translatedJbakeAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage)
         }
-        return fm.copy(title = translatedTitle, jbakeAttributes = translatedJbakeAttrs)
+        val translatedAsciidocAttrs = fm.asciidocAttributes.toMutableMap()
+        translatedAsciidocAttrs["summary"]?.let {
+            translatedAsciidocAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage)
+        }
+        translatedAsciidocAttrs["description"]?.let {
+            translatedAsciidocAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage)
+        }
+        return fm.copy(
+            title = translatedTitle,
+            jbakeAttributes = translatedJbakeAttrs,
+            asciidocAttributes = translatedAsciidocAttrs,
+        )
     }
 
     private fun translateBlock(

@@ -920,6 +920,12 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.projectDir).exists()
     }
 
+    @Given("a new document project with translation DSL and asciidoc attributes")
+    fun createNewDocumentProjectWithTranslationDslAndAsciidocAttributes() {
+        world.createGradleProjectWithTranslationDslAndAsciidocAttributes()
+        assertThat(world.projectDir).exists()
+    }
+
     @Given("a new document project with batch translation DSL")
     fun createNewDocumentProjectWithBatchTranslationDsl() {
         world.createGradleProjectWithBatchTranslationDsl()
