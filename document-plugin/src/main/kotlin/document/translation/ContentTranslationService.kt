@@ -177,6 +177,30 @@ class ContentTranslationService(
         return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
     }
 
+    fun retranslateFrontmatter(
+        sourceFile: File,
+        targetFile: File,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): FrontmatterRetranslationResult {
+        if (!targetFile.exists()) {
+            return FrontmatterRetranslationResult(retranslated = false, staleKeys = emptySet())
+        }
+        val sourceArticle = parser.parse(sourceFile.readText())
+        val targetArticle = parser.parse(targetFile.readText())
+        val staleReport = FrontmatterStaleDetector.detect(sourceArticle.frontmatter, targetArticle.frontmatter)
+        if (!staleReport.stale) {
+            return FrontmatterRetranslationResult(retranslated = false, staleKeys = emptySet())
+        }
+        val retranslatedFrontmatter = documentTranslator.translateFrontmatter(
+            sourceArticle.frontmatter, sourceLanguage, targetLanguage
+        )
+        val mergedArticle = PivotArticle(retranslatedFrontmatter, targetArticle.blocks)
+        val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+        targetFile.writeText(outputRenderer.render(mergedArticle))
+        return FrontmatterRetranslationResult(retranslated = true, staleKeys = staleReport.staleKeys)
+    }
+
     internal fun translateArticle(
         article: PivotArticle,
         sourceLanguage: String,
@@ -202,3 +226,8 @@ data class ContentTranslationResult(
 ) {
     val success: Boolean get() = errors.isEmpty()
 }
+
+data class FrontmatterRetranslationResult(
+    val retranslated: Boolean,
+    val staleKeys: Set<String>
+)

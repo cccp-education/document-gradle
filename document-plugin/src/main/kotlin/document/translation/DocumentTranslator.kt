@@ -107,7 +107,7 @@ class DocumentTranslator(
         return PivotArticle(translatedFrontmatter, translatedBlocks)
     }
 
-    private fun translateFrontmatter(
+    internal fun translateFrontmatter(
         fm: PivotFrontmatter,
         sourceLanguage: String,
         targetLanguage: String

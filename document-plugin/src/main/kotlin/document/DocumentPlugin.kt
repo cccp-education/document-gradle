@@ -7,6 +7,7 @@ import document.template.TemplateDsl
 import document.translation.TranslateDocumentTask
 import document.translation.TranslateDocumentBatchTask
 import document.translation.TranslationDsl
+import document.translation.RetranslateFrontmatterTask
 import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import org.gradle.api.Plugin
@@ -185,6 +186,7 @@ class DocumentPlugin : Plugin<Project> {
         registerBatchConvertDocuments(project, ext)
         registerTranslateDocument(project, ext)
         registerTranslateDocumentBatch(project, ext)
+        registerRetranslateFrontmatter(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -470,6 +472,27 @@ class DocumentPlugin : Plugin<Project> {
                     .map { it.toBoolean() }
                     .orElse(false),
             )
+        }
+    }
+
+    private fun registerRetranslateFrontmatter(project: Project, ext: DocumentExtension) {
+        project.tasks.register("retranslateFrontmatter", RetranslateFrontmatterTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Re-translates stale frontmatter (title/summary/description) in target AsciiDoc files, preserving already-translated body blocks. — DOC-FRONTMATTER-RETRANSLATE"
+            val cliSourceDir = cliProp(project, "retranslateSourceDir").map { project.layout.projectDirectory.dir(it) }
+            task.sourceDir.set(cliSourceDir.orElse(ext.translation.batchSourceDir.map { project.layout.projectDirectory.dir(it) }))
+            val tgtLang = cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage)
+            task.targetDirPath.set(
+                tgtLang.flatMap { lang ->
+                    cliProp(project, "retranslateTargetDir")
+                        .orElse(project.providers.gradleProperty("document.retranslateTargetDir"))
+                        .orElse(ext.translation.batchOutputDir)
+                        .map { outputDir -> "$outputDir/$lang" }
+                }
+            )
+            task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
+            task.targetLanguage.set(tgtLang)
+            task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
         }
     }
 }
