@@ -99,6 +99,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-15 | Cross-borough Hardening — compile + tests document + bakery | ✅ TERMINÉ (session 025 — compile OK, tests OK) | P2
 | DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | ✅ TERMINÉ (session 037 — VALIDATE-5 Cucumber BDD, 6/6 PASS, EPIC CLÔTURÉ) | P1
 | DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | ✅ TERMINÉ (session 040 — 5/5 US, EPIC CLÔTURÉ) | P1
+| DOC-BOOK-VALIDATE | Validation du pipeline livre — BookValidator DDD pur (TOC cohérente, ordre pages, sections non vides, refs PDF) + strict/lenient + Cucumber (5 US, ~18 pts) | 🟡 À FAIRE (cadré S-070 training-gradle, cross-borough) | P1
 |===
 
 '''

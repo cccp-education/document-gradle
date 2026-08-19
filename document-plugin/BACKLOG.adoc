@@ -786,6 +786,95 @@ l'implémentation du wrapper.
 Projection conservatrice : 3 sessions, ~21 pts, méthodo baby step DDD/TDD/BDD.
 
 '''
+== 🟡 EPIC DOC-BOOK-VALIDATE — Validation du pipeline livre (couche de texte open-source)
+
+_Cadré Session 070 (training-gradle, cross-borough) — `training-plugin/.agents/CADRAGE_EPIC_FPA_BOOK.adoc`._
+
+[CAUTION]
+====
+**Motivation** : le pipeline livre (DOC-11) assemble les pages OCRisées par
+codex en un document unique, mais rien ne **valide** la sortie. `BookAssembler`
+assemble, mais aucune couche ne vérifie que la TOC est cohérente, que l'ordre
+des pages est monotone, que les sections ne sont pas vides, que les références
+PDF sont résolues. C'est la couche de texte qui valide la création de document
+assisté par codex/IA — la brique open-sourceable de l'EPIC FPA-BOOK.
+
+**Frontière licence** : le contenu (livre scanné + transcription OCR) est
+propriétaire/dérivé et reste dans le borough privé training-gradle. Le code de
+validation (BookValidator + tests) est Apache 2.0 et vit ici, dans document-gradle.
+
+**Bénéfices** :
+. Filet de sécurité pour tout consommateur du pipeline livre (training, codex, runner)
+. Détection précoce des corruptions OCR/assemblage avant publication
+. Boundary claire : Document = garant de la validité du livre produit
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-BOOK-VALIDATE-0
+| *Cadrage* — BookValidator DDD pur, décisions architecturales
+| — (gouvernance pure)
+| 0
+| —
+
+| DOC-BOOK-VALIDATE-1
+| *`BookValidator`* — value object DDD pur. Vérifie :
+  - TOC cohérente (chaque section référencée a une page)
+  - Ordre des pages monotone (pas de page manquante/dupliquée)
+  - Sections non vides (pas de page OCRisée vide)
+  - Références PDF résolues (chaque `NNN.pdf` existe)
+  - Retourne `BookValidationResult` sealed (Valid / Invalid avec raison)
+| UT : 15-20 (TOC mismatch, page manquante, section vide, ref non résolue, valide)
+| 5
+| —
+
+| DOC-BOOK-VALIDATE-2
+| *Intégration dans `AssembleBookTask`* — après assemblage, appeler
+  `BookValidator.validate()`. Si `Invalid` : warning log + continuer (lenient).
+| UT : 8-10 (mock validator, warning propagation, valid no-op)
+| 5
+| VALIDATE-1
+
+| DOC-BOOK-VALIDATE-3
+| *Mode `--strict` vs `--lenient`* — DSL `book { validation { mode = STRICT } }`.
+  STRICT → `BookValidationException` fail build ; LENIENT (défaut) → warning.
+| UT : 5-8 + FT : 1
+| 3
+| VALIDATE-2
+
+| DOC-BOOK-VALIDATE-4
+| *Cucumber BDD* — scénarios end-to-end :
+  - `@book-validation @valid` — livre complet, validation passe
+  - `@book-validation @missing-page` — page manquante → Invalid
+  - `@book-validation @empty-section` — section vide → Invalid
+  - `@book-validation @toc-mismatch` — TOC incohérente → Invalid
+  - `@book-validation @strict` — mode STRICT → exception
+| BDD : 5 scénarios
+| 5
+| VALIDATE-3
+|===
+
+_Total_ : ~18 pts, 5 US.
+
+=== Dépendances (DAG)
+
+----
+VALIDATE-0 (cadrage) ─→ VALIDATE-1 (BookValidator) ─→ VALIDATE-2 (intégration) ─→ VALIDATE-3 (strict/lenient) ─→ VALIDATE-4 (Cucumber)
+----
+
+=== Projection sessions
+
+* *S-044* — VALIDATE-0 cadrage + VALIDATE-1 (5 pts, BookValidator DDD pur)
+* *S-045* — VALIDATE-2 + VALIDATE-3 (8 pts, intégration + strict/lenient)
+* *S-046* — VALIDATE-4 (5 pts, Cucumber BDD, clôture EPIC)
+
+Projection conservatrice : 3 sessions, ~18 pts, méthodo baby step DDD/TDD/BDD.
+
+'''
 == 🟠 EPIC DOC-CR3 — Revue CR-GLOBALE-003 : Création de Contenu Solide
 
 _Source_ : `GLOBAL_CODE_REVIEW.adoc` (workspace root) — session CR-GLOBALE-003 (2026-08-04).
