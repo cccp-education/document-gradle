@@ -788,7 +788,7 @@ Projection conservatrice : 3 sessions, ~21 pts, méthodo baby step DDD/TDD/BDD.
 '''
 == 🟡 EPIC DOC-BOOK-VALIDATE — Validation du pipeline livre (couche de texte open-source)
 
-_Cadré Session 070 (training-gradle, cross-borough) — `training-plugin/.agents/CADRAGE_EPIC_FPA_BOOK.adoc`._
+_Cadré Session 070 — `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/CADRAGE_EPIC_FPA_BOOK.adoc`._
 
 [CAUTION]
 ====
@@ -797,14 +797,16 @@ codex en un document unique, mais rien ne **valide** la sortie. `BookAssembler`
 assemble, mais aucune couche ne vérifie que la TOC est cohérente, que l'ordre
 des pages est monotone, que les sections ne sont pas vides, que les références
 PDF sont résolues. C'est la couche de texte qui valide la création de document
-assisté par codex/IA — la brique open-sourceable de l'EPIC FPA-BOOK.
+assisté par codex/IA.
 
 **Frontière licence** : le contenu (livre scanné + transcription OCR) est
-propriétaire/dérivé et reste dans le borough privé training-gradle. Le code de
-validation (BookValidator + tests) est Apache 2.0 et vit ici, dans document-gradle.
+propriétaire/dérivé et reste dans `office/metiers/FPA/` (repo privé `cheroliv/office`).
+Le code de validation (BookValidator + tests) est Apache 2.0 et vit ici, dans
+document-gradle. On prend des morceaux du livre pour valider l'exécutable, mais
+la rédaction du livre reste dans `office/`.
 
 **Bénéfices** :
-. Filet de sécurité pour tout consommateur du pipeline livre (training, codex, runner)
+. Filet de sécurité pour tout consommateur du pipeline livre (codex, runner)
 . Détection précoce des corruptions OCR/assemblage avant publication
 . Boundary claire : Document = garant de la validité du livre produit
 ====
