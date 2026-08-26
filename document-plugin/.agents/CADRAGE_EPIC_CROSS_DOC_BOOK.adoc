@@ -1,0 +1,155 @@
+= CADRAGE EPIC — CROSS-DOC-BOOK : BDD cross-borough Codex→Document Book Pipeline
+:epic: CROSS-DOC-BOOK
+:date: 2026-08-26
+:pattern: S-057/S-063 (gouvernance pure)
+
+== Contexte
+
+_Règle pilote_ : « Le pont N2↔N2 entre codex (Brooklyn) et document
+(New Orleans) est le filesystem. Les deux boroughs sont parallèles N2,
+pas empilés. Le contrat est le format `%03d-%s.adoc` — codex produit,
+document consomme via `BookAssembler`. »
+
+Ce pont existe et fonctionne (US-CDX-13-3 S-075, `CollectOcrPagesContractTest`
++ `BookAssemblerTest`). Mais il n'existe aucun scénario Cucumber
+end-to-end qui valide la chaîne complète `collectOcr → assembleBook → convert`.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| Le contrat filesystem `%03d-%s.adoc` est testé unitairement des deux
+  côtés mais jamais en BDD cross-borough.
+| `CollectOcrPagesContractTest` (codex, 4 tests) + `BookAssemblerTest`
+  (document, 9 tests). Aucun `*.feature` ne couvre le flow complet.
+
+| 2
+| document-gradle a déjà un scénario `@cross-borough` mais il teste le
+  composite-context N3, pas le pont codex→document.
+| `document.feature` ligne 306 : `@doc11 @book @n3 @cross-borough`
+  — teste `composite-context.json`, pas `assembleBook`.
+
+| 3
+| Le KDoc de `CollectOcrTask.outputDir` mentionne déjà
+  `BookAssembler` mais le format de nommage n'est pas un contrat
+  formellement spécifié.
+| `CollectOcrTask.kt` lignes 48-55 : « the N2 <-> N2 bridge with
+  document-gradle DOC-11 ». Pas de `@Contract` ni de constante partagée.
+
+| 4
+| `BookAssembler` consomme un `pagesDir: File` sans validation du
+  format de nommage — un fichier mal nommé est silencieusement ignoré.
+| `BookAssembler.kt` : `pagesDir.listFiles()` → filter `endsWith(".adoc")`
+  → sort by `PageOrder`. Pas de validation du prefix `NNN-`.
+
+| 5
+| Le runner-gradle N3 n'a pas de tâche `bookPipeline` qui orchestre
+  `codex:collectOcr` → `document:assembleBook`. Le flow est manuel.
+| `runner-gradle` : 4 tâches (`assembleCompositeContext`,
+  `deploySite`, `updateOpencodeModels`, `publishSite`). Pas de
+  `bookPipeline`.
+
+| 6
+| La boundary review S-009 document et la review S-06-08 ont acté
+  « parallèles N2, pas de dépendance Gradle ». Ce cadrage renforce
+  cette boundary par la BDD plutôt que par le couplage.
+| `ARCHITECTURE_BOUNDARY.adoc` (document) + AGENT.adoc (codex
+  règle 7).
+|===
+
+== Décisions architecturales
+
+. *EPIC BDD-only* — ce cadrage ajoute des tests, pas du code
+  production. Le pont filesystem fonctionne déjà. La valeur est la
+  garantie contractuelle.
+
+. *Cucumber feature côté document* — le scénario vit dans
+  `document-gradle` (consommateur). Le producer (codex) est simulé
+  via des fichiers `.adoc` in-memory dans `DocumentWorld`. Pattern :
+  même logique que `createGradleProjectWithOcrPagesAndSourcePointingToBook()`
+  (S-011 existant).
+
+. *Runner dédié* — nouveau `CrossBoroughCucumberRunner` + tâche
+  `crossBoroughCucumberTest` dans `build.gradle.kts` document.
+  Pattern S-082 (runner dédié par domaine). Tag `@cross-borough`.
+
+. *Steps dédiés* — `CrossBoroughSteps.kt` dans package
+  `document.crossborough`. Préfixe « cross-borough » dans tous les
+  step defs (bug S-088 — glue partagée).
+
+. *Pas de dépendance Gradle codex↔document* — la test setup
+  reproduit le format de sortie codex sans importer codex. Le test
+  valide le *contrat*, pas l'*implémentation*.
+
+. *KDoc clarification* — ajouter une `@see BookAssembler` dans le
+  KDoc de `CollectOcrTask.outputDir` (codex) et documenter le format
+  `%03d-%s.adoc` comme contrat formel. Pas de constante partagée
+  (overkill pour un format filesystem).
+
+. *Pas de tâche runner-gradle* — l'orchestration `collectOcr →
+  assembleBook` est hors scope de cet EPIC. Elle fera l'objet d'un
+  EPIC futur si besoin (suggestion : `RUN-BOOK-PIPELINE`).
+
+. *Baby-step TDD/BDD strict* — RED (UndefinedStepException) → GREEN
+  (scénarios PASSED) → REFACTOR (`check` VERT). 1 scénario à la fois.
+  English only.
+
+== Découpage US
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+
+| CROSS-DOC-BOOK-0
+| Cadrage EPIC (gouvernance pure, zéro code). Audit 6 constats,
+  8 décisions archi. Doc `CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`.
+| ✅ TERMINÉ (S-210)
+| 1
+
+| CROSS-DOC-BOOK-1
+| Cucumber feature `cross_borough_book.feature` — scénarios
+  `@cross-borough @book-pipeline` :
+  (a) pages codex assemblées en livre valide (3 pages NNN-pageId.adoc
+  → book avec titre, auteur, 3 sections),
+  (b) tri PageOrder vérifié (pages hors ordre → assemblage correct),
+  (c) page vide/absente → dégradé silencieux (book部分 avec 2/3 pages),
+  (d) formats non-adoc ignorés (fichier .txt dans pagesDir → exclu).
+  Runner dédié `CrossBoroughCucumberRunner` + tâche
+  `crossBoroughCucumberTest` + steps `CrossBoroughSteps`.
+  Baby-step BDD strict RED → GREEN → REFACTOR.
+| 🟡 À FAIRE
+| 3
+
+| CROSS-DOC-BOOK-2
+| Codex — KDoc clarification `CollectOcrTask.outputDir` :
+  documenter le format `%03d-%s.adoc` comme contrat formel
+  N2↔N2, ajouter `@see document.BookAssembler`. Zéro code
+  modifié, zéro bump BOM.
+| 🟡 À FAIRE
+| 1
+
+|===
+
+*Total* : ~5 pts (3 US)
+
+== Ordre d'exécution (baby-step)
+
+. US-0 : Cadrage ✅
+. US-1 : BDD document — scénario (a) d'abord → (b) → (c) → (d)
+  → `check` VERT → publication `crossBoroughCucumberTest`
+. US-2 : KDoc codex (peut se faire en parallèle de US-1)
+
+== Gates et risques
+
+* *Gate* : Aucune. Le pont filesystem fonctionne déjà. Les tests
+  valident un contrat existant.
+* *Risque faible* : le scénario (c) (dégradé silencieux) dépend du
+  comportement actuel de `BookAssembler` qui skip les fichiers vides.
+  Si le comportement change, le test casse — c'est le but (regression
+  guard).
+* *Non-régression* : aucun code production modifié. Le
+  `crossBoroughCucumberTest` est ajouté au `check` mais ne touche pas
+  aux scénarios existants.

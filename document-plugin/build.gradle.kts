@@ -83,6 +83,12 @@ cucumberConventions {
             tags = listOf("@frontmatter-retranslate"),
             runnerClass = "document.translation.FrontmatterRetranslateCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "crossBoroughCucumberTest",
+            features = listOf("src/test/resources/features/cross_borough_book.feature"),
+            tags = listOf("@cross-borough"),
+            runnerClass = "document.crossborough.CrossBoroughCucumberRunner",
+        ),
     )
 }
 

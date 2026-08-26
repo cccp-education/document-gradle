@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-08-19 (session 043 — sync gouvernance post-S207 : EPIC DOC-FRONTMATTER-RETRANSLATE déjà commit `9af5ed5`, rattrapage INDEX/PROMPT_REPRISE/SESSIONS_HISTORY, document-plugin 0.0.3 Central bundle `1c27a917`)
-_Session terminee_ : 043 — Sync gouvernance post-S207 (aucun code modifié)
-_Prochaine session_ : 044 — DOC-CR3 (revue code, 3 items P1/P2) si priorité remonte, ou support cross-borough bakery MASS-6
+_Derniere mise a jour_ : 2026-08-26 (session 210 — cadrage EPIC CROSS-DOC-BOOK, BDD cross-borough book pipeline)
+_Session terminee_ : 210 — Cadrage EPIC CROSS-DOC-BOOK (gouvernance pure, zéro code modifié)
+_Prochaine session_ : 044 — CROSS-DOC-BOOK-1 (Cucumber BDD) OU DOC-CR3 si priorité remonte
 
 '''
 == REGLES ABSOLUES (resume)
@@ -100,6 +100,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | ✅ TERMINÉ (session 037 — VALIDATE-5 Cucumber BDD, 6/6 PASS, EPIC CLÔTURÉ) | P1
 | DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | ✅ TERMINÉ (session 040 — 5/5 US, EPIC CLÔTURÉ) | P1
 | DOC-BOOK-VALIDATE | Validation du pipeline livre — BookValidator DDD pur (TOC cohérente, ordre pages, sections non vides, refs PDF) + strict/lenient + Cucumber (5 US, ~18 pts) | 🟡 À FAIRE (cadré S-070, contenu livre dans office/metiers/FPA) | P1
+| EPIC CROSS-DOC-BOOK | BDD cross-borough Codex→Document Book Pipeline — contrat filesystem `%03d-%s.adoc` validé en Cucumber (3 US, ~5 pts) | 🟡 À FAIRE (CROSS-DOC-BOOK-0 ✅ S-210, CROSS-DOC-BOOK-1 🟡, CROSS-DOC-BOOK-2 🟡) | P1
 |===
 
 '''
@@ -174,6 +175,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 041 | 2026-08-03 | feat | Plantuml translation test coverage reinforcement — PlantUmlTranslationAdapter tests + i18n boundary test reinforcement. | ✅ TERMINE
 | 042 | 2026-08-04 | DDD + TDD | Support EPIC BKY-I18N-MASS (cross-borough) — BlockChecksum/BlockDelta MASS-1 + translateArticleWithDelta/translateSingleFileWithBlockDelta MASS-2. 26 UT BlockDeltaTest + 4 UT DocumentTranslatorBlockDeltaTest. | ✅ TERMINE
 | 043 | 2026-08-19 | gouvernance | Sync gouvernance post-S207 — EPIC DOC-FRONTMATTER-RETRANSLATE déjà commit `9af5ed5` (FrontmatterStaleDetector + retranslateFrontmatter + RetranslateFrontmatterTask + BDD 6 scénarios, bump 0.0.3 Central bundle `1c27a917`). Rattrapage INDEX/PROMPT_REPRISE/SESSIONS_HISTORY. Aucun code modifié. | ✅ TERMINE
+| 210 | 2026-08-26 | governance | Cadrage EPIC CROSS-DOC-BOOK — BDD cross-borough book pipeline (codex→document). 6 constats, 8 décisions, 3 US ~5 pts. Zéro code modifié. | ✅ TERMINE
 |===
 
 '''

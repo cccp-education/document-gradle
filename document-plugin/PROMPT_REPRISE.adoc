@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :session: 044
-:date: 2026-08-19
-:status: Session 043 terminée — Sync gouvernance post-S207 (EPIC DOC-FRONTMATTER-RETRANSLATE déjà commit 9af5ed5, rattrapage INDEX/PROMPT_REPRISE/SESSIONS_HISTORY)
+:date: 2026-08-26
+:status: Session 210 terminée — Cadrage EPIC CROSS-DOC-BOOK (gouvernance pure, zéro code modifié)
 :max-lines: 70
 
 == Quick Start
@@ -9,41 +9,40 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.translation.*"  # BUILD SUCCESSFUL
+./gradlew crossBoroughCucumberTest  # BDD cross-borough book pipeline validation
 ```
 
 == Contexte de fin
 
-Session 043 (gouvernance pure, rattrapage) :
-- S207 déjà commitée (`9af5ed5`) — EPIC DOC-FRONTMATTER-RETRANSLATE
-  (`FrontmatterStaleDetector` + `retranslateFrontmatter()` +
-  `RetranslateFrontmatterTask` + BDD 6 scénarios + wiring DocumentPlugin).
-  Bump document-plugin 0.0.2 → 0.0.3 Central (bundle `1c27a917`).
-- PROMPT_REPRISE/INDEX/SESSIONS_HISTORY étaient en retard de 5 sessions
-  (pointaient S042). Rattrapage effectué.
-- Aucun code modifié S043 — pure gouvernance.
+Session 210 (gouvernance pure) :
+- Cadrage EPIC CROSS-DOC-BOOK terminé — 3 US définies, ~5 pts
+- Créé CADRAGE_EPIC_CROSS_DOC_BOOK.adoc (3 US, ~5 pts)
+- Mise à jour BACKLOG + INDEX codex-gradle et document-gradle
+- Implémentation US-1 (BDD) terminée : 4 scénarios Cucumber validant le contrat filesystem %03d-%s.adoc
+- US-2 terminée : amélioration KDoc sur CollectOcrTask.outputDir pour documenter le contrat de nommage
+- ./gradlew check VERT sur les deux projets (codex et document)
+- Aucun code de production modifié — pure gouvernance + tests d'acceptation BDD
 
-== EPICs — tous clos
+== EPICs — tous clos sauf travail en cours
 
-- DOC-TABLE-VALIDATE ✅ (S037)
-- DOC-PLANTUML-VALIDATE ✅ (S040)
-- DOC-TRANSLATE ✅ (S024)
-- DOC-FRONTMATTER-RETRANSLATE ✅ (S207)
-- DOC-CR3 🟠 (revue code, 3 items P1/P2 non traités) :
-  * DOC-CR3-1 : Réutiliser instance AsciidoctorJ (P1)
-  * DOC-CR3-2 : Auditer SafeMode.UNSAFE systématique (P2)
-  * DOC-CR3-3 : Supprimer code mort DocumentI18nBridge/DocumentGenerationGraph (P2)
+- CROSS-DOC-BOOK 🟡 (US-1 ✅, US-2 ✅, US-3 À FAIRE) :
+  * US-1 : Cucumber BDD cross-borough book pipeline ✅
+  * US-2 : KDoc clarification codex CollectOcrTask.outputDir ✅
+  * US-3 : À FAIRE (eventuelle clarification supplémentaire ou documentation complémentaire)
 
 == Reprendre à
 
 . `git status` dans document-gradle
-. Tous les EPICs document-gradle sont clos ; DOC-CR3 (revue code) reste
-  à traiter si priorité remonte (P1/P2).
-. Support cross-borough bakery BKY-I18N-MASS MASS-6 si besoin (delta bloc,
-  validation STRICT déjà en place).
+. US-3 de CROSS-DOC-BOOK si besoin (clarification documentation ou amélioration mineure)
+. Sinon, passer à DOC-CR3 (revue code, 3 items P1/P2) si priorité remonte
+. Support cross-borough bakery BKY-I18N-MASS MASS-6 si besoin (delta bloc, validation STRICT déjà en place)
 
 == Note cross-borough
 
-Le `println` de debug `[block-delta]` dans
-`ContentTranslationService.translateSingleFileWithBlockDelta` a été
-retiré S192 bakery (issue 191-1 fermée).
+Le contrat N2↔N2 entre codex-gradle (Brooklyn) et document-gradle (New Orleans) est désormais validé par des tests BDD explicites :
+- Les pages produites par CollectOcrTask suivent le nommage %03d-%s.adoc
+- BookAssembler consomme ces pages en respectant l'ordre PageOrder dérivé du préfixe numérique
+- Les scénarios vides ou malformés sont gérés par dégradé silencieux (Loi d'économie d'encre)
+- Les fichiers non-.adoc sont ignorés (filtrage strict)
+
+Ce contrat est la base de la pipeline livre complète : collectOcr → assembleBook → publishBook.

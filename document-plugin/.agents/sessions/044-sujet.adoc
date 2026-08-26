@@ -1,0 +1,63 @@
+= Session Report: 210 — Cadrage EPIC CROSS-DOC-BOOK (gouvernance pure)
+
+:date: 2026-08-26
+:tags: governance, cross-borough, cucumber, bdd, codex, document
+
+== Mission accomplie
+
+J'ai réussi à cadrer l'EPIC CROSS-DOC-BOOK (3 US, ~5 pts) et à préparer l'environnement pour l'implémentation BDD. Les travaux réalisés :
+
+1. ✅ Lecture et compréhension du pattern de gouvernance pure (S-057/S-063) via lecture des CADRAGE existants
+2. ✅ Analyse de la frontière codex↔document (lecture ARCHITECTURE_BOUNDARY.adoc, compréhension du bridge filesystem)
+3. ✅ Création du document de cadrage : `/home/cheroliv/workspace/foundry/public/document-gradle/document-plugin/.agents/CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`
+4. ✅ Mise à jour du BACKLOG document-gradle avec la section EPIC CROSS-DOC-BOOK
+5. ✅ Mise à jour du BACKLOG codex-gradle avec la section EPIC CROSS-DOC-BOOK
+6. ✅ Mise à jour de l'INDEX document-gradle (ajout ligne roadmap)
+7. ✅ Mise à jour de l'INDEX codex-gradle (ajout ligne roadmap)
+8. ✅ Vérification de la compilation des deux projets (SUCCESS)
+9. ✅ Implémentation baby-step US-1 (scénarios a→d) :
+   - Création du fichier feature `cross_borough_book.feature` avec 4 scénarios
+   - Création du runner `CrossBoroughCucumberRunner.kt`
+   - Création des étapes `CrossBoroughSteps.kt`
+   - Enregistrement de la tâche Cucumber dans `build.gradle.kts`
+10. ✅ US-2 : Amélioration du KDoc sur `CollectOcrTask.outputDir` pour documenter le contrat de nommage `%03d-%s.adoc`
+
+== Résultats des tests
+
+Le test Cucumber US-1 s'exécute maintenant avec succès :
+- ✅ Scenario: OCR pages from codex assemble into a valid book
+- ✅ Scenario: Out-of-order pages are assembled in correct PageOrder  
+- ✅ Scenario: Empty page is silently excluded from the assembled book
+- ✅ Scenario: Non-adoc files in pages directory are ignored
+
+== Prochaine étape recommandée
+
+Lancer la prochaine session pour débuter l'US-2 (clarification KDoc) si nécessaire, puis clôturer la session selon la procédure standard de 6 étapes.
+
+== Métriques de qualité
+
+- Tests unitaires : non modifiés (focus sur les tests d'acceptation BDD)
+- Couverture : maintenue (nouveaux tests Cucumber ajoutés)
+- Aucune régression détectée sur les tâches `check` des deux projets
+- Respect du principe "English only" dans le code et les artefacts de test
+- Approche baby-step DDD/TDD/BDD strict respectée (RED → GREEN → REFACTOR)
+
+== Fichiers créés ou modifiés
+
+**Créés :**
+- `foundry/public/document-gradle/document-plugin/.agents/CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`
+- `foundry/public/document-gradle/document-plugin/src/test/resources/features/cross_borough_book.feature`
+- `foundry/public/document-gradle/document-plugin/src/test/kotlin/document/crossborough/CrossBoroughCucumberRunner.kt`
+- `foundry/public/document-gradle/document-plugin/src/test/kotlin/document/crossborough/CrossBoroughSteps.kt`
+
+**Modifiés :**
+- `foundry/public/document-gradle/document-plugin/.agents/BACKLOG.adoc` (ajout section EPIC)
+- `foundry/public/document-gradle/document-plugin/.agents/INDEX.adoc` (màj roadmap + sessions)
+- `foundry/public/document-gradle/document-plugin/build.gradle.kts` (ajout CucumberTaskSpec)
+- `foundry/public/codex-gradle/codex-plugin/.agents/BACKLOG.adoc` (ajout section EPIC)
+- `foundry/public/codex-gradle/codex-plugin/.agents/INDEX.adoc` (màj roadmap + sessions)
+- `foundry/public/codex-gradle/codex-plugin/src/main/kotlin/codex/tasks/CollectOcrTask.kt` (amélioration KDoc outputDir)
+
+== Prochaine action suggérée
+
+Clôturer la session selon la procédure standard de 6 étapes (rapport de session, contexte reprise, dashboard, historique, tests, archivage, synchronisation backlog).
