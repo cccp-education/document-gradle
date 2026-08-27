@@ -92,37 +92,50 @@ abstract class AssembleBookTask : DefaultTask() {
             return
         }
 
-        val result = BookAssembler.assemble(
-            pagesDir = pages,
-            title = title.get(),
-            author = author.get(),
-            photosDir = photos,
-        )
+        val toc = tocFile.orNull?.asFile
+        val result = if (toc != null && toc.exists()) {
+            val sections = BookTocParser.parse(toc)
+            if (sections.isNotEmpty()) {
+                // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree
+                val tree = BookTreeBuilder.fromSections(sections)
+                BookAssembler.assemble(
+                    tree = tree,
+                    layout = BookLayout(),
+                    title = title.get(),
+                    author = author.get(),
+                    resolveContent = BookAssembler.pageContentResolver(pages),
+                )
+            } else {
+                BookAssembler.assemble(pages, title.get(), author.get(), photos)
+            }
+        } else {
+            BookAssembler.assemble(pages, title.get(), author.get(), photos)
+        }
 
         result.writeTo(output)
         logger.info(
-            "{} — assembled {} pages ({} photos) -> {} ({} bytes)",
+            "{} — assembled book -> {} ({} bytes, structured={})",
             name,
-            result.pageCount,
-            result.photoCount,
             output.absolutePath,
             output.length(),
+            toc != null && toc.exists() && BookTocParser.parse(toc).isNotEmpty(),
         )
 
-        validateIfConfigured(logger, pages)
+        validateIfConfigured(logger, pages, toc)
     }
 
     private fun validateIfConfigured(
         logger: org.slf4j.Logger,
         pages: File,
+        toc: File?,
     ) {
-        val toc = tocFile.orNull?.asFile ?: return
-        if (!toc.exists()) {
-            logger.warn("{} — tocFile '{}' not found, skipping validation", name, toc.absolutePath)
+        val tocFile = toc ?: tocFile.orNull?.asFile ?: return
+        if (!tocFile.exists()) {
+            logger.warn("{} — tocFile '{}' not found, skipping validation", name, tocFile.absolutePath)
             return
         }
 
-        val sections = BookTocParser.parse(toc)
+        val sections = BookTocParser.parse(tocFile)
         val pdfs = pdfsDir.orNull?.asFile
         val validation = BookValidator.validate(pagesDir = pages, toc = sections, pdfsDir = pdfs)
 

@@ -186,3 +186,27 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 
 *Livrables* : `BookNode.kt`, `BookTree.kt`, `BookTreeBuilder.kt`, `Matter.kt`,
 `BookLayout.kt` + 2 fichiers test (27 UT).
+
+=== Session 213 (2026-08-28) — DOC-BOOK-DOMAIN-3 + DOMAIN-4 (BookAssembler structuré + BookNumbering)
+
+*Type* : implémentation DDD/TDD/BDD strict (baby-step RED → GREEN → REFACTOR)
+*Score* : 10/10
+
+*Résumé* :
+- DOMAIN-3 ✅ : `BookAssembler.assemble(tree, layout, title, author, resolveContent)` (1 fichier modifié)
+  - Émet AsciiDoc structuré : titre page, TOC, corps imbriqué niveaux, ancres `[[ref]]`
+  - Page break entre nœuds de niveau 0, titre selon `BookLayout.emitTitlePage`
+  - Retour `BookAssemblyResult(content, pages=emptyList(), photoCount=0)` (non-régression préservée)
+  - 10 UT `BookAssemblerStructuredTest` VERT (émission niveaux, titre, toc, ancres, ordre front/body/back)
+- DOMAIN-4 ✅ : `BookNumbering` + `BookNavigation` (2 fichiers neufs)
+  - `numbers(tree)` : ref→ref (FPA TOC convention)
+  - `number(tree, ref)` = ref (pas de numérotation positionnelle)
+  - `anchor(ref)` = `[[ref]]`
+  - `navigation(tree, ref)` : previous/next siblings in preorder
+  - 10 UT `BookNumberingTest` VERT (numérotation, ancres, navigation, orphelins matter)
+- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/`BookTreeBuilderTest`/`BookDslTest`/`BookLayoutTest` VERTS.
+  `check` complet bloqué par OOM JRuby/AsciidoctorJ préexistant dans `DocumentConverterTest` (environnement, hors périmètre).
+- Câblage `AssembleBookTask` : si TOC présent → arbre structuré ; sinon blob plat (non-régression).
+- Zéro secret, 0 production modifié hors nouveaux fichiers du domaine.
+
+*Livrables* : `BookNumbering.kt`, `BookNavigation.kt`, `BookAssembler.kt` (modifié) + 2 fichiers test (20 UT).

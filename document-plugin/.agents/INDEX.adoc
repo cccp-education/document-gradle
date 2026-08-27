@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
- _Derniere mise a jour_ : 2026-08-27 (session 212 — DOC-BOOK-DOMAIN-1 BookTree DDD + DOMAIN-2 Matter/Layout)
-_Session terminee_ : 212 — DOC-BOOK-DOMAIN-1 (BookNode/BookTree/BookTreeBuilder, 15 UT) + DOMAIN-2 (Matter/BookLayout, 12 UT), TDD strict
-_Prochaine session_ : 213 — DOC-BOOK-DOMAIN-3 (refactor Assembler) + DOMAIN-4 (BookNumbering)
+ _Derniere mise a jour_ : 2026-08-28 (session 213 — DOC-BOOK-DOMAIN-3 BookAssembler structuré + DOMAIN-4 BookNumbering)
+_Session terminee_ : 213 — DOC-BOOK-DOMAIN-3 (BookAssembler assemblé structuré, 10 UT) + DOMAIN-4 (BookNumbering numérotation hiérarchique, 10 UT), TDD strict
+_Prochaine session_ : 214 — DOC-BOOK-DOMAIN-5 (AssembleBookTask dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator validation structure)
 
 '''
 == REGLES ABSOLUES (resume)

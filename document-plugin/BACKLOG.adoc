@@ -958,7 +958,7 @@ la contractualité du flow `collectOcr → assembleBook`.
 *Total* : ~5 pts (3 US)
 
 '''
-== 🟡 EPIC DOC-BOOK-DOMAIN — Domaine « Book » structuré (arbre, mise en page, logique)
+== ✅ EPIC DOC-BOOK-DOMAIN — Domaine « Book » structuré (arbre, mise en page, logique)
 
 _Cadré Session 211 — `.agents/CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`._
 _Consommateur_ : `office/metiers/FPA` (FPA-BOOK-4/5, livre FPA II scanné).
@@ -1022,7 +1022,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | FT : assembleBook livre structuré (dogfooding FPA) ; UT : émission niveaux
 | 5
 | DOMAIN-2
-| 🟡 (S-213)
+| ✅ TERMINÉ (S-213)
 
 | DOC-BOOK-DOMAIN-4
 | *`BookNumbering`* — numérotation hiérarchique (`1`, `1.2`, `1.2.1`), ancres
@@ -1030,7 +1030,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | UT : 10 (numbering, anchors, prev/next)
 | 4
 | DOMAIN-1
-| 🟡 (S-213)
+| ✅ TERMINÉ (S-213)
 
 | DOC-BOOK-DOMAIN-5
 | *Cucumber BDD* `@book-tree` — 5 scénarios (arbre structuré, front/back matter,

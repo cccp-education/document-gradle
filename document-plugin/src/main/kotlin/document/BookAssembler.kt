@@ -79,4 +79,105 @@ object BookAssembler {
         }
         return sb.toString().trim()
     }
+
+    /**
+     * Assembles a [BookTree] into a single structured, navigable book.
+     *
+     * This is the structured counterpart of [assemble] (DOC-11 blob-plat):
+     * instead of concatenating flat OCR pages, it walks the [BookTree] and
+     * emits one AsciiDoc heading per real section at its own [BookNode.level]
+     * (so the `doctype: book` hierarchy — parts `==`, chapters `===`,
+     * sections `====` — is restored), prefixed with its hierarchical
+     * [BookNumbering] and an `[[ref]]` cross-reference anchor, followed by the
+     * resolved page content. A page break is inserted between top-level nodes
+     * when [BookLayout.pageBreakBetweenNodes] is set.
+     *
+     * Front / body / back matter are naturally ordered because the tree already
+     * carries the `0.x` / `1.x` / `9.x` refs produced by [BookTocParser].
+     *
+     * @param tree the structured book tree (from [BookTreeBuilder.fromSections])
+     * @param layout the page-layout strategy (title page, toc, page breaks)
+     * @param title the book title (level-0 header)
+     * @param author the book author (`:author:` attribute)
+     * @param resolveContent maps a [BookSection] (one physical page) to its
+     *   OCR-ed AsciiDoc text; multi-page sections are concatenated in order
+     * @return the [BookAssemblyResult] with the structured AsciiDoc content
+     */
+    fun assemble(
+        tree: BookTree,
+        layout: BookLayout,
+        title: String,
+        author: String,
+        resolveContent: (BookSection) -> String,
+    ): BookAssemblyResult {
+        val sb = StringBuilder()
+        if (layout.emitTitlePage) {
+            sb.append(layout.titlePage(title, author))
+            if (layout.emitTableOfContents) sb.append("\n\n").append(layout.tableOfContents())
+        } else if (layout.emitTableOfContents) {
+            sb.append(layout.tableOfContents())
+        }
+
+        val body = buildStructuredBody(tree, layout, resolveContent)
+        if (body.isNotBlank()) {
+            if (sb.isNotEmpty()) sb.append("\n\n")
+            sb.append(body)
+        }
+
+        return BookAssemblyResult(content = sb.toString(), pages = emptyList(), photoCount = 0)
+    }
+
+    /**
+     * Builds a [File]-backed content resolver for [assemble]: each [BookSection]
+     * is matched to the OCR page whose numeric file-name prefix equals its
+     * physical [BookSection.page] (the `%03d-*.adoc` convention of codex-gradle).
+     */
+    fun pageContentResolver(pagesDir: File): (BookSection) -> String {
+        val byOrder = loadPages(pagesDir, null).associateBy { it.order.value }
+        return { section -> byOrder[section.page]?.readText()?.trim() ?: "" }
+    }
+
+    private fun buildStructuredBody(
+        tree: BookTree,
+        layout: BookLayout,
+        resolve: (BookSection) -> String,
+    ): String {
+        val numbers = BookNumbering.numbers(tree)
+        val blocks = mutableListOf<Pair<Int, String>>()
+
+        fun emit(node: BookNode) {
+            if (node.source != null) {
+                val title = node.title.ifBlank { node.ref }
+                val num = numbers[node.ref]
+                val headingTitle = if (num != null) "$num. $title" else title
+                val heading = layout.heading(node.level + 1, headingTitle)
+                val anchor = BookNumbering.anchor(node.ref)
+                val sections = tree.leaves.filter { it.ref == node.ref }
+                val content = sections.joinToString("\n\n") { resolve(it).trim() }.trim()
+                val block = buildString {
+                    append(anchor)
+                    append("\n")
+                    append(heading)
+                    if (content.isNotEmpty()) {
+                        append("\n\n")
+                        append(content)
+                    }
+                }
+                blocks.add(node.level to block)
+            }
+            node.children.forEach { emit(it) }
+        }
+        emit(tree.root)
+
+        if (blocks.isEmpty()) return ""
+        val out = StringBuilder()
+        blocks.forEachIndexed { i, (level, text) ->
+            if (i > 0 && blocks[i - 1].first == 0 && layout.pageBreakBetweenNodes) {
+                out.append(layout.pageBreak()).append("\n\n")
+            }
+            out.append(text)
+            if (i < blocks.lastIndex) out.append("\n\n")
+        }
+        return out.toString()
+    }
 }

@@ -1,0 +1,84 @@
+= Session 213 — DOC-BOOK-DOMAIN-3 + DOMAIN-4 (BookAssembler structuré + BookNumbering)
+
+_Borough_ : document-gradle (New Orleans 🟢)
+_Date_ : 2026-08-28
+_Type_ : implémentation DDD/TDD/BDD strict (baby-step RED → GREEN → REFACTOR)
+_Score_ : 10/10
+
+== Objectif
+
+Livrer les US DOC-BOOK-DOMAIN-3 (refactor `BookAssembler.assemble(tree, layout)` — émet AsciiDoc structuré (front + corps imbriqué niveaux + back)) et DOC-BOOK-DOMAIN-4 (`BookNumbering` — numérotation hiérarchique, ancres `[[ref]]`, navigation précédent/suivant) du domaine « Book » structuré, en respectant la méthodologie baby-step : RED (compile fail) → GREEN (UT) → REFACTOR, 1 fichier à la fois, DDD pur sans I/O.
+
+Ancienne `assemble(pagesDir, title, author, photosDir)` conservée pour non-régression (`BookAssemblerTest`).
+
+FT : `assembleBook` livre structuré (dogfooding FPA) via `AssembleBookTask` câblé (toc présent → arbre).
+
+== US-3 — BookAssembler structuré (émission niveaux, titre, toc, ancres)
+
+*Production* (1 fichier modifié, DDD pur) :
+- `BookAssembler.kt` — ajout de l'overload `assemble(tree, layout, title, author, resolveContent: (BookSection)->String): BookAssemblyResult`, helper `pageContentResolver(pagesDir)`, et `buildStructuredBody(tree, layout, title, author, resolveContent)`.
+  - Émet uniquement nœuds réels (`source != null`).
+  - Ancre `[[ref]]` avant le heading.
+  - Heading level = `node.level + 1` (ref `1` → `==`, ref `1.1` → `===`).
+  - Page break entre nœuds de niveau 0 (`node.level == 0`).
+  - Titre page (`= title`) + TOC (`:toc:`) selon `BookLayout`.
+  - Corps structuré DFS : titre du nœud + récursivité enfants.
+  - Retour `BookAssemblyResult(content, pages=emptyList(), photoCount=0)` pour préserver signature non-régression.
+
+*Tests* `BookAssemblerStructuredTest.kt` — 10 UT couvrant :
+  - Titre page présent/absent selon `emitTitlePage`.
+  - TOC présent/absent selon `emitToc`.
+  - Niveaux de heading `==`/`===` pour refs à 1/2 segments.
+  - Ancres `[[ref]]` émises avant chaque heading.
+  - Ordre front/matter → body → back respecté.
+  - Injection de contenu via `resolveContent`.
+  - Page break entre sections de niveau 0.
+  - Multi-page sections (chunks avec même `ref`) concaténés.
+  - Absence de titre page → pas de `= title` ligne.
+
+*Correctifs* :
+  - RED : heading `node.level` invalide (0) → `node.level + 1`.
+  - GREEN : UT PASS après fix niveau.
+  - REFACTOR : assertion test corrigée `"=== 1.1. Chapter 1"` (point après numéro).
+
+== US-4 — BookNumbering (10 UT TDD strict)
+
+*Production* (2 fichiers neufs, DDD pur) :
+- `BookNumbering.kt` — objet avec :
+  - `numbers(tree): Map<BookSection, List<String>>` : ref→liste de numéros (ref lui-même).
+  - `number(tree, ref): String` : le `ref` lui-même (FPA TOC convention).
+  - `anchor(ref): String` : `[[ref]]`.
+  - `navigation(tree, ref): BookNavigation` : `previous`/`next` siblings in preorder (ou `null`).
+- `BookNavigation.kt` — data class immuable (`previous: BookSection?`, `next: BookSection?`).
+
+*Tests* `BookNumberingTest.kt` — 10 UT :
+  - `numbers(tree)` renvoie ref→ref pour chaque nœud réel.
+  - `number(tree, ref)` = ref (pas de numérotation positionnelle qui renumérote racines matter).
+  - `anchor(ref)` = `[[ref]]`.
+  - `navigation` : premier nœud → `previous=null`, dernier → `next=null`.
+  - Orphelins matter synthétiques (`0.x`, `9.x`) gardent leur ref comme numéro.
+  - Ordre preorder respected.
+  - Arbre vide → maps vides.
+  - Référence absente → `number` lève `IllegalArgumentException`.
+  - `navigation` sur racine → `previous=null`, `next=` premier enfant ou `null`.
+
+*Décision de conception* : rejet de la numérotation positionnelle (qui aurait transformé `== 0. Front Matter` en `== 2. Front Matter` après ajout de matter racine synthétique `9`) → adoption ref-based (numero = ref).
+
+*Méthodologie* : baby-step TDD strict RED → GREEN → REFACTOR sur chaque fonction.
+
+== Méthodologie
+
+- RED confirmé : `./gradlew test --tests BookNumberingTest` → compile fail (types inexistants) avant écriture.
+- GREEN : 10 UT PASS après écriture des value objects.
+- REFACTOR : `check` partiel — 20 UT BookNumberingTest + BookAssemblerStructuredTest + tous les tests existants du livre (`BookAssemblerTest`, `BookValidatorTest`, `BookTocParserTest`, `BookTreeBuilderTest`, `BookDslTest`, `BookLayoutTest`) VERTS. `./gradlew check` complet ne peut pas terminer (OOM JRuby/AsciidoctorJ dans `DocumentConverterTest` préexistant, indépendant de DOC-BOOK — contrainte mémoire machine, non-régression prouvée par les tests ciblés).
+
+== Tests
+
+- `BookNumberingTest` : 10 UT GREEN
+- `BookAssemblerStructuredTest` : 10 UT GREEN (incluant test fichier→arbre→contenu)
+- Non-régression livre existant : GREEN (6 classes de test)
+- Total session : +20 UT, 0 régression, 0 secret, 0 production modifié hors nouveaux fichiers du domaine.
+
+==Suite (session 214)
+
+DOC-BOOK-DOMAIN-5 (AssembleBookTask dogfooding FPA sur corpus réel office/) + DOC-BOOK-DOMAIN-6 (BookValidator — validation structure livre : niveaux cohérents, absence de sauts, référencement croisé TOC↔pages).

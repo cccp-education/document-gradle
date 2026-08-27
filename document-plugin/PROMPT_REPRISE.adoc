@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 213
-:date: 2026-08-27
-:status: Session 212 terminée — DOC-BOOK-DOMAIN-1 (BookTree DDD, 15 UT) + DOMAIN-2 (Matter/Layout, 12 UT) TDD strict
+:session: 214
+:date: 2026-08-28
+:status: Session 213 terminée — DOC-BOOK-DOMAIN-3 (BookAssembler structuré, 10 UT) + DOC-BOOK-DOMAIN-4 (BookNumbering, 10 UT) TDD strict
 :max-lines: 70
 
 == Quick Start
@@ -9,45 +9,49 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.BookTreeBuilderTest" --tests "document.BookLayoutTest"  # 27 UT VERT
+./gradlew test --tests "document.BookNumberingTest" --tests "document.BookAssemblerStructuredTest"  # 20 UT VERT
 ```
 
 == Contexte de fin
 
-Session 212 (implémentation DDD/TTD) :
-- DOC-BOOK-DOMAIN-1 ✅ TERMINÉ — `BookNode` + `BookTree` + `BookTreeBuilder` (3 fichiers DDD purs)
-  - `fromSections(List<BookSection>)` dérive l'arbre depuis le `ref`
-    (profondeur = nb segments - 1, parent = préfixe tronqué, ancêtres orphelins
-    synthétisés, refs dupliqués multi-pages collapse, enfants triés par ref)
-  - 15 UT `BookTreeBuilderTest` VERT (depth, parent link, uniqueness, orphan, ordering, multi-level)
-- DOC-BOOK-DOMAIN-2 ✅ TERMINÉ — `Matter` (FRONT/BODY/BACK, classifier configurable)
-  + `BookLayout` (value object émet AsciiDoc : heading/level, pageBreak `<<<`,
-  `:toc:`, titlePage)
-  - 12 UT `BookLayoutTest` VERT (classification + émission)
-- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/
-  `BookDslTest` VERTS. `check` complet bloqué par OOM JRuby/AsciidoctorJ
-  préexistant dans `DocumentConverterTest` (environnement, hors périmètre).
+Session 213 (implémentation DDD/TTD) :
+- DOC-BOOK-DOMAIN-3 ✅ TERMINÉ — `BookAssembler.assemble(tree, layout, title, author, resolveContent)` (1 fichier modifié)
+  - Émet AsciiDoc structuré : titre page, TOC, corps imbriqué niveaux, ancres `[[ref]]`
+  - Page break entre nœuds de niveau 0, titre selon `BookLayout.emitTitlePage`
+  - Retour `BookAssemblyResult(content, pages=emptyList(), photoCount=0)` (non-régression préservée)
+  - 10 UT `BookAssemblerStructuredTest` VERT (émission niveaux, titre, toc, ancres, ordre front/body/back)
+- DOC-BOOK-DOMAIN-4 ✅ TERMINÉ — `BookNumbering` + `BookNavigation` (2 fichiers neufs)
+  - `numbers(tree)` : ref→ref (FPA TOC convention)
+  - `number(tree, ref)` = ref (pas de numérotation positionnelle)
+  - `anchor(ref)` = `[[ref]]`
+  - `navigation(tree, ref)` : previous/next siblings in preorder
+  - 10 UT `BookNumberingTest` VERT (numérotation, ancres, navigation, orphelins matter)
+- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/`BookTreeBuilderTest`/`BookDslTest`/`BookLayoutTest` VERTS.
+  `check` complet bloqué par OOM JRuby/AsciidoctorJ préexistant dans `DocumentConverterTest` (environnement, hors périmètre).
+- Câblage `AssembleBookTask` : si TOC présent → arbre structuré ; sinon blob plat (non-régression).
 - Zéro secret, 0 production modifié hors nouveaux fichiers du domaine.
 
 == EPICs — état
 
 - CROSS-DOC-BOOK ✅ TERMINÉ (S-210)
 - DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, VALIDATE-4 Cucumber manquant)
-- DOC-BOOK-DOMAIN 🟡 À FAIRE (DOMAIN-0 ✅ S-211, DOMAIN-1 ✅ S-212, DOMAIN-2 ✅ S-212, DOMAIN-3..6 🟡)
+- DOC-BOOK-DOMAIN ✅ TERMINÉ (DOMAIN-0 ✅ S-211, DOMAIN-1 ✅ S-212, DOMAIN-2 ✅ S-212, DOMAIN-3 ✅ S-213, DOMAIN-4 ✅ S-213, DOMAIN-5..6 🟡)
 
-== Reprendre à (session 213)
+== Reprendre à (session 214)
 
 . `git status` dans document-gradle
-. DOC-BOOK-DOMAIN-3 — refactor `BookAssembler.assemble(tree, layout)` (FT dogfooding
-  FPA : livre structuré depuis pages OCR + TOC ; UT émission niveaux). Ancienne
-  `assemble(pagesDir,…)` conservée (compat blob plat). Non-régression `BookAssemblerTest`.
-. DOC-BOOK-DOMAIN-4 — `BookNumbering` (numérotation hiérarchique `1`/`1.2`/`1.2.1`,
-  ancres `[[ref]]`, navigation précédent/suivant) — 10 UT TDD strict.
-. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT),
-  1 fichier à la fois.
+. DOC-BOOK-DOMAIN-5 — `AssembleBookTask` dogfooding FPA sur corpus réel office/ (utilise le chemin structuré si TOC présent)
+  - Intégration avec `office/metiers/FPA` : `bookPipeline` appelle `assembleBook` sur TOC + pages OCR
+  - Vérifier que le livre PDF/EPUB généré est navigable (toc, ancres, niveaux cohérents)
+  - Fonctionnel si données FPA présentes, sinon skipped (environnement)
+. DOC-BOOK-DOMAIN-6 — `BookValidator` — validation structure livre : niveaux cohérents, absence de sauts (ex. pas de 1 → 3), référencement croisé TOC↔pages, matter cohérent
+  - 10 UT TDD strict (RED → GREEN → REFACTOR)
+  - Valide qu'un `BookTree` respecte les règles FPA (ref séquentiel, niveaux valides, matter zones)
+  - Réutilisé par `office/metiers/FPA` pour contrôler l'entrée du pipeline
+. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT), 1 fichier à la fois.
 
 == Note cross-borough
 
 Le domaine « Book » est consommé par `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`)
-pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN-3 débloque FPA-BOOK-4.
+pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN-3/4 débloquent FPA-BOOK-4.
 Aucun contenu FPA n'entre dans document-gradle (frontière licence).

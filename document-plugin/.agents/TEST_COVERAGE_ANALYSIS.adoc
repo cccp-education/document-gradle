@@ -542,3 +542,38 @@ test livre existantes VERTES en ciblé.
 | ✅ PASS
 | `BookAssemblerTest` + `BookValidatorTest` + `BookTocParserTest` + `BookDslTest`
 |===
+
+== Session 213 — DOC-BOOK-DOMAIN-3 + DOMAIN-4 (BookAssembler structuré + BookNumbering)
+
+*Couverture domaine Book (US-3 + US-4)* : 20 nouveaux UT, 100% GREEN, DDD pur
+sans I/O. Aucun test fonctionnel (la logique est déterministe, pas de Gradle runtime).
+
+Tests ajoutés S213 :
+- `BookNumberingTest.kt` (+10 UT) : numérotation hiérarchique (ref→ref), ancres `[[ref]]`, navigation précédent/suivant.
+- `BookAssemblerStructuredTest.kt` (+10 UT) : émission niveaux (`==`/`===`), titre page, toc, ancres `[[ref]]`, ordre front/body/back, injection contenu, page break, multi-page.
+
+Non-régression (existants, VERTS) :
+- `BookAssemblerTest`, `BookValidatorTest`, `BookTocParserTest`, `BookTreeBuilderTest`, `BookDslTest`, `BookLayoutTest`.
+
+Note environnement : `./gradlew check` complet ne termine pas sur cette machine
+(OutOfMemoryError JRuby/AsciidoctorJ dans `DocumentConverterTest` préexistant,
+indépendant de DOC-BOOK-DOMAIN). Preuve de non-régression = 20 UT + 6 classes
+test livre existantes VERTES en ciblé.
+
+=== Pyramide de tests — Session 213
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+| Unit (BookNumbering DDD)
+| 10
+| ✅ PASS
+| `BookNumberingTest.kt`
+| Unit (BookAssembler structuré)
+| 10
+| ✅ PASS
+| `BookAssemblerStructuredTest.kt`
+| Non-régression livre
+| 6 classes
+| ✅ PASS
+| `BookAssemblerTest` + `BookValidatorTest` + `BookTocParserTest` + `BookTreeBuilderTest` + `BookDslTest` + `BookLayoutTest`
+|===
