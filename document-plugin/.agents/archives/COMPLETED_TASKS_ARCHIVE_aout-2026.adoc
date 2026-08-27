@@ -166,3 +166,23 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 *Diagnostic* : le fake mode reproduit les troncatures → outil de diagnostic des bugs parser (pas un problème LLM).
 
 *Infra* : `document-plugin/gradle.properties` + `org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m` (daemon OOM cucumber).
+
+=== Session 212 (2026-08-27) — DOC-BOOK-DOMAIN-1 + DOMAIN-2 (BookTree DDD + Matter/Layout)
+
+*Type* : implémentation DDD/TDD/BDD strict (baby-step RED → GREEN → REFACTOR)
+*Score* : 10/10
+
+*Résumé* :
+- DOMAIN-1 ✅ : `BookNode` + `BookTree` + `BookTreeBuilder` (3 fichiers DDD purs).
+  `fromSections(List<BookSection>)` dérive l'arbre depuis le `ref` — profondeur
+  = nb segments - 1, parent = préfixe tronqué, ancêtres orphelins synthétisés,
+  refs dupliqués (multi-pages) collapse en un nœud, enfants triés par ref.
+  15 UT `BookTreeBuilderTest` VERT.
+- DOMAIN-2 ✅ : `Matter` (FRONT/BODY/BACK, classifier configurable sans hardcode)
+  + `BookLayout` (value object émet AsciiDoc : heading/level `=`×(level+1),
+  pageBreak `<<<`, `:toc:`, titlePage). 12 UT `BookLayoutTest` VERT.
+- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/
+  `BookDslTest` VERTS. 0 secret, 0 production modifié hors nouveaux fichiers.
+
+*Livrables* : `BookNode.kt`, `BookTree.kt`, `BookTreeBuilder.kt`, `Matter.kt`,
+`BookLayout.kt` + 2 fichiers test (27 UT).

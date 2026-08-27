@@ -499,3 +499,46 @@ Total : +13 nouveaux tests, 24/24 PASS (incluant les 10 UT validator + 1 UT avai
 | ✅ PASS
 | `tableTranslationCucumberTest` (8) + `tableValidationCucumberTest` (6)
 |===
+== Session 212 — DOC-BOOK-DOMAIN-1 + DOMAIN-2 (BookTree DDD + Matter/Layout)
+
+*Couverture domaine Book (US-1 + US-2)* : 27 nouveaux UT, 100% GREEN, DDD pur
+sans I/O. Aucun test fonctionnel (la logique est déterministe, pas de Gradle runtime).
+
+Tests ajoutés S212 :
+- `BookTreeBuilderTest.kt` (+15 UT) : depth derivation (level = segments - 1),
+  parent link, ref uniqueness (multi-page collapse), orphan ref (chaîne synthétique),
+  ordering par ref, multi-level, empty input, index completeness, root children,
+  déterminisme.
+- `BookLayoutTest.kt` (+12 UT) : Matter.classify FRONT/BODY/BACK (prefixes défaut
+  `0.`/`9.` + custom), heading level 1/4, pageBreak `<<<`, tableOfContents `:toc:`,
+  titlePage (`= ` + `:author:` + `:doctype: book`).
+
+Non-régression (existants, VERTS) :
+- `BookAssemblerTest`, `BookValidatorTest`, `BookTocParserTest`, `BookDslTest`.
+
+Note environnement : `./gradlew check` complet ne termine pas sur cette machine
+(OutOfMemoryError JRuby/AsciidoctorJ dans `DocumentConverterTest` préexistant,
+indépendant de DOC-BOOK-DOMAIN). Preuve de non-régression = 27 UT + 4 classes
+test livre existantes VERTES en ciblé.
+
+=== Pyramide de tests — Session 212
+
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+
+| Unit (BookTree DDD)
+| 15
+| ✅ PASS
+| `BookTreeBuilderTest.kt`
+
+| Unit (Matter + BookLayout)
+| 12
+| ✅ PASS
+| `BookLayoutTest.kt`
+
+| Non-régression livre
+| 4 classes
+| ✅ PASS
+| `BookAssemblerTest` + `BookValidatorTest` + `BookTocParserTest` + `BookDslTest`
+|===

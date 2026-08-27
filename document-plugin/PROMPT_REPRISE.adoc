@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 212
+:session: 213
 :date: 2026-08-27
-:status: Session 211 terminée — Cadrage EPIC DOC-BOOK-DOMAIN (gouvernance pure, zéro code modifié)
+:status: Session 212 terminée — DOC-BOOK-DOMAIN-1 (BookTree DDD, 15 UT) + DOMAIN-2 (Matter/Layout, 12 UT) TDD strict
 :max-lines: 70
 
 == Quick Start
@@ -9,37 +9,45 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew check          # tous les tests (unitaire + fonctionnel + cucumber)
+./gradlew test --tests "document.BookTreeBuilderTest" --tests "document.BookLayoutTest"  # 27 UT VERT
 ```
 
 == Contexte de fin
 
-Session 211 (gouvernance pure) :
-- Cadrage EPIC DOC-BOOK-DOMAIN terminé — domaine « Book » structuré (arbre/mise en page/logique)
-- 8 constats audités (blob plat assembleBook, BookSection plat, hiérarchie ref ignorée, pas de matter, pas de navigation, validator non-structurel, FPA-BOOK-4 bloqué, refactor possible)
-- 10 décisions architecturales + modèle DDD `BookTree`/`BookNode`/`Matter`/`BookLayout`/`BookNumbering`
-- 6 US ~27 pts découpées baby-step DDD/TDD/BDD strict
-- Créé `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`
-- Mise à jour BACKLOG (Vision + EPIC DOC-BOOK-DOMAIN) + INDEX (roadmap, CROSS-DOC-BOOK ✅ TERMINÉ, session 211) + AGENT (principe mission 4 Book Domain)
-- Consommateur pilote : `office/metiers/FPA` (FPA-BOOK-4/5, livre FPA II scanné)
-- Aucun code de production modifié — pure gouvernance
+Session 212 (implémentation DDD/TTD) :
+- DOC-BOOK-DOMAIN-1 ✅ TERMINÉ — `BookNode` + `BookTree` + `BookTreeBuilder` (3 fichiers DDD purs)
+  - `fromSections(List<BookSection>)` dérive l'arbre depuis le `ref`
+    (profondeur = nb segments - 1, parent = préfixe tronqué, ancêtres orphelins
+    synthétisés, refs dupliqués multi-pages collapse, enfants triés par ref)
+  - 15 UT `BookTreeBuilderTest` VERT (depth, parent link, uniqueness, orphan, ordering, multi-level)
+- DOC-BOOK-DOMAIN-2 ✅ TERMINÉ — `Matter` (FRONT/BODY/BACK, classifier configurable)
+  + `BookLayout` (value object émet AsciiDoc : heading/level, pageBreak `<<<`,
+  `:toc:`, titlePage)
+  - 12 UT `BookLayoutTest` VERT (classification + émission)
+- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/
+  `BookDslTest` VERTS. `check` complet bloqué par OOM JRuby/AsciidoctorJ
+  préexistant dans `DocumentConverterTest` (environnement, hors périmètre).
+- Zéro secret, 0 production modifié hors nouveaux fichiers du domaine.
 
 == EPICs — état
 
-- CROSS-DOC-BOOK ✅ TERMINÉ (S-210) : BDD cross-borough + KDoc codex
+- CROSS-DOC-BOOK ✅ TERMINÉ (S-210)
 - DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, VALIDATE-4 Cucumber manquant)
-- DOC-BOOK-DOMAIN 🟡 À FAIRE (DOMAIN-0 ✅ S-211, DOMAIN-1..6 🟡)
+- DOC-BOOK-DOMAIN 🟡 À FAIRE (DOMAIN-0 ✅ S-211, DOMAIN-1 ✅ S-212, DOMAIN-2 ✅ S-212, DOMAIN-3..6 🟡)
 
-== Reprendre à (session 212)
+== Reprendre à (session 213)
 
 . `git status` dans document-gradle
-. DOC-BOOK-DOMAIN-1 — `BookNode` + `BookTree` + `BookTreeBuilder` (DDD pur, 15 UT TDD strict) : `fromSections(List<BookSection>)` dérive l'arbre depuis le `ref` (profondeur = nb segments, parent = préfixe)
-. DOC-BOOK-DOMAIN-2 — `Matter` (FRONT/BODY/BACK) + `BookLayout` (niveau section par profondeur, saut de page, page de titre + `:toc:`, 12 UT)
-. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT), 1 fichier à la fois
+. DOC-BOOK-DOMAIN-3 — refactor `BookAssembler.assemble(tree, layout)` (FT dogfooding
+  FPA : livre structuré depuis pages OCR + TOC ; UT émission niveaux). Ancienne
+  `assemble(pagesDir,…)` conservée (compat blob plat). Non-régression `BookAssemblerTest`.
+. DOC-BOOK-DOMAIN-4 — `BookNumbering` (numérotation hiérarchique `1`/`1.2`/`1.2.1`,
+  ancres `[[ref]]`, navigation précédent/suivant) — 10 UT TDD strict.
+. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT),
+  1 fichier à la fois.
 
 == Note cross-borough
 
 Le domaine « Book » est consommé par `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`)
-pour produire un livre PDF/EPUB *navigable*. Le blob plat actuel rend la
-validation humaine du rendu impossible — DOC-BOOK-DOMAIN-3 (refactor Assembler)
-débloque FPA-BOOK-4. Aucun contenu FPA n'entre dans document-gradle (frontière licence).
+pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN-3 débloque FPA-BOOK-4.
+Aucun contenu FPA n'entre dans document-gradle (frontière licence).

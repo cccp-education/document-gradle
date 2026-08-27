@@ -214,3 +214,16 @@ directe vers codex-gradle.
 - Categories custom : fallback config default si MapProperty vide (évite duplication défauts dans DSL)
 - CLI override : -Pdocument.releaseNotesRendererType, -Pdocument.releaseNotesCategories (format key=label,key2=label2)
 - Parser Conventional Commit rejette types non standards → custom categories ne mappent que sur types reconnus
+
+== Session 212 (2026-08-27) — DOC-BOOK-DOMAIN-1 + DOMAIN-2
+
+**Type** : implémentation DDD/TDD/BDD strict
+**Score** : 10/10
+**EPIC** : DOC-BOOK-DOMAIN (US-1 + US-2 livrées)
+
+**Livrables** :
+- `BookNode` + `BookTree` + `BookTreeBuilder` (US-1, 15 UT)
+- `Matter` + `BookLayout` (US-2, 12 UT)
+- Non-régression livre existant VERTE
+
+**Suite** : S-213 (DOMAIN-3 refactor Assembler + DOMAIN-4 BookNumbering)

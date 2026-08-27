@@ -989,13 +989,14 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 
 [cols="1,4,2,2,2"]
 |===
-| US | Description | Tests | Pts | Dépend de
+| US | Description | Tests | Pts | Dépend de | Statut
 
 | DOC-BOOK-DOMAIN-0
 | *Cadrage* — BookTree DDD, décisions architecturales, modèle du domaine
 | — (gouvernance pure)
 | 0 ✅ (S-211)
 | —
+| ✅ TERMINÉ (S-211)
 
 | DOC-BOOK-DOMAIN-1
 | *`BookNode` + `BookTree` + `BookTreeBuilder`* — value objects DDD purs.
@@ -1004,6 +1005,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | UT : 15 (depth, parent link, uniqueness, orphan, ordering, multi-level)
 | 5
 | —
+| ✅ TERMINÉ (S-212)
 
 | DOC-BOOK-DOMAIN-2
 | *`Matter` (FRONT/BODY/BACK)* classifier + *`BookLayout`* value object
@@ -1011,6 +1013,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | UT : 12 (matter, level→`==`, page-break, front/back emission)
 | 4
 | DOMAIN-1
+| ✅ TERMINÉ (S-212)
 
 | DOC-BOOK-DOMAIN-3
 | *Refactor `BookAssembler.assemble(tree, layout)`* — émet AsciiDoc structuré
@@ -1019,6 +1022,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | FT : assembleBook livre structuré (dogfooding FPA) ; UT : émission niveaux
 | 5
 | DOMAIN-2
+| 🟡 (S-213)
 
 | DOC-BOOK-DOMAIN-4
 | *`BookNumbering`* — numérotation hiérarchique (`1`, `1.2`, `1.2.1`), ancres
@@ -1026,6 +1030,7 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | UT : 10 (numbering, anchors, prev/next)
 | 4
 | DOMAIN-1
+| 🟡 (S-213)
 
 | DOC-BOOK-DOMAIN-5
 | *Cucumber BDD* `@book-tree` — 5 scénarios (arbre structuré, front/back matter,
@@ -1034,13 +1039,15 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | BDD : 5 scénarios
 | 5
 | DOMAIN-3, DOMAIN-4
+| 🟡 (S-214)
 
 | DOC-BOOK-DOMAIN-6
-| *Extension `BookValidator` sur l'arbre* (structurelle) : continuité `ref`,
+| *Extension `BookValidator`* sur l'arbre (structurelle) : continuité `ref`,
   unicité, présence FRONT+BACK, monotonicité ordre de page. Lenient/strict réutilisé.
 | UT : 8 + FT : 2
 | 4
 | DOMAIN-1, DOMAIN-2
+| 🟡 (S-214)
 |===
 
 _Total_ : ~27 pts (6 US + cadrage). Séquentiel : US-1 → US-2 → US-3 → US-4 → US-5 → US-6.

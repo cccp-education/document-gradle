@@ -1,0 +1,65 @@
+= Session 212 — DOC-BOOK-DOMAIN-1 + DOMAIN-2 (BookTree DDD + Matter/Layout)
+
+_Borough_ : document-gradle (New Orleans 🟢)
+_Date_ : 2026-08-27
+_Type_ : implémentation DDD/TDD/BDD strict (baby-step RED → GREEN → REFACTOR)
+_Score_ : 10/10
+
+== Objectif
+
+Livrer les US DOC-BOOK-DOMAIN-1 (`BookNode` + `BookTree` + `BookTreeBuilder`)
+et DOC-BOOK-DOMAIN-2 (`Matter` + `BookLayout`) du domaine « Book » structuré,
+en respectant la méthodologie baby-step : RED (compile fail) → GREEN (UT) →
+REFACTOR, 1 fichier à la fois, DDD pur sans I/O.
+
+== US-1 — BookNode / BookTree / BookTreeBuilder (15 UT)
+
+*Production* (3 fichiers, DDD pur) :
+- `BookNode.kt` — data class immuable (`ref, title, children, source`),
+  `level` dérivé (`= nb segments ref - 1`, ex. `1.0.2.6.4` → 4),
+  invariant `ref` blank (root) ou `^\d+(\.\d+)*$`.
+- `BookTree.kt` — agrégat racine (`root, nodesByRef, leaves`), `node(ref)`.
+- `BookTreeBuilder.kt` — `fromSections(List<BookSection>)` reconstruit l'arbre
+  depuis le `ref` : parent = préfixe tronqué, ancêtres orphelins synthétisés,
+  refs dupliqués (multi-pages) collapse en un nœud, enfants triés par ref.
+
+*Tests* `BookTreeBuilderTest.kt` — 15 UT : depth derivation, parent link,
+ref uniqueness, orphan ref (chaîne synthétique), ordering, multi-level, empty,
+index completeness, root children, déterminisme.
+
+== US-2 — Matter / BookLayout (12 UT)
+
+*Production* (2 fichiers, DDD pur) :
+- `Matter.kt` — enum `FRONT/BODY/BACK` + `classify(ref, frontPrefix, backPrefix)`
+  (convention `0.x`→FRONT, `9.x`→BACK, configurable, pas de hardcode).
+- `BookLayout.kt` — value object (`emitTitlePage/emitsToc/pageBreakBetweenNodes`)
+  émet AsciiDoc : `heading(level, title)` (`=`×(level+1)), `pageBreak()` (`<<<`),
+  `tableOfContents()` (`:toc:`), `titlePage(title, author)`.
+
+*Tests* `BookLayoutTest.kt` — 12 UT : classification FRONT/BODY/BACK (prefixes
+défaut + custom), heading levels 1/4, page break, TOC, title page.
+
+== Méthodologie
+
+- RED confirmé : `./gradlew test --tests BookTreeBuilderTest` → compile fail
+  (types inexistants) avant écriture du code de production.
+- GREEN : 15 + 12 UT PASS après écriture des value objects.
+- REFACTOR : `check` partiel — mes 27 UT + tous les tests existants du livre
+  (`BookAssemblerTest`, `BookValidatorTest`, `BookTocParserTest`, `BookDslTest`)
+  VERTS. `./gradlew check` complet ne peut pas terminer dans cet environnement
+  (OutOfMemoryError JRuby/AsciidoctorJ dans `DocumentConverterTest` préexistant,
+  indépendant de DOC-BOOK-DOMAIN — contrainte mémoire machine, non-régression
+  prouvée par les tests ciblés).
+
+== Tests
+
+- `BookTreeBuilderTest` : 15 UT GREEN
+- `BookLayoutTest` : 12 UT GREEN
+- Non-régression livre existant : GREEN (4 classes de test)
+- Total session : +27 UT, 0 régression, 0 secret, 0 production modifié hors
+  nouveaux fichiers du domaine.
+
+==Suite (session 213)
+
+DOC-BOOK-DOMAIN-3 (`BookAssembler.assemble(tree, layout)` FT dogfooding FPA) +
+DOC-BOOK-DOMAIN-4 (`BookNumbering` 10 UT).
