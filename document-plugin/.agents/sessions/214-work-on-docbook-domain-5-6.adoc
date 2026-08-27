@@ -1,0 +1,25 @@
+= Session 214 — Work on DOC-BOOK-DOMAIN-5 and DOC-BOOK-DOMAIN-6
+
+:date: 2026-08-28
+
+== Work done
+
+- Modified AssembleBookTask.kt to make it open for testing (reverted due to test issues).
+- Modified DocumentPlugin.kt to use convention mapping for properties (reverted due to test issues).
+- Created AssembleBookTaskUnitTest.kt (unit test for AssembleBookTask).
+
+== Issues encountered
+
+- The unit test for AssembleBookTask failed because of task instantiation issues.
+- The test was trying to instantiate the task directly, but the task properties are set by the plugin.
+- We tried to set the properties using the project's file system, but the test still failed.
+
+== Next steps
+
+- For DOC-BOOK-DOMAIN-5: Implement the AssembleBookTask dogfooding with real FPA data from office/.
+- For DOC-BOOK-DOMAIN-6: Extend BookValidator to validate the structure of the BookTree (sequential refs, no jumps, matter zones).
+
+== Blockers
+
+- Need to understand how to properly test Gradle tasks in unit tests.
+- Need to set up the test to use the plugin extension to configure the task.
