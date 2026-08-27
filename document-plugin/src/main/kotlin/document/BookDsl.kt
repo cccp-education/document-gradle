@@ -1,6 +1,7 @@
 package document
 
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -24,6 +25,21 @@ import org.gradle.api.provider.Property
  * }
  * ```
  *
+ * DOC-BOOK-VALIDATE-2 extends the block with the TOC file, the PDF directory
+ * and the validation mode so `assembleBook` can validate the assembled book
+ * against its table of contents:
+ *
+ * ```
+ * document {
+ *     book {
+ *         pagesDir.set(file("src/book/pages"))
+ *         tocFile.set(file("src/book/toc.adoc"))
+ *         pdfsDir.set(file("src/book/pdfs"))
+ *         validationMode.set(ValidationMode.STRICT)
+ *     }
+ * }
+ * ```
+ *
  * Concrete class with eagerly-initialised [Property]s for Kotlin DSL
  * access (pattern [DocumentEnrichDsl] / [DocumentOutputsDsl]).
  */
@@ -32,4 +48,7 @@ class BookDsl(
     val photosDir: DirectoryProperty,
     val title: Property<String>,
     val author: Property<String>,
+    val tocFile: RegularFileProperty,
+    val pdfsDir: DirectoryProperty,
+    val validationMode: Property<ValidationMode>,
 )

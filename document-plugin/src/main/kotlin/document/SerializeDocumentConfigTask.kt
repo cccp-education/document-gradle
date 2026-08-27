@@ -97,6 +97,15 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Input
     @get:Optional
     abstract val bookAuthor: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookTocFile: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookPdfsDir: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookValidationMode: Property<String>
 
     init {
         group = "document"
@@ -143,6 +152,9 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 photosDir = bookPhotosDir.orNull?.let { File(it) },
                 title = bookTitle.orNull,
                 author = bookAuthor.orNull,
+                tocFile = bookTocFile.orNull?.let { File(it) },
+                pdfsDir = bookPdfsDir.orNull?.let { File(it) },
+                validationMode = bookValidationMode.orNull,
             ),
         )
 

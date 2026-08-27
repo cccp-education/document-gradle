@@ -836,15 +836,16 @@ la rédaction du livre reste dans `office/`.
 
 | DOC-BOOK-VALIDATE-2
 | *Intégration dans `AssembleBookTask`* — après assemblage, appeler
-  `BookValidator.validate()`. Si `Invalid` : warning log + continuer (lenient).
-| UT : 8-10 (mock validator, warning propagation, valid no-op)
+  `BookValidator.validate()`. Si `Invalid` : warning log + continuer (lenient). ✅ TERMINÉ (S-078)
+| UT : 6 (BookTocParser TDD) + FT : 2 (lenient/STRICT assembleBook)
 | 5
 | VALIDATE-1
 
 | DOC-BOOK-VALIDATE-3
-| *Mode `--strict` vs `--lenient`* — DSL `book { validation { mode = STRICT } }`.
-  STRICT → `BookValidationException` fail build ; LENIENT (défaut) → warning.
-| UT : 5-8 + FT : 1
+| *Mode `--strict` vs `--lenient`* — DSL `book { validationMode.set(ValidationMode.STRICT) }`
+  ou CLI `-Pdocument.bookValidationMode=STRICT`. STRICT → `GradleException` fail build ;
+  LENIENT (défaut) → warning. ✅ TERMINÉ (S-078)
+| UT : 6 + FT : 2
 | 3
 | VALIDATE-2
 

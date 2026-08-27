@@ -68,6 +68,9 @@ class DocumentPlugin : Plugin<Project> {
                 photosDir = project.objects.directoryProperty(),
                 title = project.objects.property(String::class.java),
                 author = project.objects.property(String::class.java),
+                tocFile = project.objects.fileProperty(),
+                pdfsDir = project.objects.directoryProperty(),
+                validationMode = project.objects.property(ValidationMode::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -159,6 +162,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookPhotosDir.convention(ext.book.photosDir)
         ext.bookTitle.convention(ext.book.title)
         ext.bookAuthor.convention(ext.book.author)
+        ext.bookTocFile.convention(ext.book.tocFile)
+        ext.bookPdfsDir.convention(ext.book.pdfsDir)
+        ext.bookValidationMode.convention(ext.book.validationMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -261,12 +267,15 @@ class DocumentPlugin : Plugin<Project> {
 
     private fun registerAssembleBook(project: Project, ext: DocumentExtension) {
         project.tasks.register("assembleBook", AssembleBookTask::class.java) { task ->
-            task.description = "Assembles OCR-ed AsciiDoc pages (codex-gradle output) into a single book. — DOC-11"
+            task.description = "Assembles OCR-ed AsciiDoc pages (codex-gradle output) into a single book. — DOC-11 / DOC-BOOK-VALIDATE-2"
             task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
             task.photosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPhotosDir))
             task.title.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
             task.author.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
             task.outputFileName.set(cliProp(project, "outputFileName").orElse("book"))
+            task.tocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it) }.orElse(ext.bookTocFile))
+            task.pdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPdfsDir))
+            task.validationMode.set(cliProp(project, "bookValidationMode").map { ValidationMode.valueOf(it) }.orElse(ext.bookValidationMode).orElse(ValidationMode.LENIENT))
             task.outputFile.set(project.layout.buildDirectory.file("docs/document/book.adoc"))
         }
     }
@@ -330,6 +339,9 @@ class DocumentPlugin : Plugin<Project> {
             task.bookPhotosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPhotosDir.asFile.map { it.path }))
             task.bookTitle.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
             task.bookAuthor.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
+            task.bookTocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it).asFile.path }.orElse(ext.bookTocFile.asFile.map { it.path }))
+            task.bookPdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPdfsDir.asFile.map { it.path }))
+            task.bookValidationMode.set(cliProp(project, "bookValidationMode").orElse(ext.bookValidationMode.map { it.name }))
         }
     }
 

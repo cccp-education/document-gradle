@@ -9,6 +9,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
+import document.ValidationMode
 
 /**
  * Extension Gradle `document { }` — point d'entree du DSL documentaire (DOC-12 unified).
@@ -81,6 +82,15 @@ abstract class DocumentExtension {
 
     /** Book pipeline (DOC-11) — book author. */
     abstract val bookAuthor: Property<String>
+
+    /** Book pipeline (DOC-BOOK-VALIDATE-2) — table of contents file (AsciiDoc). */
+    abstract val bookTocFile: RegularFileProperty
+
+    /** Book pipeline (DOC-BOOK-VALIDATE-2) — directory of original scanned PDFs. */
+    abstract val bookPdfsDir: DirectoryProperty
+
+    /** Book pipeline (DOC-BOOK-VALIDATE-2) — validation strictness for [assembleBook]. */
+    abstract val bookValidationMode: Property<ValidationMode>
 
     /**
      * Nested DSL block `enrich { }` (DOC-12). Concrete val initialised in the

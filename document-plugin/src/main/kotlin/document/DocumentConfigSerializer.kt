@@ -144,6 +144,9 @@ class DocumentConfigSerializer {
                 photosDir = bookNode.get("photosDir")?.textValueOrNull()?.let { File(it) },
                 title = bookNode.get("title")?.textValueOrNull(),
                 author = bookNode.get("author")?.textValueOrNull(),
+                tocFile = bookNode.get("tocFile")?.textValueOrNull()?.let { File(it) },
+                pdfsDir = bookNode.get("pdfsDir")?.textValueOrNull()?.let { File(it) },
+                validationMode = bookNode.get("validationMode")?.textValueOrNull(),
             )
         } else {
             BookConfig()

@@ -20,6 +20,9 @@ class BookDslTest {
             photosDir = objects().directoryProperty(),
             title = objects().property(String::class.java),
             author = objects().property(String::class.java),
+            tocFile = objects().fileProperty(),
+            pdfsDir = objects().directoryProperty(),
+            validationMode = objects().property(ValidationMode::class.java),
         )
         assertNotNull(dsl.pagesDir)
         assertNotNull(dsl.photosDir)
@@ -34,6 +37,9 @@ class BookDslTest {
             photosDir = objects().directoryProperty(),
             title = objects().property(String::class.java),
             author = objects().property(String::class.java),
+            tocFile = objects().fileProperty(),
+            pdfsDir = objects().directoryProperty(),
+            validationMode = objects().property(ValidationMode::class.java),
         )
         assertFalse(dsl.title.isPresent)
         assertFalse(dsl.author.isPresent)
@@ -48,6 +54,9 @@ class BookDslTest {
             photosDir = objects().directoryProperty(),
             title = objects().property(String::class.java),
             author = objects().property(String::class.java),
+            tocFile = objects().fileProperty(),
+            pdfsDir = objects().directoryProperty(),
+            validationMode = objects().property(ValidationMode::class.java),
         )
         dsl.title.convention("Untitled Book")
         dsl.author.convention("Unknown Author")
@@ -62,6 +71,9 @@ class BookDslTest {
             photosDir = objects().directoryProperty(),
             title = objects().property(String::class.java),
             author = objects().property(String::class.java),
+            tocFile = objects().fileProperty(),
+            pdfsDir = objects().directoryProperty(),
+            validationMode = objects().property(ValidationMode::class.java),
         )
         dsl.title.set("Mon Livre")
         dsl.author.set("Auteur")

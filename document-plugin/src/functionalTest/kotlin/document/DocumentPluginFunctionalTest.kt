@@ -2192,4 +2192,98 @@ Passer.
         assertTrue(outDir.resolve("blog/keep.adoc").exists(), "blog/keep.adoc must be translated")
         assertTrue(!outDir.resolve("draft/skip.adoc").exists(), "draft/skip.adoc must be excluded")
     }
+
+    @Test
+    fun `assembleBook valide le livre contre le TOC en mode LENIENT et ne casse pas le build`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-toc-lenient\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                book {
+                    pagesDir.set(file("pages"))
+                    tocFile.set(file("toc.adoc"))
+                    pdfsDir.set(file("pdfs"))
+                    title.set("TOC Book")
+                    author.set("Author")
+                }
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("005.adoc").writeText("== Section 1\n\nContenu page 5.")
+        pagesDir.resolve("006.adoc").writeText("== Section 2\n\nContenu page 6.")
+        val pdfsDir = projectDir.resolve("pdfs").apply { mkdirs() }
+        pdfsDir.resolve("005.pdf").writeText("%PDF-1.4 fake")
+        pdfsDir.resolve("006.pdf").writeText("%PDF-1.4 fake")
+        projectDir.resolve("toc.adoc").writeText(
+            """
+            |===
+            | Référence | Sujet | Page | Fichier
+
+            | 1.0.1 | Section 1 | 5 | 005.pdf
+            | 1.0.2 | Section 2 | 6 | 006.pdf
+            |===
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
+        val output = projectDir.resolve("build/docs/document/book.adoc")
+        assertTrue(output.exists(), "le livre assemble doit exister")
+        assertTrue(output.readText().contains("Section 1"), "le contenu de la page 5 doit etre present")
+        assertTrue(output.readText().contains("Section 2"), "le contenu de la page 6 doit etre present")
+    }
+
+    @Test
+    fun `assembleBook en mode STRICT casse le build si une page du TOC est absente`() {
+        val projectDir = newTempDir()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-toc-strict\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+
+            document {
+                book {
+                    pagesDir.set(file("pages"))
+                    tocFile.set(file("toc.adoc"))
+                    title.set("TOC Book")
+                    author.set("Author")
+                }
+            }
+            """.trimIndent()
+        )
+        val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
+        pagesDir.resolve("005.adoc").writeText("== Section 1\n\nContenu page 5.")
+        projectDir.resolve("toc.adoc").writeText(
+            """
+            |===
+            | Référence | Sujet | Page | Fichier
+
+            | 1.0.1 | Section 1 | 5 | 005.pdf
+            | 1.0.2 | Section 2 | 7 | 007.pdf
+            |===
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("assembleBook", "-Pdocument.bookValidationMode=STRICT")
+            .withPluginClasspath()
+            .buildAndFail()
+
+        assertTrue(result.output.contains("book validation failed"), "le build doit echouer avec un message de validation")
+        assertTrue(result.output.contains("page 7"), "le message doit citer la page manquante 7")
+    }
 }

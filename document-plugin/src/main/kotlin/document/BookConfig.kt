@@ -29,6 +29,9 @@ data class BookConfig(
     val photosDir: File? = null,
     val title: String? = null,
     val author: String? = null,
+    val tocFile: File? = null,
+    val pdfsDir: File? = null,
+    val validationMode: String? = null,
 ) {
 
     /**
