@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 044
-:date: 2026-08-26
-:status: Session 210 terminée — Cadrage EPIC CROSS-DOC-BOOK (gouvernance pure, zéro code modifié)
+:session: 212
+:date: 2026-08-27
+:status: Session 211 terminée — Cadrage EPIC DOC-BOOK-DOMAIN (gouvernance pure, zéro code modifié)
 :max-lines: 70
 
 == Quick Start
@@ -9,40 +9,37 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew crossBoroughCucumberTest  # BDD cross-borough book pipeline validation
+./gradlew check          # tous les tests (unitaire + fonctionnel + cucumber)
 ```
 
 == Contexte de fin
 
-Session 210 (gouvernance pure) :
-- Cadrage EPIC CROSS-DOC-BOOK terminé — 3 US définies, ~5 pts
-- Créé CADRAGE_EPIC_CROSS_DOC_BOOK.adoc (3 US, ~5 pts)
-- Mise à jour BACKLOG + INDEX codex-gradle et document-gradle
-- Implémentation US-1 (BDD) terminée : 4 scénarios Cucumber validant le contrat filesystem %03d-%s.adoc
-- US-2 terminée : amélioration KDoc sur CollectOcrTask.outputDir pour documenter le contrat de nommage
-- ./gradlew check VERT sur les deux projets (codex et document)
-- Aucun code de production modifié — pure gouvernance + tests d'acceptation BDD
+Session 211 (gouvernance pure) :
+- Cadrage EPIC DOC-BOOK-DOMAIN terminé — domaine « Book » structuré (arbre/mise en page/logique)
+- 8 constats audités (blob plat assembleBook, BookSection plat, hiérarchie ref ignorée, pas de matter, pas de navigation, validator non-structurel, FPA-BOOK-4 bloqué, refactor possible)
+- 10 décisions architecturales + modèle DDD `BookTree`/`BookNode`/`Matter`/`BookLayout`/`BookNumbering`
+- 6 US ~27 pts découpées baby-step DDD/TDD/BDD strict
+- Créé `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`
+- Mise à jour BACKLOG (Vision + EPIC DOC-BOOK-DOMAIN) + INDEX (roadmap, CROSS-DOC-BOOK ✅ TERMINÉ, session 211) + AGENT (principe mission 4 Book Domain)
+- Consommateur pilote : `office/metiers/FPA` (FPA-BOOK-4/5, livre FPA II scanné)
+- Aucun code de production modifié — pure gouvernance
 
-== EPICs — tous clos sauf travail en cours
+== EPICs — état
 
-- CROSS-DOC-BOOK 🟡 (US-1 ✅, US-2 ✅, US-3 À FAIRE) :
-  * US-1 : Cucumber BDD cross-borough book pipeline ✅
-  * US-2 : KDoc clarification codex CollectOcrTask.outputDir ✅
-  * US-3 : À FAIRE (eventuelle clarification supplémentaire ou documentation complémentaire)
+- CROSS-DOC-BOOK ✅ TERMINÉ (S-210) : BDD cross-borough + KDoc codex
+- DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, VALIDATE-4 Cucumber manquant)
+- DOC-BOOK-DOMAIN 🟡 À FAIRE (DOMAIN-0 ✅ S-211, DOMAIN-1..6 🟡)
 
-== Reprendre à
+== Reprendre à (session 212)
 
 . `git status` dans document-gradle
-. US-3 de CROSS-DOC-BOOK si besoin (clarification documentation ou amélioration mineure)
-. Sinon, passer à DOC-CR3 (revue code, 3 items P1/P2) si priorité remonte
-. Support cross-borough bakery BKY-I18N-MASS MASS-6 si besoin (delta bloc, validation STRICT déjà en place)
+. DOC-BOOK-DOMAIN-1 — `BookNode` + `BookTree` + `BookTreeBuilder` (DDD pur, 15 UT TDD strict) : `fromSections(List<BookSection>)` dérive l'arbre depuis le `ref` (profondeur = nb segments, parent = préfixe)
+. DOC-BOOK-DOMAIN-2 — `Matter` (FRONT/BODY/BACK) + `BookLayout` (niveau section par profondeur, saut de page, page de titre + `:toc:`, 12 UT)
+. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT), 1 fichier à la fois
 
 == Note cross-borough
 
-Le contrat N2↔N2 entre codex-gradle (Brooklyn) et document-gradle (New Orleans) est désormais validé par des tests BDD explicites :
-- Les pages produites par CollectOcrTask suivent le nommage %03d-%s.adoc
-- BookAssembler consomme ces pages en respectant l'ordre PageOrder dérivé du préfixe numérique
-- Les scénarios vides ou malformés sont gérés par dégradé silencieux (Loi d'économie d'encre)
-- Les fichiers non-.adoc sont ignorés (filtrage strict)
-
-Ce contrat est la base de la pipeline livre complète : collectOcr → assembleBook → publishBook.
+Le domaine « Book » est consommé par `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`)
+pour produire un livre PDF/EPUB *navigable*. Le blob plat actuel rend la
+validation humaine du rendu impossible — DOC-BOOK-DOMAIN-3 (refactor Assembler)
+débloque FPA-BOOK-4. Aucun contenu FPA n'entre dans document-gradle (frontière licence).

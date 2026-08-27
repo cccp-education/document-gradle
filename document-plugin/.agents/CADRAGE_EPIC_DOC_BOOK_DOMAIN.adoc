@@ -1,0 +1,272 @@
+= CADRAGE EPIC — DOC-BOOK-DOMAIN : Domaine « Book » structuré (arbre, mise en page, logique)
+:epic: DOC-BOOK-DOMAIN
+:date: 2026-08-27
+:session: 211
+:pattern: S-057/S-063 (gouvernance pure) + baby-step DDD/TDD/BDD
+:consommateur: office/metiers/FPA (livre FPA II scanné)
+
+== Contexte
+
+_Leçon pilote_ : le pipeline livre (DOC-11 `assembleBook` + DOC-BOOK-VALIDATE)
+assemble aujourd'hui les pages OCRisées (codex/codebase) en **un blob AsciiDoc
+plat** : un en-tête `= Titre` + `:author:`, puis la concaténation des pages dans
+l'ordre `PageOrder`. La table des matières source (`Devenir_..._FPA_II.adoc`,
+~180 sections) encode pourtant une **hiérarchie profonde** par son `Référence`
+(`1.0.1`, `1.0.2.6.4`, `2.1.5`…) — un livre à parties, chapitres, sections,
+sous-sections, annexes.
+
+Ce blob plat est *illisible et non-navigable* : aucun `==`/`===` n'apparaît,
+le lecteur ne peut pas sauter à une section, la numérotation est absente, le
+glossaire/index/préface (matter) ne sont pas distingués du corps. Or AsciiDoc
+`doctype: book` *attend* une structure en arbre (level-0 titre, puis parties
+`==`, chapitres `===`, sections `====`, back matter). L'assemblage plat
+casse la promesse du format et empêche une vraie publication PDF/EPUB navigable.
+
+_L'objectif de cet EPIC_ est de **cadrer le domaine « Book »** comme un agrégat
+DDD de premier rang dans document-gradle : un *arbre propre* qui organise le
+contenu AsciiDoc de manière (1) **architecturée** (hiérarchie Parties→Chapitres→
+Sections dérivée de la TOC), (2) **mise en page** (front/body/back matter, sauts
+de page, page de titre), (3) **logique** (numérotation hiérarchique, navigation
+précédent/suivant, ancres de référence croisée). Le contenu FPA (données de
+scan) reste dans `office/`, le domaine et ses tests vivent en Apache 2.0 dans
+document-gradle.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| `BookAssembler.assemble` produit un blob plat : header + concaténation
+  des pages, **aucun niveau de section** (`==`/`===`) n'est émis par nœud.
+| `BookAssembler.kt` `buildBody` : `pages.forEach { sb.append(text) }`.
+  Le `doctype: book` est posé mais le corps reste monolithique.
+
+| 2
+| `BookSection` est **plat** (`ref, title, page, pdfFile`) : la hiérarchie
+  encodée dans `ref` (`\d+(\.\d+)*`, profondeur = nb de segments) est
+  ignorée. Aucun `parent`/`children` n'existe.
+| `BookSection.kt` data class plate. `BookTocParser` produit une
+  `List<BookSection>` à plat (expansion multi-pages), jamais un arbre.
+
+| 3
+| La TOC FPA encode 4+ niveaux (`1.0.1` Part, `1.0.2` Chapitre,
+  `1.0.2.6` Section, `1.0.2.6.4` Sous-section) — le modèle plat ne peut
+  pas les représenter ni les restituer en `==`/`===`/`====`/`=====`.
+| `Devenir_..._FPA_II.adoc` TOC (lignes 8-78+) : refs jusqu'à 4 segments.
+
+| 4
+| Aucune notion de **matter** (front/body/back). Préface, TOC, glossaire,
+  index, annexes sont mélangés au corps dans l'ordre de page brut.
+| `BookConfig`/`BookDsl` ne portent aucun `Matter`. `AssembleBookTask`
+  ne distingue pas les parties du livre.
+
+| 5
+| Aucune **logique** de navigation : pas de numérotation hiérarchique, pas
+  de `<<anchor>>` de référence croisée, pas de précédent/suivant. Le livre
+  assemblé n'est pas « navigable » au sens AsciiDoc/PDF.
+| `BookAssemblyResult` ne porte que `content/pages/photoCount`.
+
+| 6
+| `BookValidator` valide la *cohérence page↔TOC* mais pas la *structure* :
+  continuité des `ref`, unicité, front/back matter présents, monotonicité
+  hiérarchique.
+| `BookValidator.kt` 5 règles (coverage, orphan, empty, duplicate, pdf) —
+  aucune sur l'arbre.
+
+| 7
+| Le consommateur `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`) attend
+  un livre *structuré* pour une conversion PDF/EPUB lisible — sinon le
+  rendu reste un empilement de pages sans sommaire cliquable.
+| `FPA PROMPT_REPRISE` S-079 : « Validation humaine du rendu (TOC,
+  pagination, images) ». Le blob plat rend cette validation impossible.
+
+| 8
+| `BookAssembler` est un `object` pur (déterministe, ink-economy) — il est
+  *refactorable* sans casser la source : on peut ajouter un surcharge
+  `assemble(tree, layout)` qui émet l'arbre, en gardant l'ancienne
+  `assemble(pagesDir, ...)` en compatibilité.
+| `BookAssembler.kt` : `object`, aucun état, aucun I/O mutable.
+|===
+
+== Décisions architecturales
+
+. *Agrégat `BookTree` de premier rang* — le domaine « Book » devient un
+  agrégat DDD : racine `BookTree` contenant des `BookNode` (arbre
+  Parties→Chapitres→Sections→Sous-sections→…), une `Map<ref, BookNode>`, et
+  la liste ordonnée des feuilles (pages). C'est la *source de vérité
+  structurelle* du livre, découplée de l'assemblage.
+
+. *Hiérarchie dérivée du `ref`* — la profondeur d'un nœud = nombre de
+  segments du `ref` (`1.0.2.6.4` → level 4). Le parent d'un nœud = préfixe
+  tronqué au segment k-1 (`1.0.2.6` → parent de `1.0.2.6.4`). `BookTreeBuilder
+  .fromSections(List<BookSection>)` reconstruit l'arbre ; `BookSection` existant
+  devient la *feuille source* (mapping ref→page). Zéro changement de format TOC.
+
+. *`BookNode` sealed/value object* — `BookNode` = data class immuable
+  (`ref, title, level, children: List<BookNode>`, + `sourcePage` pour la feuille
+  mappée). Pas de dépendance Gradle. TDD strict (15 UT : dérivation profondeur,
+  lien parent, unicité ref, ordre, refs orphelins).
+
+. *`Matter` (FRONT/BODY/BACK)* — classifier logique d'un nœud selon la racine
+  de son `ref` OU un marqueur explicite dans la TOC. Convention proposée :
+  `0.x` → FRONT (préface, intro, TOC), `1..n.x` → BODY (corps), `9.x` → BACK
+  (glossaire, index, annexes). `Matter` est une value object du domaine, testable
+  sans I/O.
+
+. *`BookLayout` (mise en page)* — value object portant la stratégie d'émission
+  AsciiDoc : niveau de section par profondeur (`==` pour level 1, `===` level 2,
+  …), politique de saut de page (`<<<` ou `:page-break:`), émission de la page
+  de titre et de la TOC (`:toc:`), placement du front/back matter. DDD pur,
+  testable (émet une `String` AsciiDoc attendue).
+
+. *Refactor `BookAssembler` par surcharge* — nouvelle `assemble(tree, layout)`
+  émet header + front matter + corps (sections imbriquées aux bons niveaux) +
+  back matter. L'ancienne `assemble(pagesDir, title, author, photosDir)`
+  reste pour compatibilité (blob plat). Non-régression : `BookAssemblerTest`
+  existant reste VERT.
+
+. *`BookNumbering` (logique)* — value object calculant la numérotation
+  hiérarchique (`1`, `1.2`, `1.2.1`…), les ancres de référence croisée
+  (`[[ref]]`), et la navigation précédent/suivant. DDD pur, testable (10 UT).
+
+. *Extension `BookValidator` sur l'arbre* (US-6, option) — règles structurelles
+  : continuité des `ref` (pas de trou de niveau), unicité des `ref`, présence
+  d'au moins un nœud FRONT et un nœud BACK, monotonicité de l'ordre de page.
+  Mode lenient/strict réutilisé (DOC-BOOK-VALIDATE).
+
+. *Baby-step DDD/TDD/BDD strict* — RED → GREEN → REFACTOR, 1 fichier à la
+  fois, 3 niveaux (unit / functional / Cucumber). English only dans le code.
+  Chaque US est *testable isolément* avant le refactoring de l'assemblage.
+
+. *Frontière licence préservée* — le domaine et ses tests sont Apache 2.0
+  dans document-gradle ; les données FPA (pages/scans/TOC) restent dans
+  `office/metiers/FPA/`. On prend des morceaux du livre FPA pour dogfooder,
+  jamais l'inverse.
+
+== Modèle du domaine (vocabulaire ubiquit)
+
+----
+Book (agrégat racine, doctype: book)
+ ├─ frontMatter : List<BookNode>   (Matter.FRONT  — préface, intro, TOC)
+ ├─ bodyMatter  : List<BookNode>   (Matter.BODY   — parties/chapitres/sections)
+ ├─ backMatter  : List<BookNode>   (Matter.BACK   — glossaire, index, annexes)
+ └─ leaves      : List<BookSection> (pages OCR, mapping ref→page, source de vérité contenu)
+
+BookNode (value object)
+ ├─ ref      : String   (ex "1.0.2.6.4")
+ ├─ title    : String
+ ├─ level    : Int      (= nb de segments du ref)
+ ├─ matter   : Matter
+ ├─ children : List<BookNode>
+ └─ source   : BookSection?  (feuille mappée sur une page OCR)
+
+BookTreeBuilder.fromSections(List<BookSection>) : BookTree
+BookLayout.emit(tree) : String   (AsciiDoc structuré navigable)
+BookNumbering.compute(tree) : Map<ref, NavEntry>  (numéro + prev/next + anchor)
+----
+
+== Découpage US (baby steps DDD/TDD/BDD)
+
+[cols="1,5,2,2", options="header"]
+|===
+| US | Description | Tests | Pts
+
+| DOC-BOOK-DOMAIN-0
+| *Cadrage* EPIC (gouvernance pure, zéro code modifié). Audit 8 constats,
+  10 décisions, modèle du domaine. Doc `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`.
+| — (gouvernance pure)
+| 0 ✅ (S-211)
+
+| DOC-BOOK-DOMAIN-1
+| *`BookNode` + `BookTree` + `BookTreeBuilder`* — value objects DDD purs.
+  `fromSections(List<BookSection>)` dérive la hiérarchie depuis le `ref`
+  (profondeur = nb de segments, parent = préfixe). Unicité ref, lien parent,
+  ordre préservé.
+| UT : 15 (depth derifation, parent link, ref uniqueness, orphan ref,
+  ordering, multi-level 1.0.2.6.4)
+| 5
+
+| DOC-BOOK-DOMAIN-2
+| *`Matter` (FRONT/BODY/BACK)* classifier + *`BookLayout`* value object
+  (niveau de section par profondeur `==`/`===`/`====`, politique saut de page,
+  émission page de titre + `:toc:`).
+| UT : 12 (matter classification, level→`==`, page-break policy,
+  front/back emission)
+| 4
+
+| DOC-BOOK-DOMAIN-3
+| *Refactor `BookAssembler.assemble(tree, layout)`* — émet AsciiDoc structuré
+  (front matter + corps imbriqué niveaux + back matter). Ancienne
+  `assemble(pagesDir,…)` conservée (compat). Non-régression `BookAssemblerTest`.
+| FT : assembleBook produit livre structuré depuis pages OCR + TOC FPA
+  (dogfooding) ; UT : émission niveaux
+| 5
+
+| DOC-BOOK-DOMAIN-4
+| *`BookNumbering`* — numérotation hiérarchique (`1`, `1.2`, `1.2.1`),
+  ancres `[[ref]]`, navigation précédent/suivant. DDD pur.
+| UT : 10 (numbering, anchors, prev/next, root-relative)
+| 4
+
+| DOC-BOOK-DOMAIN-5
+| *Cucumber BDD* `@book-tree` — scénarios end-to-end :
+  (a) arbre structuré assemblé depuis TOC FPA (niveaux `==`/`===` corrects),
+  (b) front/body/back matter séparés,
+  (c) numérotation hiérarchique présente,
+  (d) navigation précédent/suivant + ancres,
+  (e) compat ancien blob plat (pages sans TOC → assemblage dégradé).
+  Runner dédié `BookTreeCucumberRunner` + steps `BookTreeSteps` (préfixe
+  « book-tree », pattern S-088).
+| BDD : 5 scénarios
+| 5
+
+| DOC-BOOK-DOMAIN-6
+| *Extension `BookValidator` sur l'arbre* (structurelle) : continuité des
+  `ref`, unicité, présence FRONT+BACK, monotonicité ordre de page. Réutilise
+  lenient/strict (DOC-BOOK-VALIDATE). Intégration `AssembleBookTask`.
+| UT : 8 + FT : 2
+| 4
+|===
+
+_Total_ : ~27 pts (6 US actives + cadrage). Séquentiel : US-1 → US-2 → US-3
+→ US-4 → US-5 → US-6.
+
+== Ordre d'exécution (baby-step)
+
+. US-0 : Cadrage ✅ (cette session)
+. US-1 : `BookNode`/`BookTree`/`BookTreeBuilder` — TDD strict (RED compile
+  fail → GREEN 15 UT → REFACTOR). Aucun I/O.
+. US-2 : `Matter` + `BookLayout` — TDD strict (12 UT). Peut suivre US-1.
+. US-3 : `BookAssembler.assemble(tree, layout)` — FT dogfooding FPA (livre
+  structuré) + non-régression. `check` VERT.
+. US-4 : `BookNumbering` — TDD strict (10 UT).
+. US-5 : Cucumber `@book-tree` — BDD strict RED → GREEN → REFACTOR. Runner
+  dédié.
+. US-6 : extension `BookValidator` arbre + intégration — UT/FT.
+
+== Relation avec FPA (consommateur)
+
+* FPA-BOOK-4 (`bookPipeline`) **consommera** `BookTree` + `BookLayout` pour
+  produire un livre PDF/EPUB *navigable*. Le cadrage DOC-BOOK-DOMAIN est la
+  pré-condition de FPA-BOOK-4 (le blob plat rendait la validation humaine
+  impossible).
+* Ajout côté FPA d'une US *FPA-BOOK-5 « Book tree structured assembly »* qui
+  dogfoode `assembleBook(tree, layout)` sur le `livre.adoc` FPA réel une fois
+  DOC-BOOK-DOMAIN-3 livré. Voir `office/metiers/FPA/BACKLOG.adoc`.
+
+== Gates et risques
+
+* *Gate* : aucune dépendance cross-borough bloquante. `BookSection` existant
+  est réutilisé (mapping ref→page). Le domaine est autonome (zéro import codex).
+* *Risque* : TOC FPA non parfaitement monotone (refs `1.0.2` puis `1.0.2.1`)
+  — `BookTreeBuilder` doit tolérer l'insertion de nœuds feuilles hors ordre
+  strict (arbre reconstruit depuis le `ref`, pas depuis l'ordre de ligne).
+* *Risque* : matter FRONT/BACK par convention `0.x`/`9.x` peut ne pas coller
+  à la TOC réelle FPA — classifier configurable (marqueur explicite dans la
+  TOC en fallback). Pas de hardcode aveugle.
+* *Non-régression* : ancienne `assembleBook` (blob plat) conservée ; les
+  tests DOC-11/DOC-BOOK-VALIDATE existants restent VERTS.
+* *Économie d'encre* : l'arbre est dérivé du `ref` déjà calculé — zéro
+  re-OCR, zéro nouvel I/O coûteux.

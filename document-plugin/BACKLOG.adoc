@@ -18,6 +18,19 @@ Le plugin couvre deux missions complementaires :
 2. **Publication multi-format** → chaque backend AsciidoctorJ est expose
    comme une tache Gradle isolee avec configuration fine
 
+=== Domaine « Book » (structuré, mise en page, logique)
+
+Au-dela de l'assemblage plat (DOC-11), document-gradle porte un *domaine
+« Book »* de premier rang : un agregat DDD `BookTree` qui organise le contenu
+AsciiDoc en **arbre propre** — Parties → Chapitres → Sections → Sous-sections
+— derive de la table des matieres (ref `1.0.2.6.4` = profondeur 4). Ce domaine
+rend le livre (1) **architecturé** (hiérarchie restituee en niveaux `==`/`===`/
+`====`), (2) **mise en page** (front/body/back matter, sauts de page, page de
+titre, `:toc:`), (3) **logique** (numérotation hiérarchique, navigation
+précédent/suivant, ancres de reference croisée). Voir EPIC `DOC-BOOK-DOMAIN`
+(cadrage S-211, `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`). Consommateur pilote :
+`office/metiers/FPA` (livre FPA II scanné → livre PDF/EPUB navigable).
+
 '''
 == Boundary Codex (Brooklyn)
 
@@ -943,3 +956,110 @@ la contractualité du flow `collectOcr → assembleBook`.
 |===
 
 *Total* : ~5 pts (3 US)
+
+'''
+== 🟡 EPIC DOC-BOOK-DOMAIN — Domaine « Book » structuré (arbre, mise en page, logique)
+
+_Cadré Session 211 — `.agents/CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`._
+_Consommateur_ : `office/metiers/FPA` (FPA-BOOK-4/5, livre FPA II scanné).
+
+[CAUTION]
+====
+**Motivation** : `assembleBook` (DOC-11) produit aujourd'hui un *blob AsciiDoc
+plat* — header + concaténation des pages, **aucun niveau de section**. Or la TOC
+source (FPA, ~180 sections) encode une hiérarchie profonde par son `Référence`
+(`1.0.2.6.4`). Le `doctype: book` AsciiDoc attend un arbre (parties `==`,
+chapitres `===`, sections `====`) — l'assemblage plat casse la navigabilité
+PDF/EPUB et empêche la validation humaine du rendu (FPA-BOOK-4).
+
+**Besoin** : un agrégat DDD `BookTree` (Parties→Chapitres→Sections→Sous-sections)
+dérivé du `ref` de la TOC, un `Matter` (FRONT/BODY/BACK), un `BookLayout` (mise
+en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
+(logique : numérotation, ancres, navigation). Le contenu FPA reste dans
+`office/`, le domaine + tests sont Apache 2.0 ici.
+
+**Bénéfices** :
+. Livre PDF/EPUB *navigable* (sommaire cliquable, numérotation, ancres)
+. Séparation front/body/back matter (préface, glossaire, index, annexes)
+. `BookValidator` peut valider la *structure* (continuité ref, front/back présents)
+. Réutilisable par tout consommateur du pipeline livre (codex, runner, FPA)
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-BOOK-DOMAIN-0
+| *Cadrage* — BookTree DDD, décisions architecturales, modèle du domaine
+| — (gouvernance pure)
+| 0 ✅ (S-211)
+| —
+
+| DOC-BOOK-DOMAIN-1
+| *`BookNode` + `BookTree` + `BookTreeBuilder`* — value objects DDD purs.
+  `fromSections(List<BookSection>)` dérive la hiérarchie depuis le `ref`
+  (profondeur = nb segments, parent = préfixe). Unicité ref, lien parent, ordre.
+| UT : 15 (depth, parent link, uniqueness, orphan, ordering, multi-level)
+| 5
+| —
+
+| DOC-BOOK-DOMAIN-2
+| *`Matter` (FRONT/BODY/BACK)* classifier + *`BookLayout`* value object
+  (niveau de section par profondeur, politique saut de page, page de titre + `:toc:`).
+| UT : 12 (matter, level→`==`, page-break, front/back emission)
+| 4
+| DOMAIN-1
+
+| DOC-BOOK-DOMAIN-3
+| *Refactor `BookAssembler.assemble(tree, layout)`* — émet AsciiDoc structuré
+  (front + corps imbriqué niveaux + back). Ancienne `assemble` conservée (compat).
+  Non-régression `BookAssemblerTest`.
+| FT : assembleBook livre structuré (dogfooding FPA) ; UT : émission niveaux
+| 5
+| DOMAIN-2
+
+| DOC-BOOK-DOMAIN-4
+| *`BookNumbering`* — numérotation hiérarchique (`1`, `1.2`, `1.2.1`), ancres
+  `[[ref]]`, navigation précédent/suivant. DDD pur.
+| UT : 10 (numbering, anchors, prev/next)
+| 4
+| DOMAIN-1
+
+| DOC-BOOK-DOMAIN-5
+| *Cucumber BDD* `@book-tree` — 5 scénarios (arbre structuré, front/back matter,
+  numérotation, navigation/ancres, compat blob plat). Runner `BookTreeCucumberRunner`
+  + steps `BookTreeSteps` (préfixe « book-tree »).
+| BDD : 5 scénarios
+| 5
+| DOMAIN-3, DOMAIN-4
+
+| DOC-BOOK-DOMAIN-6
+| *Extension `BookValidator` sur l'arbre* (structurelle) : continuité `ref`,
+  unicité, présence FRONT+BACK, monotonicité ordre de page. Lenient/strict réutilisé.
+| UT : 8 + FT : 2
+| 4
+| DOMAIN-1, DOMAIN-2
+|===
+
+_Total_ : ~27 pts (6 US + cadrage). Séquentiel : US-1 → US-2 → US-3 → US-4 → US-5 → US-6.
+
+=== Dépendances (DAG)
+
+----
+DOMAIN-0 (cadrage S-211) ─→ DOMAIN-1 (BookTree) ─→ DOMAIN-2 (Matter/Layout) ─→ DOMAIN-3 (Assembler)
+                                          │                                            │
+                                          └──→ DOMAIN-4 (Numbering) ─────────────────┤
+                                          └──→ DOMAIN-6 (Validator arbre) ───────────┤
+                                                                                        └─→ DOMAIN-5 (Cucumber)
+----
+
+=== Projection sessions
+
+* *S-211* — DOMAIN-0 cadrage ✅ (ce document)
+* *S-212* — DOMAIN-1 (5 pts, BookTree DDD pur) + DOMAIN-2 (4 pts, Matter/Layout)
+* *S-213* — DOMAIN-3 (5 pts, refactor Assembler) + DOMAIN-4 (4 pts, Numbering)
+* *S-214* — DOMAIN-5 (5 pts, Cucumber) + DOMAIN-6 (4 pts, Validator arbre, clôture EPIC)
+
+Projection conservatrice : 4 sessions (cadrage + 3), ~27 pts, méthodo baby step DDD/TDD/BDD.

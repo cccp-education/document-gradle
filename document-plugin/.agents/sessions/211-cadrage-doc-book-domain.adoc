@@ -1,0 +1,61 @@
+= Session 211 — Cadrage EPIC DOC-BOOK-DOMAIN (Domaine « Book » structuré)
+
+_Borough_ : document-gradle (New Orleans 🟢)
+_Date_ : 2026-08-27
+_Type_ : cadrage (gouvernance pure, zéro code modifié)
+_Score_ : 10/10
+
+== Objectif
+
+Cadrer le domaine « Book » dans document-gradle pour organiser le contenu
+AsciiDoc en *arbre propre* : (1) architecturé (hiérarchie Parties→Chapitres→
+Sections dérivée de la TOC), (2) mise en page (front/body/back matter, sauts
+de page, page de titre, `:toc:`), (3) logique (numérotation, ancres, navigation).
+Consommateur pilote : `office/metiers/FPA` (livre FPA II scanné).
+
+== Constats audités (8)
+
+1. `BookAssembler.assemble` produit un blob plat (header + concaténation),
+   aucun niveau de section `==`/`===`.
+2. `BookSection` est plat — la hiérarchie encodée dans `ref` (`\d+(\.\d+)*`)
+   est ignorée.
+3. La TOC FPA encode 4+ niveaux (`1.0.2.6.4`) — modèle plat incapable.
+4. Aucune notion de `Matter` (front/body/back).
+5. Aucune logique de navigation (numérotation, ancres, précédent/suivant).
+6. `BookValidator` valide la cohérence page↔TOC, pas la structure.
+7. FPA-BOOK-4 (`bookPipeline`) attend un livre navigable — blob plat bloque
+   la validation humaine du rendu.
+8. `BookAssembler` est un `object` pur → refactorable par surcharge
+   (compatibilité préservée).
+
+== Décisions architecturales (10)
+
+Agrégat `BookTree` de premier rang ; hiérarchie dérivée du `ref` (profondeur =
+nb segments, parent = préfixe) ; `BookNode` value object ; `Matter` classifier
+(FRONT/BODY/BACK, convention `0.x`/`1..n.x`/`9.x` + fallback explicite) ;
+`BookLayout` value object (niveaux, sauts de page, page de titre + `:toc:`) ;
+refactor `BookAssembler.assemble(tree, layout)` par surcharge ; `BookNumbering`
+(numérotation/ancres/nav) ; extension `BookValidator` sur l'arbre (lenient/
+strict) ; baby-step DDD/TDD/BDD strict ; frontière licence préservée.
+
+== Découpage US (~27 pts)
+
+- DOC-BOOK-DOMAIN-0 ✅ cadrage (cette session)
+- DOMAIN-1 `BookNode`/`BookTree`/`BookTreeBuilder` — 15 UT
+- DOMAIN-2 `Matter` + `BookLayout` — 12 UT
+- DOMAIN-3 refactor `BookAssembler.assemble(tree, layout)` — FT dogfooding FPA
+- DOMAIN-4 `BookNumbering` — 10 UT
+- DOMAIN-5 Cucumber `@book-tree` (5 scénarios, runner dédié)
+- DOMAIN-6 extension `BookValidator` arbre — 8 UT + 2 FT
+
+== Livrables gouvernance
+
+- `.agents/CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc` (créé)
+- BACKLOG.adoc : Vision enrichie + EPIC DOC-BOOK-DOMAIN (créé)
+- INDEX.adoc : roadmap + CROSS-DOC-BOOK ✅ TERMINÉ + session 211
+- AGENT.adoc : mission 4 « Domaine Book structuré »
+- PROMPT_REPRISE.adoc : session 212 = DOMAIN-1/2
+
+== Suite (session 212)
+
+DOMAIN-1 + DOMAIN-2 en TDD strict (RED → GREEN → REFACTOR), 1 fichier à la fois.

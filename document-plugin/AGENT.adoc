@@ -45,6 +45,24 @@ attributs, des templates et des options de rendu.
 Pipeline complet :
   Source ──→ IA (LLM) ──→ AsciiDoc ──→ enrichissement (PlantUML/images/HTML) ──→ conversion ──→ livrable (HTML/PDF/EPUB/...)
 
+=== 4. Domaine « Book » structuré (arbre, mise en page, logique)
+
+Au-delà de l'assemblage plat (mission DOC-11), document-gradle porte un
+*domaine « Book »* de premier rang : un agrégat DDD `BookTree` qui organise le
+contenu AsciiDoc en **arbre propre** — Parties → Chapitres → Sections →
+Sous-sections — dérivé de la table des matières (le `ref` `1.0.2.6.4` encode
+la profondeur 4). Ce domaine rend le livre :
+
+* *architecturé* — la hiérarchie est restituée en niveaux AsciiDoc `==` / `===` / `====` ;
+* *mise en page* — `Matter` FRONT/BODY/BACK (préface, corps, glossaire/index/annexes), sauts de page, page de titre, `:toc:` ;
+* *logique* — `BookNumbering` (numérotation hiérarchique, ancres `[[ref]]`, navigation précédent/suivant).
+
+Le domaine est découplé de l'assemblage : `BookTreeBuilder.fromSections` reconstruit
+l'arbre depuis la TOC, `BookLayout.emit(tree)` produit l'AsciiDoc navigable, et
+`BookAssembler` conserve une surcharge par arbre. Voir EPIC `DOC-BOOK-DOMAIN`
+(cadrage S-211, `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`). Consommateur pilote :
+`office/metiers/FPA` (livre FPA II scanné → PDF/EPUB navigable).
+
 Cas d'usage MVP0 :
 - Generation de documentation technique des plugins (README, specs)
 - Conversion des SPG/SPD AsciiDoc en PDF stagiaire
