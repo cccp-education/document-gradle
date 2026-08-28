@@ -1,0 +1,44 @@
+= Session 218 (2026-08-28) — FPA-BOOK-6 : resolver FPA-aware + localisation OCR (consumer office/metiers/FPA)
+
+== Contexte
+
+Session FPA S-081 : l'utilisateur rejette le Python et exige du TDD dans le
+plugin Gradle/Kotlin. Le `livre.adoc` FPA assemblé (S-078) et le livrable
+navigable (S-080) avaient une mise en page déplorable (concaténation à plat,
+pages TOC imprimées en faux headings, aucune hiérarchie, aucune ancre). Cause
+racine : `BookAssembler.pageContentResolver` suppose la convention codex
+`%03d-*.adoc` alors que les scans FPA sont `NNN.adoc` (+ splits `NNN_N.adoc`).
+
+== Livrable (consumer extension, EPIC DOC-BOOK-DOMAIN reste ✅ TERMINÉ 6/6 US)
+
+Nouvelles pièces `document-plugin/src/main/kotlin/document/` :
+- `FpaPageResolver` — `BookSection.page` → `NNN.adoc` (+ `NNN_N.adoc`).
+- `BookOcrFailureDetector` + `BookOcrIssue` + `OcrFailureReason` — localise
+  pages `[ILLISIBLE]`/vides avec la section TOC (ref + titre).
+- `BookOcrIssueReport` — sérialise en `book-ocr-issues.json`.
+- `BookAssembler.fpaAwareResolver(pagesDir)` — combine `FpaPageResolver`
+  (prioritaire) + legacy `pageContentResolver`.
+- `AssembleBookTask` — utilise `fpaAwareResolver` + émet `book-ocr-issues.json`.
+
+Tests :
+- `FpaBookAssemblyTest` (UT, 4 cas) — GREEN.
+- `AssembleBookTaskFpaRichTocTest` (FT dogfooding corpus FPA complet 203 pages +
+  TOC riche 116 sections) — PASSED : livre structuré navigable reconstruit
+  (`:toc: macro` + `toc::[]` + `[[ref]]` + niveaux dérivés des refs) et 16
+  échecs OCR localisés (ex. page 73 → 2.1.1, ILLISIBLE).
+
+== Blocage (environnement, non code)
+
+Génération standalone de l'artefact `livre.adoc` dans le repo FPA échoue sur la
+résolution d'artefacts internes (`workspace-bom:0.0.11`, `plantuml-plugin:0.0.3`)
+— le test fonctionnel de dogfooding prouve néanmoins l'assemblée correcte.
+Déploiement tracé côté FPA (FPA-BOOK-6-5, S-082).
+
+== Commandes vérifiées
+
+----
+./gradlew test --tests document.FpaBookAssemblyTest
+./gradlew functionalTest --tests document.AssembleBookTaskFpaRichTocTest
+----
+
+Les deux PASSENT. Zéro régression du domaine `Book` existant.

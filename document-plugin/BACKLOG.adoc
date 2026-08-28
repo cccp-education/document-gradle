@@ -1075,3 +1075,19 @@ domaine `Book` structuré complet (arbre, matter, layout, numbering, navigation,
 assembleur structuré + validation structurelle), Cucumber BDD `@book-tree`
 6/6 PASSED, dogfooding FPA réel (`office/metiers/FPA`) PASSED. Consommateur
 `office/metiers/FPA` débloqué (FPA-BOOK-4 bookPipeline navigable).
+
+=== Extension consommateur (S-081, hors EPIC — suivi dans `office/metiers/FPA/BACKLOG.adoc` FPA-BOOK-6)
+
+*Extension non-régression du domaine `Book` pour le consommateur FPA* (S-081) :
+`- `BookAssembler.fpaAwareResolver(pagesDir)` combine un nouveau
+  `FpaPageResolver` (résout `BookSection.page` → `NNN.adoc` + splits `NNN_N.adoc`,
+  convention réelle des scans FPA) avec le resolver codex legacy `%03d-*.adoc`.
+- `BookOcrFailureDetector` + `BookOcrIssue` + `OcrFailureReason` localisent les
+  pages `[ILLISIBLE]`/vides avec la section TOC (ref + titre).
+- `BookOcrIssueReport` sérialise la liste en `book-ocr-issues.json`.
+- `AssembleBookTask` émet désormais le rapport OCR après assemblage.
+- Tests : `FpaBookAssemblyTest` (UT) + `AssembleBookTaskFpaRichTocTest` (FT
+  dogfooding corpus FPA complet 203 pages + TOC riche 116 sections) — tous PASSENT.
+
+L'EPIC DOC-BOOK-DOMAIN reste ✅ TERMINÉ (6/6 US) ; ces ajouts sont des
+*extensions de câblage consommateur* (FPA-BOOK-6) tracées côté FPA.

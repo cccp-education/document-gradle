@@ -93,21 +93,19 @@ abstract class AssembleBookTask : DefaultTask() {
         }
 
         val toc = tocFile.orNull?.asFile
-        val result = if (toc != null && toc.exists()) {
-            val sections = BookTocParser.parse(toc)
-            if (sections.isNotEmpty()) {
-                // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree
-                val tree = BookTreeBuilder.fromSections(sections)
-                BookAssembler.assemble(
-                    tree = tree,
-                    layout = BookLayout(),
-                    title = title.get(),
-                    author = author.get(),
-                    resolveContent = BookAssembler.pageContentResolver(pages),
-                )
-            } else {
-                BookAssembler.assemble(pages, title.get(), author.get(), photos)
-            }
+        val tocPresent = toc != null && toc.exists()
+        val sections = if (tocPresent) BookTocParser.parse(toc!!) else emptyList()
+
+        val result = if (tocPresent && sections.isNotEmpty()) {
+            // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree
+            val tree = BookTreeBuilder.fromSections(sections)
+            BookAssembler.assemble(
+                tree = tree,
+                layout = BookLayout(),
+                title = title.get(),
+                author = author.get(),
+                resolveContent = BookAssembler.fpaAwareResolver(pages),
+            )
         } else {
             BookAssembler.assemble(pages, title.get(), author.get(), photos)
         }
@@ -118,16 +116,31 @@ abstract class AssembleBookTask : DefaultTask() {
             name,
             output.absolutePath,
             output.length(),
-            toc != null && toc.exists() && BookTocParser.parse(toc).isNotEmpty(),
+            tocPresent && sections.isNotEmpty(),
         )
 
-        validateIfConfigured(logger, pages, toc)
+        // FPA-BOOK-6 — locate OCR / LLM-vision failures for human iteration: the
+        // report carries page number + owning TOC section ref + title.
+        val issues = if (tocPresent) BookOcrFailureDetector.detect(pages, sections) else emptyList()
+        if (issues.isNotEmpty()) {
+            val reportFile = output.parentFile.resolve("book-ocr-issues.json")
+            BookOcrIssueReport.write(issues, reportFile)
+            logger.warn(
+                "{} — {} OCR failure(s) located for human iteration, see {}",
+                name,
+                issues.size,
+                reportFile.absolutePath,
+            )
+        }
+
+        validateIfConfigured(logger, pages, toc, sections)
     }
 
     private fun validateIfConfigured(
         logger: org.slf4j.Logger,
         pages: File,
         toc: File?,
+        sections: List<BookSection>,
     ) {
         val tocFile = toc ?: tocFile.orNull?.asFile ?: return
         if (!tocFile.exists()) {
@@ -135,7 +148,6 @@ abstract class AssembleBookTask : DefaultTask() {
             return
         }
 
-        val sections = BookTocParser.parse(tocFile)
         val pdfs = pdfsDir.orNull?.asFile
 
         // DOC-BOOK-DOMAIN-6 — tree-level structural validation (ref continuity,
