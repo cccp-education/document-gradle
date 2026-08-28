@@ -210,3 +210,32 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 - Zéro secret, 0 production modifié hors nouveaux fichiers du domaine.
 
 *Livrables* : `BookNumbering.kt`, `BookNavigation.kt`, `BookAssembler.kt` (modifié) + 2 fichiers test (20 UT).
+
+=== Session 215 (2026-08-28) — DOC-BOOK-DOMAIN-5 (Cucumber BDD @book-tree + dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator structurel) — EPIC DOC-BOOK-DOMAIN CLÔTURÉ 6/6 US
+
+*Type* : implémentation DDD/TDD/BDD strict (baby-step RED → GREEN → REFACTOR)
+*Score* : 10/10
+
+*Résumé* :
+- Nettoyage S-214 : wrapper Gradle 9.6.1 restauré (jar + properties), `.bak` supprimés, `.gitignore` durci (+ .idea/.gradle/.kotlin/build).
+- DOMAIN-6 ✅ : `BookValidator.validateStructure(sections)` — validation *structurelle* DDD pure (zéro I/O)
+  - S1 ref continuity — parent `ref` (préfixe tronqué) absent → level jump détecté
+  - S2 unicité — doublon `(ref, page)` (même ref sur pages distinctes = section multi-pages légitime)
+  - S3 matter completeness — au moins un FRONT `0.x` et un BACK `9.x`
+  - S4 page order monotonicity — pages physiques ne régressent jamais
+  - 8 UT `BookValidatorStructureTest` RED → GREEN (TDD strict)
+  - Intégration `AssembleBookTask.validateIfConfigured` : raisons structurelles préfixées `structure — ` mergées avec la validation fichier, LENIENT → warn / STRICT → GradleException, non-régression préservée
+  - `AssembleBookTaskFunctionalTest.kt` réécrit : 4 FT GREEN (registered, structured from TOC, STRICT fail level jump citant `1.1`, LENIENT survit)
+- DOMAIN-5 ✅ : Cucumber BDD `@book-tree`
+  - `book_tree.feature` 6 scénarios (assembly structuré, front/body/back, niveaux, ancres, navigation prev/next, bornes début/fin, compt blob plat)
+  - `BookTreeCucumberRunner` + `BookTreeSteps` (package `document.booktree`, préfixe « book-tree », pure BDD domaine) + `CucumberTaskSpec("bookTreeCucumberTest")`
+  - RED UndefinedStepException → GREEN 6/6 PASSED
+  - Dogfooding FPA `AssembleBookTaskFpaTest` : corpus réel `office/metiers/FPA` (toc.adoc + scans 000/009/010), pages copiées (jamais mutées), self-skip `assumeTrue` si corpus absent, TOC LENIENT → warnings structurels loggés sans casser, book structuré navigable. PASSED.
+- Gates : 91 UT book domain + 6 suites cucumber + FT book GREEN. `DocumentPluginFunctionalTest` 62 dont 1 flaky environnemental (convertDocumentToPdf images, PASSED isolé, pression mémoire JRuby — hors périmètre, famille OOM S-213).
+
+*Livrables* : `BookValidator.kt` + `AssembleBookTask.kt` (modifiés), `booktree/` (runner + steps), `book_tree.feature`, `BookValidatorStructureTest.kt`, `AssembleBookTaskFpaTest.kt` + `AssembleBookTaskFunctionalTest.kt` (neufs).
+
+=== Session 214 (2026-08-28) — session interrompue (note d'archivage)
+
+*Type* : échec partiel — tentative d'extraction `AssembleBookTask` pour testabilité unitaire + convention mapping reverted.
+*Résultat retenu* : `AssembleBookTaskUnitTest.kt` fixé (S-214, conservé). État sale nettoyé en S-215.

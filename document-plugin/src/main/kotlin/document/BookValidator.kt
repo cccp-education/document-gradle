@@ -96,6 +96,79 @@ object BookValidator {
         }
     }
 
+    /**
+     * Validates the *structure* of the book table of contents itself
+     * (DOC-BOOK-DOMAIN-6) — the tree-level counterpart of [validate]
+     * (file-level). No I/O is performed: the check is purely structural.
+     *
+     * Validation rules:
+     * . *ref continuity* — every multi-segment `ref` has its parent `ref`
+     *   (the prefix truncated to the last segment) present in the TOC, so the
+     *   assembled [BookTree] never synthesizes hidden ancestors (no level
+     *   jump such as `1` → `1.1.1` without an intermediate `1.1`);
+     * . *ref uniqueness* — no two sections share the same (`ref`, `page`)
+     *   pair; the same `ref` with distinct pages is legitimate (multi-page
+     *   sections expanded by [BookTocParser]);
+     * . *matter completeness* — the book carries at least one FRONT section
+     *   (`0.x` ref) and one BACK section (`9.x` ref);
+     * . *page order monotonicity* — physical pages never regress in document
+     *   order.
+     *
+     * Ink Economy Law: the validation is a pure function of the sections —
+     * no I/O, no Gradle dependency, fully deterministic and idempotent.
+     *
+     * @param sections the table-of-contents sections (document order)
+     * @return a [BookValidationResult] — [BookValidationResult.Valid] when
+     *   the structure is coherent, [BookValidationResult.Invalid] with
+     *   reasons otherwise
+     */
+    fun validateStructure(sections: List<BookSection>): BookValidationResult {
+        val reasons = mutableListOf<String>()
+
+        // Rule S1: ref continuity — no level jump, every parent ref exists
+        val refs = sections.map { it.ref }.toSet()
+        for (ref in refs.sorted()) {
+            val parent = ref.substringBeforeLast('.', missingDelimiterValue = "")
+            if (parent.isNotEmpty() && parent !in refs) {
+                reasons.add("ref continuity: section '$ref' has no parent ref '$parent' in the TOC (level jump)")
+            }
+        }
+
+        // Rule S2: uniqueness — same ref on distinct pages is a legit multi-page section
+        val duplicatedPairs = sections.map { it.ref to it.page }
+            .groupBy { it }
+            .filterValues { it.size > 1 }
+            .keys
+        for ((ref, page) in duplicatedPairs) {
+            reasons.add("duplicate section: ref '$ref' appears more than once for page $page")
+        }
+
+        // Rule S3: matter completeness — at least one FRONT and one BACK section
+        val matters = sections.map { Matter.classify(it.ref) }.toSet()
+        if (Matter.FRONT !in matters) {
+            reasons.add("matter: no FRONT section (0.x ref) found in the TOC")
+        }
+        if (Matter.BACK !in matters) {
+            reasons.add("matter: no BACK section (9.x ref) found in the TOC")
+        }
+
+        // Rule S4: page order monotonicity — physical pages never regress
+        sections.zipWithNext().forEach { (current, next) ->
+            if (next.page < current.page) {
+                reasons.add(
+                    "page order: section '${next.ref}' (page ${next.page}) regresses before " +
+                        "'${current.ref}' (page ${current.page})",
+                )
+            }
+        }
+
+        return if (reasons.isEmpty()) {
+            BookValidationResult.Valid(pageCount = sections.size)
+        } else {
+            BookValidationResult.Invalid(reasons = reasons)
+        }
+    }
+
     private fun loadAdocFiles(pagesDir: File): List<File> {
         if (!pagesDir.exists() || !pagesDir.isDirectory) return emptyList()
         return pagesDir.listFiles { f -> f.isFile && f.extension.equals("adoc", ignoreCase = true) }

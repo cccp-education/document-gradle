@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 214
+:session: 216
 :date: 2026-08-28
-:status: Session 213 terminée — DOC-BOOK-DOMAIN-3 (BookAssembler structuré, 10 UT) + DOC-BOOK-DOMAIN-4 (BookNumbering, 10 UT) TDD strict
+:status: Session 215 terminée — DOC-BOOK-DOMAIN-5 (Cucumber BDD @book-tree 6/6 + dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator structurel 8 UT) — EPIC DOC-BOOK-DOMAIN CLÔTURÉ 6/6 US
 :max-lines: 70
 
 == Quick Start
@@ -9,49 +9,55 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.BookNumberingTest" --tests "document.BookAssemblerStructuredTest"  # 20 UT VERT
+./gradlew test --tests "document.BookValidatorStructureTest" --tests "document.BookAssemblerStructuredTest"  # UT VERT
+./gradlew bookTreeCucumberTest  # 6/6 scenarios PASSED
 ```
 
 == Contexte de fin
 
-Session 213 (implémentation DDD/TTD) :
-- DOC-BOOK-DOMAIN-3 ✅ TERMINÉ — `BookAssembler.assemble(tree, layout, title, author, resolveContent)` (1 fichier modifié)
-  - Émet AsciiDoc structuré : titre page, TOC, corps imbriqué niveaux, ancres `[[ref]]`
-  - Page break entre nœuds de niveau 0, titre selon `BookLayout.emitTitlePage`
-  - Retour `BookAssemblyResult(content, pages=emptyList(), photoCount=0)` (non-régression préservée)
-  - 10 UT `BookAssemblerStructuredTest` VERT (émission niveaux, titre, toc, ancres, ordre front/body/back)
-- DOC-BOOK-DOMAIN-4 ✅ TERMINÉ — `BookNumbering` + `BookNavigation` (2 fichiers neufs)
-  - `numbers(tree)` : ref→ref (FPA TOC convention)
-  - `number(tree, ref)` = ref (pas de numérotation positionnelle)
-  - `anchor(ref)` = `[[ref]]`
-  - `navigation(tree, ref)` : previous/next siblings in preorder
-  - 10 UT `BookNumberingTest` VERT (numérotation, ancres, navigation, orphelins matter)
-- Non-régression : `BookAssemblerTest`/`BookValidatorTest`/`BookTocParserTest`/`BookTreeBuilderTest`/`BookDslTest`/`BookLayoutTest` VERTS.
-  `check` complet bloqué par OOM JRuby/AsciidoctorJ préexistant dans `DocumentConverterTest` (environnement, hors périmètre).
-- Câblage `AssembleBookTask` : si TOC présent → arbre structuré ; sinon blob plat (non-régression).
-- Zéro secret, 0 production modifié hors nouveaux fichiers du domaine.
+Session 215 (implémentation DDD/TDD/BDD, clôture EPIC DOC-BOOK-DOMAIN) :
+- DOC-BOOK-DOMAIN-6 ✅ TERMINÉ — `BookValidator.validateStructure(sections)` (BookValidator.kt)
+  - S1 ref continuity (parent préfixe absent → level jump), S2 unicité (ref,page),
+    S3 matter completeness (FRONT 0.x + BACK 9.x), S4 page order monotonicity
+  - 8 UT `BookValidatorStructureTest` VERT ; intégré dans `AssembleBookTask.validateIfConfigured`
+    (raisons structurelles préfixées `structure — `, merged avec validation fichier,
+    LENIENT → warn / STRICT → GradleException)
+  - `AssembleBookTaskFunctionalTest.kt` réécrit : 4 FT VERT (registered, structured,
+    STRICT fail level jump citant `1.1`, LENIENT survit)
+- DOC-BOOK-DOMAIN-5 ✅ TERMINÉ — Cucumber BDD `@book-tree`
+  - `book_tree.feature` 6 scénarios + `BookTreeCucumberRunner` + `BookTreeSteps`
+    (préfixe « book-tree », pure domaine) + `CucumberTaskSpec("bookTreeCucumberTest")`
+  - 6/6 PASSED ; dogfooding FPA `AssembleBookTaskFpaTest` PASSED (corpus réel
+    office/metiers/FPA toc.adoc + scans 000/009/010, self-skip si corpus absent)
+- Gates : 91 UT book domain + 6 cucumber suites + FT book GREEN.
+  `DocumentPluginFunctionalTest` 62 tests : 1 échec flaky environnemental
+  (convertDocumentToPdf images, pression mémoire JRuby) — PASSED isolé ; OOM
+  `DocumentConverterTest` préexistant hors périmètre (S-213).
+- Nettoyage S-214 : wrapper 9.6.1 restauré (jar+properties), `.bak` supprimés, `.gitignore` durci.
+- Zéro secret, BOM inchangé, commit/push document-plugin.
 
 == EPICs — état
 
 - CROSS-DOC-BOOK ✅ TERMINÉ (S-210)
-- DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, VALIDATE-4 Cucumber manquant)
-- DOC-BOOK-DOMAIN ✅ TERMINÉ (DOMAIN-0 ✅ S-211, DOMAIN-1 ✅ S-212, DOMAIN-2 ✅ S-212, DOMAIN-3 ✅ S-213, DOMAIN-4 ✅ S-213, DOMAIN-5..6 🟡)
+- DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, **VALIDATE-4 Cucumber manquant**)
+- DOC-BOOK-DOMAIN ✅ TERMINÉ (6/6 US — cadrage S-211, BookTree S-212, Matter/Layout S-212,
+  Assembler S-213, Numbering S-213, Cucumber+dogfooding S-215, Validator structurel S-215)
 
-== Reprendre à (session 214)
+== Reprendre à (session 216)
 
 . `git status` dans document-gradle
-. DOC-BOOK-DOMAIN-5 — `AssembleBookTask` dogfooding FPA sur corpus réel office/ (utilise le chemin structuré si TOC présent)
-  - Intégration avec `office/metiers/FPA` : `bookPipeline` appelle `assembleBook` sur TOC + pages OCR
-  - Vérifier que le livre PDF/EPUB généré est navigable (toc, ancres, niveaux cohérents)
-  - Fonctionnel si données FPA présentes, sinon skipped (environnement)
-. DOC-BOOK-DOMAIN-6 — `BookValidator` — validation structure livre : niveaux cohérents, absence de sauts (ex. pas de 1 → 3), référencement croisé TOC↔pages, matter cohérent
-  - 10 UT TDD strict (RED → GREEN → REFACTOR)
-  - Valide qu'un `BookTree` respecte les règles FPA (ref séquentiel, niveaux valides, matter zones)
-  - Réutilisé par `office/metiers/FPA` pour contrôler l'entrée du pipeline
-. Respecter baby-step : RED (compile fail) → GREEN (UT) → REFACTOR (`check` VERT), 1 fichier à la fois.
+. DOC-BOOK-VALIDATE-4 — Cucumber BDD 5 scénarios `@book-validation` :
+  `@valid`, `@missing-page`, `@empty-section`, `@toc-mismatch`, `@strict`
+  (runner dédié + steps préfixés, pattern book-tree S-215). Baby-step BDD strict.
+  $ +Tests : 1 feature + 1 runner + 1 steps + 1 CucumberTaskSpec (~5 pts)
+. Optionnel : rapprocher `PROMPT_REPRISE-office/metiers/FPA` (FPA-BOOK-4 bookPipeline
+  débloqué par DOC-BOOK-DOMAIN) — le livre PDF/EPUB navigable FPA est désormais possible.
+. Respecter baby-step : RED (compile fail/UndefinedStep) → GREEN → REFACTOR (`check` VERT),
+  1 fichier à la fois.
 
 == Note cross-borough
 
 Le domaine « Book » est consommé par `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`)
-pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN-3/4 débloquent FPA-BOOK-4.
+pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN (6/6) débloque FPA-BOOK-4.
+Validation structurelle (DOMAIN-6) réutilisable comme garde d'entrée du pipeline.
 Aucun contenu FPA n'entre dans document-gradle (frontière licence).

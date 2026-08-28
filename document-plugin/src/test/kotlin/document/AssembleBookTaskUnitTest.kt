@@ -11,11 +11,15 @@ import kotlin.test.assertTrue
 
 class AssembleBookTaskUnitTest {
     private lateinit var tempDir: File
+    private lateinit var project: Project
 
     @BeforeEach
     fun setUp() {
         // Create a unique temporary directory for this test
         tempDir = Files.createTempDirectory("assemblebooktest").toFile()
+        // Create a project and apply the document plugin
+        project = ProjectBuilder.builder().build()
+        project.pluginManager.apply("education.cccp.document")
     }
 
     @AfterEach
@@ -35,8 +39,8 @@ class AssembleBookTaskUnitTest {
 
     @Test
     fun `assembleBook produces structured book from TOC`() {
-        // Create the task directly
-        val task = AssembleBookTask()
+        // Get the task by name (applied by the plugin)
+        val task = project.tasks.getByName("assembleBook") as AssembleBookTask
 
         // Set up directories and files
         val pagesDir = File(tempDir, "pages")

@@ -1,1 +1,5 @@
 *.hprof
+.idea
+.gradle
+.kotlin
+build

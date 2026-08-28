@@ -137,25 +137,34 @@ abstract class AssembleBookTask : DefaultTask() {
 
         val sections = BookTocParser.parse(tocFile)
         val pdfs = pdfsDir.orNull?.asFile
-        val validation = BookValidator.validate(pagesDir = pages, toc = sections, pdfsDir = pdfs)
 
-        when (validation) {
-            is BookValidationResult.Valid -> logger.info(
-                "{} — book validation OK ({} pages covered by TOC)",
+        // DOC-BOOK-DOMAIN-6 — tree-level structural validation (ref continuity,
+        // uniqueness, matter completeness, page order monotonicity), merged with
+        // the file-level validation (DOC-BOOK-VALIDATE) into a single report.
+        val structural = BookValidator.validateStructure(sections)
+        val fileBased = BookValidator.validate(pagesDir = pages, toc = sections, pdfsDir = pdfs)
+        val reasons = buildList {
+            if (structural is BookValidationResult.Invalid) {
+                addAll(structural.reasons.map { "structure — $it" })
+            }
+            if (fileBased is BookValidationResult.Invalid) addAll(fileBased.reasons)
+        }
+
+        if (reasons.isEmpty()) {
+            logger.info(
+                "{} — book validation OK ({} pages covered by TOC, structure coherent)",
                 name,
-                validation.pageCount,
+                (fileBased as? BookValidationResult.Valid)?.pageCount ?: sections.size,
             )
-            is BookValidationResult.Invalid -> {
-                val reasons = validation.reasons
-                when (validationMode.get()) {
-                    ValidationMode.LENIENT -> reasons.forEach {
-                        logger.warn("{} — book validation (lenient): {}", name, it)
-                    }
-                    ValidationMode.STRICT -> throw GradleException(
-                        "$name — book validation failed (${reasons.size} finding(s)):\n" +
-                            reasons.joinToString("\n") { "  - $it" },
-                    )
+        } else {
+            when (validationMode.get()) {
+                ValidationMode.LENIENT -> reasons.forEach {
+                    logger.warn("{} — book validation (lenient): {}", name, it)
                 }
+                ValidationMode.STRICT -> throw GradleException(
+                    "$name — book validation failed (${reasons.size} finding(s)):\n" +
+                        reasons.joinToString("\n") { "  - $it" },
+                )
             }
         }
     }

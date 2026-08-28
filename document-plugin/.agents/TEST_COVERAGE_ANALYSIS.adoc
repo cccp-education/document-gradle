@@ -577,3 +577,23 @@ test livre existantes VERTES en ciblé.
 | ✅ PASS
 | `BookAssemblerTest` + `BookValidatorTest` + `BookTocParserTest` + `BookTreeBuilderTest` + `BookDslTest` + `BookLayoutTest`
 |===
+
+== Session 215 — DOC-BOOK-DOMAIN-5 (Cucumber BDD @book-tree + dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator structurel)
+
+Tests ajoutés S215 :
+- `BookValidatorStructureTest.kt` — 8 UT DOMAIN-6 (S1 ref continuity, S2 unicité (ref,page), S3 matter FRONT+BACK, S4 page monotonicity) — RED compile fail → GREEN.
+- `book_tree.feature` — 6 scénarios Cucumber BDD @book-tree (assembly structuré, front/body/back, niveaux, ancres, navigation prev/next, bornes début/fin, compat blob plat) — RED UndefinedStepException → GREEN 6/6 PASSED.
+- `BookTreeCucumberRunner.kt` + `BookTreeSteps.kt` (package `document.booktree`, préfixe « book-tree », pure BDD domaine) + `CucumberTaskSpec("bookTreeCucumberTest")`.
+- `AssembleBookTaskFpaTest.kt` — 1 FT dogfooding corpus réel FPA (TOC + scans 000/009/010, self-skip `assumeTrue` si corpus absent en CI).
+- `AssembleBookTaskFunctionalTest.kt` réécrit — 4 FT (task registered, structured from TOC, STRICT fail level jump citant `1.1`, LENIENT survit).
+
+Total S215 : 8 UT + 6 BDD + 5 FT (dont 1 dogfooding), tous GREEN.
+
+Gates :
+- 91 UT book domain GREEN (`document.Book*Test` + `document.AssembleBook*Test`).
+- 6 suites cucumber GREEN (tableTranslation, tableValidation, plantumlValidation, frontmatterRetranslate, crossBorough, bookTree) — BUILD SUCCESSFUL 1m29s.
+- FT book GREEN (AssembleBookTaskFunctionalTest 4 + AssembleBookTaskFpaTest 1).
+- `DocumentPluginFunctionalTest` complet (62 tests) : 1 échec flaky environnemental `convertDocumentToPdf renders image directives` (pression mémoire JRuby/AsciidoctorJ) — PASSED isolé. Hors périmètre (même famille que l'OOM `DocumentConverterTest` documenté S-213).
+
+== Session 214 (interrompue) — note
+`AssembleBookTaskUnitTest.kt` fixé (S-214, conservé) ; reste de la session reverted en S-215 (pas de tests retenus hors ce fix).

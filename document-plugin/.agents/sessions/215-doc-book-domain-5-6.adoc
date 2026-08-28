@@ -1,0 +1,99 @@
+= Session 215 — DOC-BOOK-DOMAIN-5 (Cucumber BDD) + DOC-BOOK-DOMAIN-6 (BookValidator structurel) — EPIC CLÔTURÉ
+
+:date: 2026-08-28
+
+== Objet
+
+Clôture de l'EPIC DOC-BOOK-DOMAIN (domaine « Book » structuré) : US-5
+(Cucumber BDD `@book-tree` + dogfooding FPA) + US-6 (BookValidator
+structurel sur l'arbre). Reprise de la session 214 interrompue (état sale
+nettoyé en ouverture de session).
+
+== Work done
+
+=== Nettoyage session 214 interrompue
+
+- Wrapper Gradle restauré à 9.6.1 (jar + properties, racine + document-plugin)
+  — la modif non documentée 9.7.1 en session 214 a été annulée (git checkout HEAD).
+- `.bak` supprimés : `AssembleBookTaskFpaTest.kt.bak`, `AssembleBookTask.kt.bak`.
+- `.gitignore` durci : + `.idea`, `.gradle`, `.kotlin`, `build`.
+
+=== DOC-BOOK-DOMAIN-6 — BookValidator structurel (US-6)
+
+- **RED** : `src/test/kotlin/document/BookValidatorStructureTest.kt` (8 UT)
+  — compile fail confirmé (`validateStructure` inexistant).
+- **GREEN** : `BookValidator.validateStructure(sections: List<BookSection>):
+  BookValidationResult` (chemin structurel, zéro I/O). Règles :
+  * S1 *ref continuity* — tout ref multi-segment a son ref parent (préfixe
+    tronqué au dernier segment) présent dans la TOC (pas de level jump `1`→`1.1.1`);
+  * S2 *ref uniqueness* — pas de doublon `(ref, page)` (même ref sur pages
+    distinctes = section multi-pages légitime);
+  * S3 *matter completeness* — au moins une section FRONT (`0.x`) et une BACK (`9.x`);
+  * S4 *page order monotonicity* — les pages physiques ne régressent jamais.
+  Retourne `Valid(pageCount)` / `Invalid(reasons)` existant.
+- **Intégration `AssembleBookTask`** : `validateIfConfigured` réécrit pour
+  merger les raisons structurelles (préfixe `"structure — "`) avec la
+  validation fichier (`BookValidator.validate`). LENIENT → `logger.warn`,
+  STRICT → `GradleException("... book validation failed ...")`. Non-régression
+  strict/lenient préservée.
+- `AssembleBookTaskFunctionalTest.kt` réécrit : 4 FT GREEN
+  (task registered ; structured book from TOC ; STRICT fail sur level jump
+  citant `1.1` ; LENIENT survit et assemble).
+
+=== DOC-BOOK-DOMAIN-5 — Cucumber BDD `@book-tree` + dogfooding FPA (US-5)
+
+- **RED** : `src/test/resources/features/book_tree.feature` (6 scénarios
+  `@book-tree`) + `src/test/kotlin/document/booktree/BookTreeCucumberRunner.kt`
+  + `CucumberTaskSpec("bookTreeCucumberTest")` dans build.gradle.kts.
+  `./gradlew bookTreeCucumberTest` → UndefinedStepException (RED confirmé).
+- **GREEN** : `src/test/kotlin/document/booktree/BookTreeSteps.kt` (préfixe
+  « book-tree », pure BDD domaine sans tâche Gradle, pattern PlantUmlValidationSteps) :
+  * assembly structuré depuis la TOC (BookTreeBuilder.fromSections
+    → BookAssembler.assemble(tree, layout, title, author, resolver));
+  * titre page + `:author:`, headings niveaux 1/2, ancres `[[ref]]`;
+  * front/body/back matter en ordre documentaire;
+  * numérotation hiérarchique (`BookLayout.heading(node.level+1)` → `=`×k+2);
+  * navigation prev/next (`BookNumbering.navigation`);
+  * compat blob plat (assemble sans TOC — `BookAssembler.assemble(pagesDir,...)`).
+  6/6 PASSED (29s).
+- **Dogfooding FPA** : `AssembleBookTaskFpaTest.kt` réécrit sur corpus réel
+  `office/metiers/FPA` (`toc.adoc` + pages `000/009/010.adoc` des scans) —
+  projet TestKit jetable, pages copiées (jamais mutées), `assumeTrue` self-skip
+  si corpus absent (CI), TOC LENIENT par défaut (structure FPA incomplète :
+  pas de `0.x`/`9.x` → warnings structurels loggés sans casser le build).
+  Book structuré navigable (titre, `:author:`, ancres `[[ref]]`, headings
+  `====`×ref depth+2, contenu OCR réel). **PASSED** (31s).
+
+=== Non-régression (gates finales)
+
+- 91 UT book domain GREEN (Book*Test + AssembleBook*Test).
+- 6 tâches cucumber GREEN (tableTranslation, tableValidation, plantumlValidation,
+  frontmatterRetranslate, crossBorough, bookTree) — BUILD SUCCESSFUL 1m29s.
+- FT book GREEN : AssembleBookTaskFunctionalTest (4) + AssembleBookTaskFpaTest (1).
+- `DocumentPluginFunctionalTest` complet : 62 tests, 1 échec flaky
+  environnemental (`convertDocumentToPdf renders image directives`, pression
+  mémoire JRuby/AsciidoctorJ) — **PASSED isolé**. Même famille que l'OOM
+  `DocumentConverterTest` préexistant (hors périmètre, documenté S-213).
+
+== Decision log
+
+- Le ref `1.0.0` (3 segments → node.level 2) émet `====` (4 `=`), pas `===` :
+  `BookLayout.heading(level) = "="×(level+1)` appelé avec `node.level+1`.
+  Assertions du dogfooding alignées sur `"="×(segments+1)`.
+- Extraction des pages référencées du TOC FPA par split de cellules `|` avec
+  `drop(1)` (le `|` initial produit une cellule vide) — pas de regex fragile
+  exigeant un pipe terminal (le `toc.adoc` FPA n'en a pas).
+- DOMAIN-5 cadragé 5 scénarios, implémenté 6 (navigation split en
+  prev/next + bornes de début/fin — meilleure isolation).
+
+== Next steps
+
+- Prochaine session : DOC-BOOK-VALIDATE-4 (Cucumber BDD `@book-validation`,
+  5 scénarios, dernière US de l'EPIC DOC-BOOK-VALIDATE) — ou maintenance.
+- EPIC DOC-BOOK-DOMAIN ✅ TERMINÉ (6/6 US).
+
+== Blockers
+
+- Flakiness mémoire JRuby/AsciidoctorJ pour les runs complets de
+  `DocumentPluginFunctionalTest` (et OOM `DocumentConverterTest`) — environnement,
+  hors périmètre book. En cas d'échec, ré-isoler le test concerné.

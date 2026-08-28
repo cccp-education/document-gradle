@@ -89,6 +89,12 @@ cucumberConventions {
             tags = listOf("@cross-borough"),
             runnerClass = "document.crossborough.CrossBoroughCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "bookTreeCucumberTest",
+            features = listOf("src/test/resources/features/book_tree.feature"),
+            tags = listOf("@book-tree"),
+            runnerClass = "document.booktree.BookTreeCucumberRunner",
+        ),
     )
 }
 

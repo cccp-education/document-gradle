@@ -1036,18 +1036,18 @@ en page : niveaux, sauts de page, page de titre, `:toc:`), et un `BookNumbering`
 | *Cucumber BDD* `@book-tree` — 5 scénarios (arbre structuré, front/back matter,
   numérotation, navigation/ancres, compat blob plat). Runner `BookTreeCucumberRunner`
   + steps `BookTreeSteps` (préfixe « book-tree »).
-| BDD : 5 scénarios
+| BDD : 6 scénarios (prev/next split)
 | 5
 | DOMAIN-3, DOMAIN-4
-| 🟡 (S-214)
+| ✅ TERMINÉ (S-215)
 
 | DOC-BOOK-DOMAIN-6
 | *Extension `BookValidator`* sur l'arbre (structurelle) : continuité `ref`,
   unicité, présence FRONT+BACK, monotonicité ordre de page. Lenient/strict réutilisé.
-| UT : 8 + FT : 2
+| UT : 8 + FT : 5 (dont 1 dogfooding FPA)
 | 4
 | DOMAIN-1, DOMAIN-2
-| 🟡 (S-214)
+| ✅ TERMINÉ (S-215)
 |===
 
 _Total_ : ~27 pts (6 US + cadrage). Séquentiel : US-1 → US-2 → US-3 → US-4 → US-5 → US-6.
@@ -1065,8 +1065,12 @@ DOMAIN-0 (cadrage S-211) ─→ DOMAIN-1 (BookTree) ─→ DOMAIN-2 (Matter/Layo
 === Projection sessions
 
 * *S-211* — DOMAIN-0 cadrage ✅ (ce document)
-* *S-212* — DOMAIN-1 (5 pts, BookTree DDD pur) + DOMAIN-2 (4 pts, Matter/Layout)
-* *S-213* — DOMAIN-3 (5 pts, refactor Assembler) + DOMAIN-4 (4 pts, Numbering)
-* *S-214* — DOMAIN-5 (5 pts, Cucumber) + DOMAIN-6 (4 pts, Validator arbre, clôture EPIC)
+* *S-212* — DOMAIN-1 (5 pts, BookTree DDD pur) + DOMAIN-2 (4 pts, Matter/Layout) ✅
+* *S-213* — DOMAIN-3 (5 pts, refactor Assembler) + DOMAIN-4 (4 pts, Numbering) ✅
+* *S-215* — DOMAIN-5 (5 pts, Cucumber + dogfooding FPA) + DOMAIN-6 (4 pts, Validator arbre) ✅
 
-Projection conservatrice : 4 sessions (cadrage + 3), ~27 pts, méthodo baby step DDD/TDD/BDD.
+**EPIC CLÔTURÉ le 2026-08-28 (S-215)** — 6/6 US TERMINÉES. Nord :
+domaine `Book` structuré complet (arbre, matter, layout, numbering, navigation,
+assembleur structuré + validation structurelle), Cucumber BDD `@book-tree`
+6/6 PASSED, dogfooding FPA réel (`office/metiers/FPA`) PASSED. Consommateur
+`office/metiers/FPA` débloqué (FPA-BOOK-4 bookPipeline navigable).
