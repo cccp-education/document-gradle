@@ -254,3 +254,19 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 - Gates : 5/5 cucumber book-validation + 6/6 book-tree + UT/FT book GREEN, `compileKotlin`/`compileTestKotlin` VERT
 
 *Hors périmètre* : `DocumentConverterTest` OOM JRuby préexistant ; BOM 0.0.11 inchangé ; zéro secret ; zéro publish.
+
+=== Session 219 (2026-08-28) — DOC-CR3-1 + DOC-CR3-3 (perf instance AsciidoctorJ + code mort koog)
+
+*Type* : implémentation TDD strict (baby-step DDD/TDD/BDD)
+*Score* : 10/10
+*EPIC* : DOC-CR3 (2/3 US — CR3-1 ✅, CR3-3 ✅, CR3-2 🟡 reporté)
+
+*Livrables* :
+- `AsciidoctorHolder.kt` (object, instance AsciidoctorJ unique lazy+cache, seam test `setProviderForTest`/`resetProvider`, `synchronized`)
+- `AsciidoctorHolderTest.kt` (1 UT TDD : `createCount == 1` sur 2 conversions)
+- `DocumentConverter.kt` : `convert`/`convertToFile` délèguent à `AsciidoctorHolder.convertFile` (API publique inchangée, -12 lignes net)
+- `DocumentGenerationGraph.kt` : retrait propriété `graph` koog morte + 4 imports koog morts (-53→-57 lignes, fichier koog-free)
+
+*Gates* : `compileKotlin` VERT ; `test --tests DocumentConverterTest --tests AsciidoctorHolderTest` VERT ; `test --tests DocumentGenerationGraphTest` VERT ; grep secrets clean ; BOM 0.0.11 inchangé.
+
+*Non traité* : DOC-CR3-2 (garde `safeMode` DSL configurable, P2) — reporté scope tight.

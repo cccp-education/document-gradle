@@ -597,3 +597,16 @@ Gates :
 
 == Session 214 (interrompue) — note
 `AssembleBookTaskUnitTest.kt` fixé (S-214, conservé) ; reste de la session reverted en S-215 (pas de tests retenus hors ce fix).
+
+== Session 219 (2026-08-28) — DOC-CR3-1 + DOC-CR3-3
+
+*Tests ajoutés S219* :
+- `AsciidoctorHolderTest.kt` — 1 UT TDD strict (provider compteur : `createCount == 1` sur 2 conversions `convertToHtml`). Prouve la réutilisation de l'instance AsciidoctorJ (DOC-CR3-1).
+
+*Tests modifiés/non-régressés* :
+- `DocumentConverterTest` (43 UT) — conversions HTML/PDF/EPUB/DocBook/ManPage toujours vertes après délégation au holder.
+- `DocumentGenerationGraphTest` — génération intacte après retrait du code mort koog.
+
+*Couverture* : `DocumentConverter` passe d'un `Factory.create()` par conversion à une instance partagée (singleton lazy). Couvert par `AsciidoctorHolderTest` + `DocumentConverterTest`. `DocumentGenerationGraph` : suppression de ~57 lignes mortes sans perte de comportement (validé par `DocumentGenerationGraphTest`).
+
+*Hors périmètre* : DOC-CR3-2 (safeMode DSL) non traité.

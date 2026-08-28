@@ -1,0 +1,80 @@
+= Session 219 — DOC-CR3 : Création de Contenu Solide (1/3 + 3/3 US)
+
+:session: 219
+:date: 2026-08-28
+:borough: document-gradle (New Orleans 🟢)
+:epic: DOC-CR3
+
+== Objectif
+
+Reprendre le borough sur son EPIC suivant du BACKLOG (DOC-CR3 — Revue
+CR-GLOBALE-003). Traiter les US à plus haute valeur en baby-step DDD/TDD/BDD :
+réutilisation de l'instance AsciidoctorJ (perf, P1) et suppression du code mort
+koog (P2).
+
+== Travail effectué
+
+=== DOC-CR3-1 — Réutiliser l'instance AsciidoctorJ (P1) ✅
+
+*Constat* : `DocumentConverter.kt:106,128` appelait `Asciidoctor.Factory.create()`
+à chaque conversion (`.use { }` fermait l'instance après chaque appel). Pour le
+bookPipeline (5 formats), cela démarrait JRuby 5× par livre.
+
+*Décisions* :
+- Nouveau `object AsciidoctorHolder` (package `document`) : instance unique
+  créée paresseusement, mise en cache, réutilisée pour toutes les conversions.
+- Accès `synchronized(lock)` (l'instance AsciidoctorJ n'est pas garantie
+  thread-safe).
+- Seam de test : `setProviderForTest(...)` / `resetProvider()` (internal) pour
+  injecter un provider compteur et prouver la réutilisation.
+- `DocumentConverter.convert` / `convertToFile` délèguent désormais à
+  `AsciidoctorHolder.convertFile(...)`. API publique inchangée.
+
+*Baby-step TDD strict* :
+- RED : `AsciidoctorHolderTest` (1 test) → compile fail (`AsciidoctorHolder`
+  inexistant).
+- GREEN : création du holder + refactor converter → assertion
+  `createCount == 1` PASSED.
+- REFACTOR : `DocumentConverterTest` + `AsciidoctorHolderTest` verts
+  (non-régression, `--rerun-tasks`).
+
+=== DOC-CR3-3 — Supprimer le code mort (P2) ✅
+
+*Constat* : `DocumentGenerationGraph.graph` (stratégie koog `AIAgentGraphStrategy`)
+était construite mais jamais lue — `execute()` réimplémente le flux manuellement.
+`DocumentI18nBridge` (autre mort cité) était déjà retiré en S-030.
+
+*Action* : suppression de la propriété `graph` (34-66) + des 4 imports koog
+morts (`AIAgentGraphStrategy`, `ToolSelectionStrategy`, `node`, `strategy`).
+Le fichier redevient koog-free ; `execute()` inchangé. Le test
+`DocumentGenerationGraphTest` utilise une variable locale + `execute()` → non
+régression.
+
+=== DOC-CR3-2 — Audit SafeMode.UNSAFE (P2) — NON TRAITÉ cette session
+
+Laissé en suspens : il s'agit d'ajouter une garde configurable `safeMode` DSL
+(backward-compat UNSAFE par défaut). Reporté pour garder le scope du baby-step
+tight et vérifié. Marqueur 🟡 conservé dans le BACKLOG.
+
+== Gates
+
+- `./gradlew compileKotlin` BUILD SUCCESSFUL
+- `./gradlew test --tests DocumentConverterTest --tests AsciidoctorHolderTest`
+  BUILD SUCCESSFUL (non-régression converter + nouveau test vert)
+- `./gradlew test --tests DocumentGenerationGraphTest` BUILD SUCCESSFUL
+  (code mort retiré, génération intacte)
+- Zéro secret en dur (grep TOKEN/SECRET/PASSWORD/API_KEY clean)
+- BOM inchangé (0.0.11)
+
+== Fichiers
+
+- Ajout `src/main/kotlin/document/AsciidoctorHolder.kt` (instance partagée)
+- Ajout `src/test/kotlin/document/AsciidoctorHolderTest.kt` (1 test TDD)
+- Modif `src/main/kotlin/document/DocumentConverter.kt` (délégation holder)
+- Modif `src/main/kotlin/document/generation/DocumentGenerationGraph.kt`
+  (retrait code mort koog)
+
+== Prochaine session (220)
+
+Poursuivre DOC-CR3-2 (garde `safeMode` DSL configurable) OU EPIC suivant du
+BACKLOG. Rester en baby-step DDD/TDD/BDD.

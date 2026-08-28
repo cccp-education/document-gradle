@@ -1,6 +1,5 @@
 package document
 
-import org.asciidoctor.Asciidoctor
 import org.asciidoctor.Attributes
 import org.asciidoctor.Options
 import org.asciidoctor.SafeMode
@@ -103,12 +102,10 @@ object DocumentConverter {
      * @return le contenu du fichier de sortie
      */
     fun convert(source: DocumentSource, backend: String, theme: DocumentTheme = DocumentTheme()): String {
-        Asciidoctor.Factory.create().use { asciidoctor ->
-            val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
-            val options = buildOptions(backend, theme, format, outputFile = null)
-            return asciidoctor.convertFile(source.file, options)
-                ?: throw IllegalStateException("AsciidoctorJ a produit une sortie nulle pour ${source.file.name} (backend=$backend)")
-        }
+        val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
+        val options = buildOptions(backend, theme, format, outputFile = null)
+        return AsciidoctorHolder.convertFile(source.file, options)
+            ?: throw IllegalStateException("AsciidoctorJ a produit une sortie nulle pour ${source.file.name} (backend=$backend)")
     }
 
     /**
@@ -125,11 +122,9 @@ object DocumentConverter {
      */
     fun convertToFile(source: DocumentSource, backend: String, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
         output.parentFile.mkdirs()
-        Asciidoctor.Factory.create().use { asciidoctor ->
-            val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
-            val options = buildOptions(backend, theme, format, outputFile = output)
-            asciidoctor.convertFile(source.file, options)
-        }
+        val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
+        val options = buildOptions(backend, theme, format, outputFile = output)
+        AsciidoctorHolder.convertFile(source.file, options)
     }
 
     /**
