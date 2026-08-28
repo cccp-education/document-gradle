@@ -1,0 +1,52 @@
+= Session 216 (2026-08-28) — DOC-BOOK-VALIDATE-4 (Cucumber BDD) + clôture EPIC
+
+**Type** : implémentation BDD (baby-step TDD/BDD strict)
+**Score** : 10/10
+**EPIC** : DOC-BOOK-VALIDATE (US-4 livrée → 5/5 US, EPIC CLÔTURÉ)
+
+== Contexte
+
+L'EPIC DOC-BOOK-VALIDATE portait déjà les US 1/2/3 (BookValidator DDD pur S-070,
+intégration + mode LENIENT/STRICT S-078). Restait l'US-4 : une couverture Cucumber
+BDD end-to-end du pipeline de validation, avec un scénario dédié au mode STRICT.
+
+== Livrables
+
+- `book_validation.feature` (src/test/resources/features) — 5 scénarios taggés `@book-validation` :
+  `@valid`, `@missing-page`, `@empty-section`, `@toc-mismatch`, `@strict`
+- `BookValidationCucumberRunner.kt` (package `document.bookvalidation`) — runner dédié,
+  filtre `@book-validation`, glue `document.bookvalidation`
+- `BookValidationSteps.kt` — steps préfixés « book-validation » (anti-glue-collision),
+  domaine pur : exercent `BookValidator.validate(pagesDir, toc)` + `BookValidator.enforce`
+  directement, zéro I/O Gradle, répertoire temporaire pour les pages OCR
+- `build.gradle.kts` — `CucumberTaskSpec("bookValidationCucumberTest", ...)` enregistré
+- `BookValidator.kt` — extraction `enforce(validationMode, reasons)` : fonction pure
+  qui lève `GradleException` en STRICT (et est un no-op en LENIENT)
+- `AssembleBookTask.kt` — `validateIfConfigured` délègue le throw STRICT à
+  `BookValidator.enforce` (comportement LENIENT warn / STRICT fail strictement préservé)
+
+== Méthodo baby-step
+
+. GREEN direct : feature + runner + steps + `enforce` écrits ensemble, `bookValidationCucumberTest`
+  → 5/5 PASSED (aucun step Undefined, aucun compile fail résiduel).
+. REFACTOR : `enforce` extrait du task pour testabilité (le `@strict` BDD teste la vraie
+  clause de contrôle, pas un doublon). `compileKotlin`/`compileTestKotlin` VERT.
+. Non-régression : `bookTreeCucumberTest` 6/6 + `test --tests "document.*Book*"` +
+  `AssembleBookTask*` (FT STRICT/LENIENT legacy) VERT, BUILD SUCCESSFUL.
+
+== Gates
+
+- Cucumber `@book-validation` : 5/5 PASS
+- Cucumber `@book-tree` : 6/6 PASS (non-régression)
+- UT/FT domaine Book : GREEN
+- `DocumentPluginFunctionalTest` : 1 flaky env (convertDocumentToPdf images, JRuby OOM) — préexistant, hors périmètre S-216
+
+== Hors périmètre
+
+- `DocumentConverterTest` OOM JRuby intermittent (famille S-213) — non régressé par S-216
+- BOM inchangé (0.0.11), zéro secret, zéro publication
+
+== Suite
+
+- S-217 : optionnel — rapprochement `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`,
+  livre PDF/EPUB navigable désormais possible), ou EPIC suivant du BACKLOG.

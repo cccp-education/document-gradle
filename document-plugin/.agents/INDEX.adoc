@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
- _Derniere mise a jour_ : 2026-08-28 (session 213 — DOC-BOOK-DOMAIN-3 BookAssembler structuré + DOMAIN-4 BookNumbering)
-_Session terminee_ : 213 — DOC-BOOK-DOMAIN-3 (BookAssembler assemblé structuré, 10 UT) + DOMAIN-4 (BookNumbering numérotation hiérarchique, 10 UT), TDD strict
-_Prochaine session_ : 214 — DOC-BOOK-DOMAIN-5 (AssembleBookTask dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator validation structure)
+ _Derniere mise a jour_ : 2026-08-28 (session 216 — DOC-BOOK-VALIDATE-4 Cucumber BDD 5/5 + clôture EPIC DOC-BOOK-VALIDATE)
+_Derniere session terminee_ : 216 — DOC-BOOK-VALIDATE-4 (Cucumber BDD `@book-validation` 5 scénarios 5/5 PASSED, `BookValidator.enforce` extrait du task), EPIC DOC-BOOK-VALIDATE CLÔTURÉ
+_Prochaine session_ : 217 — optionnel : rapprochement `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline` débloqué par DOC-BOOK-DOMAIN + DOC-BOOK-VALIDATE) ou EPIC suivant
 
 '''
 == REGLES ABSOLUES (resume)
@@ -99,7 +99,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-15 | Cross-borough Hardening — compile + tests document + bakery | ✅ TERMINÉ (session 025 — compile OK, tests OK) | P2
 | DOC-TABLE-VALIDATE | Validation syntaxique tableaux AsciiDoc post-traduction — TableSyntaxValidator + strict/lenient + batch report (5 US, ~25 pts) | ✅ TERMINÉ (session 037 — VALIDATE-5 Cucumber BDD, 6/6 PASS, EPIC CLÔTURÉ) | P1
 | DOC-PLANTUML-VALIDATE | Validation syntaxique diagrammes PlantUML post-traduction — DRY via plantuml-gradle PlantumlService + BOM (5 US, ~21 pts) | ✅ TERMINÉ (session 040 — 5/5 US, EPIC CLÔTURÉ) | P1
-| DOC-BOOK-VALIDATE | Validation du pipeline livre — BookValidator DDD pur (TOC cohérente, ordre pages, sections non vides, refs PDF) + strict/lenient + Cucumber (5 US, ~18 pts) | 🟡 À FAIRE (cadré S-070, contenu livre dans office/metiers/FPA) | P1
+| DOC-BOOK-VALIDATE | Validation du pipeline livre — BookValidator DDD pur (TOC cohérente, ordre pages, sections non vides, refs PDF) + strict/lenient + Cucumber (5 US, ~18 pts) | ✅ TERMINÉ (S-216, 5/5 BDD PASSED, `BookValidator.enforce` extrait) | P1
 | EPIC CROSS-DOC-BOOK | BDD cross-borough Codex→Document Book Pipeline — contrat filesystem `%03d-%s.adoc` validé en Cucumber (3 US, ~5 pts) | ✅ TERMINÉ (S-210) | P1
 | EPIC DOC-BOOK-DOMAIN | Domaine « Book » structuré — `BookTree` (Parties→Chapitres→Sections dérivés du ref TOC), `Matter` FRONT/BODY/BACK, `BookLayout` (mise en page), `BookNumbering` (logique), refactor `BookAssembler` + Cucumber `@book-tree` (6 US + cadrage, ~27 pts) | ✅ TERMINÉ (S-211 cadrage, S-212 BookTree+Matter/Layout, S-213 Assembler+Numbering, S-215 Cucumber 6/6 + validateur structurel, 6/6 US) | P1
 |===
@@ -182,6 +182,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 213 | 2026-08-28 | impl + TDD | DOC-BOOK-DOMAIN-3 (refactor `BookAssembler.assemble(tree, layout, title, author, resolveContent)` structuré — titre page, TOC, corps imbriqué niveaux, ancres `[[ref]]`, 10 UT `BookAssemblerStructuredTest`) + DOC-BOOK-DOMAIN-4 (`BookNumbering` numbers/number/anchor + `BookNavigation` prev/next preorder, 10 UT). Non-régression blob plat et câblage AssembleBookTask (TOC → arbre structuré, sinon plat). check complet bloqué OOM JRuby préexistant (DocumentConverterTest, hors périmètre). Baby-step DDD/TDD/BDD strict. | 10/10
 | 214 | 2026-08-28 | échec | Session interrompue — tentative d'extraire AssembleBookTask pour testabilité unitaire + convention mapping, reverted (tests cassés). Livré : AssembleBookTaskUnitTest.kt (fix S-214). Session nettoyée en ouverture S-215 (wrapper 9.6.1, .bak). | 5/10
 | 215 | 2026-08-28 | impl + BDD | **EPIC DOC-BOOK-DOMAIN CLÔTURÉ 6/6 US** — DOMAIN-5 Cucumber BDD `@book-tree` (6 scénarios, BookTreeRunner + BookTreeSteps préfixe « book-tree », 6/6 PASSED, dogfooding FPA `AssembleBookTaskFpaTest` sur corpus réel office/metiers/FPA toc+scans 000/009/010 PASSED) + DOMAIN-6 `BookValidator.validateStructure` structurel (S1 ref continuity, S2 unicité (ref,page), S3 matter FRONT+BACK, S4 page monotonicity — 8 UT TDD strict, intégration `AssembleBookTask.validateIfConfigured` structure+file, LENIENT warn/STRICT fail, 4 FT `AssembleBookTaskFunctionalTest`). Gates : 91 UT book + 6 cucumber suites + FT book GREEN ; DocumentPluginFunctionalTest 62 dont 1 flaky env PASSED isolé. Commit/push. | 10/10
+| 216 | 2026-08-28 | impl + BDD | **EPIC DOC-BOOK-VALIDATE CLÔTURÉ 5/5 US** — VALIDATE-4 Cucumber BDD `@book-validation` (5 scénarios `@valid`/`@missing-page`/`@empty-section`/`@toc-mismatch`/`@strict`, `BookValidationCucumberRunner` + `BookValidationSteps` préfixe « book-validation », 5/5 PASSED) + extraction `BookValidator.enforce(mode, reasons)` (pure, throw GradleException STRICT) du `AssembleBookTask.validateIfConfigured` (comportement LENIENT/STRICT préservé). Pattern S-215 book-tree respecté (domaine pur, zéro I/O Gradle). Enregistrement `bookValidationCucumberTest` CucumberTaskSpec. Baby-step BDD strict : GREEN 5/5, non-régression book domaine + bookTree + AssembleBookTaskFunctionalTest VERT. | 10/10
 |===
 
 '''

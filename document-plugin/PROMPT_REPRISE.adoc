@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 216
+:session: 217
 :date: 2026-08-28
-:status: Session 215 terminée — DOC-BOOK-DOMAIN-5 (Cucumber BDD @book-tree 6/6 + dogfooding FPA) + DOC-BOOK-DOMAIN-6 (BookValidator structurel 8 UT) — EPIC DOC-BOOK-DOMAIN CLÔTURÉ 6/6 US
+:status: Session 216 terminée — DOC-BOOK-VALIDATE-4 (Cucumber BDD @book-validation 5/5) + extraction BookValidator.enforce — EPIC DOC-BOOK-VALIDATE CLÔTURÉ 5/5 US
 :max-lines: 70
 
 == Quick Start
@@ -9,55 +9,52 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests "document.BookValidatorStructureTest" --tests "document.BookAssemblerStructuredTest"  # UT VERT
-./gradlew bookTreeCucumberTest  # 6/6 scenarios PASSED
+./gradlew bookValidationCucumberTest  # 5/5 scenarios PASSED
+./gradlew bookTreeCucumberTest         # 6/6 scenarios PASSED
 ```
 
 == Contexte de fin
 
-Session 215 (implémentation DDD/TDD/BDD, clôture EPIC DOC-BOOK-DOMAIN) :
-- DOC-BOOK-DOMAIN-6 ✅ TERMINÉ — `BookValidator.validateStructure(sections)` (BookValidator.kt)
-  - S1 ref continuity (parent préfixe absent → level jump), S2 unicité (ref,page),
-    S3 matter completeness (FRONT 0.x + BACK 9.x), S4 page order monotonicity
-  - 8 UT `BookValidatorStructureTest` VERT ; intégré dans `AssembleBookTask.validateIfConfigured`
-    (raisons structurelles préfixées `structure — `, merged avec validation fichier,
-    LENIENT → warn / STRICT → GradleException)
-  - `AssembleBookTaskFunctionalTest.kt` réécrit : 4 FT VERT (registered, structured,
-    STRICT fail level jump citant `1.1`, LENIENT survit)
-- DOC-BOOK-DOMAIN-5 ✅ TERMINÉ — Cucumber BDD `@book-tree`
-  - `book_tree.feature` 6 scénarios + `BookTreeCucumberRunner` + `BookTreeSteps`
-    (préfixe « book-tree », pure domaine) + `CucumberTaskSpec("bookTreeCucumberTest")`
-  - 6/6 PASSED ; dogfooding FPA `AssembleBookTaskFpaTest` PASSED (corpus réel
-    office/metiers/FPA toc.adoc + scans 000/009/010, self-skip si corpus absent)
-- Gates : 91 UT book domain + 6 cucumber suites + FT book GREEN.
-  `DocumentPluginFunctionalTest` 62 tests : 1 échec flaky environnemental
-  (convertDocumentToPdf images, pression mémoire JRuby) — PASSED isolé ; OOM
-  `DocumentConverterTest` préexistant hors périmètre (S-213).
-- Nettoyage S-214 : wrapper 9.6.1 restauré (jar+properties), `.bak` supprimés, `.gitignore` durci.
-- Zéro secret, BOM inchangé, commit/push document-plugin.
+Session 216 (implémentation BDD, clôture EPIC DOC-BOOK-VALIDATE) :
+- DOC-BOOK-VALIDATE-4 ✅ TERMINÉ — Cucumber BDD `@book-validation`
+  - `book_validation.feature` 5 scénarios + `BookValidationCucumberRunner` (package
+    `document.bookvalidation`) + `BookValidationSteps` (préfixe « book-validation »,
+    domaine pur — zéro I/O Gradle, pattern S-215 book-tree) + `CucumberTaskSpec("bookValidationCucumberTest")`
+  - 5/5 PASSED : `@valid` (Valid), `@missing-page` (« no .adoc page found »),
+    `@empty-section` (« is empty »), `@toc-mismatch` (« no corresponding TOC section »),
+    `@strict` (enforce STRICT → GradleException)
+- Extraction `BookValidator.enforce(validationMode, reasons)` (fonction pure,
+  throw GradleException en STRICT) depuis `AssembleBookTask.validateIfConfigured`
+  (comportement LENIENT warn / STRICT fail préservé — baby-step, zéro régression)
+- Gates : 5 cucumber book-validation + 6 cucumber book-tree + UT/FT book GREEN.
+  `AssembleBookTaskFunctionalTest` (STRICT/LENIENT legacy) VERT.
+  `compileKotlin`/`compileTestKotlin` VERT.
+- Hors périmètre (préexistant, environnement) : `DocumentConverterTest` OOM JRuby
+  intermittent, `DocumentPluginFunctionalTest` 1 flaky env — non régressés par S-216.
+- Zéro secret, BOM inchangé (0.0.11), commit/push document-plugin.
 
 == EPICs — état
 
 - CROSS-DOC-BOOK ✅ TERMINÉ (S-210)
-- DOC-BOOK-VALIDATE 🟡 À FAIRE (VALIDATE-1/2/3 ✅ S-071/078, **VALIDATE-4 Cucumber manquant**)
-- DOC-BOOK-DOMAIN ✅ TERMINÉ (6/6 US — cadrage S-211, BookTree S-212, Matter/Layout S-212,
-  Assembler S-213, Numbering S-213, Cucumber+dogfooding S-215, Validator structurel S-215)
+- DOC-BOOK-DOMAIN ✅ TERMINÉ (6/6 US — S-211 cadrage, S-212..S-215)
+- DOC-BOOK-VALIDATE ✅ TERMINÉ (5/5 US — VALIDATE-1/2/3 S-070/078, VALIDATE-4 Cucumber S-216)
 
-== Reprendre à (session 216)
+== Reprendre à (session 217)
 
 . `git status` dans document-gradle
-. DOC-BOOK-VALIDATE-4 — Cucumber BDD 5 scénarios `@book-validation` :
-  `@valid`, `@missing-page`, `@empty-section`, `@toc-mismatch`, `@strict`
-  (runner dédié + steps préfixés, pattern book-tree S-215). Baby-step BDD strict.
-  $ +Tests : 1 feature + 1 runner + 1 steps + 1 CucumberTaskSpec (~5 pts)
-. Optionnel : rapprocher `PROMPT_REPRISE-office/metiers/FPA` (FPA-BOOK-4 bookPipeline
-  débloqué par DOC-BOOK-DOMAIN) — le livre PDF/EPUB navigable FPA est désormais possible.
-. Respecter baby-step : RED (compile fail/UndefinedStep) → GREEN → REFACTOR (`check` VERT),
-  1 fichier à la fois.
+. Optionnel A — rapprochement `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`) :
+   le livre PDF/EPUB *navigable* FPA est désormais possible (DOC-BOOK-DOMAIN 6/6 +
+   DOC-BOOK-VALIDATE 5/5). Cadrage FPA-BOOK-4 si souhaité (contenu privé office/,
+   code Apache 2.0 ici).
+. Optionnel B — EPIC suivant du BACKLOG (ex. DOC-CR3 — Création de Contenu Solide,
+   ou DOC-TABLE/PLANTUML hardening). Choisir selon priorité produit.
+. Respecter baby-step : RED (compile fail / UndefinedStep) → GREEN → REFACTOR
+   (`check` VERT), 1 fichier à la fois, DDD/TDD/BDD unit/fonctionnal/cucumber.
 
 == Note cross-borough
 
-Le domaine « Book » est consommé par `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline`)
-pour produire un livre PDF/EPUB *navigable*. DOC-BOOK-DOMAIN (6/6) débloque FPA-BOOK-4.
-Validation structurelle (DOMAIN-6) réutilisable comme garde d'entrée du pipeline.
-Aucun contenu FPA n'entre dans document-gradle (frontière licence).
+Le domaine « Book » (`BookTree`, `BookValidator`, `BookLayout`, `BookNumbering`)
+est consommé par `office/metiers/FPA` pour produire un livre PDF/EPUB navigable.
+Validation structurelle (`validateStructure`) + validation fichier (`validate` +
+`enforce`) forment le filet de sécurité du pipeline livre. Aucun contenu FPA
+n'entre dans document-gradle (frontière licence).

@@ -230,3 +230,17 @@ directe vers codex-gradle.
 - Non-régression livre existant VERTE
 
 **Suite** : S-213 (DOMAIN-3 refactor Assembler + DOMAIN-4 BookNumbering)
+
+== Session 216 (2026-08-28) — DOC-BOOK-VALIDATE-4 (Cucumber BDD) + clôture EPIC
+
+**Type** : implémentation BDD (baby-step TDD/BDD strict)
+**Score** : 10/10
+**EPIC** : DOC-BOOK-VALIDATE (US-4 livrée → 5/5 US, EPIC CLÔTURÉ)
+
+**Livrables** :
+- `book_validation.feature` 5 scénarios `@book-validation` (`@valid`/`@missing-page`/`@empty-section`/`@toc-mismatch`/`@strict`)
+- `BookValidationCucumberRunner` + `BookValidationSteps` (package `document.bookvalidation`, préfixe « book-validation », pure BDD domaine) + `CucumberTaskSpec("bookValidationCucumberTest")`
+- `BookValidator.enforce(mode, reasons)` extrait du task (throw GradleException STRICT, no-op LENIENT) ; `AssembleBookTask.validateIfConfigured` délègue
+- 5/5 PASSED ; non-régression book-tree 6/6 + UT/FT book GREEN
+
+**Suite** : S-217 (rapprochement FPA-BOOK-4 ou EPIC suivant)

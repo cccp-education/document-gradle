@@ -799,7 +799,7 @@ l'implémentation du wrapper.
 Projection conservatrice : 3 sessions, ~21 pts, méthodo baby step DDD/TDD/BDD.
 
 '''
-== 🟡 EPIC DOC-BOOK-VALIDATE — Validation du pipeline livre (couche de texte open-source)
+== ✅ EPIC DOC-BOOK-VALIDATE — Validation du pipeline livre (TERMINÉ, Session 216)
 
 _Cadré Session 070 — `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/CADRAGE_EPIC_FPA_BOOK.adoc`._
 
@@ -863,13 +863,13 @@ la rédaction du livre reste dans `office/`.
 | VALIDATE-2
 
 | DOC-BOOK-VALIDATE-4
-| *Cucumber BDD* — scénarios end-to-end :
+| *Cucumber BDD* — scénarios end-to-end : ✅ TERMINÉ (S-216)
   - `@book-validation @valid` — livre complet, validation passe
   - `@book-validation @missing-page` — page manquante → Invalid
   - `@book-validation @empty-section` — section vide → Invalid
   - `@book-validation @toc-mismatch` — TOC incohérente → Invalid
-  - `@book-validation @strict` — mode STRICT → exception
-| BDD : 5 scénarios
+  - `@book-validation @strict` — mode STRICT → exception (`BookValidator.enforce` extrait du task)
+| BDD : 5 scénarios 5/5 PASSED
 | 5
 | VALIDATE-3
 |===
@@ -887,8 +887,9 @@ VALIDATE-0 (cadrage) ─→ VALIDATE-1 (BookValidator) ─→ VALIDATE-2 (intég
 * *S-044* — VALIDATE-0 cadrage + VALIDATE-1 (5 pts, BookValidator DDD pur)
 * *S-045* — VALIDATE-2 + VALIDATE-3 (8 pts, intégration + strict/lenient)
 * *S-046* — VALIDATE-4 (5 pts, Cucumber BDD, clôture EPIC)
+* *S-216* — VALIDATE-4 Cucumber BDD 5/5 PASSED (`@valid`/`@missing-page`/`@empty-section`/`@toc-mismatch`/`@strict`), `BookValidator.enforce` extrait du task, EPIC CLÔTURÉ
 
-Projection conservatrice : 3 sessions, ~18 pts, méthodo baby step DDD/TDD/BDD.
+Projection conservatrice : 3 sessions, ~18 pts, méthodo baby step DDD/TDD/BDD. *Réalisé en 1 session (S-216) — EPIC ✅ TERMINÉ.*
 
 '''
 == 🟠 EPIC DOC-CR3 — Revue CR-GLOBALE-003 : Création de Contenu Solide

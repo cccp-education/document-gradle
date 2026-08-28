@@ -95,6 +95,12 @@ cucumberConventions {
             tags = listOf("@book-tree"),
             runnerClass = "document.booktree.BookTreeCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "bookValidationCucumberTest",
+            features = listOf("src/test/resources/features/book_validation.feature"),
+            tags = listOf("@book-validation"),
+            runnerClass = "document.bookvalidation.BookValidationCucumberRunner",
+        ),
     )
 }
 

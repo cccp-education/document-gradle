@@ -239,3 +239,18 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 
 *Type* : échec partiel — tentative d'extraction `AssembleBookTask` pour testabilité unitaire + convention mapping reverted.
 *Résultat retenu* : `AssembleBookTaskUnitTest.kt` fixé (S-214, conservé). État sale nettoyé en S-215.
+
+=== Session 216 (2026-08-28) — DOC-BOOK-VALIDATE-4 (Cucumber BDD) — EPIC CLÔTURÉ
+
+*Type* : implémentation BDD (baby-step TDD/BDD strict)
+*Score* : 10/10
+*EPIC* : DOC-BOOK-VALIDATE (5/5 US)
+
+*Livrables* :
+- `book_validation.feature` 5 scénarios `@book-validation` (`@valid`, `@missing-page`, `@empty-section`, `@toc-mismatch`, `@strict`)
+- `BookValidationCucumberRunner.kt` + `BookValidationSteps.kt` (package `document.bookvalidation`, préfixe « book-validation », domaine pur zéro I/O Gradle)
+- `build.gradle.kts` : `CucumberTaskSpec("bookValidationCucumberTest")`
+- `BookValidator.enforce(validationMode, reasons)` extrait de `AssembleBookTask.validateIfConfigured` (throw GradleException STRICT, no-op LENIENT)
+- Gates : 5/5 cucumber book-validation + 6/6 book-tree + UT/FT book GREEN, `compileKotlin`/`compileTestKotlin` VERT
+
+*Hors périmètre* : `DocumentConverterTest` OOM JRuby préexistant ; BOM 0.0.11 inchangé ; zéro secret ; zéro publish.

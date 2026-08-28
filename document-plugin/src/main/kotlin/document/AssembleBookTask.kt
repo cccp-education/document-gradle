@@ -161,10 +161,7 @@ abstract class AssembleBookTask : DefaultTask() {
                 ValidationMode.LENIENT -> reasons.forEach {
                     logger.warn("{} — book validation (lenient): {}", name, it)
                 }
-                ValidationMode.STRICT -> throw GradleException(
-                    "$name — book validation failed (${reasons.size} finding(s)):\n" +
-                        reasons.joinToString("\n") { "  - $it" },
-                )
+                ValidationMode.STRICT -> BookValidator.enforce(ValidationMode.STRICT, reasons)
             }
         }
     }

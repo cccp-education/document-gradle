@@ -1,5 +1,6 @@
 package document
 
+import org.gradle.api.GradleException
 import java.io.File
 
 /**
@@ -166,6 +167,26 @@ object BookValidator {
             BookValidationResult.Valid(pageCount = sections.size)
         } else {
             BookValidationResult.Invalid(reasons = reasons)
+        }
+    }
+
+    /**
+     * Enforces the [validationMode] against a list of [reasons].
+     *
+     * In [ValidationMode.LENIENT] the call is a no-op (the caller is expected to
+     * log the reasons as warnings). In [ValidationMode.STRICT] any non-empty
+     * [reasons] list raises a [GradleException] carrying the full report, so the
+     * build fails fast.
+     *
+     * Ink Economy Law: deterministic — the same (mode, reasons) always produces
+     * the same outcome (silent return or identical exception).
+     */
+    fun enforce(validationMode: ValidationMode, reasons: List<String>) {
+        if (validationMode == ValidationMode.STRICT && reasons.isNotEmpty()) {
+            throw GradleException(
+                "book validation failed (${reasons.size} finding(s)):\n" +
+                    reasons.joinToString("\n") { "  - $it" },
+            )
         }
     }
 
