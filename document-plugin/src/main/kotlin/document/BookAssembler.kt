@@ -113,9 +113,15 @@ object BookAssembler {
         val sb = StringBuilder()
         if (layout.emitTitlePage) {
             sb.append(layout.titlePage(title, author))
-            if (layout.emitTableOfContents) sb.append("\n\n").append(layout.tableOfContents())
+            // `:toc: macro` must stay inside the document header (no blank line
+            // before it) so Asciidoctor enables the toc; the `toc::[]` block is
+            // emitted in the body just below.
+            if (layout.emitTableOfContents) sb.append("\n").append(layout.tableOfContents())
         } else if (layout.emitTableOfContents) {
-            sb.append(layout.tableOfContents())
+            sb.append(layout.tableOfContents()).append("\n")
+        }
+        if (layout.emitTableOfContents) {
+            sb.append("\n\n").append(layout.tableOfContentsBlock())
         }
 
         val body = buildStructuredBody(tree, layout, resolveContent)

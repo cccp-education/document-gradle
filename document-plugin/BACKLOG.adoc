@@ -920,7 +920,7 @@ Ajouter une garde configurable `safeMode` DSL si du contenu externe est ingéré
 |===
 
 '''
-== 🔴 EPIC CROSS-DOC-BOOK — BDD cross-borough Codex→Document Book Pipeline
+== ✅ EPIC CROSS-DOC-BOOK — BDD cross-borough Codex→Document Book Pipeline (TERMINÉ, Session 210)
 
 _Source_ : cadrage S-210 (`CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`).
 _Pattern_ : gouvernance pure S-057/S-063 + baby-step BDD strict.

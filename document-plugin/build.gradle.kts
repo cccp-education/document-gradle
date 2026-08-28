@@ -57,6 +57,12 @@ dependencies {
     testImplementation(libs.bundles.cucumber)
 }
 
+// Forward the dogfooding publish flag to the test JVM so the FPA-BOOK-4
+// integration test can copy generated artifacts into office/metiers/FPA.
+tasks.named<Test>("test") {
+    systemProperty("fpa.book.publish", System.getProperty("fpa.book.publish") ?: "false")
+}
+
 cucumberConventions {
     additionalTasks = listOf(
         CucumberTaskSpec(

@@ -1,0 +1,37 @@
+= PROMPT_REPRISE — document-gradle (New Orleans 🟢)
+
+== Mission session 218
+
+Suite S-217 (rapprochement FPA-BOOK-4 : `bookPipeline` convertit le livre *assemblé* en
+HTML/PDF/EPUB navigables, artefacts publiés dans `office/metiers/FPA/.../livre-navigable/`).
+
+Deux options ouvertes, selon la disponibilité métier :
+
+. Poursuivre FPA-BOOK-4 sur le livre complet dès qu'un TOC FPA *scan-aligné* complet est
+  fourni (FPA-BOOK-3 content follow-up côté FPA). Sinon, consolider le dogfooding
+  existant (facteuriser `FpaBookArtifactGenerationTest` vers un `bookPipeline` réel
+  FPA déclenché depuis un repo consommateur via `includeBuild`, une fois la résolution
+  `plantuml-gradle`/`workspace-bom` clarifiée dans le consumer).
+. OU démarrer l'EPIC suivant du BACKLOG document (ex. DOC-CR3 « Création de Contenu
+  Solide » — injection/partage d'instance LLM, pool, gain perf sur `bookPipeline`).
+
+== Règles absolues (AGENT.adoc)
+
+- English only dans le code/commentaires/tests (gouvernance .adoc en français).
+- Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+- Zéro secret, zéro commit/push sans accord explicite.
+- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ /
+  Document WRITE+PUBLISH).
+
+== État du code (S-217)
+
+- `bookPipeline` : assembleBook → convertDocumentToHtml/Pdf/Epub câblés (DOC-BOOK-DOMAIN-3).
+- `BookLayout.tableOfContents` : `:toc: macro` + `toc::[]` (vrai TOC rendu).
+- Tests : `BookPipelineFpaFunctionalTest` (FT) + `FpaBookArtifactGenerationTest` (IT) GREEN.
+- Gates : 91 UT book + bookTree/bookValidation cucumber + FT book VERT.
+
+== À vérifier en ouverture
+
+1. `git status` (document-gradle + office/metiers/FPA).
+2. `./gradlew functionalTest --tests "document.BookPipelineFpaFunctionalTest"` + `bookTreeCucumberTest` + `bookValidationCucumberTest` VERT.
+3. Pas de régression `DocumentPluginFunctionalTest` (1 flaky env PDF images connu).

@@ -72,7 +72,8 @@ class BookLayoutTest {
     fun `page break and table of contents are emitted as AsciiDoc`() {
         val layout = BookLayout()
         assertEquals("<<<", layout.pageBreak())
-        assertEquals(":toc:", layout.tableOfContents())
+        assertEquals(":toc: macro", layout.tableOfContents())
+        assertEquals("toc::[]", layout.tableOfContentsBlock())
         val titlePage = layout.titlePage("Mon Livre", "Cheroliv")
         assertTrue(titlePage.startsWith("= Mon Livre"))
         assertTrue(titlePage.contains(":author: Cheroliv"))

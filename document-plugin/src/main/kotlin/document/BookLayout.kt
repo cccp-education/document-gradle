@@ -41,9 +41,18 @@ data class BookLayout(
     fun pageBreak(): String = "<<<"
 
     /**
-     * Emits the AsciiDoc table-of-contents attribute (`:toc:`).
+     * Emits the AsciiDoc table-of-contents attribute as a *macro* (`:toc:
+     * macro`), which — combined with [tableOfContentsBlock] (`toc::[]`) —
+     * makes Asciidoctor actually render a navigable table of contents in the
+     * HTML/PDF/EPUB outputs (a bare `:toc:` alone is not always rendered).
      */
-    fun tableOfContents(): String = ":toc:"
+    fun tableOfContents(): String = ":toc: macro"
+
+    /**
+     * Emits the `toc::[]` block macro that materialises the table of contents
+     * at its location in the document body. Must follow [tableOfContents].
+     */
+    fun tableOfContentsBlock(): String = "toc::[]"
 
     /**
      * Emits the book title page header (`= Title` + `:author:` + `:doctype: book`).

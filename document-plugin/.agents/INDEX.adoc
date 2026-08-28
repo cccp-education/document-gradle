@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
- _Derniere mise a jour_ : 2026-08-28 (session 216 — DOC-BOOK-VALIDATE-4 Cucumber BDD 5/5 + clôture EPIC DOC-BOOK-VALIDATE)
-_Derniere session terminee_ : 216 — DOC-BOOK-VALIDATE-4 (Cucumber BDD `@book-validation` 5 scénarios 5/5 PASSED, `BookValidator.enforce` extrait du task), EPIC DOC-BOOK-VALIDATE CLÔTURÉ
-_Prochaine session_ : 217 — optionnel : rapprochement `office/metiers/FPA` (FPA-BOOK-4 `bookPipeline` débloqué par DOC-BOOK-DOMAIN + DOC-BOOK-VALIDATE) ou EPIC suivant
+ _Derniere mise a jour_ : 2026-08-28 (session 217 — FPA-BOOK-4 rapprochement : `bookPipeline` câblé sur le livre assemblé + artefact navigable HTML/PDF/EPUB généré dans office/metiers/FPA)
+_Derniere session terminee_ : 217 — Rapprochement FPA-BOOK-4 : `bookPipeline` convertit désormais le livre *assemblé* (assembleBook → html/pdf/epub), FT `BookPipelineFpaFunctionalTest` + IT `FpaBookArtifactGenerationTest` (publie book.html/pdf/epub navigables dans FPA), `BookLayout.tableOfContents` rend un vrai TOC (`toc::[]`)
+_Prochaine session_ : 218 — EPIC suivant du BACKLOG (ex. DOC-CR3 Création de Contenu Solide) ou poursuite FPA-BOOK-4 (livre complet dès TOC FPA scan-alignée fournie)
 
 '''
 == REGLES ABSOLUES (resume)
@@ -183,6 +183,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 214 | 2026-08-28 | échec | Session interrompue — tentative d'extraire AssembleBookTask pour testabilité unitaire + convention mapping, reverted (tests cassés). Livré : AssembleBookTaskUnitTest.kt (fix S-214). Session nettoyée en ouverture S-215 (wrapper 9.6.1, .bak). | 5/10
 | 215 | 2026-08-28 | impl + BDD | **EPIC DOC-BOOK-DOMAIN CLÔTURÉ 6/6 US** — DOMAIN-5 Cucumber BDD `@book-tree` (6 scénarios, BookTreeRunner + BookTreeSteps préfixe « book-tree », 6/6 PASSED, dogfooding FPA `AssembleBookTaskFpaTest` sur corpus réel office/metiers/FPA toc+scans 000/009/010 PASSED) + DOMAIN-6 `BookValidator.validateStructure` structurel (S1 ref continuity, S2 unicité (ref,page), S3 matter FRONT+BACK, S4 page monotonicity — 8 UT TDD strict, intégration `AssembleBookTask.validateIfConfigured` structure+file, LENIENT warn/STRICT fail, 4 FT `AssembleBookTaskFunctionalTest`). Gates : 91 UT book + 6 cucumber suites + FT book GREEN ; DocumentPluginFunctionalTest 62 dont 1 flaky env PASSED isolé. Commit/push. | 10/10
 | 216 | 2026-08-28 | impl + BDD | **EPIC DOC-BOOK-VALIDATE CLÔTURÉ 5/5 US** — VALIDATE-4 Cucumber BDD `@book-validation` (5 scénarios `@valid`/`@missing-page`/`@empty-section`/`@toc-mismatch`/`@strict`, `BookValidationCucumberRunner` + `BookValidationSteps` préfixe « book-validation », 5/5 PASSED) + extraction `BookValidator.enforce(mode, reasons)` (pure, throw GradleException STRICT) du `AssembleBookTask.validateIfConfigured` (comportement LENIENT/STRICT préservé). Pattern S-215 book-tree respecté (domaine pur, zéro I/O Gradle). Enregistrement `bookValidationCucumberTest` CucumberTaskSpec. Baby-step BDD strict : GREEN 5/5, non-régression book domaine + bookTree + AssembleBookTaskFunctionalTest VERT. | 10/10
+| 217 | 2026-08-28 | impl + BDD | Rapprochement FPA-BOOK-4 (consumer office/metiers/FPA) — `bookPipeline` câblé sur le livre *assemblé* (`assembleBook.outputFile` → `convertDocumentToHtml/Pdf/Epub.sourceFile`, DOC-BOOK-DOMAIN-3) + `BookLayout.tableOfContents` rend désormais un vrai TOC (`toc::[]`, `id="toc"` dans le HTML) + `build.gradle.kts` forward du flag `-Dfpa.book.publish` au JVM de test. FT `BookPipelineFpaFunctionalTest` (bookPipeline réel FPA 3 pages, 5 formats) + IT `@Tag("integration") FpaBookArtifactGenerationTest` publient `book.{adoc,html,pdf,epub}` navigables dans `office/metiers/FPA/.../livre-navigable/`. Gates : 91 UT book + bookTree/bookValidation cucumber + FT book GREEN, 0 régression. Commit/push autorisé. | 10/10
 |===
 
 '''
@@ -203,7 +204,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
 | Chiraq 🟤 | readme-gradle | N2 | 003
-| New Orleans 🟢 | document-gradle | N2 | 040
+| New Orleans 🟢 | document-gradle | N2 | 217
 | Atlanta | agile-gradle | N4 | 000
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000

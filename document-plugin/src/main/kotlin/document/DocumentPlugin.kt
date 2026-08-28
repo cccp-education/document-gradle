@@ -295,16 +295,29 @@ class DocumentPlugin : Plugin<Project> {
                 "collectDocumentRetrieve",
             )
         }
-        val assembleBook = project.tasks.named("assembleBook")
+        val assembleBook = project.tasks.named("assembleBook", AssembleBookTask::class.java)
         val enrichDocument = project.tasks.named("enrichDocument")
-        val html = project.tasks.named("convertDocumentToHtml")
-        val pdf = project.tasks.named("convertDocumentToPdf")
-        val epub = project.tasks.named("convertDocumentToEpub")
+        val html = project.tasks.named("convertDocumentToHtml", ConvertDocumentTask::class.java)
+        val pdf = project.tasks.named("convertDocumentToPdf", ConvertDocumentTask::class.java)
+        val epub = project.tasks.named("convertDocumentToEpub", ConvertDocumentTask::class.java)
         val collect = project.tasks.named("collectDocumentRetrieve")
         enrichDocument.configure { it.mustRunAfter(assembleBook) }
-        html.configure { it.mustRunAfter(enrichDocument) }
-        pdf.configure { it.mustRunAfter(enrichDocument) }
-        epub.configure { it.mustRunAfter(enrichDocument) }
+        // DOC-BOOK-DOMAIN-3 — the converters must consume the *assembled* book
+        // (output of assembleBook), not ext.source which is unrelated to the
+        // book pipeline. This is what makes `bookPipeline` actually produce a
+        // navigable HTML/PDF/EPUB of the assembled book (FPA-BOOK-4).
+        html.configure {
+            it.mustRunAfter(enrichDocument)
+            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+        }
+        pdf.configure {
+            it.mustRunAfter(enrichDocument)
+            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+        }
+        epub.configure {
+            it.mustRunAfter(enrichDocument)
+            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+        }
         collect.configure { it.mustRunAfter(listOf(html, pdf, epub)) }
     }
 

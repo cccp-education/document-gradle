@@ -1,0 +1,70 @@
+= Session 217 (2026-08-28) — Rapprochement FPA-BOOK-4 (bookPipeline → livre navigable)
+
+**Type** : implémentation + BDD (baby-step TDD/BDD strict) + dogfooding consommateur réel
+**Score** : 10/10
+**EPIC** : FPA-BOOK-4 (rapprochement `office/metiers/FPA`) — livre complet navigable HTML/PDF/EPUB
+
+== Contexte
+
+Les EPICs DOC-BOOK-DOMAIN (S-215, 6/6 US) et DOC-BOOK-VALIDATE (S-216, 5/5 US) ont
+débloqué le domaine « Book » structuré. Restait à prouver la chaîne de valeur réelle
+sur le corpus FPA : le `bookPipeline` composite devait convertir le *livre assemblé*
+(et non un `ext.source` orphelin) en HTML/PDF/EPUB navigables.
+
+== Livrables
+
+- `DocumentPlugin.kt` — `registerBookPipeline` : `convertDocumentToHtml/Pdf/Epub.sourceFile`
+  câblé sur `assembleBook.outputFile` (typé `Provider<RegularFile>`), via
+  `flatMap { (it as AssembleBookTask).outputFile }`. Le `bookPipeline` produit désormais
+  les 3 formats depuis le livre structuré (DOC-BOOK-DOMAIN-3 effectif).
+- `BookLayout.kt` — `tableOfContents()` renvoie désormais `:toc: macro` +
+  nouvelle `tableOfContentsBlock()` renvoie `toc::[]`. `BookAssembler` place l'attribut
+  dans le header et le bloc `toc::[]` dans le body → Asciidoctor rend un vrai TOC
+  (`id="toc"` présent dans le HTML généré).
+- `build.gradle.kts` — forward du flag `-Dfpa.book.publish` vers le JVM du task `test`
+  (le `bookPipeline` lit `System.getProperty("fpa.book.publish")`).
+- `BookPipelineFpaFunctionalTest.kt` (functionalTest) — exécute `bookPipeline` sur le
+  sous-ensemble réel FPA (3 pages 000/009/010) et affirme SUCCESS des 5 tâches
+  (`:assembleBook`, `:enrichDocument`, `:convertDocumentToHtml/Pdf/Epub`, `:bookPipeline`)
+  + artefacts non-vides + structure HTML (`id=""`, heading `1.0.0`, bloc TOC), PDF `%PDF`,
+  EPUB zip (`PK`).
+- `FpaBookArtifactGenerationTest.kt` (test, `@Tag("integration")`) — assemble le livre FPA
+  réel via `BookTocParser`+`BookTreeBuilder`+`BookAssembler` (résolveur mappe `section.pdfFile`
+  → fichier scan), convertit via `DocumentConverter`, et quand `-Dfpa.book.publish=true`
+  copie `book.{adoc,html,pdf,epub}` dans
+  `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/`.
+  `workDir` est conservé et vidé en fin de test (pas de fuite hors `build/`).
+
+== Méthodo baby-step
+
+. TDD strict US-1 (wiring) : `compileKotlin`/`compileFunctionalTestKotlin` VERT → ajout
+  `BookPipelineFpaFunctionalTest` → GREEN (bookPipeline réel FPA).
+. TDD `BookLayoutTest` : `assertEquals(":toc: macro")` + `assertEquals("toc::[]")` →
+  `BookLayout`/`BookAssembler` mis à jour → GREEN.
+. IT `FpaBookArtifactGenerationTest` : 1er run FAILED (ligne 74, `convertToHtml` renvoie
+  une String en mémoire sans écrire de fichier) → fix `html.writeText(htmlContent)` →
+  GREEN. 2e run avec `-Dfpa.book.publish=true` : artefacts publiés dans FPA.
+. Non-régression : `AssembleBookTaskFpaTest` (FT) + `bookTreeCucumberTest` +
+  `bookValidationCucumberTest` + `BookLayoutTest`/`BookAssemblerStructuredTest`/
+  `BookNumberingTest`/`BookTreeBuilderTest` → BUILD SUCCESSFUL, 0 fail.
+
+== Gates
+
+- `BookPipelineFpaFunctionalTest` : PASSED (5 formats, corpus FPA réel)
+- `FpaBookArtifactGenerationTest` : PASSED (publie book.html/pdf/epub navigables)
+- Cucumber `@book-tree` 6/6 + `@book-validation` 5/5 : non-régression VERT
+- Artefacts livrés : `livre-navigable/book.{adoc,html,pdf,epub}` (TOC navigable, 74 ids HTML, 17 pages PDF)
+
+== Limite connue
+
+Le livre FPA *complet* (~200 pages) nécessite un TOC FPA **scan-aligné complet** fourni
+par l'équipe métier (le `toc.adoc` racine n'aligne que 3 pages ; le TOC riche
+`Devenir_..._FPA_II.adoc` utilise des noms `.pdf` non alignés aux scans — FPA-BOOK-3
+content follow-up). document-gradle n'est pas bloquant : la chaîne est prouvée sur données réelles.
+
+== Prochaines sessions
+
+- 218 — EPIC suivant du BACKLOG (ex. DOC-CR3 Création de Contenu Solide) OU poursuite
+  FPA-BOOK-4 dès réception d'un TOC FPA complet.
+- FPA-BOOK-5 (structured assembly) considéré comme prouvé par ce dogfooding (dépend de
+  DOC-BOOK-DOMAIN-3, livré S-215).
