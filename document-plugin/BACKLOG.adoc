@@ -1091,3 +1091,13 @@ assembleur structuré + validation structurelle), Cucumber BDD `@book-tree`
 
 L'EPIC DOC-BOOK-DOMAIN reste ✅ TERMINÉ (6/6 US) ; ces ajouts sont des
 *extensions de câblage consommateur* (FPA-BOOK-6) tracées côté FPA.
+
+=== Note transversale (S-081) — convention anti-Python / LLM via codebase
+
+*Règle* (issue de FPA-PY-MIGRATE, backlog `office/metiers/FPA`) : `document-gradle`
+reste 100% Kotlin (aucun `.py` résiduel — vérifié S-081). Tout nouvel appel LLM
+dans le pipeline livre doit consommer le hub `codebase` (`LlmBuildService` / koog),
+jamais un script ad hoc. Les scripts Python prototypes (`fpa_*.py` côté FPA) sont
+à purger au profit des tâches Gradle existantes (`codebase OcrTask`,
+`document assembleBook`/`bookPipeline`). Voir aussi `codex-gradle` (même règle,
+boundary CDX-OCR / CDEX-RAG-SOCLE).
