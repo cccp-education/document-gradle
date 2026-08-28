@@ -892,11 +892,11 @@ VALIDATE-0 (cadrage) ─→ VALIDATE-1 (BookValidator) ─→ VALIDATE-2 (intég
 Projection conservatrice : 3 sessions, ~18 pts, méthodo baby step DDD/TDD/BDD. *Réalisé en 1 session (S-216) — EPIC ✅ TERMINÉ.*
 
 '''
-== 🟠 EPIC DOC-CR3 — Revue CR-GLOBALE-003 : Création de Contenu Solide (EN COURS — 2/3 US)
+== ✅ EPIC DOC-CR3 — Revue CR-GLOBALE-003 : Création de Contenu Solide (TERMINÉ, Session 220)
 
 _Source_ : `GLOBAL_CODE_REVIEW.adoc` (workspace root) — session CR-GLOBALE-003 (2026-08-04).
 _Focus_ : solidité de la chaîne documentaire multi-format.
-_Statut_ : DOC-CR3-1 ✅ TERMINÉ (S-219, TDD strict), DOC-CR3-3 ✅ TERMINÉ (S-219), DOC-CR3-2 🟡 reporté.
+_Statut_ : DOC-CR3-1 ✅ TERMINÉ (S-219, TDD strict), DOC-CR3-3 ✅ TERMINÉ (S-219), DOC-CR3-2 ✅ TERMINÉ (S-220).
 
 [cols="1,3,2,1", options="header"]
 |===
@@ -913,7 +913,12 @@ Injecter/partager une instance ( lifecycle plugin) ou pool. Gain perf significat
 | **Auditer `SafeMode.UNSAFE` systématique** — `DocumentConverter.buildOptions` force `UNSAFE`
 sur tous les backends. Justifiable en local, mais à documenter/limiter (include resolution, macros).
 Ajouter une garde configurable `safeMode` DSL si du contenu externe est ingéré.
-| 🟡 P2 | 🟡 À FAIRE (reporté S-219)
+→ Résolu S-220 : `DocumentConverter.buildOptions` accepte un `SafeMode` configurable
+  (UNSAFE/SERVER/SECURE, défaut UNSAFE pour backward-compat), propagé via le bloc DSL
+  `converter { safeMode = ... }` (mirror flat `safeMode`) + flag CLI `-Pdocument.safeMode`.
+  `ConvertDocumentTask` consomme la valeur. Baby-step DDD/TDD/BDD : 3 UT (`buildOptions` SafeMode)
+  + 1 UT conversion + 4 FT (GradleTestKit DSL/CLI) + 3 scénarios Cucumber `@converter-safe-mode` (tous GREEN).
+| 🟡 P2 | ✅ TERMINÉ (S-220)
 
 | DOC-CR3-3
 | **Supprimer le code mort** — `DocumentI18nBridge` et `DocumentGenerationGraph.graph` sont morts

@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 220
+:session: 221
 :date: 2026-08-28
-:status: Session 219 terminée — DOC-CR3-1 (réutilisation instance AsciidoctorJ, TDD) + DOC-CR3-3 (retrait code mort koog) ✅ ; DOC-CR3-2 reporté
+:status: Session 220 terminée — DOC-CR3-2 (garde `safeMode` DSL configurable) ✅ ; EPIC DOC-CR3 CLÔTURÉ (3/3 US)
 :max-lines: 70
 
 == Quick Start
@@ -9,42 +9,51 @@
 ```
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 ./gradlew compileKotlin  # BUILD SUCCESSFUL
-./gradlew test --tests document.AsciidoctorHolderTest  # 1/1 PASSED
-./gradlew test --tests document.DocumentConverterTest  # 43/43 PASSED
+./gradlew test --tests document.DocumentConverterTest  # 47/47 PASSED (dont 4 SafeMode)
+./gradlew functionalTest --tests document.ConvertDocumentTaskSafeModeFunctionalTest  # 4/4 PASSED
+./gradlew converterSafeModeCucumberTest  # 3/3 PASSED (@converter-safe-mode)
 ```
 
 == Contexte de fin
 
-Session 219 (DOC-CR3, perf + nettoyage) :
-- DOC-CR3-1 ✅ TERMINÉ (TDD strict) — `AsciidoctorHolder` partage une instance
-  AsciidoctorJ unique (lazy + cache + `synchronized`). `DocumentConverter.convert`
-  / `convertToFile` délèguent à `AsciidoctorHolder.convertFile`. Gain : 1 démarrage
-  JRuby pour N conversions (bookPipeline 5 formats = 1 au lieu de 5).
-  - `AsciidoctorHolderTest` (1 UT) prouve `createCount == 1` sur 2 conversions.
-  - `DocumentConverterTest` (43 UT) non-régressé.
-- DOC-CR3-3 ✅ TERMINÉ — retrait du code mort `DocumentGenerationGraph.graph`
-  (stratégie koog jamais lue, `execute()` réimplémente le flux) + 4 imports koog
-  morts. Fichier koog-free. `DocumentGenerationGraphTest` non-régressé.
-- DOC-CR3-2 🟡 REPORTÉ — garde `safeMode` DSL configurable (backward-compat
-  UNSAFE par défaut). Laissé pour scope tight et vérifié.
+Session 220 (DOC-CR3-2, perf + configurabilité) :
+- DOC-CR3-2 ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — `DocumentConverter.buildOptions`
+  accepte désormais un `SafeMode` configurable (UNSAFE/SERVER/SECURE), défaut
+  UNSAFE pour backward-compat. `ConverterDsl` (bloc DSL `converter { }`) + mirror
+  flat `safeMode` sur `DocumentExtension` + flag CLI `-Pdocument.safeMode`.
+  `ConvertDocumentTask` consomme la valeur et la propage à `DocumentConverter`.
+  - `buildOptions` passé `internal` + `safeMode` param ; `convert`/`convertToFile`/
+    `convertToHtml`/`convertToPdf`/`convertToEpub`/`convertToDocBook`/`convertToManPage`
+    exposent un paramètre `safeMode` (défaut UNSAFE).
+  - Tests : 3 UT `buildOptions` (SafeMode via `SafeMode.safeMode(level)`), 1 UT
+    conversion SERVER, 4 FT GradleTestKit (DSL SERVER / SECURE / CLI override /
+    défaut UNSAFE), 3 scénarios Cucumber `@converter-safe-mode`
+    (`converterSafeModeCucumberTest`, runner dédié `ConverterSafeModeCucumberRunner`).
+- EPIC DOC-CR3 ✅ CLÔTURÉ (3/3 US) — CR3-1 (S-219), CR3-3 (S-219), CR3-2 (S-220).
+- Note : le task global `cucumberTest` reste rouge pour TOUTES les features
+  (environnement : glue globale non filtrée + LLM/réseau) — chaque feature a un
+  runner Cucumber dédié GREEN. Ce comportement est préexistant et non régression.
 
 == EPICs — état
 
 - CROSS-DOC-BOOK ✅ TERMINÉ (S-210)
 - DOC-BOOK-DOMAIN ✅ TERMINÉ (6/6 US — S-211..S-215)
 - DOC-BOOK-VALIDATE ✅ TERMINÉ (5/5 US — VALIDATE-1/2/3 S-070/078, VALIDATE-4 S-216)
-- DOC-CR3 🟡 EN COURS (2/3 US — CR3-1 S-219 ✅, CR3-3 S-219 ✅, CR3-2 reporté)
+- DOC-CR3 ✅ TERMINÉ (S-219 CR3-1, S-219 CR3-3, S-220 CR3-2)
+- Tous les EPICs DOC-x livrés. Restent àplanifier : DOC-TABLE/PLANTUML hardening,
+  ou nouvelle US produit (ex. enrichissement avancé, pipeline i18n document).
 
-== Reprendre à (session 220)
+== Reprendre à (session 221)
 
 . `git status` dans document-gradle
-. Option A — DOC-CR3-2 : ajouter une garde `safeMode` DSL configurable
-  (valeurs UNSAFE/SERVER/SECURE, défaut UNSAFE pour backward-compat) sur
-  `DocumentConverter.buildOptions`. Baby-step TDD : `DocumentConverterTest`
-  assert le `SafeMode` choisi dans les `Options`.
-. Option B — EPIC suivant du BACKLOG (ex. DOC-TABLE/PLANTUML hardening, ou
-  nouvelle US produit).
-. Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT), DDD/TDD/BDD.
+. Choisir le prochain EPIC du BACKLOG (aucun EN COURS) :
+  . Option A — nouveau hardening : audit sécurité des conversions (ex. échappement
+    des chemins `include` en SERVER/SECURE, ou validation des `sourcemap`).
+  . Option B — EPIC produit : enrichissement avancé (ex. diagrammes inline
+    multi-backend, ou pipeline de traduction document avec garde SafeMode).
+  . Option C — dogfooding : publier un livre FPA via `bookPipeline` en mode SERVER.
+. Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches
+  dédiées), DDD/TDD/BDD (unit + functional + cucumber).
 
 == Note cross-borough
 

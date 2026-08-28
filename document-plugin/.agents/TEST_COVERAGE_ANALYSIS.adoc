@@ -1,7 +1,31 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-03
-:session: 040
+:date: 2026-08-28
+:session: 220
 
+== Session 220 — DOC-CR3-2 : Garde safeMode DSL configurable (UNSAFE/SERVER/SECURE)
+
+*Tests ajoutés S220* :
+- `DocumentConverterTest.kt` — 4 UT TDD strict (buildOptions applique SafeMode fourni/utilisé par défaut/appliqué SECURE ; convertToHtml honore le SafeMode SERVER).
+- `ConvertDocumentTaskSafeModeFunctionalTest.kt` — 4 FT GradleTestKit (DSL SERVER/SECURE, CLI override DSL SERVER, défaut UNSAFE).
+- `ConverterDsl.kt` — NOUVEAU (DSL imbriqué `converter { safeMode = ... }`).
+- `ConverterSafeModeSteps.kt` — NOUVEAU (package `document.convertersafemode`).
+- `ConverterSafeModeCucumberRunner.kt` — NOUVEAU (runner dédié).
+- `converter_safe_mode.feature` — NOUVEAU (3 scénarios `@converter-safe-mode`).
+- Enregistrement `converterSafeModeCucumberTest` dans `build.gradle.kts`.
+
+*Couverture* : 
+- Unit : 4/4 PASSED (DocumentConverterTest total 47/47).
+- Fonctionnel : 4/4 PASSED (ConvertDocumentTaskSafeModeFunctionalTest).
+- Cucumber dédié : 3/3 PASSED (converterSafeModeCucumberTest).
+- `compileKotlin` VERT.
+
+*Notes* : 
+- Default UNSAFE pour backward-compat.
+- Propagation via `ConvertDocumentTask.safeMode` → `DocumentConverter.buildOptions(safeMode)`.
+- Baby-step DDD/TDD/BDD strict (chaque ajout compilé/testé pas à pas).
+- Le task global `cucumberTest` reste rouge (préexistant : glue/environnement affectant toutes les features, pas de régression).
+
+---
 == Session 040 — DOC-PLANTUML-VALIDATE-5 (Cucumber BDD, clôture EPIC)
 
 *Couverture plantuml validation* : suite `document.translation.*` GREEN.

@@ -33,8 +33,12 @@ object DocumentConverter {
      * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      * @return le contenu HTML5 produit
      */
-    fun convertToHtml(source: DocumentSource, theme: DocumentTheme = DocumentTheme()): String {
-        return convert(source, "html5", theme)
+    fun convertToHtml(
+        source: DocumentSource,
+        theme: DocumentTheme = DocumentTheme(),
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ): String {
+        return convert(source, "html5", theme, safeMode)
     }
 
     /**
@@ -48,8 +52,13 @@ object DocumentConverter {
      * @param output le fichier PDF de sortie a ecrire
      * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToPdf(source: DocumentSource, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
-        convertToFile(source, "pdf", output, theme)
+    fun convertToPdf(
+        source: DocumentSource,
+        output: java.io.File,
+        theme: DocumentTheme = DocumentTheme(),
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ) {
+        convertToFile(source, "pdf", output, theme, safeMode)
     }
 
     /**
@@ -64,8 +73,13 @@ object DocumentConverter {
      * @param output le fichier EPUB de sortie a ecrire
      * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToEpub(source: DocumentSource, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
-        convertToFile(source, "epub3", output, theme)
+    fun convertToEpub(
+        source: DocumentSource,
+        output: java.io.File,
+        theme: DocumentTheme = DocumentTheme(),
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ) {
+        convertToFile(source, "epub3", output, theme, safeMode)
     }
 
     /**
@@ -76,8 +90,8 @@ object DocumentConverter {
      * @param source le fichier AsciiDoc source (lecture seule)
      * @return le contenu DocBook 5 produit
      */
-    fun convertToDocBook(source: DocumentSource): String {
-        return convert(source, "docbook5")
+    fun convertToDocBook(source: DocumentSource, safeMode: SafeMode = SafeMode.UNSAFE): String {
+        return convert(source, "docbook5", safeMode = safeMode)
     }
 
     /**
@@ -89,8 +103,8 @@ object DocumentConverter {
      * @param source le fichier AsciiDoc source (lecture seule, doctype manpage)
      * @return le contenu troff produit
      */
-    fun convertToManPage(source: DocumentSource): String {
-        return convert(source, "manpage")
+    fun convertToManPage(source: DocumentSource, safeMode: SafeMode = SafeMode.UNSAFE): String {
+        return convert(source, "manpage", safeMode = safeMode)
     }
 
     /**
@@ -101,9 +115,14 @@ object DocumentConverter {
      * @param theme le theme visuel a appliquer (DOC-10, optionnel — ignoré pour DocBook/ManPage)
      * @return le contenu du fichier de sortie
      */
-    fun convert(source: DocumentSource, backend: String, theme: DocumentTheme = DocumentTheme()): String {
+    fun convert(
+        source: DocumentSource,
+        backend: String,
+        theme: DocumentTheme = DocumentTheme(),
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ): String {
         val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
-        val options = buildOptions(backend, theme, format, outputFile = null)
+        val options = buildOptions(backend, theme, format, outputFile = null, safeMode = safeMode)
         return AsciidoctorHolder.convertFile(source.file, options)
             ?: throw IllegalStateException("AsciidoctorJ a produit une sortie nulle pour ${source.file.name} (backend=$backend)")
     }
@@ -120,30 +139,42 @@ object DocumentConverter {
      * @param output le fichier de sortie a ecrire
      * @param theme le theme visuel a appliquer (DOC-10, optionnel)
      */
-    fun convertToFile(source: DocumentSource, backend: String, output: java.io.File, theme: DocumentTheme = DocumentTheme()) {
+    fun convertToFile(
+        source: DocumentSource,
+        backend: String,
+        output: java.io.File,
+        theme: DocumentTheme = DocumentTheme(),
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ) {
         output.parentFile.mkdirs()
         val format = DocumentFormat.ALL.firstOrNull { it.backend == backend }
-        val options = buildOptions(backend, theme, format, outputFile = output)
+        val options = buildOptions(backend, theme, format, outputFile = output, safeMode = safeMode)
         AsciidoctorHolder.convertFile(source.file, options)
     }
 
     /**
      * Builds AsciidoctorJ [Options] for the given backend, injecting theme attributes (DOC-10).
      *
+     * DOC-CR3-2 — the AsciidoctorJ [SafeMode] is configurable (default [SafeMode.UNSAFE]
+     * for backward compatibility). It governs filesystem access during conversion
+     * (includes, images, stylesheets).
+     *
      * @param backend the AsciidoctorJ backend ("html5", "pdf", "epub3", "docbook5", "manpage")
      * @param theme the visual theme to apply (attributes injected per format)
      * @param format the [DocumentFormat] (null -> no theme attributes injected)
      * @param outputFile the output file (null -> in-memory String conversion)
+     * @param safeMode the AsciidoctorJ safe-mode guard (UNSAFE/SERVER/SECURE)
      */
-    private fun buildOptions(
+    internal fun buildOptions(
         backend: String,
         theme: DocumentTheme,
         format: DocumentFormat?,
         outputFile: java.io.File?,
+        safeMode: SafeMode = SafeMode.UNSAFE,
     ): Options {
         val builder = Options.builder()
             .backend(backend)
-            .safe(SafeMode.UNSAFE)
+            .safe(safeMode)
             .standalone(true)
             .option("sourcemap", "true")
 

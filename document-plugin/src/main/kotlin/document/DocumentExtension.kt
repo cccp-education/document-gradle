@@ -10,6 +10,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 import document.ValidationMode
+import org.asciidoctor.SafeMode
 
 /**
  * Extension Gradle `document { }` — point d'entree du DSL documentaire (DOC-12 unified).
@@ -93,6 +94,12 @@ abstract class DocumentExtension {
     abstract val bookValidationMode: Property<ValidationMode>
 
     /**
+     * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
+     * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.
+     */
+    abstract val safeMode: Property<SafeMode>
+
+    /**
      * Nested DSL block `enrich { }` (DOC-12). Concrete val initialised in the
      * plugin registration via the [org.gradle.api.model.ObjectFactory]. The
      * concrete [DocumentEnrichDsl] exposes its properties as `val` so the
@@ -138,6 +145,12 @@ abstract class DocumentExtension {
     lateinit var translation: TranslationDsl
         private set
 
+    /**
+     * Nested DSL block `converter { }` (DOC-CR3-2) — AsciidoctorJ safe-mode guard.
+     */
+    lateinit var converter: ConverterDsl
+        private set
+
     internal fun initNested(
         enrich: DocumentEnrichDsl,
         outputs: DocumentOutputsDsl,
@@ -147,6 +160,7 @@ abstract class DocumentExtension {
         template: TemplateDsl,
         batch: BatchDsl,
         translation: TranslationDsl,
+        converter: ConverterDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
@@ -156,6 +170,7 @@ abstract class DocumentExtension {
         this.template = template
         this.batch = batch
         this.translation = translation
+        this.converter = converter
     }
 
     /**
@@ -213,6 +228,13 @@ abstract class DocumentExtension {
 
     fun translation(action: Action<TranslationDsl>) {
         action.execute(translation)
+    }
+
+    /**
+     * Nested DSL block `converter { }` (DOC-CR3-2).
+     */
+    fun converter(action: Action<ConverterDsl>) {
+        action.execute(converter)
     }
 
     fun formats(vararg formats: DocumentFormat) {

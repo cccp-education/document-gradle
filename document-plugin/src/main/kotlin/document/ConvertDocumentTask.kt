@@ -3,6 +3,7 @@ package document
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
+import org.asciidoctor.SafeMode
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
@@ -34,6 +35,13 @@ abstract class ConvertDocumentTask() : DefaultTask() {
 
     @get:Input
     abstract val format: Property<DocumentFormat>
+
+    /**
+     * AsciidoctorJ safe-mode guard applied to this conversion (DOC-CR3-2).
+     * UNSAFE by default (backward-compatible).
+     */
+    @get:Input
+    abstract val safeMode: Property<SafeMode>
 
     @get:Input
     @get:Optional
@@ -91,17 +99,17 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         val docSource = DocumentSource(source)
 
         val content = when (fmt) {
-            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme)
+            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme, safeMode.get())
             DocumentFormat.PDF -> {
-                convertBinary(docSource, output, logger, "pdf", docTheme)
+                convertBinary(docSource, output, logger, "pdf", docTheme, safeMode.get())
                 return
             }
             DocumentFormat.EPUB -> {
-                convertBinary(docSource, output, logger, "epub3", docTheme)
+                convertBinary(docSource, output, logger, "epub3", docTheme, safeMode.get())
                 return
             }
-            DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource)
-            DocumentFormat.MANPAGE -> DocumentConverter.convertToManPage(docSource)
+            DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource, safeMode.get())
+            DocumentFormat.MANPAGE -> DocumentConverter.convertToManPage(docSource, safeMode.get())
         }
 
         if (DocumentConverter.shouldSkipConversion(docSource, output)) {
@@ -120,13 +128,14 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         logger: org.slf4j.Logger,
         backend: String,
         docTheme: DocumentTheme,
+        safeMode: SafeMode,
     ) {
         if (DocumentConverter.shouldSkipBinaryConversion(docSource, output)) {
             logger.info("{} skip — sortie {} existante pour source inchangee : {}", name, backend, output.absolutePath)
             return
         }
         logger.info("{} — {} -> {} ({} backend)", name, docSource.file.name, output.name, backend)
-        DocumentConverter.convertToFile(docSource, backend, output, docTheme)
+        DocumentConverter.convertToFile(docSource, backend, output, docTheme, safeMode)
         DocumentConverter.writeBinaryMetadataHeader(docSource, output)
         logger.info("{} — converti -> {} ({} octets)", name, output.absolutePath, output.length())
     }

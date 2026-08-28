@@ -10,6 +10,7 @@ import document.translation.TranslationDsl
 import document.translation.RetranslateFrontmatterTask
 import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
+import org.asciidoctor.SafeMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -100,6 +101,9 @@ class DocumentPlugin : Plugin<Project> {
                     mode = project.objects.property(String::class.java),
                 ),
             ),
+            converter = ConverterDsl(
+                safeMode = project.objects.property(SafeMode::class.java),
+            ),
         )
 
         // Conventions (defauts)
@@ -148,6 +152,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.batchExcludePaths.convention("")
         ext.translation.tableValidation.mode.convention("LENIENT")
         ext.translation.plantUmlValidation.mode.convention("LENIENT")
+        // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
+        ext.converter.safeMode.convention(SafeMode.UNSAFE)
+        ext.safeMode.convention(SafeMode.UNSAFE)
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -165,6 +172,8 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookTocFile.convention(ext.book.tocFile)
         ext.bookPdfsDir.convention(ext.book.pdfsDir)
         ext.bookValidationMode.convention(ext.book.validationMode)
+        // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
+        ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -246,6 +255,7 @@ class DocumentPlugin : Plugin<Project> {
                 task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
                 task.format.set(format)
                 task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
+                task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
                 task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
                 task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
                 task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))

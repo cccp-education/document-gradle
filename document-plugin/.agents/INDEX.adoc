@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
- _Derniere mise a jour_ : 2026-08-28 (session 219 — DOC-CR3 : `AsciidoctorHolder` partage l'instance AsciidoctorJ + retrait code mort koog `DocumentGenerationGraph.graph`)
-_Derniere session terminee_ : 219 — DOC-CR3-1 (réutilisation instance AsciidoctorJ, TDD strict `AsciidoctorHolderTest` createCount==1) + DOC-CR3-3 (retrait `graph` koog mort, fichier koog-free). DOC-CR3-2 (garde safeMode DSL) reporté.
-_Prochaine session_ : 220 — DOC-CR3-2 (garde `safeMode` DSL configurable) ou EPIC suivant du BACKLOG.
+ _Derniere mise a jour_ : 2026-08-28 (session 220 — DOC-CR3-2 : garde `safeMode` DSL configurable UNSAFE/SERVER/SECURE, propagée ConvertDocumentTask)
+_Derniere session terminee_ : 220 — DOC-CR3-2 ✅ TERMINÉ (baby-step DDD/TDD/BDD : 3 UT + 1 UT conversion + 4 FT GradleTestKit + 3 scénarios Cucumber `@converter-safe-mode`, tous GREEN). EPIC DOC-CR3 CLÔTURÉ (3/3 US).
+_Prochaine session_ : 221 — EPIC suivant du BACKLOG (ex. DOC-TABLE/PLANTUML hardening, ou nouvelle US produit).
 
 '''
 == REGLES ABSOLUES (resume)
@@ -102,7 +102,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | DOC-BOOK-VALIDATE | Validation du pipeline livre — BookValidator DDD pur (TOC cohérente, ordre pages, sections non vides, refs PDF) + strict/lenient + Cucumber (5 US, ~18 pts) | ✅ TERMINÉ (S-216, 5/5 BDD PASSED, `BookValidator.enforce` extrait) | P1
 | EPIC CROSS-DOC-BOOK | BDD cross-borough Codex→Document Book Pipeline — contrat filesystem `%03d-%s.adoc` validé en Cucumber (3 US, ~5 pts) | ✅ TERMINÉ (S-210) | P1
 | EPIC DOC-BOOK-DOMAIN | Domaine « Book » structuré — `BookTree` (Parties→Chapitres→Sections dérivés du ref TOC), `Matter` FRONT/BODY/BACK, `BookLayout` (mise en page), `BookNumbering` (logique), refactor `BookAssembler` + Cucumber `@book-tree` (6 US + cadrage, ~27 pts) | ✅ TERMINÉ (S-211 cadrage, S-212 BookTree+Matter/Layout, S-213 Assembler+Numbering, S-215 Cucumber 6/6 + validateur structurel, 6/6 US) | P1
-| EPIC DOC-CR3 | Revue CR-GLOBALE-003 : Création de Contenu Solide — réutilisation instance AsciidoctorJ (CR3-1), audit SafeMode (CR3-2), code mort (CR3-3) | 🟡 EN COURS (CR3-1 ✅ S-219, CR3-3 ✅ S-219, CR3-2 🟡 reporté) | P1
+| EPIC DOC-CR3 | Revue CR-GLOBALE-003 : Création de Contenu Solide — réutilisation instance AsciidoctorJ (CR3-1), audit SafeMode (CR3-2), code mort (CR3-3) | ✅ TERMINÉ (S-219 CR3-1, S-219 CR3-3, S-220 CR3-2 — 3/3 US) | P1
 |===
 
 '''
@@ -187,6 +187,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 217 | 2026-08-28 | impl + BDD | Rapprochement FPA-BOOK-4 (consumer office/metiers/FPA) — `bookPipeline` câblé sur le livre *assemblé* (`assembleBook.outputFile` → `convertDocumentToHtml/Pdf/Epub.sourceFile`, DOC-BOOK-DOMAIN-3) + `BookLayout.tableOfContents` rend désormais un vrai TOC (`toc::[]`, `id="toc"` dans le HTML) + `build.gradle.kts` forward du flag `-Dfpa.book.publish` au JVM de test. FT `BookPipelineFpaFunctionalTest` (bookPipeline réel FPA 3 pages, 5 formats) + IT `@Tag("integration") FpaBookArtifactGenerationTest` publient `book.{adoc,html,pdf,epub}` navigables dans `office/metiers/FPA/.../livre-navigable/`. Gates : 91 UT book + bookTree/bookValidation cucumber + FT book GREEN, 0 régression. Commit/push autorisé. | 10/10
 | 218 | 2026-08-28 | impl + TDD | **FPA-BOOK-6 (consumer FPA S-081)** — correction rigoureuse mise en page via TDD (refus Python). `BookAssembler.fpaAwareResolver` + `FpaPageResolver` (scan FPA `NNN.adoc`+splits, prioritaire sur legacy `%03d-*.adoc`) + `BookOcrFailureDetector`/`BookOcrIssue`/`OcrFailureReason` (localisation `[ILLISIBLE]`/vides + section TOC) + `BookOcrIssueReport` (`book-ocr-issues.json`) + `AssembleBookTask` câblé. TDD RED→GREEN : `FpaBookAssemblyTest` (UT) + `AssembleBookTaskFpaRichTocTest` (FT dogfooding corpus FPA complet 203 pages + TOC riche 116 sections) PASSENT — livre structuré navigable + 16 échecs OCR localisés. EPIC DOC-BOOK-DOMAIN ✅ TERMINÉ 6/6 US conservé. Commit/push autorisé. | 10/10
 | 219 | 2026-08-28 | refactor + TDD | DOC-CR3-1 (✅ TDD strict) — `AsciidoctorHolder` partage instance AsciidoctorJ unique (lazy+cache+synchronized), `DocumentConverter` délègue ; `AsciidoctorHolderTest` (1 UT, createCount==1). DOC-CR3-3 (✅) — retrait `DocumentGenerationGraph.graph` koog mort + 4 imports, fichier koog-free. DOC-CR3-2 reporté. | 10/10
+| 220 | 2026-08-28 | feat + TDD/BDD | **EPIC DOC-CR3 CLÔTURÉ (3/3 US)** — DOC-CR3-2 : garde `safeMode` AsciidoctorJ configurable (UNSAFE/SERVER/SECURE, défaut UNSAFE backward-compat). `buildOptions` interne accepte `SafeMode` ; `ConverterDsl` (bloc `converter { }`) + mirror flat `safeMode` + flag CLI `-Pdocument.safeMode` ; `ConvertDocumentTask` consomme la valeur. Baby-step DDD/TDD/BDD : 3 UT (`buildOptions` SafeMode via `SafeMode.safeMode(level)`) + 1 UT conversion SERVER + 4 FT GradleTestKit (DSL/CLI/default) + 3 scénarios Cucumber `@converter-safe-mode` (runner dédié `ConverterSafeModeCucumberRunner`). Tous GREEN. `compileKotlin` VERT, `test`/`functionalTest`/cucumber dédié VERTS. | 10/10
 |===
 
 '''

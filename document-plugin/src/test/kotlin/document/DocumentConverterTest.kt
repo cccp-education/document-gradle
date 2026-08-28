@@ -1,5 +1,7 @@
 package document
 
+import org.asciidoctor.Options
+import org.asciidoctor.SafeMode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -128,6 +130,58 @@ class DocumentConverterTest {
 
         assertTrue(header.contains("source hash:"))
         assertTrue(header.contains(DocumentConverter.sourceHash(source)))
+    }
+
+    // --- DOC-CR3-2 : SafeMode configurable ---
+
+    @Test
+    fun `buildOptions applique le SafeMode fourni`() {
+        val options = DocumentConverter.buildOptions(
+            backend = "html5",
+            theme = DocumentTheme(),
+            format = DocumentFormat.HTML,
+            outputFile = null,
+            safeMode = SafeMode.SERVER,
+        )
+
+        assertEquals(SafeMode.SERVER, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode fourni doit etre reflete dans les Options")
+    }
+
+    @Test
+    fun `buildOptions utilise UNSAFE par defaut pour backward-compat`() {
+        val options = DocumentConverter.buildOptions(
+            backend = "html5",
+            theme = DocumentTheme(),
+            format = DocumentFormat.HTML,
+            outputFile = null,
+        )
+
+        assertEquals(SafeMode.UNSAFE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le defaut doit rester UNSAFE (backward-compat)")
+    }
+
+    @Test
+    fun `buildOptions applique SECURE quand fourni`() {
+        val options = DocumentConverter.buildOptions(
+            backend = "pdf",
+            theme = DocumentTheme(),
+            format = DocumentFormat.PDF,
+            outputFile = File(tempDir(), "out.pdf"),
+            safeMode = SafeMode.SECURE,
+        )
+
+        assertEquals(SafeMode.SECURE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode SECURE doit etre reflete dans les Options")
+    }
+
+    @Test
+    fun `convertToHtml honore le SafeMode SERVER et produit un HTML valide`() {
+        val dir = tempDir()
+        val source = adocSource(dir)
+
+        val html = DocumentConverter.convertToHtml(source, safeMode = SafeMode.SERVER)
+
+        assertNotNull(html)
+        assertTrue(html.contains("<!DOCTYPE html", ignoreCase = true), "le HTML doit contenir une declaration doctype")
+        assertTrue(html.contains("Document de Test"), "le HTML doit contenir le titre du document source")
     }
 
     // --- DOC-4 : convertToPdf ---

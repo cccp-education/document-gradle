@@ -107,6 +107,12 @@ cucumberConventions {
             tags = listOf("@book-validation"),
             runnerClass = "document.bookvalidation.BookValidationCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "converterSafeModeCucumberTest",
+            features = listOf("src/test/resources/features/converter_safe_mode.feature"),
+            tags = listOf("@converter-safe-mode"),
+            runnerClass = "document.convertersafemode.ConverterSafeModeCucumberRunner",
+        ),
     )
 }
 
