@@ -1,6 +1,31 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-29
-:session: 221
+:date: 2026-08-30
+:session: 222
+
+== Session 222 — DOC-CR5 : Conversion Security Policy (cohérence SafeMode × IncludeGuard)
+
+*Tests ajoutés S222* :
+- `document/security/SecurityAdvice.kt` — NOUVEAU (sealed Valid/Warn/Reject).
+- `document/security/DocumentSecurityPolicy.kt` — NOUVEAU (`advise(safeMode, includeGuard)`).
+- `DocumentSecurityPolicyTest.kt` — 12 UT TDD strict.
+- `ConvertDocumentTask.kt` — `+DocumentSecurityPolicy.advise` check après `DocumentIncludeGuard.check` (STRICT reject / LENIENT warn / OFF skip).
+- `ConvertDocumentTaskSecurityPolicyFunctionalTest.kt` — 3 FT GradleTestKit (STRICT+UNSAFE reject, LENIENT+UNSAFE warn+convert, SERVER+STRICT valid).
+- `converter_security_policy.feature` — NOUVEAU (3 scénarios `@converter-security-policy`).
+- `SecurityPolicyCucumberRunner.kt` / `SecurityPolicySteps.kt` — NOUVEAU (package `document.securitypolicy`).
+- Enregistrement `securityPolicyCucumberTest` dans `build.gradle.kts`.
+
+*Couverture* :
+- Unit : 12/12 PASSED (`DocumentSecurityPolicyTest`).
+- Fonctionnel : 3/3 PASSED (`ConvertDocumentTaskSecurityPolicyFunctionalTest`).
+- Cucumber dédié : 3/3 PASSED (`SecurityPolicyCucumberRunner`), exécution globale bruite par infra borough (DuplicateStepDefinitionException conventions plugin, non bloquant DOC-CR5).
+- `compileKotlin` VERT, non-régression `document.security.*` (IncludePathValidatorTest 12/12) + FT include-guard 5/5.
+
+*Notes* :
+- Compose `safeMode` (CR3-2) + `includeGuard` (CR4) : défense en profondeur — un include guard actif ne doit pas laisser AsciidoctorJ FS non restreint.
+- Sévérité réutilise le mode `includeGuard` (zéro nouveau knob DSL/CLI).
+- Infra Cucumber borough (conventions duplicate classpath) affecte aussi S-220/S-221 — non bloquant DOC-CR5.
+
+---
 
 == Session 221 — DOC-CR4 : Include Path Guard (audit pré-vol `include::` filesystem)
 

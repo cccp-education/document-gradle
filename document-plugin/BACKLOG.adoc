@@ -1024,6 +1024,75 @@ Cucumber. À corriger dans une session dédiée (conventions-gradle) — n'est p
 
 '''
 
+== ✅ EPIC DOC-CR5 — Conversion Security Policy (TERMINÉ, Session 222)
+
+__source_ : suite directe de DOC-CR3-2 (safeMode) + DOC-CR4 (includeGuard).
+_focus_ : cohérence de la combinaison `SafeMode` × `includeGuard` (défense en profondeur).
+_statut_ : DOC-CR5-1 ✅ TERMINÉ (S-222, TDD strict 12 UT), DOC-CR5-2 ✅ TERMINÉ (S-222,
+3 FT), DOC-CR5-3 ✅ TERMINÉ (S-222, 3 scénarios Cucumber `@converter-security-policy`).
+
+[CAUTION]
+====
+**Motivation** : DOC-CR4 audite les directives `include::` (vecteur de traversal), mais
+l'audit ne couvre QUE les `include::`. Or AsciidoctorJ accède aussi au filesystem pour les
+images, data URIs, thèmes, `:docdir:`. Activer `includeGuard` (STRICT/LENIENT) tout en
+laissant `safeMode = UNSAFE` (défaut) est une *illusion de sécurité* : le FS global reste
+non restreint. DOC-CR5 fait respecter un plancher de cohérence.
+
+**Règle** : `safeMode == UNSAFE && includeGuard != OFF` →
+- `includeGuard == STRICT` → `SecurityAdvice.Reject` → `GradleException` (fail-fast).
+- `includeGuard == LENIENT` → `SecurityAdvice.Warn` → `logger.warn` (dégradé).
+- sinon (SERVER/SECURE, ou OFF) → `SecurityAdvice.Valid`.
+
+**Bénéfices** :
+. Fail-fast STRICT : pas d'illusion de sécurité (build refuse une config asymétrique).
+. Visibilité LENIENT : l'asymétrie est signalée.
+. DDD pur, testable sans Gradle ni réseau.
+. Compose les propriétés existantes (`safeMode` CR3-2, `includeGuard` CR4) — zéro nouveau knob.
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-CR5-1
+| `DocumentSecurityPolicy` DDD pur : `advise(safeMode, includeGuard)` → `SecurityAdvice` sealed (Valid/Warn/Reject). UNSAFE+OFF=Valid, UNSAFE+LENIENT=Warn, UNSAFE+STRICT=Reject, SERVER/SECURE=Valid.
+| 12 UT
+| 5
+| ✅ TERMINÉ (S-222)
+
+| DOC-CR5-2
+| Intégration `ConvertDocumentTask` : STRICT+UNSAFE throw / LENIENT+UNSAFE warn+pass / SERVER+STRICT pass (sévérité via mode `includeGuard`).
+| 3 FT
+| 5
+| ✅ TERMINÉ (S-222)
+
+| DOC-CR5-3
+| Cucumber BDD `@converter-security-policy` (STRICT reject / LENIENT warn / SERVER valid) + runner `SecurityPolicyCucumberRunner` + steps `SecurityPolicySteps` + tâche `securityPolicyCucumberTest`.
+| 3 BDD
+| 5
+| ✅ TERMINÉ (S-222)
+
+|===
+
+=== Livrables S-222
+
+- `document/security/SecurityAdvice.kt` — NOUVEAU (sealed Valid/Warn/Reject).
+- `document/security/DocumentSecurityPolicy.kt` — NOUVEAU (`advise`).
+- `ConvertDocumentTask.kt` — `+DocumentSecurityPolicy.advise` après `DocumentIncludeGuard.check`.
+- `DocumentSecurityPolicyTest.kt` (12 UT) + `ConvertDocumentTaskSecurityPolicyFunctionalTest.kt` (3 FT).
+- `converter_security_policy.feature` + `SecurityPolicyCucumberRunner.kt` + `SecurityPolicySteps.kt` + tâche `securityPolicyCucumberTest`.
+
+=== Note infra Cucumber (connue, hors DOC-CR5)
+
+Le moteur Cucumber *global* du borough bruite (DuplicateStepDefinitionException conventions
+plugin 0.0.2) — le runner *dédié* `securityPolicyCucumberTest` est 3/3 GREEN. Non bloquant
+DOC-CR5 (cf. DOC-CR4).
+
+'''
+
 == ✅ EPIC CROSS-DOC-BOOK — BDD cross-borough Codex→Document Book Pipeline (TERMINÉ, Session 210)
 
 _Source_ : cadrage S-210 (`CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`).

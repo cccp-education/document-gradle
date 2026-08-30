@@ -1,0 +1,75 @@
+= CADRAGE EPIC DOC-CR5 — Conversion Security Policy (cohérence SafeMode × IncludeGuard)
+
+== Session 222 — New Orleans 🟢 (document-gradle)
+
+== Motivation
+
+DOC-CR3-2 (S-220) a rendu le `SafeMode` AsciidoctorJ configurable (UNSAFE/SERVER/SECURE).
+DOC-CR4 (S-221) a ajouté un audit pré-vol `include::` (`IncludeGuardMode` STRICT/LENIENT/OFF).
+Les deux gardes sont configurées *indépendamment* et peuvent être contradictoires :
+
+- Un utilisateur active `includeGuard = STRICT` (audit pré-vol des `include::`)
+  mais laisse `safeMode = UNSAFE` (défaut). L'audit ne couvre QUE les directives
+  `include::` ; tout autre accès filesystem d'AsciidoctorJ (chemins d'images, data URIs,
+  thèmes, `:docdir:`) reste *non restreint*. L'illusion de sécurité est réelle.
+- Inversement `safeMode = SECURE` sans `includeGuard` restreint le FS AsciidoctorJ
+  mais ne pré-audite pas les cibles `include::` (le vrai vecteur de traversal).
+
+DOC-CR5 ajoute un `DocumentSecurityPolicy` (DDD pur) qui *audite la combinaison*
+`safeMode` × `includeGuard` et fait respecter un plancher de cohérence lorsque
+la garde est active. C'est la défense en profondeur : les deux gardes ne doivent
+pas être contradictoires.
+
+== Bénéfices
+
+. Fail-fast en STRICT : une config asymétrique (`includeGuard` actif + `safeMode=UNSAFE`)
+  fait échouer le build avant toute conversion (pas d'illusion de sécurité).
+. Visibilité en LENIENT : la même asymétrie est signalée par warn (degréé).
+. DDD pur, testable sans Gradle ni réseau (baby-step TDD strict).
+. Compose les propriétés existantes (`safeMode` CR3-2, `includeGuard` CR4) — zéro
+  nouveau knob DSL/CLI.
+
+== Ubiquitous Language
+
+- `SecurityAdvice` : `Valid` | `Warn(reason)` | `Reject(reason)` (sealed)
+- `DocumentSecurityPolicy.advise(safeMode, includeGuard)` : classe l'état de la config
+
+== Décisions architecturales
+
+1. Nouveau fichier `document.security.DocumentSecurityPolicy` (package `document.security`,
+   à côté de `DocumentIncludeGuard`/`IncludeGuardMode`). Aucune dépendance Gradle.
+2. Règle unique d'asymétrie :
+   - `safeMode == UNSAFE && includeGuard != OFF`
+     * `includeGuard == STRICT` → `Reject("include guard $mode requires AsciidoctorJ SafeMode at least SERVER ...")`
+     * `includeGuard == LENIENT` → `Warn(...)` (même raison, dégradé)
+   - sinon (safeMode SERVER/SECURE, ou includeGuard OFF) → `Valid`.
+3. Sévérité appliquée dans `ConvertDocumentTask.convert()` *via le mode `includeGuard`*
+   (pas de nouveau knob) :
+   - `STRICT` : `Reject` → `GradleException` (fail-fast).
+   - `LENIENT` : `Warn`/`Reject` → `logger.warn`.
+   - `OFF` : politique non consultée (rétrocompatibilité totale — les deux gardes
+     désactivées restent permises par défaut, conforme à DOC-CR4).
+4. Point d'intégration : juste après `DocumentIncludeGuard.check(...)` dans `convert()`,
+   avant la branche binaire/texte.
+5. Zéro nouveau dépendency ; réutilise `SafeMode` (AsciidoctorJ) + `IncludeGuardMode`.
+
+== User Stories — baby steps DDD/TDD/BDD
+
+| US | Description | Tests | Pts |
+|----|-------------|-------|-----|
+| DOC-CR5-1 | `DocumentSecurityPolicy` DDD pur : `advise(safeMode, includeGuard)` → `SecurityAdvice` sealed. UNSAFE+OFF=Valid, UNSAFE+LENIENT=Warn, UNSAFE+STRICT=Reject, SERVER/SECURE=Valid. | UT 12 | 5 |
+| DOC-CR5-2 | Intégration `ConvertDocumentTask` (STRICT+UNSAFE throw / LENIENT+UNSAFE warn+pass / SERVER+STRICT pass) | FT 3 (GradleTestKit) | 5 |
+| DOC-CR5-3 | Cucumber BDD `@converter-security-policy` (STRICT reject / LENIENT warn / SERVER valid) + runner + steps + tâche | BDD 3 scénarios | 5 |
+
+Total ~15 pts, 3 US. Séquentiel US-1 → US-2 → US-3.
+
+== Dépendances (DAG)
+
+----
+CR5-1 (policy DDD) ─→ CR5-2 (task intégration) ─→ CR5-3 (Cucumber)
+----
+
+== Note
+
+Compose `safeMode` (DOC-CR3-2) + `includeGuard` (DOC-CR4). Aucun nouveau knob DSL/CLI :
+la sévérité de la politique réutilise le mode `includeGuard` existant.

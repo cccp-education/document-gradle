@@ -126,6 +126,12 @@ cucumberConventions {
             tags = listOf("@converter-include-guard"),
             runnerClass = "document.includeguard.IncludeGuardCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "securityPolicyCucumberTest",
+            features = listOf("src/test/resources/features/converter_security_policy.feature"),
+            tags = listOf("@converter-security-policy"),
+            runnerClass = "document.securitypolicy.SecurityPolicyCucumberRunner",
+        ),
     )
 }
 

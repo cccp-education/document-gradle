@@ -1,0 +1,75 @@
+= Session 222 — DOC-CR5 : Conversion Security Policy (cohérence SafeMode × IncludeGuard)
+
+:epic: DOC-CR5
+:date: 2026-08-30
+:status: EPIC DOC-CR5 ✅ TERMINÉ (3/3 US) — baby-step DDD/TDD/BDD
+:max-lines: 70
+
+== Contexte
+
+Suite de S-221 (DOC-CR4 ✅). Le `PROMPT_REPRISE.adoc` disque était périmé (session 221) ;
+la roadmap INDEX/BACKLOG/SESSIONS_HISTORY étaient à jour. Le build était bloqué (JDK 24 vs
+`conventions-plugin:0.0.2` exigeant JVM 25) — basculé sur Temurin 25.0.4-tem (sdkman).
+
+DOC-CR4 audite les `include::` (vecteur de traversal) mais ne couvre que les `include::`.
+AsciidoctorJ accède aussi au FS pour images/data URIs/thèmes/`:docdir:`. Activer `includeGuard`
+avec `safeMode=UNSAFE` (défaut) est une illusion de sécurité. DOC-CR5 fait respecter un
+plancher de cohérence — défense en profondeur (pattern DOC-CR3 + DOC-CR4).
+
+== Quick Start (vérif S-222)
+
+----
+cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
+export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem
+./gradlew compileKotlin                                          # VERT
+./gradlew test --tests "document.security.*"                    # 24 UT (12 CR4 + 12 CR5) VERT
+./gradlew functionalTest --tests "document.ConvertDocumentTaskSecurityPolicyFunctionalTest" \
+  --tests "document.ConvertDocumentTaskIncludeGuardFunctionalTest"   # 3 + 5 FT VERT
+./gradlew securityPolicyCucumberTest                            # runner dédié 3/3 PASSED
+----
+
+== Déroulé baby-step
+
+=== DOC-CR5-1 — DDD `document.security` (TDD strict) ✅
+
+- `SecurityAdvice` sealed (Valid / Warn(reason) / Reject(reason)).
+- `DocumentSecurityPolicy.advise(safeMode, includeGuard)` :
+  UNSAFE+OFF→Valid, UNSAFE+LENIENT→Warn, UNSAFE+STRICT→Reject, SERVER/SECURE→Valid.
+- RED (classe absente) → GREEN : `DocumentSecurityPolicyTest` 12 UT PASSED.
+
+=== DOC-CR5-2 — Intégration `ConvertDocumentTask` ✅
+
+- Après `DocumentIncludeGuard.check`, `when(advice)` applique la sévérité via le mode
+  `includeGuard` : STRICT→Reject throw `GradleException` ; LENIENT→Warn `logger.warn` ;
+  OFF→no-op (rétrocompat).
+- `ConvertDocumentTaskSecurityPolicyFunctionalTest` 3 FT GradleTestKit PASSED :
+  STRICT+UNSAFE reject / LENIENT+UNSAFE warn+convert / SERVER+STRICT valid.
+
+=== DOC-CR5-3 — Cucumber BDD ✅
+
+- `converter_security_policy.feature` (3 scénarios `@converter-security-policy`).
+- `SecurityPolicyCucumberRunner` (package `document.securitypolicy`, glue filtré) +
+  `SecurityPolicySteps` + tâche `securityPolicyCucumberTest` (build.gradle.kts).
+- Runner dédié 3/3 PASSED. Le moteur Cucumber *global* borough reste bruite par l'infra
+  conventions plugin (DuplicateStepDefinitionException) — non bloquant, conforme à DOC-CR4.
+
+== Gates
+
+- `compileKotlin` VERT.
+- `test --tests document.security.*` VERT (24 UT).
+- `functionalTest` CR5 (3) + CR4 (5) VERT.
+- `securityPolicyCucumberTest` runner dédié 3/3 PASSED.
+- Non-régression : aucun fichier de production CR4 modifié hormis le point d'intégration
+  `ConvertDocumentTask` (adjacent à `DocumentIncludeGuard.check`).
+
+== Livrables
+
+- EPIC DOC-CR5 ✅ TERMINÉ (3/3 US).
+- DDD `document.security` étendu (`SecurityAdvice`, `DocumentSecurityPolicy`).
+- Zéro nouveau knob DSL/CLI (compose `safeMode` + `includeGuard`).
+- Artifacts Cucumber `@converter-security-policy` ajoutés.
+
+== Suite (session 223)
+
+- Correction infra Cucumber borough (DuplicateStepDefinitionException conventions plugin) — voir PROMPT_REPRISE.adoc mission 223.
+- Ou EPIC produit suivant (DOC-TABLE / PLANTUML hardening, dogfooding livre FPA SERVER).

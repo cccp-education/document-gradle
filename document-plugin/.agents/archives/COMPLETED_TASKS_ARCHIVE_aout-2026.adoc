@@ -306,3 +306,28 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 *Gates* : `compileKotlin` VERT ; `test --tests document.security.IncludePathValidatorTest` VERT (12 UT) ; `functionalTest --tests ConvertDocumentTaskIncludeGuardFunctionalTest --tests ConvertDocumentTaskSafeModeFunctionalTest` VERT (5 FT CR4 + 4 FT safeMode). Cucumber dédié CR4 : artifacts ajoutés, exécution globale bloquée infra borough (DuplicateStepDefinitionException conventions plugin, non bloquant DOC-CR4).
 
 *Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — reportée S-222.
+
+=== Session 222 (2026-08-30) — DOC-CR5 (Conversion Security Policy) — EPIC CLÔTURÉ
+
+*Type* : implémentation TDD/BDD strict (baby-step DDD/TDD/BDD)
+*Score* : 10/10
+*EPIC* : DOC-CR5 (3/3 US)
+
+*Contexte* : suite de DOC-CR3-2 (safeMode) + DOC-CR4 (includeGuard). DOC-CR4 audite
+les `include::` mais ne couvre que ce vecteur ; AsciidoctorJ accède aussi au FS (images,
+data URIs, thèmes, `:docdir:`). Activer `includeGuard` avec `safeMode=UNSAFE` (défaut)
+est une illusion de sécurité. DOC-CR5 force un plancher de cohérence (défense en profondeur).
+
+*Règle* : `safeMode == UNSAFE && includeGuard != OFF` →
+STRICT→Reject (GradleException fail-fast) / LENIENT→Warn (logger.warn) ; sinon Valid.
+
+*Livrables* :
+- `document/security/SecurityAdvice.kt` (sealed Valid/Warn/Reject), `DocumentSecurityPolicy.kt` (`advise(safeMode, includeGuard)`).
+- `DocumentSecurityPolicyTest.kt` : 12 UT.
+- `ConvertDocumentTask.kt` : `+DocumentSecurityPolicy.advise` check après `DocumentIncludeGuard.check` (sévérité via mode `includeGuard`, zéro nouveau knob DSL/CLI).
+- `ConvertDocumentTaskSecurityPolicyFunctionalTest.kt` : 3 FT (STRICT+UNSAFE reject, LENIENT+UNSAFE warn+convert, SERVER+STRICT valid).
+- `converter_security_policy.feature` (3 scénarios `@converter-security-policy`) + `SecurityPolicyCucumberRunner.kt` + `SecurityPolicySteps.kt` + `CucumberTaskSpec("securityPolicyCucumberTest")`.
+
+*Gates* : `compileKotlin` VERT ; `test --tests document.security.*` VERT (24 UT : 12 CR4 + 12 CR5) ; `functionalTest` CR5 (3 FT) + CR4 (5 FT) VERT ; `securityPolicyCucumberTest` runner dédié 3/3 PASSED. Exécution globale Cucumber borough bruite par infra (DuplicateStepDefinitionException conventions plugin) — non bloquant DOC-CR5.
+
+*Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — reportée S-223.

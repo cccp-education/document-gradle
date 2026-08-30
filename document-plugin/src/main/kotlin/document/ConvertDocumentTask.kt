@@ -15,7 +15,10 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
 import document.security.DocumentIncludeGuard
+import document.security.DocumentSecurityPolicy
 import document.security.IncludeGuardMode
+import document.security.SecurityAdvice
+import org.gradle.api.GradleException
 
 /**
  * Tache de conversion AsciiDoc -> format (AsciidoctorJ).
@@ -110,6 +113,23 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         // DOC-CR4 — pre-flight audit of include:: directives (path traversal / absolute).
         // Runs before any AsciidoctorJ filesystem access, for every backend.
         DocumentIncludeGuard.check(source.readText(), source.parentFile, includeGuard.get(), logger::warn)
+
+        // DOC-CR5 — defence-in-depth coherence check : an active include guard paired
+        // with an UNSAFE AsciidoctorJ SafeMode is an illusion of security (the include
+        // audit covers only `include::`, not other filesystem access). Severity follows
+        // the includeGuard mode (STRICT fails fast, LENIENT warns, OFF stays silent).
+        val advice = DocumentSecurityPolicy.advise(safeMode.get(), includeGuard.get())
+        when (advice) {
+            is SecurityAdvice.Reject ->
+                if (includeGuard.get() == IncludeGuardMode.STRICT) {
+                    throw GradleException("Security policy (STRICT) rejected conversion — ${advice.reason}")
+                } else {
+                    logger.warn("Security policy (LENIENT) — ${advice.reason}")
+                }
+            is SecurityAdvice.Warn ->
+                logger.warn("Security policy (LENIENT) — ${advice.reason}")
+            SecurityAdvice.Valid -> Unit
+        }
 
         val content = when (fmt) {
             DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme, safeMode.get())
