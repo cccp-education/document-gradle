@@ -1,0 +1,97 @@
+= Session 220 — DOC-CR3-2 : Garde safeMode DSL configurable (UNSAFE/SERVER/SECURE)
+
+:session: 220
+:date: 2026-08-28
+:borough: document-gradle (New Orleans 🟢)
+:epic: DOC-CR3
+
+== Objectif
+
+Implémenter une garde `safeMode` DSL configurable dans `DocumentConverter` pour maîtriser la sécurité des conversions AsciidoctorJ, en baby-step DDD/TDD/BDD strict. Ajouter :
+- Un `Property<SafeMode>` exposés via le DSL imbriqué `converter { }` sur `DocumentExtension`.
+- Un miroir flat `safeMode` + flag CLI `-Pdocument.safeMode`.
+- Propagation de la valeur vers `ConvertDocumentTask` puis `DocumentConverter.buildOptions`.
+- Default `UNSAFE` pour backward-compat.
+Tests : unit (buildOptions), fonctionnel (GradleTestKit), Cucumber (scénarios DSL/CLI).
+Autorisation : commit + push à la clôture.
+
+== Travail effectué
+
+=== Implémentation production (DDD baby-step) ===
+
+1. **DocumentConverter.kt** :
+   - Rendu `buildOptions` **internal** avec param `safeMode: SafeMode = SafeMode.UNSAFE` (utilise `OptionsBuilder.safe(safeMode)`).
+   - Méthodes `convert`, `convertToFile`, `convertToHtml`, `convertToPdf`, `convertToEpub`, `convertToDocBook`, `convertToManPage` exposent `safeMode` (défaut UNSAFE).
+   - Appels vers `buildOptions(safeMode)`.
+
+2. **ConverterDsl.kt** (NOUVEAU) :
+   - `class ConverterDsl(val safeMode: Property<SafeMode>)` — DSL imbriqué standard.
+
+3. **DocumentExtension.kt** :
+   - `abstract val safeMode: Property<SafeMode>`.
+   - `lateinit var converter: ConverterDsl`.
+   - `initNested(..., converter)`.
+   - `fun converter(action: Action<ConverterDsl>)`.
+   - Miroir flat : `ext.safeMode.convention(ext.converter.safeMode)`.
+
+4. **ConvertDocumentTask.kt** :
+   - `abstract val safeMode: Property<SafeMode>`.
+   - Passé à tous les appels `DocumentConverter.*`.
+
+5. **DocumentPlugin.kt** :
+   - Wiring du bloc DSL : `converter = ConverterDsl(safeMode = project.objects.property(SafeMode::class.java))` dans `initNested`.
+   - Conventions : `ext.converter.safeMode.convention(SafeMode.UNSAFE)` + `ext.safeMode.convention(SafeMode.UNSAFE)`.
+   - Miroir : `ext.safeMode.convention(ext.converter.safeMode)`.
+   - CLI : `task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))`.
+   - Import `org.asciidoctor.SafeMode`.
+
+=== Tests ===
+
+**Unitaires** (`DocumentConverterTest.kt`) :
+- 4 tests ajoutés :
+  - `buildOptions applique le SafeMode fourni` (SERVER, vérifié via `options.map()[Options.SAFE] as Int` → `SafeMode.safeMode(level)`).
+  - `buildOptions utilise UNSAFE par défaut`.
+  - `buildOptions applique SECURE quand fourni`.
+  - `convertToHtml honore le SafeMode SERVER` (vérifie le `SAFEMODE` dans la sortie via `PrintWriter` capturé).
+- **Résultat** : 47/47 PASSED (dont 4 nouveaux SafeMode).
+
+**Fonctionnels** (`ConvertDocumentTaskSafeModeFunctionalTest.kt`, GradleTestKit) :
+- 4 scénarios :
+  - DSL SERVER → `SAFEMODE=SERVER`.
+  - DSL SECURE → `SAFEMODE=SECURE`.
+  - CLI `-Pdocument.safeMode=SERVER` override DSL → `SAFEMODE=SERVER`.
+  - Défaut (aucune config) → `SAFEMODE=UNSAFE`.
+- Écrit un `build.gradle.kts` avec tâche `printSafeMode` affichant la valeur.
+- **Résultat** : 4/4 PASSED (erreur de nom de fonction contenant `-`/`. ` corrigée).
+
+**Cucumber** (`converter_safe_mode.feature`, runner + steps dédiés) :
+- 3 scénarios `@converter-safe-mode` :
+  - `GIVEN no converter config → WHEN convert → THEN SAFEMODE=UNSAFE`.
+  - `GIVEN converter { safeMode = SERVER } → WHEN convert → THEN SAFEMODE=SERVER`.
+  - `GIVEN converter { safeMode = SECURE } AND -Pdocument.safeMode=SERVER → WHEN convert → THEN SAFEMODE=SERVER` (CLI override DSL).
+- Utilise GradleTestKit + `printSafeMode` task.
+- **Étapes** : suppression du prefix `converter-safe-mode ` (collision anti-glue évitée via package dédié `document.convertersafemode`).
+- **Résultat** : 3/3 PASSED (`converterSafeModeCucumberTask`).
+
+**Build** :
+- `./gradlew compileKotlin --offline` → BUILD SUCCESSFUL.
+- `./gradlew check` → unit + functional + dédié cucumber VERT ; global `cucumberTest` rouge (préexistant : glue/environnement affectant toutes les features identiquement, pas de régression).
+
+== Décisions
+
+- **Default UNSAFE** : backward-compat total (comportement identique si aucune config).
+- **Propagation** : le `safeMode` du DSL/CLI atteint chaque backend (`buildOptions` interne) via `ConvertDocumentTask`.
+- **DDD** : `ConverterDsl` (nested block) + miroir flat + propriété abstraite sur l'extension.
+- **Baby-step** : chaque ajout compilé, testé unitairement puis fonctionnellement puis BDD.
+- **Sécurité** : en mode `SERVER`/`SECURE`, l'include de fichiers système et l'exécution de macros sont restreints (selon AsciidoctorJ).
+
+== Bilan
+
+- ✅ DOC-CR3-2 TERMINÉ (garde `safeMode` DSL configurable).
+- ✅ EPIC DOC-CR3 CLÔTURÉ (3/3 US).
+- ✅ Aucun secret introduit (grep `TOKEN\|SECRET\|...` négatif).
+- ✅ Procédure de clôture prête.
+
+== Prochaine étape
+
+Passer au prochain EPIC du BACKLOG (ex. hardening tableau/PlantUML, ou nouvelle US produit).

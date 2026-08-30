@@ -1,0 +1,68 @@
+= CADRAGE EPIC DOC-CR4 — Include Path Guard (sécurité des conversions)
+
+== Session 221 — New Orleans 🟢 (document-gradle)
+
+== Motivation
+
+DOC-CR3-2 (S-220) a rendu le `SafeMode` AsciidoctorJ configurable
+(UNSAFE/SERVER/SECURE) pour chaque conversion. Mais `SafeMode` ne fait que
+*restreindre* l'accès filesystem d'AsciidoctorJ ; il n'audit pas le contenu
+AsciiDoc lui-même. Un document non fiable (ex. livre FPA scanné, OCR externe)
+peut contenir des directives `include::` dont la cible sort de l'arborescence
+du document (path traversal `../secret.adoc`, chemin absolu `/etc/passwd`,
+ou lien vers un fichier hors `allowedRoot`).
+
+C'est une faille de sécurité réelle pour le dogfooding `bookPipeline` en mode
+SERVER/SECURE : la source est produite par un LLM/OCR, pas par l'humain.
+
+== Bénéfices
+
+. Filet de sécurité pré-flight : détecte le path traversal *avant* la conversion
+. Mode STRICT (fail build) / LENIENT (warn) / OFF (rétrocompat) — cohérent avec
+  DOC-TABLE-VALIDATE / DOC-PLANTUML-VALIDATE / DOC-BOOK-VALIDATE
+. DDD pur, testable sans Gradle ni réseau (baby-step TDD strict)
+. Complète DOC-CR3 : `safeMode` (restriction AsciidoctorJ) + `includeGuard`
+  (audit contenu) = défense en profondeur
+
+== Ubiquitous Language
+
+- `IncludeDirective` : une occurrence `include::target[opts]` (ligne source)
+- `IncludeValidationResult` : `Valid` | `Invalid(reason, offendingTarget, line)`
+- `IncludePathValidator` : parse + résout les cibles vs `allowedRoot`
+- `IncludeGuardMode` : `STRICT` | `LENIENT` | `OFF`
+- `DocumentIncludeGuard` : applique le mode (throw vs warn vs no-op)
+
+== Décisions architecturales
+
+1. Nouveau package `document.security` (isolé, sans dépendance Gradle pour le DDD).
+2. `allowedRoot` par défaut = répertoire parent du fichier source (`source.parentFile`).
+   L'include doit rester *sous* ce répertoire (canonical path prefix check).
+3. Cibles absolues (`/...`) et cibles résolues hors `allowedRoot` → `Invalid`.
+4. `ConvertDocumentTask` appelle `DocumentIncludeGuard.check` au tout début de
+   `convert()` (avant la branche binaire/texte), après vérification d'existence.
+5. DSL : `converter { includeGuard = IncludeGuardMode.STRICT }` (mirror flat
+   `document.includeGuard`) + CLI `-Pdocument.includeGuard=STRICT`.
+6. Défaut `OFF` (rétrocompatibilité totale — S-220 laisse `safeMode=UNSAFE`).
+7. Zéro nouveau dépendency ; réutilise `ValidationMode`-like pattern local.
+
+== User Stories — baby steps DDD/TDD/BDD
+
+| US | Description | Tests | Pts |
+|----|-------------|-------|-----|
+| DOC-CR4-1 | `IncludePathValidator` DDD pur : parse `include::`, résout vs `allowedRoot`, détecte traversal/absolu. `IncludeValidationResult` sealed. | UT 12 (valide relatif, traversal `../`, absolu, multi-includes, ligne, cible avec `[]`) | 5 |
+| DOC-CR4-2 | `DocumentIncludeGuard.check` + intégration `ConvertDocumentTask` (STRICT throw / LENIENT warn / OFF skip) | FT 3 (GradleTestKit : STRICT fail, LENIENT pass, valid pass) | 5 |
+| DOC-CR4-3 | DSL `converter.includeGuard` + `DocumentExtension.includeGuard` mirror + CLI `-Pdocument.includeGuard` + convention OFF | FT 2 (propagation DSL/CLI) | 3 |
+| DOC-CR4-4 | Cucumber BDD `@converter-include-guard` (STRICT/LENIENT/OFF/CLI) + runner + steps | BDD 4 scénarios | 5 |
+
+Total ~18 pts, 4 US. Séquentiel US-1 → US-2 → US-3 → US-4.
+
+== Dépendances (DAG)
+
+----
+CR4-1 (validator DDD) ─→ CR4-2 (guard + task) ─→ CR4-3 (DSL/CLI) ─→ CR4-4 (Cucumber)
+----
+
+== Extension cross-borough (future)
+
+Si codex/runner veulent auditer les includes, extraire `include-guard-contracts`
+N0 (pattern DOC-PLANTUML-VALIDATE DRY). Aujourd'hui : wrapper local only.

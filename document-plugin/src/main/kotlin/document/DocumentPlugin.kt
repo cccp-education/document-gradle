@@ -11,6 +11,7 @@ import document.translation.RetranslateFrontmatterTask
 import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import org.asciidoctor.SafeMode
+import document.security.IncludeGuardMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -103,6 +104,7 @@ class DocumentPlugin : Plugin<Project> {
             ),
             converter = ConverterDsl(
                 safeMode = project.objects.property(SafeMode::class.java),
+                includeGuard = project.objects.property(IncludeGuardMode::class.java),
             ),
         )
 
@@ -174,6 +176,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookValidationMode.convention(ext.book.validationMode)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
+        // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
+        ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
+        ext.includeGuard.convention(ext.converter.includeGuard)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -256,6 +261,7 @@ class DocumentPlugin : Plugin<Project> {
                 task.format.set(format)
                 task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
                 task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
+                task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
                 task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
                 task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
                 task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))
@@ -312,21 +318,23 @@ class DocumentPlugin : Plugin<Project> {
         val epub = project.tasks.named("convertDocumentToEpub", ConvertDocumentTask::class.java)
         val collect = project.tasks.named("collectDocumentRetrieve")
         enrichDocument.configure { it.mustRunAfter(assembleBook) }
+        html.configure { it.mustRunAfter(enrichDocument) }
+        pdf.configure { it.mustRunAfter(enrichDocument) }
+        epub.configure { it.mustRunAfter(enrichDocument) }
         // DOC-BOOK-DOMAIN-3 — the converters must consume the *assembled* book
         // (output of assembleBook), not ext.source which is unrelated to the
         // book pipeline. This is what makes `bookPipeline` actually produce a
         // navigable HTML/PDF/EPUB of the assembled book (FPA-BOOK-4).
-        html.configure {
-            it.mustRunAfter(enrichDocument)
-            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
-        }
-        pdf.configure {
-            it.mustRunAfter(enrichDocument)
-            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
-        }
-        epub.configure {
-            it.mustRunAfter(enrichDocument)
-            it.sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+        // The override is applied ONLY when `bookPipeline` is in the task graph,
+        // so the standalone `convertDocumentToHtml` (driven by `ext.source`) keeps
+        // working — otherwise its sourceFile is permanently hijacked to a
+        // non-existent book.adoc (latent bug).
+        project.gradle.taskGraph.whenReady { graph ->
+            if (graph.hasTask(project.tasks.named("bookPipeline").get())) {
+                html.get().sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+                pdf.get().sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+                epub.get().sourceFile.set(assembleBook.flatMap { t -> t.outputFile })
+            }
         }
         collect.configure { it.mustRunAfter(listOf(html, pdf, epub)) }
     }

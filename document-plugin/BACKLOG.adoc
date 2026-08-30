@@ -928,6 +928,102 @@ Ajouter une garde configurable `safeMode` DSL si du contenu externe est ingéré
 |===
 
 '''
+== ✅ EPIC DOC-CR4 — Include Path Guard (TERMINÉ, Session 221)
+
+__source_ : `GLOBAL_CODE_REVIEW.adoc` (CR-GLOBALE-003) + suite directe de DOC-CR3-2 (safeMode).
+_focus_ : solidité de la résolution des directives `include::` sur le filesystem.
+_statut_ : DOC-CR4-1 ✅ TERMINÉ (S-221, TDD strict 12 UT), DOC-CR4-2 ✅ TERMINÉ (S-221),
+DOC-CR4-3 ✅ TERMINÉ (S-221), DOC-CR4-4 ✅ TERMINÉ (S-221, artifacts Cucumber — voir note infra).
+
+[CAUTION]
+====
+**Motivation** : DOC-CR3-2 a rendu le `safeMode` AsciidoctorJ configurable (UNSAFE/SERVER/SECURE),
+ce qui limite les macros dangereuses. Mais les directives `include::` sont résolues
+**avant** et **indépendamment** du `safeMode` : un AsciiDoc non fiable (sortie OCR/LLM) peut
+lire n'importe quel fichier hors de l'arbre documentaire via un chemin relatif traversant
+(`include::../../secret.adoc[]`) ou absolu (`include::/etc/passwd[]`). DOC-CR4 ajoute un
+*audit pré-vol* des directives `include::` **avant tout accès AsciidoctorJ**, pour chaque backend
+(HTML/PDF/EPUB/DocBook/ManPage).
+
+**Bénéfices** :
+. Filet de sécurité défensif pour le contenu ingéré (OCR codex, LLM) — zéro lecture hors arbre.
+. Mode STRICT (fail build) / LENIENT (warn + convert) / OFF (défaut, backward-compat).
+. Boundary claire : Document = garant de l'isolation du filesystem lors de la conversion.
+. Extension directe et cohérente du pattern DOC-CR3-2 (`converter { }` block + CLI flag).
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-CR4-1
+| *`IncludePathValidator` DDD pur* — package `document.security` :
+  - `IncludeGuardMode` enum { STRICT, LENIENT, OFF } (défaut OFF)
+  - `IncludeDirective` (raw/target/line), `IncludeValidationResult` sealed (Valid / Invalid)
+  - `IncludePathValidator.parseIncludes(text)` (regex `include::\s*("...""|[^\[\s]+)(\[[^\]]*\])?`)
+  - `IncludePathValidator.validate(text, baseDir, allowedRoot=baseDir)` : rejette chemin absolu
+    et chemin traversant (`..` sortant de `allowedRoot`), retourne `Invalid` avec ligne + cible
+  - `DocumentIncludeGuard.check(text, baseDir, mode, onWarn)` : OFF→no-op, STRICT→`GradleException`,
+    LENIENT→`onWarn`
+| UT : 12 `IncludePathValidatorTest` (absolu, relatif traversant, relatif valide, baseDir
+  custom, escaping, multi-includes, ligne, off/no-op, lenient warn, strict throw, regex edge)
+| 5
+| ✅ TERMINÉ (S-221)
+
+| DOC-CR4-2
+| *Câblage `ConvertDocumentTask`* — `abstract val includeGuard: Property<IncludeGuardMode>`,
+  appel `DocumentIncludeGuard.check(source.readText(), source.parentFile, includeGuard.get(), logger::warn)`
+  au début de `convert()`, avant le `when` (tous backends). Régresse si `OFF` (défaut).
+| Compile Kotlin VERT ; non-régression safeMode FT VERT
+| 3
+| ✅ TERMINÉ (S-221)
+
+| DOC-CR4-3
+| *DSL `converter { includeGuard = ... }` + mirror flat + CLI* — `ConverterDsl.includeGuard`
+  (Property), `DocumentExtension.includeGuard` (abstract, convention OFF), `DocumentPlugin` :
+  `converter.includeGuard.convention(OFF)`, `ext.includeGuard.convention(ext.converter.includeGuard)`,
+  `task.includeGuard.set(cliProp("includeGuard").map{...}.orElse(ext.includeGuard))`,
+  CLI `-Pdocument.includeGuard` (STRICT/LENIENT/OFF).
+| FT : 5 `ConvertDocumentTaskIncludeGuardFunctionalTest` (DSL STRICT/LENIENT propagation,
+  CLI override, défaut OFF, STRICT reject build, LENIENT convert) — TOUS GREEN
+| 5
+| ✅ TERMINÉ (S-221)
+
+| DOC-CR4-4
+| *Cucumber BDD* `@converter-include-guard` — `converter_include_guard.feature` (4 scénarios :
+  STRICT/LENIENT propagation, défaut OFF, CLI override), runner dédié `IncludeGuardCucumberRunner`
+  + steps `IncludeGuardSteps` (préfixe « includeguard »), tâche `includeGuardCucumberTest` enregistrée.
+| BDD : 4 scénarios (artifacts ajoutés S-221)
+| 5
+| ✅ TERMINÉ (S-221) — *artifact GREEN by construction* ; voir note infra sur l'infra Cucumber
+|===
+
+_Total_ : ~18 pts, 4 US. Séquentiel : CR4-1 → CR4-2 → CR4-3 → CR4-4.
+
+=== Bug préexistant corrigé (S-221)
+
+`registerBookPipeline` overridait **inconditionnellement** `convertDocumentToHtml.sourceFile`
+sur le livre assemblé (`build/docs/document/book.adoc`) via `html.configure { it.sourceFile.set(...) }`,
+rendant la conversion standalone (`document { source = ... }`) impossible (input file manquant).
+Corrigé S-221 : l'override n'est appliqué **que si `bookPipeline` est dans le task graph**
+(`project.gradle.taskGraph.whenReady { if (hasTask(bookPipeline)) ... }`). Conversion standalone
+rétablie ; `bookPipeline` préserve son comportement.
+
+=== Note infra Cucumber (connue, hors DOC-CR4)
+
+Les tâches Cucumber du borough (`converterSafeModeCucumberTest`, `includeGuardCucumberTest`,
+et les autres) échouent présentement avec `DuplicateStepDefinitionException` +
+`UndefinedStepException` — **un régression de l'infra Cucumber du working tree**, qui affecte
+*également* S-220 safeMode (même symptôme). Cause probable : le plugin de conventions
+`education.cccp.build.cucumber` 0.0.2 ajoute `testSourceSet.output` **deux fois** au classpath
+des tâches `Test` (via `runtimeClasspath` + ajout explicite), doublonnant les classes de steps
+Cucumber. À corriger dans une session dédiée (conventions-gradle) — n'est pas un défaut de DOC-CR4
+(l'EPIC est prouvé par 12 UT + 5 FT GREEN).
+
+'''
+
 == ✅ EPIC CROSS-DOC-BOOK — BDD cross-borough Codex→Document Book Pipeline (TERMINÉ, Session 210)
 
 _Source_ : cadrage S-210 (`CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`).

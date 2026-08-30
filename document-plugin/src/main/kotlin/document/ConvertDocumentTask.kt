@@ -14,6 +14,8 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
+import document.security.DocumentIncludeGuard
+import document.security.IncludeGuardMode
 
 /**
  * Tache de conversion AsciiDoc -> format (AsciidoctorJ).
@@ -42,6 +44,13 @@ abstract class ConvertDocumentTask() : DefaultTask() {
      */
     @get:Input
     abstract val safeMode: Property<SafeMode>
+
+    /**
+     * Include-path guard strictness applied before conversion (DOC-CR4).
+     * [IncludeGuardMode.OFF] by default (backward-compatible).
+     */
+    @get:Input
+    abstract val includeGuard: Property<IncludeGuardMode>
 
     @get:Input
     @get:Optional
@@ -97,6 +106,10 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         }
 
         val docSource = DocumentSource(source)
+
+        // DOC-CR4 — pre-flight audit of include:: directives (path traversal / absolute).
+        // Runs before any AsciidoctorJ filesystem access, for every backend.
+        DocumentIncludeGuard.check(source.readText(), source.parentFile, includeGuard.get(), logger::warn)
 
         val content = when (fmt) {
             DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme, safeMode.get())

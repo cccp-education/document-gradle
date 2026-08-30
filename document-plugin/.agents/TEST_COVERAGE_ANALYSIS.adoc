@@ -1,6 +1,36 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-28
-:session: 220
+:date: 2026-08-29
+:session: 221
+
+== Session 221 — DOC-CR4 : Include Path Guard (audit pré-vol `include::` filesystem)
+
+*Tests ajoutés S221* :
+- `document/security/IncludeGuardMode.kt` — NOUVEAU (enum STRICT/LENIENT/OFF).
+- `document/security/IncludeDirective.kt` — NOUVEAU (data class raw/target/line).
+- `document/security/IncludeValidationResult.kt` — NOUVEAU (sealed Valid/Invalid).
+- `document/security/IncludePathValidator.kt` — NOUVEAU (parseIncludes/validate).
+- `document/security/DocumentIncludeGuard.kt` — NOUVEAU (check(text, baseDir, mode, onWarn)).
+- `IncludePathValidatorTest.kt` — 12 UT TDD strict.
+- `ConvertDocumentTask.kt` — `+includeGuard` + `DocumentIncludeGuard.check` au début de `convert()`.
+- `ConverterDsl.kt` / `DocumentExtension.kt` / `DocumentPlugin.kt` — `+includeGuard` DSL + flat mirror + CLI `-Pdocument.includeGuard` ; fix `registerBookPipeline` (override `sourceFile` seulement si `bookPipeline` dans le graphe).
+- `ConvertDocumentTaskIncludeGuardFunctionalTest.kt` — 5 FT GradleTestKit (DSL STRICT/LENIENT, CLI override, défaut OFF, STRICT reject, LENIENT convert).
+- `converter_include_guard.feature` — NOUVEAU (4 scénarios `@converter-include-guard`).
+- `IncludeGuardCucumberRunner.kt` / `IncludeGuardSteps.kt` — NOUVEAU (package `document.includeguard`).
+- Enregistrement `includeGuardCucumberTest` dans `build.gradle.kts`.
+
+*Couverture* :
+- Unit : 12/12 PASSED (`IncludePathValidatorTest`).
+- Fonctionnel : 5/5 PASSED (`ConvertDocumentTaskIncludeGuardFunctionalTest`) + 4/4 FT safeMode existants non-régression.
+- Cucumber dédié : artifacts ajoutés (4 scénarios), exécution bloquée par infra borough (DuplicateStepDefinitionException conventions plugin, voir note S-221).
+- `compileKotlin` VERT.
+
+*Notes* :
+- Modes : STRICT (fail build) / LENIENT (warn + convert) / OFF (défaut, backward-compat).
+- Audit pré-vol : `include::` résolu AVANT le `safeMode` AsciidoctorJ → filet défensif indépendant.
+- Bug conversion standalone (`convertDocumentToHtml.sourceFile` hijacké par bookPipeline) corrigé.
+- Infra Cucumber borough (conventions duplicate classpath) affecte aussi S-220 — non bloquant DOC-CR4.
+
+---
 
 == Session 220 — DOC-CR3-2 : Garde safeMode DSL configurable (UNSAFE/SERVER/SECURE)
 

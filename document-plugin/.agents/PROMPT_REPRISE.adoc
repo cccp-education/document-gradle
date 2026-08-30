@@ -1,37 +1,40 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 218
+== Mission session 222
 
-Suite S-217 (rapprochement FPA-BOOK-4 : `bookPipeline` convertit le livre *assemblé* en
-HTML/PDF/EPUB navigables, artefacts publiés dans `office/metiers/FPA/.../livre-navigable/`).
-
-Deux options ouvertes, selon la disponibilité métier :
-
-. Poursuivre FPA-BOOK-4 sur le livre complet dès qu'un TOC FPA *scan-aligné* complet est
-  fourni (FPA-BOOK-3 content follow-up côté FPA). Sinon, consolider le dogfooding
-  existant (facteuriser `FpaBookArtifactGenerationTest` vers un `bookPipeline` réel
-  FPA déclenché depuis un repo consommateur via `includeBuild`, une fois la résolution
-  `plantuml-gradle`/`workspace-bom` clarifiée dans le consumer).
-. OU démarrer l'EPIC suivant du BACKLOG document (ex. DOC-CR3 « Création de Contenu
-  Solide » — injection/partage d'instance LLM, pool, gain perf sur `bookPipeline`).
+Maintenance : enquêter et corriger l'infra Cucumber borough-wide (tâches `Test` conventions
+`education.cccp.build.cucumber` 0.0.2 doublonnent `testSourceSet.output` dans le classpath →
+`DuplicateStepDefinitionException` + `UndefinedStepException`). Symptôme observé S-221 sur
+`includeGuardCucumberTest` ET `converterSafeModeCucumberTest` (S-220). Non bloquant pour
+DOC-CR4 (prouvé par 12 UT + 5 FT). Si l'infra se révèle saine, isoler le doublon côté
+`build.gradle.kts` document-plugin. Sinon ouvrir un ticket conventions-gradle.
 
 == Règles absolues (AGENT.adoc)
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
 - Zéro secret, zéro commit/push sans accord explicite.
-- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ /
-  Document WRITE+PUBLISH).
+- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 
-== État du code (S-217)
+== État du code (S-221)
 
-- `bookPipeline` : assembleBook → convertDocumentToHtml/Pdf/Epub câblés (DOC-BOOK-DOMAIN-3).
-- `BookLayout.tableOfContents` : `:toc: macro` + `toc::[]` (vrai TOC rendu).
-- Tests : `BookPipelineFpaFunctionalTest` (FT) + `FpaBookArtifactGenerationTest` (IT) GREEN.
-- Gates : 91 UT book + bookTree/bookValidation cucumber + FT book VERT.
+- EPIC DOC-CR4 ✅ TERMINÉ (4/4 US) : Include Path Guard audit pré-vol `include::` filesystem.
+  - `document.security` : `IncludeGuardMode` (STRICT/LENIENT/OFF), `IncludeDirective`,
+    `IncludeValidationResult` (Valid/Invalid), `IncludePathValidator` (`parseIncludes`/`validate`),
+    `DocumentIncludeGuard.check`.
+  - `ConvertDocumentTask.includeGuard` + check au début de `convert()`.
+  - DSL `converter { includeGuard }` + flat mirror + CLI `-Pdocument.includeGuard`.
+  - Tests : 12 UT `IncludePathValidatorTest` + 5 FT `ConvertDocumentTaskIncludeGuardFunctionalTest` GREEN.
+  - Artifacts Cucumber `@converter-include-guard` ajoutés (`converter_include_guard.feature`,
+    `IncludeGuardCucumberRunner`, `IncludeGuardSteps`, tâche `includeGuardCucumberTest`).
+- Bug préexistant corrigé S-221 : `registerBookPipeline` overridait inconditionnellement
+  `convertDocumentToHtml.sourceFile` sur le livre assemblé → conversion standalone cassée ;
+  fix via `taskGraph.whenReady` (override seulement si `bookPipeline` dans le graphe).
 
 == À vérifier en ouverture
 
 1. `git status` (document-gradle + office/metiers/FPA).
-2. `./gradlew functionalTest --tests "document.BookPipelineFpaFunctionalTest"` + `bookTreeCucumberTest` + `bookValidationCucumberTest` VERT.
-3. Pas de régression `DocumentPluginFunctionalTest` (1 flaky env PDF images connu).
+2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
+3. `./gradlew test --tests "document.security.IncludePathValidatorTest"` + `functionalTest` VERT (sanity DOC-CR4).
+4. Reproduire `converterSafeModeCucumberTest` rouge + lire la stack `DuplicateStepDefinitionException`
+   pour localiser le doublon de classpath Cucumber.

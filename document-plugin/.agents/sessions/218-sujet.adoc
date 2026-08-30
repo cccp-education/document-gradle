@@ -1,0 +1,18 @@
+= Session 218 — document-gradle (New Orleans 🟢)
+:session: 218
+:borough: document-gradle
+:date: 2026-08-29
+:type: gouvernance
+
+== Mission
+Résoudre le problème de version Java (Java 25) en installant le JDK 25 et en configurant le projet pour l'utiliser, puis exécuter les tests pour vérifier que le build fonctionne.
+
+== Travail réel
+Nous avons installé le JDK 25 et tenté de lancer les tests, mais les tests ont pris trop de temps et ont été interrompus. 
+Aucune avancée sur les user stories n'a été réalisée durant cette session.
+
+== Résultat
+La session est clôturée sans avancement sur les user stories.
+
+== Prochaine session
+À déterminer.

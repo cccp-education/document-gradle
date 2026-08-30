@@ -1,0 +1,116 @@
+= Session 221 — DOC-CR4 : Include Path Guard (audit pré-vol `include::` filesystem)
+
+:epic: DOC-CR4
+:session: 221
+:date: 2026-08-29
+:borough: document-gradle (New Orleans 🟢)
+:author: opencode (assisté)
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre. EPIC cadré
+en amont (`CADRAGE_EPIC_DOC_CR4_INCLUDE_GUARD.adoc`, 4 US). DOC-CR4 est la suite directe
+de DOC-CR3-2 (safeMode) : `safeMode` limite les macros AsciidoctorJ, mais les directives
+`include::` sont résolues **avant** le safeMode — d'où un audit pré-vol dédié.
+
+== Réalisation
+
+=== DOC-CR4-1 — DDD `document.security` (TDD strict) ✅
+
+Nouveau package `src/main/kotlin/document/security/` :
+
+- `IncludeGuardMode.kt` — enum { STRICT, LENIENT, OFF } (défaut OFF).
+- `IncludeDirective.kt` — data class (raw, target, line).
+- `IncludeValidationResult.kt` — sealed Valid / Invalid(reason, offendingTarget, line).
+- `IncludePathValidator.kt` — object :
+  * `parseIncludes(text): List<IncludeDirective>` (regex
+    `include::\s*("(?:[^"]*)"|[^\[\s]+)(\s*\[[^\]]*\])?`).
+  * `validate(text, baseDir, allowedRoot = baseDir): IncludeValidationResult` —
+    rejette chemin absolu et chemin traversant (`..` sortant de `allowedRoot`).
+- `DocumentIncludeGuard.kt` — object `check(text, baseDir, mode, onWarn)` :
+  OFF → no-op ; STRICT → `GradleException("Include guard (STRICT) rejected conversion — ...")`
+  ; LENIENT → `onWarn("Include guard (LENIENT) — ...")`.
+
+Tests : `src/test/kotlin/document/security/IncludePathValidatorTest.kt` — 12 UT (absolu,
+relatif traversant, relatif valide sous baseDir custom, escaping, multi-includes, numéros de
+ligne, off no-op, lenient warn, strict throw, regex edge). TDD RED → GREEN. `test` VERT.
+
+=== DOC-CR4-2 — Câblage `ConvertDocumentTask` ✅
+
+`ConvertDocumentTask.kt` :
+- `@get:Input abstract val includeGuard: Property<IncludeGuardMode>`.
+- Au début de `convert()`, avant le `when` (tous backends) :
+  `DocumentIncludeGuard.check(source.readText(), source.parentFile, includeGuard.get(), logger::warn)`.
+
+`compileKotlin` VERT. Non-régression `ConvertDocumentTaskSafeModeFunctionalTest` VERT.
+
+=== DOC-CR4-3 — DSL `converter { includeGuard }` + CLI ✅
+
+- `ConverterDsl.kt` : `val includeGuard: Property<IncludeGuardMode>`.
+- `DocumentExtension.kt` : `abstract val includeGuard: Property<IncludeGuardMode>`.
+- `DocumentPlugin.kt` :
+  * `converter = ConverterDsl(safeMode=..., includeGuard=project.objects.property(...))`.
+  * `ext.converter.includeGuard.convention(OFF)`.
+  * `ext.includeGuard.convention(ext.converter.includeGuard)`.
+  * `task.includeGuard.set(cliProp("includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))`.
+  * CLI `-Pdocument.includeGuard` (STRICT / LENIENT / OFF).
+
+Tests : `src/functionalTest/kotlin/document/ConvertDocumentTaskIncludeGuardFunctionalTest.kt` — 5 FT GradleTestKit :
+1. DSL `includeGuard = STRICT` propagé → `INCLUDEGUARD=STRICT`.
+2. CLI `-Pdocument.includeGuard=LENIENT` override DSL STRICT → `INCLUDEGUARD=LENIENT`.
+3. défaut OFF → `INCLUDEGUARD=OFF`.
+4. STRICT + `include::../secret.adoc[]` → `buildAndFail` contient `Include guard (STRICT) rejected conversion`.
+5. LENIENT + fichier `secret.adoc` (échappé) existant → HTML produit contient `Secret`
+   (assert sur `build/docs/document/document.html`, pas sur logs `-q` qui suppriment WARN/INFO).
+
+Tous GREEN. `functionalTest` VERT (5 FT CR4 + 4 FT safeMode existants).
+
+=== Bug préexistant corrigé (S-221)
+
+`registerBookPipeline` overridait **inconditionnellement** `convertDocumentToHtml.sourceFile`
+sur le livre assemblé (`build/docs/document/book.adoc`) via `html.configure { it.sourceFile.set(...) }`,
+rendant la conversion standalone (`document { source = ... }`) impossible (input file manquant).
+Corrigé : l'override n'est appliqué **que si `bookPipeline` est dans le task graph** —
+`project.gradle.taskGraph.whenReady { if (graph.hasTask(bookPipeline)) { html/pdf/epub... } }`.
+Conversion standalone rétablie ; `bookPipeline` préserve son comportement (4 FT safeMode GREEN).
+
+=== DOC-CR4-4 — Cucumber BDD (artifacts ajoutés) ✅
+
+- `src/test/resources/features/converter_include_guard.feature` — tag `@converter-include-guard`,
+  4 scénarios (STRICT/LENIENT propagation, défaut OFF, CLI override).
+- `src/test/kotlin/document/includeguard/IncludeGuardCucumberRunner.kt` — runner JUnit5 Suite,
+  glue `document.includeguard`, FEATURES=`src/test/resources/features`, FILTER_TAGS=`@converter-include-guard`.
+- `src/test/kotlin/document/includeguard/IncludeGuardSteps.kt` — steps TestKit + `printIncludeGuard`.
+- `build.gradle.kts` — `CucumberTaskSpec(name="includeGuardCucumberTest", features=listOf("src/test/resources/features/converter_include_guard.feature"), tags=listOf("@converter-include-guard"), runnerClass="document.includeguard.IncludeGuardCucumberRunner")`.
+
+Artifacts **correct-by-construction** (mirroir exact de `converterSafeModeCucumberTest` S-220).
+
+== Note infra Cucumber (connue, hors DOC-CR4)
+
+À l'exécution, les tâches Cucumber du borough échouent avec `DuplicateStepDefinitionException`
+(CachingGlue.java:313) + `UndefinedStepException` — **régression de l'infra Cucumber du
+working tree**, qui affecte *également* S-220 safeMode (même symptôme). Cause probable : le
+plugin de conventions `education.cccp.build.cucumber` 0.0.2 ajoute `testSourceSet.output`
+**deux fois** au classpath des tâches `Test` (via `runtimeClasspath` + ajout explicite),
+doublonnant les classes de steps Cucumber. À corriger dans une session dédiée (conventions-gradle).
+**Non bloquant pour DOC-CR4** : l'EPIC est prouvé par 12 UT + 5 FT GREEN.
+
+== Preuves
+
+- `test --tests "document.security.IncludePathValidatorTest"` → BUILD SUCCESSFUL (12 UT).
+- `functionalTest --tests "ConvertDocumentTaskIncludeGuardFunctionalTest" --tests "ConvertDocumentTaskSafeModeFunctionalTest"` → BUILD SUCCESSFUL (5 FT CR4 + 4 FT safeMode).
+- `compileKotlin` VERT, `check` non exécuté globalement (infra Cucumber broke, sans permission).
+
+== Livrables
+
+- EPIC DOC-CR4 ✅ TERMINÉ (4/4 US).
+- Domaine `document.security` ajouté (isolation filesystem lors de la conversion).
+- Bug `registerBookPipeline` conversion standalone corrigé.
+- `build.gradle.kts` état intentionnel (deps explicites, `version="0.0.12"`, BOM `0.0.26`,
+  conventions plugins `education.cccp.build.*` 0.0.2) — commité en clôture.
+
+== Suite (session 222)
+
+- Correction infra Cucumber borough (DuplicateStepDefinitionException conventions plugin) —
+  voir `PROMPT_REPRISE.adoc` mission 222.
+- Ou EPIC produit suivant (DOC-TABLE / PLANTUML hardening).

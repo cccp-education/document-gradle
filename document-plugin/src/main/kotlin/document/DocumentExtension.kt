@@ -10,6 +10,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 import document.ValidationMode
+import document.security.IncludeGuardMode
 import org.asciidoctor.SafeMode
 
 /**
@@ -98,6 +99,13 @@ abstract class DocumentExtension {
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.
      */
     abstract val safeMode: Property<SafeMode>
+
+    /**
+     * Include-path guard strictness applied to every conversion (DOC-CR4).
+     * [IncludeGuardMode.OFF] by default (backward-compatible). Mirrors
+     * [converter].includeGuard.
+     */
+    abstract val includeGuard: Property<IncludeGuardMode>
 
     /**
      * Nested DSL block `enrich { }` (DOC-12). Concrete val initialised in the

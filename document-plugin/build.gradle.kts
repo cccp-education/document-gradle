@@ -8,54 +8,61 @@ plugins {
 }
 
 group = "education.cccp"
-version = libs.plugins.document.get().version
+version = "0.0.12"
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.11"))
+    implementation(platform("education.cccp:workspace-bom:0.0.26"))
 
     implementation(kotlin("stdlib-jdk8"))
 
     // AsciidoctorJ — implementation directe (boundary Codex : pas de compileOnly codex)
-    implementation(libs.bundles.asciidoctor)
+    implementation("org.asciidoctor:asciidoctorj")
+    implementation("org.asciidoctor:asciidoctorj-diagram")
+    implementation("org.asciidoctor:asciidoctorj-diagram-plantuml")
 
     // koog — orchestrateur de graphe agentique (EPIC L : koog orchestre, langchain4j execute)
-    implementation(libs.bundles.koog)
+    implementation("ai.koog:koog-agents")
 
     // langchain4j — execution LLM (Ollama local, port 11437-11465)
-    implementation(libs.langchain4j.ollama)
+    implementation("dev.langchain4j:langchain4j-ollama")
 
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
-    compileOnly(libs.planner.plugin)
+    compileOnly("education.cccp:planner-plugin")
 
     // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
-    implementation(libs.plantuml.plugin)
+    implementation("education.cccp:plantuml-plugin")
 
     // N0 contracts — i18n (internationalisation documents)
     // + opencode-session (traçabilité release notes, vision MEM-4 — non implémenté, gardé pour roadmap)
     // + pipeline-contracts (release notes generator, MEM-2 DOC-8)
-    implementation(libs.i18n.contracts)
-    implementation(libs.opencode.session.contracts)
-    implementation(libs.pipeline.contracts)
+    implementation("education.cccp:i18n-contracts")
+    implementation("education.cccp:opencode-session-contracts")
+    implementation("education.cccp:pipeline-contracts")
 
     // Coroutines — ContentTranslationService parallel translation
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.jdk8)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
 
     // SLF4J — logging in ContentTranslationService
-    implementation(libs.slf4j.api)
+    implementation("org.slf4j:slf4j-api")
 
     // Tests unitaires
-    testImplementation(kotlin("test-junit5"))
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation(libs.slf4j.api)
-    testRuntimeOnly(libs.logback.classic)
-    testImplementation(libs.assertj.core)
-    testImplementation(libs.mockito.kotlin)
-    testImplementation(libs.mockito.junit.jupiter)
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.slf4j:slf4j-api")
+    testRuntimeOnly("ch.qos.logback:logback-classic")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.mockito.kotlin:mockito-kotlin")
+    testImplementation("org.mockito:mockito-junit-jupiter")
 
     // Cucumber BDD
-    testImplementation(libs.bundles.cucumber)
+    testImplementation("io.cucumber:cucumber-java")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine")
+    testImplementation("io.cucumber:cucumber-picocontainer")
+    testImplementation("org.junit.platform:junit-platform-suite")
 }
+
+
 
 // Forward the dogfooding publish flag to the test JVM so the FPA-BOOK-4
 // integration test can copy generated artifacts into office/metiers/FPA.
@@ -113,6 +120,12 @@ cucumberConventions {
             tags = listOf("@converter-safe-mode"),
             runnerClass = "document.convertersafemode.ConverterSafeModeCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "includeGuardCucumberTest",
+            features = listOf("src/test/resources/features/converter_include_guard.feature"),
+            tags = listOf("@converter-include-guard"),
+            runnerClass = "document.includeguard.IncludeGuardCucumberRunner",
+        ),
     )
 }
 
@@ -122,7 +135,7 @@ gradlePlugin {
 
     plugins {
         create("document") {
-            id = libs.plugins.document.get().pluginId
+            id = "education.cccp.document"
             implementationClass = "document.DocumentPlugin"
             displayName = "Document Plugin"
             description = "Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ."
