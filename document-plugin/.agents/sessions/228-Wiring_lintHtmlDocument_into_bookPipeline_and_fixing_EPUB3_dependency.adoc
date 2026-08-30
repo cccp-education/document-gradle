@@ -1,0 +1,15 @@
+= Wiring lintHtmlDocument into bookPipeline and fixing EPUB3 dependency
+
+:session: 228
+:date: 2026-08-30
+
+== Summary
+
+We worked on wiring the lintHtmlDocument task into the bookPipeline after convertDocumentToHtml.
+We fixed the EPUB3 dependency by updating workspace-bom to include asciidoctorj-epub3:3.0.0 and
+updated the BookPipelineFpaFunctionalTest to assert the EPUB output.
+
+== Next steps
+
+- Run the bookPipeline functional test to verify the fix.
+- If the test passes, consider the wiring complete and move to the next EPIC or option.
