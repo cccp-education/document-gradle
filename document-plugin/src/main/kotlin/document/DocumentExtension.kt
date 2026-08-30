@@ -3,6 +3,7 @@ package document
 import document.batch.BatchDsl
 import document.template.TemplateDsl
 import document.translation.TranslationDsl
+import document.validation.HtmlLinkLintMode
 import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -165,6 +166,11 @@ abstract class DocumentExtension {
      */
     lateinit var converter: ConverterDsl
         private set
+
+    /**
+     * HTML link linting mode (DOC-HTML-LINT). Mirrors [converter].htmlLinkLint.
+     */
+    abstract val htmlLinkLint: Property<HtmlLinkLintMode>
 
     internal fun initNested(
         enrich: DocumentEnrichDsl,

@@ -10,6 +10,7 @@ import document.translation.TranslationDsl
 import document.translation.RetranslateFrontmatterTask
 import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
+import document.validation.HtmlLinkLintMode
 import org.asciidoctor.SafeMode
 import document.security.IncludeGuardMode
 import document.xref.XrefValidationMode
@@ -107,6 +108,7 @@ class DocumentPlugin : Plugin<Project> {
                 safeMode = project.objects.property(SafeMode::class.java),
                 includeGuard = project.objects.property(IncludeGuardMode::class.java),
                 xrefValidation = project.objects.property(XrefValidationMode::class.java),
+                htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
             ),
         )
 
@@ -184,6 +186,11 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
         ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
         ext.xrefValidation.convention(ext.converter.xrefValidation)
+        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
+        ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -566,6 +573,17 @@ class DocumentPlugin : Plugin<Project> {
             task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
             task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
             task.reportFile.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json"))
+        }
+    }
+
+    private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
+        project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
+            // The HTML file to lint is the output of convertDocumentToHtml
+            task.htmlFile.set(project.layout.buildDirectory.file("docs/document/document.html"))
+            // The linting mode is taken from the converter block (htmlLinkLint)
+            task.htmlLinkLintMode.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
         }
     }
 }
