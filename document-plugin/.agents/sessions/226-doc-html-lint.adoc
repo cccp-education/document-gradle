@@ -1,0 +1,38 @@
+= Session 226 — EPIC DOC-HTML-LINT ✅ TERMINÉ (3/3 US)
+
+== Objectif
+Implémenter le lint de navigabilité du HTML rendu (`convertDocumentToHtml`) pour détecter les liens internes morts (`href="#id"` manquants) et garantir la présence d'une table des matières (`id="toc"`).
+
+== Travail réalisé
+- US-1 DDD : Création du domaine `document.validation` :
+  * `HtmlLinkLintMode` (OFF/STRICT/LENIENT)` enum.
+  * `HtmlLinkLintResult` sealed class (Valid/Invalid avec `deadLinks: List<String>`).
+  * `HtmlLinkLinter.lint(html)` : extraction des ancres (`id="..."`, `name="..."`), des liens internes (`href="#..."`), validation.
+  * `HtmlLinkLintReport` (toJson/fromResult).
+  * 12 unit tests (`HtmlLinkLinterTest`) couvrant l'extraction, la validation, le rapport JSON.
+- US-2 FT dogfooding : 
+  * `HtmlLinkLintFunctionalTest` lit le vrai livre FPA `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.html` (418 KB, produit S-217/218).
+  * Assertion que le HTML réel est navigable (zéro lien mort, TOC présente).
+  * Variante altérée avec `#missing` injecté → Invalid.
+- US-3 Cucumber BDD :
+  * 5 scénarios `@html-link-lint` (OFF skip, LENIENT valid/warn+report, STRICT dead-link reject, STRICT valid).
+  * Runner dédié `HtmlLinkLintCucumberRunner`.
+  * Steps `HtmlLinkLintSteps`.
+  * Tâche `htmlLinkLintCucumberTest`.
+  * Tous les scénarios passent.
+
+== Modifications apportées
+- Nouveau fichier : `src/main/kotlin/document/LintHtmlDocumentTask.kt` (classe `LintHtmlDocumentTask`).
+- Modifications :
+  * `src/main/kotlin/document/ConverterDsl.kt` : ajout de la propriété `htmlLinkLint`.
+  * `src/main/kotlin/document/DocumentExtension.kt` : ajout de la propriété abstraite `htmlLinkLint` et mise à jour de l'initialisation du bloc `converter`.
+  * `src/main/kotlin/document/DocumentPlugin.kt` : import de `HtmlLinkLintMode`, mise à jour de l'initialisation du bloc `converter`, ajout de l'enregistrement de la tâche `lintHtmlDocument`.
+  * `src/main/kotlin/document/DocumentExtension.kt` : miroir de la propriété `htmlLinkLint` du bloc `converter` vers l'extension (backward-compat).
+
+== Résultat
+- Toutes les tâches de test passent : unit, fonctionnel, Cucumber.
+- Le livre FPA réel est confirmé navigable (zéro lien mort, TOC présente) — verrouillage du produit « livre FPA SERVER ».
+- Aucune dépendance extérieure requise (100% Kotlin/Regex), donc compatible avec tout environnement JVM.
+
+== Prochaine session (227)
+Câblage éventuel de la tâche `lintHtmlDocument` dans le `bookPipeline` ou ajout d'une tâche de vérification optionnelle (voir PROMPT_REPRISE mis à jour).

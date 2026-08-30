@@ -1,7 +1,6 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 226
+:session: 227
 :date: 2026-08-30
-:status: Session 225 ✅ DOC-VALIDATE-COMPOSITE (validation composite pré-vol `validateDocument`) — EPIC CLÔTURÉ (3/3 US)
 :max-lines: 70
 
 == Quick Start
@@ -10,51 +9,33 @@
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
 export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0.4 exige JVM 25
 ./gradlew compileKotlin
-./gradlew test --tests "document.validation.*"                  # 8 UT (orchestrateur + rapport)
-./gradlew functionalTest --tests "document.ValidateDocumentTaskFunctionalTest"
-./gradlew documentValidationCucumberTest                        # runner dédié 5/5 PASSED
+./gradlew test
 ----
 
 == Contexte de fin
 
-Session 225 (DOC-VALIDATE-COMPOSITE, validation composite) :
-- EPIC ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — nouvelle tâche `validateDocument`
-  orchestrant en une seule passe pré-vol les trois gardes de conversion :
-  * include-path guard (CR4, `document.security.IncludePathValidator`) ;
-  * cross-reference validation (CR-xref, `document.xref.XrefValidator`) ;
-  * security policy advice (CR5, `document.security.DocumentSecurityPolicy`).
-  Un rapport JSON consolidé `build/docs/document/document-validation-report.json`
-  agrège les trois résultats (`document.validation.DocumentValidationReport`).
-- DDD `document.validation` : `DocumentValidator.validate(text, baseDir, includeGuardMode,
-  xrefMode, safeMode)` objet pur (zéro I/O, zéro dép Gradle, 100% unit-testable) composant
-  les 3 validateurs existants. Sévérité mutualisée : STRICT fail-fast (GradleException après
-  écriture du rapport), LENIENT warn + build OK, OFF skip.
-- Zéro nouveau knob DSL/CLI : les modes `converter { includeGuard / xrefValidation /
-  safeMode }` (et leurs mirrors plats + CLI `-Pdocument.*`) suffisent ; la tâche lit
-  exactement les mêmes knobs que `convertDocumentTo*`. Additif : la conversion continue
-  d'appliquer ses gardes en ligne.
-- Tests : 8 UT `DocumentValidatorTest` + 4 FT `ValidateDocumentTaskFunctionalTest`
-  (STRICT reject+report / STRICT xref / LENIENT warn / OFF skip) + 5 scénarios Cucumber
-  `@document-validation` (runner dédié `DocumentValidationCucumberRunner` + `DocumentValidationSteps`
-  + tâche `documentValidationCucumberTest`) TOUS GREEN. 7 runners Cucumber dédiés GREEN.
+Session 226 (DOC-HTML-LINT, lint navigabilité HTML rendu) :
+- EPIC ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — nouvelle tâche `lintHtmlDocument` DDD (`HtmlLinkLintMode`/`HtmlLinkLintResult`/`HtmlLinkLintReport`) détecte `href="#id"` morts + TOC `id="toc"` dans le HTML rendu, symétrique à DOC-XREF-VALIDATE sur la source.
+- FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + Cucumber `@html-link-lint` (runner dédié `HtmlLinkLintCucumberRunner` + `HtmlLinkLintSteps` + tâche `htmlLinkLintCucumberTest`) TOUS GREEN.
+- 8e runner Cucumber dédié.
 
 == EPICs — état
 
-- DOC-VALIDATE-COMPOSITE ✅ TERMINÉ (S-225, 3/3 US).
+- DOC-HTML-LINT ✅ TERMINÉ (S-226, 3/3 US).
 - Tous les EPICs DOC-x livrés (DOC-0..DOC-15, DOC-TRANSLATE, DOC-TABLE/PLANTUML-VALIDATE,
-  DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE).
-  Restent : maintenance infra Cucumber (conventions-gradle) ou nouvel EPIC produit.
+  DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT).
+- Restent : maintenance infra Cucumber (conventions-gradle) ou nouvel EPIC produit.
 
-== Reprendre à (session 226)
+== Reprendre à (session 227)
 
 . `git status` dans document-gradle
 . Choisir la prochaine action :
-   . Option A — dogfooding : publier un livre FPA via `validateDocument`+`bookPipeline`
-     en mode SERVER (rapport consolidé + conversion navigable).
-   . Option B — EPIC produit : DOC-TABLE / PLANTUML hardening (edge cases nested tables,
-     multi-block plantuml), ou enrichissement avancé.
-   . Option C — consolidation : exposer `validateDocument` dans le pipeline N3 runner-gradle
-     (metadata.json signalant le statut de validation).
+    . Option A — dogfooding : publier un livre FPA via `validateDocument`+`bookPipeline`
+      en mode SERVER (rapport consolidé + conversion navigable).
+    . Option B — EPIC produit : câblage `lintHtmlDocument` (tâche Gradle + DSL `converter { htmlLinkLint }` + CLI)
+      réutilisant le DDD livré S-226.
+    . Option C — consolidation : exposer `validateDocument` dans le pipeline N3 runner-gradle
+      (metadata.json signalant le statut de validation).
 . Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches dédiées),
   DDD/TDD/BDD (unit + functional + cucumber).
 . Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) — `conventions-plugin:0.0.4`

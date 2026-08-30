@@ -162,10 +162,16 @@ abstract class DocumentExtension {
         private set
 
     /**
-     * Nested DSL block `converter { }` (DOC-CR3-2) — AsciidoctorJ safe-mode guard.
+     * Nested DSL block `converter { }` (DOC-CR3-2).
      */
     lateinit var converter: ConverterDsl
         private set
+
+    /**
+     * Nested DSL block `verification { }` (DOC-HTML-LINT extension).
+     */
+    lateinit var verification: VerificationDsl
+        internal set
 
     /**
      * HTML link linting mode (DOC-HTML-LINT). Mirrors [converter].htmlLinkLint.
@@ -182,6 +188,7 @@ abstract class DocumentExtension {
         batch: BatchDsl,
         translation: TranslationDsl,
         converter: ConverterDsl,
+        verification: VerificationDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
@@ -192,6 +199,7 @@ abstract class DocumentExtension {
         this.batch = batch
         this.translation = translation
         this.converter = converter
+        this.verification = verification
     }
 
     /**

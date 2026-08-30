@@ -104,25 +104,25 @@ class BookPipelineFpaFunctionalTest {
         val docsDir = projectDir.resolve("build/docs/document")
         val html = docsDir.resolve("document.html")
         val pdf = docsDir.resolve("document.pdf")
-        val epub = docsDir.resolve("document.epub")
+    val epub = docsDir.resolve("document.epub")
 
-        assertTrue(html.isFile && html.length() > 0, "HTML output must exist and be non-empty")
-        assertTrue(pdf.isFile && pdf.length() > 0, "PDF output must exist and be non-empty")
-        assertTrue(epub.isFile && epub.length() > 0, "EPUB output must exist and be non-empty")
+    assertTrue(html.isFile && html.length() > 0, "HTML output must exist and be non-empty")
+    assertTrue(pdf.isFile && pdf.length() > 0, "PDF output must exist and be non-empty")
+    assertTrue(epub.isFile && epub.length() > 0, "EPUB output must exist and be non-empty")
 
-        val htmlContent = html.readText()
-        assertTrue(htmlContent.contains("FPA Book"), "HTML must contain the book title")
-        // the structured assembly emits a hierarchical heading for ref 1.0.0
-        // (e.g. "1.0.0. Introduction"); the HTML must also carry navigable
-        // anchors (cross-reference ids or heading ids) produced by Asciidoctor.
-        assertTrue(htmlContent.contains("1.0.0"), "HTML must carry the 1.0.0 section heading")
-        assertTrue(
-            htmlContent.contains(" id=\""),
-            "HTML must render navigable anchors (cross-reference or heading ids)",
-        )
+    val htmlContent = html.readText()
+    assertTrue(htmlContent.contains("FPA Book"), "HTML must contain the book title")
+    // the structured assembly emits a hierarchical heading for ref 1.0.0
+    // (e.g. "1.0.0. Introduction"); the HTML must also carry navigable
+    // anchors (cross-reference ids or heading ids) produced by Asciidoctor.
+    assertTrue(htmlContent.contains("1.0.0"), "HTML must carry the 1.0.0 section heading")
+    assertTrue(
+        htmlContent.contains(" id=\""),
+        "HTML must render navigable anchors (cross-reference ids or heading ids)",
+    )
 
-        assertTrue(pdf.readText(Charsets.ISO_8859_1).startsWith("%PDF"), "PDF must be a valid PDF document")
-        // EPUB is a zip archive
-        assertTrue(epub.readBytes().take(4).toByteArray().contentEquals("PK\u0003\u0004".toByteArray()), "EPUB must be a zip archive")
+    assertTrue(pdf.readText(Charsets.ISO_8859_1).startsWith("%PDF"), "PDF must be a valid PDF document")
+    // EPUB is a zip archive
+    assertTrue(epub.readBytes().take(4).toByteArray().contentEquals("PK\u0003\u0004".toByteArray()), "EPUB must be a zip archive")
     }
 }

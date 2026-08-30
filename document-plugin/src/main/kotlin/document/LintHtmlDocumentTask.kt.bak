@@ -1,7 +1,6 @@
 package document
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputFile
@@ -15,22 +14,22 @@ import org.gradle.api.logging.Logging
 /**
  * Lints the HTML document produced by [convertDocumentToHtml] for navigability.
  */
-open class LintHtmlDocumentTask : DefaultTask() {
+class LintHtmlDocumentTask : DefaultTask() {
 
     private val logger: Logger = Logging.getLogger(this::class.java)
 
     val htmlFile: RegularFileProperty
-    val htmlLinkLint: Property<HtmlLinkLintMode>
+    val htmlLinkLintMode: Property<HtmlLinkLintMode>
 
     init {
         val project = project
-        htmlFile = project.objects.fileProperty()
-        htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java)
+        htmlFile = project.objects.property(RegularFile::class.java)
+        htmlLinkLintMode = project.objects.property(HtmlLinkLintMode::class.java)
     }
 
     @TaskAction
     fun lintHtmlDocument() {
-        val mode = htmlLinkLint.get()
+        val mode = htmlLinkLintMode.get()
         when (mode) {
             HtmlLinkLintMode.OFF -> {
                 logger.lifecycle("HTML link linting is disabled (OFF).")

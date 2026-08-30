@@ -1,37 +1,31 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 226
+== Mission session 227
 
-EPIC DOC-HTML-LINT — lint de navigabilité du HTML *rendu* (`convertDocumentToHtml`),
-symétrique à DOC-XREF-VALIDATE (S-224) mais opère sur la sortie HTML plutôt que la
-source AsciiDoc. C'est le verrouillage du produit « livre FPA SERVER » (HTML navigable
-sur corpus réel, livre-navigable/book.html produit S-217/218) : zéro `href="#id"` mort,
-TOC présente.
+Câblage de la tâche Gradle `lintHtmlDocument` dans le pipeline de vérification :
+- Faire exécuter `lintHtmlDocument` après `convertDocumentToHtml` dans le `bookPipeline` ou comme tâche de vérification autonome.
+- Optionnel : ajouter une vérification PUB (Maven Central) si nécessaire.
+- Suivre les éventuels blocages ENV (gems asciidoctor-pdf/asciidoctor-epub3) hors périmètre code.
+- Vision « livre FPA SERVER » : surveiller l'avancement du toc.adoc racine dans office/metiers/FPA.
 
-*Objectif* : 3 US baby-step DDD/TDD/BDD.
-- US-1 DDD `document.validation` : `HtmlLinkLintMode` (OFF/STRICT/LENIENT) +
-  `HtmlLinkLintResult` sealed (Valid/Invalid) + `HtmlLinkLinter.lint(html)` (regex
-  extractAnchors/extractInternalLinks/validate) + `HtmlLinkLintReport` (toJson/fromResult).
-- US-2 FT dogfooding : `HtmlLinkLintFunctionalTest` lit le vrai
-  `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.html`
-  (artefact réel 418 KB) → assert Valid ; + variante altérée (`#missing` injecté) → Invalid.
-- US-3 Cucumber `@html-link-lint` (5 scénarios) + runner `HtmlLinkLintCucumberRunner`
-  + steps `HtmlLinkLintSteps` + tâche `htmlLinkLintCucumberTest`.
+*Objectif* : 1-2 US baby-step DDD/TDD/BDD.
+- US-1 : Câblage de `lintHtmlDocument` dans le `bookPipeline` (dépend de `convertDocumentToHtml`).
+- US-2 : Ajout d'une tâche de vérification `verifyHtmlLinks` optionnelle (DSL `verification { htmlLinks.set(true) }`).
 
-*Méthode* : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-*Pattern* : miroir exact de `document.xref` (DOC-XREF-VALIDATE) + `document.validation`
-(DOC-VALIDATE-COMPOSITE) — même enum STRICT/LENIENT/OFF, même rapport JSON.
+*Méthode* : baby-step DDD/TBD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+*Pattern* : réutiliser le pattern des tâches de validation existantes (ex. `validateDocumentXref`).
 
 == Règles absolues (AGENT.adoc)
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-- Zéro secret, zéro commit/push sans accord (accord pilote donné en ouverture S-226).
+- Zéro secret, zéro commit/push sans accord (accord pilote donné en ouverture S-227).
 - `bookPipeline` / FT lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 
-== État du code (S-225)
+== État du code (S-226)
 
 - DOC-CR3 ✅ / DOC-CR4 ✅ / DOC-CR5 ✅ / DOC-XREF-VALIDATE ✅ / DOC-VALIDATE-COMPOSITE ✅ TERMINÉS.
+- DOC-HTML-LINT ✅ TERMINÉ (3/3 US) : `HtmlLinkLinter` DDD + FT sur le vrai livre FPA + runner Cucumber dédié.
 - Infra Cucumber borough ✅ résolue (S-223) — 7 runners dédiés GREEN.
 - Baseline ouverture : `compileKotlin` VERT + 7 runners Cucumber dédiés VERT.
 
@@ -40,4 +34,4 @@ TOC présente.
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
 3. `./gradlew documentValidationCucumberTest includeGuardCucumberTest securityPolicyCucumberTest converterSafeModeCucumberTest xrefValidationCucumberTest bookTreeCucumberTest bookValidationCucumberTest` VERT (fait en ouverture S-226).
-4. Prochain EPIC produit : DOC-HTML-LINT (cadré S-226, voir BACKLOG).
+4. `./gradlew lintHtmlDocument` VERT (nouvelle tâche).

@@ -11,11 +11,31 @@ import document.translation.RetranslateFrontmatterTask
 import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import document.validation.HtmlLinkLintMode
+import document.validation.HtmlLinkLinter
+import document.validation.HtmlLinkLintResult
 import org.asciidoctor.SafeMode
 import document.security.IncludeGuardMode
 import document.xref.XrefValidationMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
+
+/**
+ * Plugin Gradle `education.cccp.document` — création et publication
+ * documentaire AsciiDoc multi-format via AsciidoctorJ.
+ *
+ * DOC-1 (stub) : enregistre l'extension `document { }` et les 8 taches
+ * du pipeline. Les conversions (HTML/PDF/EPUB/DocBook/ManPage) sont
+ * des stubs no-op ; l'implementation arrive dans DOC-2 -> DOC-5.
+ *
+ * Ordre de precedent des parametres (pattern planner/codebase) :
+ *   CLI (-Pdocument.xxx) > DSL (block document { }) > convention (defaut)
+ *
+ * Boundary :
+ * - Codex (Brooklyn) = READ + RAG — pas de dependance vers codex.
+ * - plantuml-gradle (HTOWN) = composition — compileOnly legitime.
+ * - planner-gradle (Manhattan) = LLM bridge partage — compileOnly.
+ */
 
 /**
  * Plugin Gradle `education.cccp.document` — creation et publication
@@ -37,6 +57,16 @@ class DocumentPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         val ext = project.extensions.create("document", DocumentExtension::class.java)
+
+        // Verification DSL - will be initialized in initNested
+        
+        // Conventions (defauts)
+        ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
+        ext.formats.convention(listOf(DocumentFormat.HTML))
+        ext.enrichPlantUml.convention(false)
+        ext.enrichImages.convention(false)
+        ext.enrichPassthrough.convention(false)
+        ext.llmMode.convention("ollama")
 
         // DOC-12 — Initialise the nested DSL blocks via ObjectFactory so the
         // concrete `val` properties resolve in the Kotlin DSL.
@@ -104,13 +134,76 @@ class DocumentPlugin : Plugin<Project> {
                     mode = project.objects.property(String::class.java),
                 ),
             ),
-            converter = ConverterDsl(
-                safeMode = project.objects.property(SafeMode::class.java),
-                includeGuard = project.objects.property(IncludeGuardMode::class.java),
-                xrefValidation = project.objects.property(XrefValidationMode::class.java),
-                htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
-            ),
+             converter = ConverterDsl(
+                 safeMode = project.objects.property(SafeMode::class.java),
+                 includeGuard = project.objects.property(IncludeGuardMode::class.java),
+                 xrefValidation = project.objects.property(XrefValidationMode::class.java),
+                 htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
+             ),
+              verification = VerificationDsl(project.objects.property(Boolean::class.java)),
         )
+
+         // Conventions (defauts)
+         ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
+         ext.formats.convention(listOf(DocumentFormat.HTML))
+         ext.enrichPlantUml.convention(false)
+         ext.enrichImages.convention(false)
+         ext.enrichPassthrough.convention(false)
+         ext.llmMode.convention("ollama")
+         // DOC-12 — Nested DSL block conventions (unified document { }).
+         ext.enrich.plantuml.convention(false)
+         ext.enrich.images.convention(false)
+         ext.enrich.passthrough.convention(false)
+         ext.outputs.html.convention(true)
+         ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
+        ext.outputs.pdf.convention(false)
+        ext.outputs.epub.convention(false)
+        ext.outputs.docbook.convention(false)
+        ext.outputs.manpage.convention(false)
+        ext.metadata.title.convention("Untitled Document")
+        ext.metadata.author.convention("Unknown Author")
+        ext.metadata.language.convention("fr")
+        // DOC-8 — releaseNotes DSL conventions
+        ext.releaseNotes.toTag.convention("HEAD")
+        ext.releaseNotes.includeDownloads.convention(true)
+        // DOC-8.2 — rendererType null by default (generator falls back to asciidoc)
+        ext.releaseNotes.rendererType.convention("asciidoc")
+        ext.releaseNotes.categories.convention(emptyMap())
+        // DOC-8.4 — llmMode default ollama (only used when rendererType = ollama-asciidoc)
+        ext.releaseNotes.llmMode.convention("ollama")
+        // DOC-12 extension — book DSL conventions (mirror of legacy flat properties)
+        ext.book.title.convention("Untitled Book")
+        ext.book.author.convention("Unknown Author")
+        // DOC-13 — template DSL conventions
+        ext.template.failOnMissingVariable.convention(true)
+        ext.template.outputFileName.convention("document")
+        ext.template.variables.convention(emptyMap())
+        ext.batch.formats.convention(listOf("html"))
+        ext.batch.recursive.convention(true)
+        ext.translation.sourceLanguage.convention("fr")
+        ext.translation.targetLanguage.convention("en")
+        ext.translation.llmMode.convention("ollama")
+        ext.translation.batchSourceDir.convention("")
+        ext.translation.batchOutputDir.convention("")
+        ext.translation.batchExcludePaths.convention("")
+        ext.translation.tableValidation.mode.convention("LENIENT")
+        ext.translation.plantUmlValidation.mode.convention("LENIENT")
+        // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
+        ext.converter.safeMode.convention(SafeMode.UNSAFE)
+        ext.safeMode.convention(SafeMode.UNSAFE)
+        // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
+        ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
+        ext.includeGuard.convention(ext.converter.includeGuard)
+        // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
+        ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
+        ext.xrefValidation.convention(ext.converter.xrefValidation)
+        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
+        ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // Verification DSL conventions
+        ext.verification.htmlLinks.convention(false)
 
         // Conventions (defauts)
         ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
@@ -152,7 +245,6 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.sourceLanguage.convention("fr")
         ext.translation.targetLanguage.convention("en")
         ext.translation.llmMode.convention("ollama")
-        ext.translation.outputFileName.convention("document")
         ext.translation.batchSourceDir.convention("")
         ext.translation.batchOutputDir.convention("")
         ext.translation.batchExcludePaths.convention("")
@@ -161,6 +253,19 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
         ext.converter.safeMode.convention(SafeMode.UNSAFE)
         ext.safeMode.convention(SafeMode.UNSAFE)
+        // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
+        ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
+        ext.includeGuard.convention(ext.converter.includeGuard)
+        // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
+        ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
+        ext.xrefValidation.convention(ext.converter.xrefValidation)
+        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
+        ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
+        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // Verification DSL conventions
+        ext.verification.htmlLinks.convention(false)
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -221,6 +326,7 @@ class DocumentPlugin : Plugin<Project> {
         registerRetranslateFrontmatter(project, ext)
         registerValidateDocumentXref(project, ext)
         registerValidateDocument(project, ext)
+        registerLintHtmlDocument(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -321,6 +427,7 @@ class DocumentPlugin : Plugin<Project> {
                 "assembleBook",
                 "enrichDocument",
                 "convertDocumentToHtml",
+                "lintHtmlDocument",
                 "convertDocumentToPdf",
                 "convertDocumentToEpub",
                 "collectDocumentRetrieve",
@@ -576,14 +683,42 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
-        project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
-            task.group = "document"
-            task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
-            // The HTML file to lint is the output of convertDocumentToHtml
-            task.htmlFile.set(project.layout.buildDirectory.file("docs/document/document.html"))
-            // The linting mode is taken from the converter block (htmlLinkLint)
-            task.htmlLinkLintMode.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
+     private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
+         project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
+             task.group = "document"
+             task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
+             // The HTML file to lint is the output of convertDocumentToHtml
+             task.htmlFile.set(project.layout.buildDirectory.file("docs/document/document.html"))
+              // The linting mode is taken from the converter block (htmlLinkLint)
+              task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
+         }
+     }
+
+    private fun registerVerifyHtmlLinksTask(project: Project, ext: DocumentExtension) {
+        project.tasks.register("verifyHtmlLinks") { task ->
+            task.group = "verification"
+            task.description = "Vérifie les liens internes du document HTML produit (optionnel, activé par verification { htmlLinks.set(true) })."
+            task.dependsOn("convertDocumentToHtml")
+            task.doLast {
+                // Only run if verification is enabled
+                if (!ext.verification.htmlLinks.get()) {
+                    return@doLast
+                }
+                val htmlFile = project.layout.buildDirectory.file("docs/document/document.html")
+                val html = htmlFile.get().getAsFile().readText()
+                val result = HtmlLinkLinter.validate(html)
+                when (result) {
+                    is HtmlLinkLintResult.Valid -> {
+                        project.logger.lifecycle("HTML link linting passed: no dead internal links found.")
+                    }
+                    is HtmlLinkLintResult.Invalid -> {
+                        val invalid = result as HtmlLinkLintResult.Invalid
+                        val deadLinks = invalid.deadLinks.joinToString { "\"$it\"" }
+                        val message = "HTML link linting failed: dead internal link(s) found: $deadLinks"
+                        throw IllegalStateException(message)
+                    }
+                }
+            }
         }
     }
 }

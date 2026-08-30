@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-30 (session 226 — EPIC DOC-HTML-LINT ✅ TERMINÉ 3/3 US : lint navigabilité HTML rendu `HtmlLinkLinter` DDD + FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + runner Cucumber dédié `@html-link-lint`, 12 UT + 2 FT + 5 BDD GREEN; session 227 — câblage de `lintHtmlDocument` dans le `bookPipeline` après `convertDocumentToHtml`)
+_Date revision_ : 2026-08-02 (session 032 — Dogfooding batch 61 articles cheroliv.com + cadrage DOC-TABLE-VALIDATE + DOC-PLANTUML-VALIDATE)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
