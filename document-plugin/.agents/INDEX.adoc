@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-  _Derniere mise a jour_ : 2026-08-30 (session 225 — EPIC DOC-VALIDATE-COMPOSITE ✅ TERMINÉ 3/3 US : validation composite pré-vol `validateDocument` orchestrant include guard (CR4) + xref (CR-xref) + security policy (CR5) en un rapport JSON consolidé, DDD `document.validation` + tâche `validateDocument` + runner Cucumber dédié `@document-validation`, 8 UT + 4 FT + 5 BDD GREEN)
-  _Derniere session terminee_ : 224 — DOC-XREF-VALIDATE : `XrefValidator`/`XrefValidationResult`/`XrefValidationMode`/`XrefValidationReport` (DDD pur) + câblage `ConvertDocumentTask` (STRICT fail-fast / LENIENT warn+report / OFF skip) + tâche dédiée `validateDocumentXref` (rapport JSON) + Cucumber `@xref-validation`. EPIC CLÔTURÉ (4/4 US).
-  _Prochaine session_ : 225 — EPIC produit suivant : DOC-TABLE hardening / PLANTUML validation hardening, ou dogfooding livre FPA SERVER (HTML/PDF/EPUB navigables sur corpus FPA réel). ENV : `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest` échouent sur gems `asciidoctor-pdf`/`asciidoctor-epub3` absents (préexistant, hors périmètre xref).
+  _Derniere mise a jour_ : 2026-08-30 (session 226 — EPIC DOC-HTML-LINT ✅ TERMINÉ 3/3 US : lint navigabilité HTML rendu `HtmlLinkLinter` DDD + FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + runner Cucumber dédié `@html-link-lint`, 12 UT + 2 FT + 5 BDD GREEN)
+  _Derniere session terminee_ : 226 — EPIC DOC-HTML-LINT ✅ TERMINÉ (3/3 US) : `HtmlLinkLinter` DDD (`HtmlLinkLintMode`/`HtmlLinkLintResult`/`HtmlLinkLintReport`) détecte `href="#id"` morts + TOC `id="toc"` dans le HTML rendu, symétrique à DOC-XREF-VALIDATE sur la source. FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + Cucumber `@html-link-lint` (12 UT + 2 FT + 5 BDD GREEN). 8e runner Cucumber dédié.
+  _Prochaine session_ : 227 — Borough DORMANT (maintenance + dogfooding livre FPA SERVER); prochain EPIC produit si besoin : câblage `lintHtmlDocument` (tâche Gradle + DSL `converter { htmlLinkLint }` + CLI) réutilisant le DDD livré S-226, ou DOC-TABLE/PLANTUML hardening. ENV : PDF/EPUB gems absents (hors périmètre HTML-lint).
 
 '''
 == REGLES ABSOLUES (resume)
@@ -107,6 +107,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-CR5 | Conversion Security Policy — cohérence SafeMode × IncludeGuard (STRICT reject fail-fast / LENIENT warn / OFF skip), câblage `ConvertDocumentTask`, DDD `document.security.DocumentSecurityPolicy` + `SecurityAdvice` | ✅ TERMINÉ (S-222 — 3/3 US) | P1
 | EPIC DOC-XREF-VALIDATE | Validation références croisées AsciiDoc (`<<id>>`/`xref:id[]`) — `XrefValidator` DDD pur (STRICT fail-fast / LENIENT warn+report / OFF skip), DSL `converter { xrefValidation }` + CLI `-Pdocument.xrefValidation` + tâche `validateDocumentXref` (rapport JSON), Cucumber `@xref-validation` (4 US, ~15 pts) | ✅ TERMINÉ (S-224 — 4/4 US) | P1
 | EPIC DOC-VALIDATE-COMPOSITE | Validation composite pré-vol — `validateDocument` orchestrant include guard (CR4) + xref (CR-xref) + security policy (CR5) en un rapport JSON consolidé (`document-validation-report.json`), DDD `document.validation` (`DocumentValidator` + `DocumentValidationReport`), sévérité STRICT fail-fast / LENIENT warn / OFF skip, Cucumber `@document-validation` (3 US, ~15 pts) | ✅ TERMINÉ (S-225 — 3/3 US) | P1
+| EPIC DOC-HTML-LINT | Lint navigabilité HTML rendu — `HtmlLinkLinter` DDD (`HtmlLinkLintMode` OFF/STRICT/LENIENT, `HtmlLinkLintResult` sealed, `HtmlLinkLintReport` JSON) détectant `href="#id"` morts + TOC présente dans le HTML `convertDocumentToHtml`, symétrique à DOC-XREF-VALIDATE sur la source ; FT sur le vrai livre FPA `livre-navigable/book.html` + Cucumber `@html-link-lint` (3 US, ~15 pts) | ✅ TERMINÉ (S-226 — 3/3 US) | P1
 |===
 
 '''

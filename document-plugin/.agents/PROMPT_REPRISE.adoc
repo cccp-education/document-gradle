@@ -1,48 +1,43 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 224
+== Mission session 226
 
-EPIC DOC-XREF-VALIDATE — validation des références croisées AsciiDoc (`<<id>>` / `xref:id[]`)
-avant publication du livre. Suite directe de DOC-CR3-2 (safeMode) + DOC-CR4 (includeGuard)
-+ DOC-CR5 (security policy) : complète la solidité documentaire en auditant la navigation interne.
+EPIC DOC-HTML-LINT — lint de navigabilité du HTML *rendu* (`convertDocumentToHtml`),
+symétrique à DOC-XREF-VALIDATE (S-224) mais opère sur la sortie HTML plutôt que la
+source AsciiDoc. C'est le verrouillage du produit « livre FPA SERVER » (HTML navigable
+sur corpus réel, livre-navigable/book.html produit S-217/218) : zéro `href="#id"` mort,
+TOC présente.
 
-*Livré (4/4 US, EPIC CLÔTURÉ)* :
-- DDD `document.xref` : `XrefValidationMode` (OFF/STRICT/LENIENT), `XrefValidationResult`
-  sealed (Valid/Invalid), `XrefValidator` (extractAnchors/extractReferences/validate, regex
-  sur texte brut, IDs `[A-Za-z0-9_][A-Za-z0-9_.-]*`), `XrefValidationReport` (toJson/fromResult).
-- Câblage `ConvertDocumentTask` : valide avant conversion, sévérité (STRICT fail-fast /
-  LENIENT warn + rapport JSON / OFF skip, défaut OFF backward-compat).
-- DSL `converter { xrefValidation = ... }` + mirror flat `xrefValidation` + CLI `-Pdocument.xrefValidation`.
-- Tâche dédiée `validateDocumentXref` (groupe `document`, rapport
-  `build/docs/document/xref-validation-report.json`).
-- Cucumber `@xref-validation` (5 scénarios) + runner `XrefValidationCucumberRunner`
-  + steps `XrefValidationSteps` + tâche `xrefValidationCucumberTest`.
+*Objectif* : 3 US baby-step DDD/TDD/BDD.
+- US-1 DDD `document.validation` : `HtmlLinkLintMode` (OFF/STRICT/LENIENT) +
+  `HtmlLinkLintResult` sealed (Valid/Invalid) + `HtmlLinkLinter.lint(html)` (regex
+  extractAnchors/extractInternalLinks/validate) + `HtmlLinkLintReport` (toJson/fromResult).
+- US-2 FT dogfooding : `HtmlLinkLintFunctionalTest` lit le vrai
+  `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.html`
+  (artefact réel 418 KB) → assert Valid ; + variante altérée (`#missing` injecté) → Invalid.
+- US-3 Cucumber `@html-link-lint` (5 scénarios) + runner `HtmlLinkLintCucumberRunner`
+  + steps `HtmlLinkLintSteps` + tâche `htmlLinkLintCucumberTest`.
 
-*Tests* : 12 UT `XrefValidatorTest` + 4 UT `XrefValidationReportTest` + 7 FT
-(`ConvertDocumentTaskXrefValidationFunctionalTest` 4 + `ValidateDocumentXrefTaskFunctionalTest` 3)
-+ 5 BDD. Tous GREEN. 6 runners Cucumber dédiés GREEN.
-
-*Note ENV* : `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest` échouent sur
-`LoadError asciidoctor-pdf` / `asciidoctor-epub3` (gems Ruby absents) — préexistant S-213,
-hors périmètre xref, aucune régression liée.
+*Méthode* : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+*Pattern* : miroir exact de `document.xref` (DOC-XREF-VALIDATE) + `document.validation`
+(DOC-VALIDATE-COMPOSITE) — même enum STRICT/LENIENT/OFF, même rapport JSON.
 
 == Règles absolues (AGENT.adoc)
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-- Zéro secret, zéro commit/push sans accord explicite.
-- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
+- Zéro secret, zéro commit/push sans accord (accord pilote donné en ouverture S-226).
+- `bookPipeline` / FT lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 
-== État du code (S-224)
+== État du code (S-225)
 
-- DOC-CR3 ✅ / DOC-CR4 ✅ / DOC-CR5 ✅ / DOC-XREF-VALIDATE ✅ TERMINÉS (4/4 US).
-- Infra Cucumber borough ✅ résolue (S-223).
-- 9e tâche `document` enregistrée : `validateDocumentXref` (les 8 historiques + celle-ci).
+- DOC-CR3 ✅ / DOC-CR4 ✅ / DOC-CR5 ✅ / DOC-XREF-VALIDATE ✅ / DOC-VALIDATE-COMPOSITE ✅ TERMINÉS.
+- Infra Cucumber borough ✅ résolue (S-223) — 7 runners dédiés GREEN.
+- Baseline ouverture : `compileKotlin` VERT + 7 runners Cucumber dédiés VERT.
 
 == À vérifier en ouverture
 
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
-3. `./gradlew xrefValidationCucumberTest includeGuardCucumberTest securityPolicyCucumberTest converterSafeModeCucumberTest` VERT.
-4. Prochain EPIC produit : DOC-TABLE hardening / PLANTUML validation hardening, ou dogfooding
-   livre FPA SERVER (HTML/PDF/EPUB navigables sur corpus FPA réel — voir S-217/218).
+3. `./gradlew documentValidationCucumberTest includeGuardCucumberTest securityPolicyCucumberTest converterSafeModeCucumberTest xrefValidationCucumberTest bookTreeCucumberTest bookValidationCucumberTest` VERT (fait en ouverture S-226).
+4. Prochain EPIC produit : DOC-HTML-LINT (cadré S-226, voir BACKLOG).

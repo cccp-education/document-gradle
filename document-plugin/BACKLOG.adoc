@@ -1438,3 +1438,96 @@ jamais un script ad hoc. Les scripts Python prototypes (`fpa_*.py` côté FPA) s
 à purger au profit des tâches Gradle existantes (`codebase OcrTask`,
 `document assembleBook`/`bookPipeline`). Voir aussi `codex-gradle` (même règle,
 boundary CDX-OCR / CDEX-RAG-SOCLE).
+
+'''
+== ✅ EPIC DOC-HTML-LINT — Lint des liens internes du HTML généré (TERMINÉ, Session 226)
+
+_Suite directe de DOC-XREF-VALIDATE (S-224) + DOC-VALIDATE-COMPOSITE (S-225)._
+_focus_ : navigabilité du HTML *rendu* —对称 (symétrique) à xref sur la source AsciiDoc,
+mais opère sur la sortie `convertDocumentToHtml` (le « livre FPA SERVER »).
+_statut_ : ✅ TERMINÉ (session 226).
+
+[CAUTION]
+====
+**Motivation** : DOC-XREF-VALIDATE audite les références croisées dans la *source*
+AsciiDoc (`<<id>>` / `xref:id[]` → ancres `[[id]]`). Mais rien ne valide le
+*HTML rendu* : après conversion AsciidoctorJ, une ancre manquante devient un
+`href="#missing"` mort dans la page publiée. Le livre FPA (`livre-navigable/book.html`,
+~418 KB, produit S-217/218) doit être *servable* (FPA SERVER) sans lien cassé —
+or aucun garde-fou ne couvre le HTML final. C'est le verrouillage du produit
+« livre FPA navigable sur corpus réel » resté ouvert parmi les candidats
+« Prochaine session » (INDEX S-225).
+
+**Règle** : parsing regex sur le HTML brut (zéro I/O, zéro dép Gradle, miroir
+exact de `document.xref`/`document.validation`) :
+- Ancres cibles : `id="..."` et `name="..."` (attributs HTML), plus `id='...'`.
+- Liens internes : `href="#..."` (fragment-only, same-page).
+- TOC présente : un élément `id="toc"` (émiss par `BookLayout.tableOfContents`,
+  S-217) — indicateur de navigabilité.
+- Liens morts : tout `href="#x"` dont `x` n'est dans aucune ancre cible.
+- Sévérité (réutilise le pattern STRICT/LENIENT/OFF de xref/validation) :
+  . STRICT → `GradleException` (fail-fast, cite les ids morts).
+  . LENIENT → `logger.warn` + rapport JSON `html-link-lint-report.json`.
+  . OFF → no-op (défaut, backward-compat).
+
+**Bénéfices** :
+. Qualité produit : zéro lien mort dans le livre HTML publié (STRICT).
+. Mode LENIENT : visibilité sans casser le build (rapport JSON).
+. DDD pur, testable sans Gradle ni réseau — miroir `document.xref`.
+. Compose `converter { }` block DSL + CLI `-Pdocument.htmlLinkLint` (zéro nouveau
+  concept, pattern déjà posé par CR4/xref/composite).
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-HTML-LINT-1
+| *`HtmlLinkLinter` DDD pur* — package `document.validation` (réutilise le domaine
+  composite). `HtmlLinkLintMode` enum (OFF/STRICT/LENIENT, défaut OFF).
+  `HtmlLinkLintResult` sealed (Valid / Invalid avec `deadLinks: List<String>`).
+  `HtmlLinkLinter.lint(html)` : `extractAnchors(html)` (ids/names),
+  `extractInternalLinks(html)` (href=#), `validate(html)` → Invalid si lien mort.
+  + `HtmlLinkLintReport` (entry + liste, `toJson()`/`fromResult()`).
+| UT : 12 (`HtmlLinkLinterTest` : ancre présente, lien mort unique, multi-morts,
+  TOC présent, id avec quotes simples, href avec quote, OFF no-op, sealed mapping,
+  report toJson/fromResult, ancres dupliquées, href externe ignoré, name= ancre,
+  html vide)
+| 5
+| ✅ TERMINÉ (S-226)
+
+| DOC-HTML-LINT-2
+| *Functional test sur le vrai livre FPA* — `HtmlLinkLintFunctionalTest` lit
+  `office/metiers/FPA/.../livre-navigable/book.html` (artefact réel S-217/218),
+  assert `lint` → Valid (navigabilité réelle prouvée). FT dogfooding, pas de
+  régénération JRuby (lit le fichier existant).
+| FT : 1 (book.html réel → Valid) + 1 (book.html altéré : un `#missing` injecté → Invalid)
+| 5
+| ✅ TERMINÉ (S-226)
+
+| DOC-HTML-LINT-3
+| *Cucumber BDD* `@html-link-lint` (OFF skip / LENIENT valid / LENIENT dead-link warn+report
+  / STRICT dead-link reject / STRICT valid) + runner `HtmlLinkLintCucumberRunner`
+  + steps `HtmlLinkLintSteps` (préfixe « htmllint ») + tâche `htmlLinkLintCucumberTest`.
+| BDD : 5 scénarios
+| 5
+| ✅ TERMINÉ (S-226)
+|===
+
+_Total_ : ~15 pts, 3 US. Séquentiel : LINT-1 → LINT-2 → LINT-3.
+
+=== Dépendances (DAG)
+
+----
+LINT-1 (HtmlLinkLinter DDD) ─→ LINT-2 (FT livre FPA réel) ─→ LINT-3 (Cucumber BDD)
+----
+
+=== Note environnement
+
+Le livre FPA `book.html` existe déjà (`office/metiers/FPA/Devenir_Formateur_.../livre-navigable/book.html`,
+418 KB, produit S-217/218, HTML navigable avec TOC). Le FT LINT-2 le consomme en lecture
+seule (boundary Codex/Doc : Document consomme AsciiDoc/HTML sans modifier la source).
+Aucune dépendance gem Ruby (contrairement à PDF/EPUB) — le lint HTML est 100% Kotlin/Regex,
+donc GREEN en ENV quel qu'il soit.

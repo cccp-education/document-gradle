@@ -144,6 +144,12 @@ cucumberConventions {
             tags = listOf("@document-validation"),
             runnerClass = "document.validation.DocumentValidationCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "htmlLinkLintCucumberTest",
+            features = listOf("src/test/resources/features/html_link_lint.feature"),
+            tags = listOf("@html-link-lint"),
+            runnerClass = "document.htmllint.HtmlLinkLintCucumberRunner",
+        ),
     )
 }
 
