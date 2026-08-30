@@ -1,13 +1,29 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 222
+== Mission session 223
 
-Maintenance : enquêter et corriger l'infra Cucumber borough-wide (tâches `Test` conventions
-`education.cccp.build.cucumber` 0.0.2 doublonnent `testSourceSet.output` dans le classpath →
-`DuplicateStepDefinitionException` + `UndefinedStepException`). Symptôme observé S-221 sur
-`includeGuardCucumberTest` ET `converterSafeModeCucumberTest` (S-220). Non bloquant pour
-DOC-CR4 (prouvé par 12 UT + 5 FT). Si l'infra se révèle saine, isoler le doublon côté
-`build.gradle.kts` document-plugin. Sinon ouvrir un ticket conventions-gradle.
+Corriger le « bruit » du moteur Cucumber global du borough (`DuplicateStepDefinitionException`).
+Diagnostic corrigé en cours de session : la cause RÉELLE n'est PAS le plugin conventions
+(`education.cccp.build.cucumber` 0.0.2) — son classpath doublonnait seulement le `jar` projet
+(redondant avec `main.output`, inoffensif). La vraie cause était une **étape Cucumber dupliquée
+dans les tests document-gradle** :
+
+- `a document gradle project with no converter configuration` était définie dans DEUX classes de
+  steps : `IncludeGuardSteps.kt` (package `document.includeguard`) ET `ConverterSafeModeSteps.kt`
+  (package `document.convertersafemode`).
+- Le moteur Cucumber GLOBAL (sans restriction `glue` + tâche `SecurityPolicyCucumberRunner` sans
+  `glue`) scanne tout le classpath → `io.cucumber.core.runner.DuplicateStepDefinitionException`.
+- Les runners DÉDIÉS (`IncludeGuardCucumberRunner`, `ConverterSafeModeCucumberRunner`) restreignent
+  `glue` à leur package → masquaient le doublon.
+
+Fix (commit `f67eb8e`, poussé) : textes de step distincts (`no include guard configuration` /
+`no safe mode configuration`) + features mises à jour. Vérifié : `securityPolicyCucumberTest`,
+`includeGuardCucumberTest`, `converterSafeModeCucumberTest` → BUILD SUCCESSFUL (PASSED, plus de
+DuplicateStepDefinitionException).
+
+Hygiene conventions (commit `1c13b7e`, poussé dans conventions-gradle) : `CucumberConventionsPlugin`
+et `build.gradle.kts` du plugin utilisent `testRuntimeClasspath + test.output + main.output`
+(suppression du `jar` redondant) + test fonctionnel de régression `CP_JAR_PRESENT=false`.
 
 == Règles absolues (AGENT.adoc)
 
@@ -16,25 +32,16 @@ DOC-CR4 (prouvé par 12 UT + 5 FT). Si l'infra se révèle saine, isoler le doub
 - Zéro secret, zéro commit/push sans accord explicite.
 - `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 
-== État du code (S-221)
+== État du code (S-223)
 
-- EPIC DOC-CR4 ✅ TERMINÉ (4/4 US) : Include Path Guard audit pré-vol `include::` filesystem.
-  - `document.security` : `IncludeGuardMode` (STRICT/LENIENT/OFF), `IncludeDirective`,
-    `IncludeValidationResult` (Valid/Invalid), `IncludePathValidator` (`parseIncludes`/`validate`),
-    `DocumentIncludeGuard.check`.
-  - `ConvertDocumentTask.includeGuard` + check au début de `convert()`.
-  - DSL `converter { includeGuard }` + flat mirror + CLI `-Pdocument.includeGuard`.
-  - Tests : 12 UT `IncludePathValidatorTest` + 5 FT `ConvertDocumentTaskIncludeGuardFunctionalTest` GREEN.
-  - Artifacts Cucumber `@converter-include-guard` ajoutés (`converter_include_guard.feature`,
-    `IncludeGuardCucumberRunner`, `IncludeGuardSteps`, tâche `includeGuardCucumberTest`).
-- Bug préexistant corrigé S-221 : `registerBookPipeline` overridait inconditionnellement
-  `convertDocumentToHtml.sourceFile` sur le livre assemblé → conversion standalone cassée ;
-  fix via `taskGraph.whenReady` (override seulement si `bookPipeline` dans le graphe).
+- DOC-CR4 ✅ TERMINÉ (4/4 US) : Include Path Guard.
+- DOC-CR5 ✅ TERMINÉ (3/3 US) : Conversion Security Policy (commit `20aa56c`).
+- Infra Cucumber borough : bruit `DuplicateStepDefinitionException` RÉSOLU (S-223, commit `f67eb8e`).
+- Conventions plugin : classpath Cucumber nettoyé (jar redondant supprimé, S-223, commit `1c13b7e`).
 
 == À vérifier en ouverture
 
-1. `git status` (document-gradle + office/metiers/FPA).
+1. `git status` (document-gradle + conventions-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
-3. `./gradlew test --tests "document.security.IncludePathValidatorTest"` + `functionalTest` VERT (sanity DOC-CR4).
-4. Reproduire `converterSafeModeCucumberTest` rouge + lire la stack `DuplicateStepDefinitionException`
-   pour localiser le doublon de classpath Cucumber.
+3. `./gradlew securityPolicyCucumberTest includeGuardCucumberTest converterSafeModeCucumberTest` VERT.
+4. Prochain EPIC produit : DOC-TABLE / PLANTUML hardening / dogfooding livre FPA SERVER.

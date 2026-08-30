@@ -286,7 +286,7 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 - `ConvertDocumentTaskSafeModeFunctionalTest.kt` : 4 FT (DSL SERVER/SECURE, CLI override, défaut UNSAFE).
 - `converter_safe_mode.feature` (3 scénarios `@converter-safe-mode`) + `ConverterSafeModeCucumberRunner.kt` + `ConverterSafeModeSteps.kt` + `CucumberTaskSpec("converterSafeModeCucumberTest")`.
 
-*Gates* : `compileKotlin` VERT ; `test` (4 UT) VERT ; `functionalTest` (4 FT) VERT ; cucumber dédié safeMode 3/3 (exécution globale bloquée infra borough DuplicateStepDefinitionException — hors DOC-CR3).
+*Gates* : `compileKotlin` VERT ; `test` (4 UT) VERT ; `functionalTest` (4 FT) VERT ; cucumber dédié safeMode 3/3 (exécution globale bruite par infra borough — DuplicateStepDefinitionException due à un doublon de step définition dans les tests document-gradle, résolu S-223, hors DOC-CR3).
 
 === Session 221 (2026-08-29) — DOC-CR4 (Include Path Guard) — EPIC CLÔTURÉ
 
@@ -303,9 +303,9 @@ Wrapper DDD prêt pour extraction future en `plantuml-validation-contracts` N0.
 - `converter_include_guard.feature` (4 scénarios `@converter-include-guard`) + `IncludeGuardCucumberRunner.kt` + `IncludeGuardSteps.kt` + `CucumberTaskSpec("includeGuardCucumberTest")`.
 - **Bug préexistant corrigé** : `registerBookPipeline` overridait inconditionnellement `convertDocumentToHtml.sourceFile` sur le livre assemblé → conversion standalone cassée ; fix via `taskGraph.whenReady` (override seulement si `bookPipeline` dans le graphe).
 
-*Gates* : `compileKotlin` VERT ; `test --tests document.security.IncludePathValidatorTest` VERT (12 UT) ; `functionalTest --tests ConvertDocumentTaskIncludeGuardFunctionalTest --tests ConvertDocumentTaskSafeModeFunctionalTest` VERT (5 FT CR4 + 4 FT safeMode). Cucumber dédié CR4 : artifacts ajoutés, exécution globale bloquée infra borough (DuplicateStepDefinitionException conventions plugin, non bloquant DOC-CR4).
+*Gates* : `compileKotlin` VERT ; `test --tests document.security.IncludePathValidatorTest` VERT (12 UT) ; `functionalTest --tests ConvertDocumentTaskIncludeGuardFunctionalTest --tests ConvertDocumentTaskSafeModeFunctionalTest` VERT (5 FT CR4 + 4 FT safeMode). Cucumber dédié CR4 : artifacts ajoutés, exécution globale bruite par infra borough (DuplicateStepDefinitionException due à un doublon de step définition dans les tests document-gradle, résolu S-223, non bloquant DOC-CR4).
 
-*Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — reportée S-222.
+*Hors périmètre* : correction infra Cucumber borough — résolue S-223 (le doublon réel était une step définition dupliquée dans les tests document-gradle, pas le plugin conventions).
 
 === Session 222 (2026-08-30) — DOC-CR5 (Conversion Security Policy) — EPIC CLÔTURÉ
 
@@ -328,6 +328,6 @@ STRICT→Reject (GradleException fail-fast) / LENIENT→Warn (logger.warn) ; sin
 - `ConvertDocumentTaskSecurityPolicyFunctionalTest.kt` : 3 FT (STRICT+UNSAFE reject, LENIENT+UNSAFE warn+convert, SERVER+STRICT valid).
 - `converter_security_policy.feature` (3 scénarios `@converter-security-policy`) + `SecurityPolicyCucumberRunner.kt` + `SecurityPolicySteps.kt` + `CucumberTaskSpec("securityPolicyCucumberTest")`.
 
-*Gates* : `compileKotlin` VERT ; `test --tests document.security.*` VERT (24 UT : 12 CR4 + 12 CR5) ; `functionalTest` CR5 (3 FT) + CR4 (5 FT) VERT ; `securityPolicyCucumberTest` runner dédié 3/3 PASSED. Exécution globale Cucumber borough bruite par infra (DuplicateStepDefinitionException conventions plugin) — non bloquant DOC-CR5.
+*Gates* : `compileKotlin` VERT ; `test --tests document.security.*` VERT (24 UT : 12 CR4 + 12 CR5) ; `functionalTest` CR5 (3 FT) + CR4 (5 FT) VERT ; `securityPolicyCucumberTest` runner dédié 3/3 PASSED. Exécution globale Cucumber borough bruite par infra (DuplicateStepDefinitionException due à un doublon de step définition dans les tests document-gradle, résolu S-223, non bloquant DOC-CR5).
 
-*Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — reportée S-223.
+*Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — résolue S-223 (doublon de step dans tests document-gradle, pas le plugin conventions).

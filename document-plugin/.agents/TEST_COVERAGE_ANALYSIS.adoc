@@ -1,6 +1,35 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-30
-:session: 222
+:session: 223
+
+== Session 223 — Infra Cucumber borough : résolution DuplicateStepDefinitionException
+
+*Diagnostic corrigé* : le `DuplicateStepDefinitionException` du moteur Cucumber GLOBAL n'était PAS
+dû au plugin conventions (`education.cccp.build.cucumber` 0.0.2). Son classpath ne doublonnait que
+le `jar` projet (redondant avec `main.output`, inoffensif). La vraie cause était une **step définition
+dupliquée** dans les tests document-gradle : `a document gradle project with no converter configuration`
+déclarée dans `IncludeGuardSteps.kt` (package `document.includeguard`) ET `ConverterSafeModeSteps.kt`
+(package `document.convertersafemode`). Le moteur global (sans restriction `glue`) scanne tout le
+classpath → exception. Les runners DÉDIÉS restreignent `glue` et masquaient le doublon.
+
+*Correction* (commit `f67eb8e`, poussé) : textes de step distincts (`a document gradle project with no
+include guard configuration` / `a document gradle project with no safe mode configuration`) + features
+`converter_include_guard.feature` / `converter_safe_mode.feature` mises à jour. Aucun step dupliqué
+restant (vérifié par grep `@Given/@When/@Then` + `uniq -d`).
+
+*Vérification* : `securityPolicyCucumberTest` + `includeGuardCucumberTest` + `converterSafeModeCucumberTest`
+→ BUILD SUCCESSFUL (plus de DuplicateStepDefinitionException).
+
+*Hygiene conventions* (commit `1c13b7e` conventions-gradle) : `CucumberConventionsPlugin.kt` +
+`build.gradle.kts` du plugin utilisent `testRuntimeClasspath + test.output + main.output` (jar redondant
+supprimé) ; test fonctionnel de régression `CP_JAR_PRESENT=false` ajouté.
+
+*Couverture* :
+- Cucumber dédié : 3/3 PASSED (securityPolicy) + 4/4 PASSED (includeGuard) + 3/3 PASSED (safeMode).
+- Cucumber global : BUILD SUCCESSFUL (bruit résolu).
+- Conventions : `functionalTest` (incl. régression jar) + `cucumberTest` GREEN.
+
+---
 
 == Session 222 — DOC-CR5 : Conversion Security Policy (cohérence SafeMode × IncludeGuard)
 
@@ -17,7 +46,7 @@
 *Couverture* :
 - Unit : 12/12 PASSED (`DocumentSecurityPolicyTest`).
 - Fonctionnel : 3/3 PASSED (`ConvertDocumentTaskSecurityPolicyFunctionalTest`).
-- Cucumber dédié : 3/3 PASSED (`SecurityPolicyCucumberRunner`), exécution globale bruite par infra borough (DuplicateStepDefinitionException conventions plugin, non bloquant DOC-CR5).
+- Cucumber dédié : 3/3 PASSED (`SecurityPolicyCucumberRunner`), exécution globale bruite par infra borough (DuplicateStepDefinitionException — root-cause corrigé S-223 : doublon de step définition dans les tests document-gradle, pas le plugin conventions, non bloquant DOC-CR5).
 - `compileKotlin` VERT, non-régression `document.security.*` (IncludePathValidatorTest 12/12) + FT include-guard 5/5.
 
 *Notes* :
@@ -46,7 +75,7 @@
 *Couverture* :
 - Unit : 12/12 PASSED (`IncludePathValidatorTest`).
 - Fonctionnel : 5/5 PASSED (`ConvertDocumentTaskIncludeGuardFunctionalTest`) + 4/4 FT safeMode existants non-régression.
-- Cucumber dédié : artifacts ajoutés (4 scénarios), exécution bloquée par infra borough (DuplicateStepDefinitionException conventions plugin, voir note S-221).
+- Cucumber dédié : artifacts ajoutés (4 scénarios), exécution bloquée par infra borough (DuplicateStepDefinitionException — root-cause corrigé S-223 : doublon de step définition dans les tests document-gradle, pas le plugin conventions, voir note S-221).
 - `compileKotlin` VERT.
 
 *Notes* :
