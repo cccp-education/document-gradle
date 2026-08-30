@@ -1,6 +1,59 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-30
-:session: 223
+:session: 224
+
+== Session 224 — DOC-XREF-VALIDATE : validation références croisées AsciiDoc (`<<id>>` / `xref:id[]`)
+
+*Objectif* : détecter les références croisées non résolues avant publication du livre (qualité
+navigation). DDD pur `document.xref` (zéro I/O/Gradle), câblage `ConvertDocumentTask` +
+tâche dédiée `validateDocumentXref` (rapport JSON), Cucumber `@xref-validation`.
+
+*Tests ajoutés S224* :
+- `document/xref/XrefValidationMode.kt` — NOUVEAU (enum OFF/STRICT/LENIENT).
+- `document/xref/XrefValidationResult.kt` — NOUVEAU (sealed Valid/Invalid).
+- `document/xref/XrefValidator.kt` — NOUVEAU (extractAnchors/extractReferences/validate, regex texte brut).
+- `document/xref/XrefValidationReport.kt` — NOUVEAU (entry + liste, toJson/fromResult).
+- `XrefValidatorTest.kt` — 12 UT TDD strict (anchors/refs extraction, ids valides/invalides, mode OFF no-op, STRICT/LENIENT détection manquante).
+- `XrefValidationReportTest.kt` — 4 UT (toJson round-trip, fromResult, liste vide/peuplée).
+- `ConvertDocumentTaskXrefValidationFunctionalTest.kt` — 4 FT GradleTestKit (STRICT reject + report, LENIENT convert + report, OFF skip, CLI STRICT override DSL LENIENT).
+- `ValidateDocumentXrefTaskFunctionalTest.kt` — 3 FT GradleTestKit (STRICT fail + report, LENIENT VALID report, OFF no report).
+- `xref_validation.feature` — 5 scénarios Cucumber `@xref-validation` (OFF skip / LENIENT VALID / LENIENT missing warn+report / STRICT reject / STRICT VALID).
+- `XrefValidationCucumberRunner.kt` / `XrefValidationSteps.kt` — NOUVEAU (package `document.xrefvalidation`, préfixe « xrefvalidation »).
+- Enregistrement `xrefValidationCucumberTest` dans `build.gradle.kts`.
+
+*Couverture* :
+- Unit : 16/16 PASSED (`XrefValidatorTest` 12 + `XrefValidationReportTest` 4).
+- Fonctionnel : 7/7 PASSED (`ConvertDocumentTaskXrefValidationFunctionalTest` 4 + `ValidateDocumentXrefTaskFunctionalTest` 3).
+- Cucumber dédié : 5/5 PASSED (`xrefValidationCucumberTest`).
+- `compileKotlin` VERT. 6 runners Cucumber dédiés GREEN (xref + includeGuard + securityPolicy + converterSafeMode + bookTree + bookValidation).
+
+*Non-régression* :
+- `DocumentPluginFunctionalTest` « enregistre les 8 taches » non cassé (assert liste les noms, pas un count exact — la 9e tâche `validateDocumentXref` ne le brise pas).
+- Seuls échecs `:test`/`:functionalTest` : `DocumentConverterTest.convertToPdf/Epub` + `FpaBookArtifactGenerationTest` sur `LoadError asciidoctor-pdf`/`asciidoctor-epub3` (gems Ruby absents) — préexistant S-213/S-215, hors périmètre xref, aucune régression liée.
+
+*Pyramide S224* :
+
+[cols="2,1,1,3"]
+|===
+| Couche | Tests | Status | Fichier
+
+| Unit (xref DDD)
+| 16
+| ✅ PASS
+| `XrefValidatorTest.kt` + `XrefValidationReportTest.kt`
+
+| Functional (GradleTestKit)
+| 7
+| ✅ PASS
+| `ConvertDocumentTaskXrefValidationFunctionalTest.kt` + `ValidateDocumentXrefTaskFunctionalTest.kt`
+
+| Cucumber BDD (@xref-validation)
+| 5
+| ✅ PASS
+| `xref_validation.feature` + `XrefValidationSteps.kt`
+|===
+
+---
 
 == Session 223 — Infra Cucumber borough : résolution DuplicateStepDefinitionException
 

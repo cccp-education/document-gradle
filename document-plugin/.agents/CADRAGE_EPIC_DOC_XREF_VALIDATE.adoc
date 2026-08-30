@@ -1,0 +1,81 @@
+= CADRAGE EPIC DOC-XREF-VALIDATE — Validation des références croisées AsciiDoc
+
+_Session_ : 224 (New Orleans 🟢)
+_Borough_ : document-gradle (N2 — WRITE + PUBLISH)
+_Famille_ : VALIDATE (parallel à DOC-TABLE-VALIDATE / DOC-PLANTUML-VALIDATE / DOC-CR4 / DOC-CR5)
+_Méthode_ : baby-step DDD/TDD/BDD strict (unit + functional + cucumber)
+_Loi Economie d'Encre_ : validateur DDD pur, zéro I/O, zéro Gradle — idempotent.
+
+== Constat (prémisse)
+
+Le Domaine « Book » (`BookTree`, `BookNumbering.anchor(ref)` → `[[ref]]`,
+`BookAssembler` émet des ancres `[[ref]]` pour chaque section) produit des livres
+AsciiDoc riches en ancres de navigation. Mais *rien* ne vérifie aujourd'hui que les
+références croisées `<<ref>>` (ou `xref:ref[]`) présentes dans le contenu pointent
+vers une ancre définie. Un `<<id>>` orphelin produit un lien mort dans le HTML/PDF/EPUB
+final — défaut silencieux, invisible au build, détectable seulement par lecture humaine.
+
+Cas d'usage : livre FPA (203 pages, TOC riche) — un `<<1.2.3>>` pointant vers une
+section renommée casse la navigation du livre publié.
+
+== Décision architecturale
+
+. *Package* `document.xref` (parallel à `document.security`, `document.translation.validation`).
+. *Mode* `XrefValidationMode` enum { OFF, STRICT, LENIENT } — parallel à `IncludeGuardMode`.
+  Défaut OFF (backward-compatible). Câblé dans le bloc `converter { xrefValidation = ... }`
+  (mirror flat `xrefValidation`) + CLI `-Pdocument.xrefValidation`.
+. *Sévérité* : STRICT → `GradleException` fail-fast ; LENIENT → `logger.warn` ; OFF → no-op.
+  Appliquée dans `ConvertDocumentTask.convert()` *avant* la conversion (parallel à
+  `DocumentIncludeGuard.check`), et dans une tâche dédiée `validateDocumentXref` qui émet
+  un rapport JSON `xref-validation-report.json` (parallel à `TableValidationReport`).
+. *Extraction AsciiDoc* (heuristique regex sur le texte brut, parallel à `IncludePathValidator`
+  qui scanne aussi le brut) :
+  - Ancres définies : `[[id]]`, `[[id,label]]` (ancre inline/bloc), `[#id]` (id de bloc).
+  - Références : `<<id>>`, `<<id,text>>`, `xref:id[]`, `xref:id[text]`.
+  - IDs = `[A-Za-z0-9_][A-Za-z0-9_.\-]*` (accepte les `ref` hiérarchiques `1.2.3`).
+. *Hors périmètre* : auto-IDs générés par Asciidoctor depuis les titres de section
+  (implicites, non écrits dans le source) — on ne valide que les ancres explicites.
+. *Zéro nouveau knob DSL/CLI* hors `converter { xrefValidation }` (compose avec safeMode/includeGuard).
+
+== User Stories (baby steps DDD/TDD/BDD)
+
+[cols="1,4,2,1,1"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-XREF-1
+| `XrefValidator` DDD pur — `extractAnchors(text): Set<String>`,
+  `extractReferences(text): List<String>`, `validate(text): XrefValidationResult`
+  (Valid / Invalid(missing)). + `XrefValidationMode` + `XrefValidationResult` sealed.
+| UT : 12 `XrefValidatorTest`
+| 5
+| 🟡
+
+| DOC-XREF-2
+| `XrefValidationReport` (entry + liste, `toJson()`/`fromResults()`) — parallèle
+  à `TableValidationReport`.
+| UT : 4 `XrefValidationReportTest`
+| 2
+| 🟡
+
+| DOC-XREF-3
+| Câblage `converter { xrefValidation }` + `ConvertDocumentTask` (sévérité) +
+  tâche dédiée `validateDocumentXref` (rapport JSON) + CLI `-Pdocument.xrefValidation`.
+| FT : 5 (ConvertDocumentTask STRICT/LENIENT/OFF + ValidateDocumentXrefTask report/STRICT)
+| 5
+| 🟡
+
+| DOC-XREF-4
+| Cucumber BDD `@xref-validation` (OFF skip / LENIENT warn+convert / STRICT reject /
+  rapport JSON liste les refs manquantes) + runner dédié + steps + tâche.
+| BDD : 4 scénarios
+| 5
+| 🟡
+|===
+
+_Total_ : ~17 pts, 4 US. Séquentiel : US-1 → US-2 → US-3 → US-4.
+
+== Dépendances
+
+Aucune dépendance externe nouvelle. Réutilise `converter { }` DSL + `ConvertDocumentTask`
++ conventions plugin (CucumberTaskSpec). Parallel à DOC-CR4 (includeGuard) pour le câblage.

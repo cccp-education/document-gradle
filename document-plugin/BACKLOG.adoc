@@ -918,13 +918,13 @@ Ajouter une garde configurable `safeMode` DSL si du contenu externe est ingéré
   `converter { safeMode = ... }` (mirror flat `safeMode`) + flag CLI `-Pdocument.safeMode`.
   `ConvertDocumentTask` consomme la valeur. Baby-step DDD/TDD/BDD : 3 UT (`buildOptions` SafeMode)
   + 1 UT conversion + 4 FT (GradleTestKit DSL/CLI) + 3 scénarios Cucumber `@converter-safe-mode` (tous GREEN).
-| 🟡 P2 | ✅ TERMINÉ (S-220)
+| ✅ P2 | ✅ TERMINÉ (S-220)
 
 | DOC-CR3-3
 | **Supprimer le code mort** — `DocumentI18nBridge` et `DocumentGenerationGraph.graph` sont morts
 (confirmé CR-GLOBALE-002). Décider : câbler ou expulser. Expulser recommandé sauf besoin explicite.
 → `DocumentI18nBridge` déjà retiré (S-030). `DocumentGenerationGraph.graph` retiré S-219 (fichier koog-free).
-| 🟡 P2 | ✅ TERMINÉ (S-219)
+| ✅ P2 | ✅ TERMINÉ (S-219)
 |===
 
 '''
@@ -1090,6 +1090,90 @@ non restreint. DOC-CR5 fait respecter un plancher de cohérence.
 Le moteur Cucumber *global* du borough bruite (DuplicateStepDefinitionException conventions
 plugin 0.0.2) — le runner *dédié* `securityPolicyCucumberTest` est 3/3 GREEN. Non bloquant
 DOC-CR5 (cf. DOC-CR4).
+
+'''
+
+== ✅ EPIC DOC-XREF-VALIDATE — Validation des références croisées AsciiDoc (TERMINÉ, Session 224)
+
+__source_ : suite directe de DOC-CR3-2 (safeMode) + DOC-CR4 (includeGuard) + DOC-CR5 (security policy).
+_focus_ : intégrité de navigation — détecter les références croisées AsciiDoc non résolues
+(`<<id>>` / `xref:id[]`) avant publication du livre.
+_statut_ : DOC-XREF-1 ✅ TERMINÉ (S-224, TDD strict 12 UT), DOC-XREF-2 ✅ TERMINÉ (S-224, 4 UT),
+DOC-XREF-3 ✅ TERMINÉ (S-224, 7 FT), DOC-XREF-4 ✅ TERMINÉ (S-224, 5 scénarios Cucumber `@xref-validation`).
+
+[CAUTION]
+====
+**Motivation** : DOC-CR4 audite les directives `include::` (vecteur de traversal FS) et DOC-CR5
+garantit la cohérence `safeMode` × `includeGuard`. Mais la navigation interne du livre
+(références `<<id>>` / `xref:id[]` vers des ancres `[[id]]` / `[#id]`) n'est jamais validée.
+Une référence morte (`<<missing>>` sans ancre correspondante) produit un lien cassé silencieux
+dans le HTML/PDF/EPUB publié — défaut de qualité documentaire non détecté au build.
+
+**Règle** : extraction AsciiDoc sur le texte brut source (regex, zéro I/O/Gradle) :
+- Ancres : `[[id]]`, `[[id,label]]`, `[#id]`.
+- Références : `<<id>>`, `<<id,text>>`, `xref:id[]`, `xref:id[text]`.
+- IDs = `[A-Za-z0-9_][A-Za-z0-9_.-]*` (auto-IDs Asciidoctor implicites hors périmètre).
+- Sévérité (réutilise le pattern STRICT/LENIENT/OFF de includeGuard) :
+  . STRICT → `GradleException` (fail-fast, message cite les refs manquantes).
+  . LENIENT → `logger.warn` + rapport JSON émis.
+  . OFF → no-op (défaut, backward-compat).
+
+**Bénéfices** :
+. Qualité documentaire : zéro lien mort dans le livre publié (STRICT).
+. Mode LENIENT : visibilité sans casser le build (rapport `build/docs/document/xref-validation-report.json`).
+. DDD pur, testable sans Gradle ni réseau.
+. Compose les propriétés existantes (`converter { }` block DSL + CLI `-Pdocument.xrefValidation`).
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-XREF-1
+| `XrefValidator` DDD pur : `extractAnchors(text)` / `extractReferences(text)` / `validate(text)` → `XrefValidationResult` sealed (Valid/Invalid). `XrefValidationMode` enum (OFF/STRICT/LENIENT). IDs manquants listés.
+| 12 UT
+| 3
+| ✅ TERMINÉ (S-224)
+
+| DOC-XREF-2
+| `XrefValidationReport` : entry + liste + `toJson()` / `fromResult()` (rapport batch `xref-validation-report.json`).
+| 4 UT
+| 2
+| ✅ TERMINÉ (S-224)
+
+| DOC-XREF-3
+| Câblage DSL + tâche : `converter { xrefValidation = ... }` (mirror flat + CLI `-Pdocument.xrefValidation`), `ConvertDocumentTask` valide avant conversion (sévérité), tâche dédiée `validateDocumentXref` (groupe `document`, rapport JSON).
+| 7 FT
+| 5
+| ✅ TERMINÉ (S-224)
+
+| DOC-XREF-4
+| Cucumber BDD `@xref-validation` (OFF skip / LENIENT valid / LENIENT missing warn+report / STRICT reject / STRICT valid) + runner `XrefValidationCucumberRunner` + steps `XrefValidationSteps` + tâche `xrefValidationCucumberTest`.
+| 5 BDD
+| 5
+| ✅ TERMINÉ (S-224)
+
+|===
+
+=== Livrables S-224
+
+- `document/xref/XrefValidationMode.kt` — NOUVEAU (enum OFF/STRICT/LENIENT).
+- `document/xref/XrefValidationResult.kt` — NOUVEAU (sealed Valid/Invalid).
+- `document/xref/XrefValidator.kt` — NOUVEAU (extractAnchors/extractReferences/validate, regex).
+- `document/xref/XrefValidationReport.kt` — NOUVEAU (entry + liste, toJson/fromResult).
+- `XrefValidatorTest.kt` (12 UT) + `XrefValidationReportTest.kt` (4 UT) — GREEN.
+- `ConvertDocumentTaskXrefValidationFunctionalTest.kt` (4 FT) + `ValidateDocumentXrefTaskFunctionalTest.kt` (3 FT) — GREEN.
+- `xref_validation.feature` + `XrefValidationCucumberRunner.kt` + `XrefValidationSteps.kt` + tâche `xrefValidationCucumberTest` — 5/5 BDD GREEN.
+- `ConverterDsl.kt` / `DocumentExtension.kt` / `DocumentPlugin.kt` / `ConvertDocumentTask.kt` / `ValidateDocumentXrefTask.kt` — câblage DSL + tâche.
+
+=== Note environnement (préexistant, hors DOC-XREF-VALIDATE)
+
+`DocumentConverterTest.convertToPdf` / `convertToEpub` et `FpaBookArtifactGenerationTest` échouent
+sur `LoadError asciidoctor-pdf` / `asciidoctor-epub3` (gems Ruby absents de l'environnement) —
+préexistant (noté S-213/S-215), indépendant de cet EPIC. Les tests xref (16 UT + 7 FT + 5 BDD)
+sont tous GREEN ; les 6 runners Cucumber dédiés (xref + existants) sont GREEN.
 
 '''
 

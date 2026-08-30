@@ -1,0 +1,59 @@
+= Session 224 — DOC-XREF-VALIDATE (Validation références croisées AsciiDoc)
+
+:date: 2026-08-30
+:borough: document-gradle (New Orleans 🟢)
+:epic: DOC-XREF-VALIDATE
+
+== Résumé
+
+EPIC produit DOC-XREF-VALIDATE ✅ TERMINÉ (4/4 US). Validation des références croisées
+AsciiDoc (`<<id>>` / `xref:id[]`) avant publication du livre — complète la solidité
+documentaire après DOC-CR3-2 (safeMode), DOC-CR4 (includeGuard), DOC-CR5 (security policy).
+
+== Livrables (DDD pur `document.xref`)
+
+- `XrefValidationMode.kt` — enum OFF/STRICT/LENIENT.
+- `XrefValidationResult.kt` — sealed Valid/Invalid (liste des refs manquantes).
+- `XrefValidator.kt` — `extractAnchors` / `extractReferences` / `validate` (regex sur texte brut,
+  ancres `[[id]]`/`[[id,label]]`/`[#id]`, références `<<id>>`/`<<id,text>>`/`xref:id[]`/`xref:id[text]`,
+  IDs `[A-Za-z0-9_][A-Za-z0-9_.-]*`, auto-IDs implicites hors périmètre).
+- `XrefValidationReport.kt` — entry + liste, `toJson()` / `fromResult()` (rapport
+  `build/docs/document/xref-validation-report.json`).
+
+== Câblage
+
+- `ConvertDocumentTask` : valide le texte source avant conversion, sévérité
+  (STRICT → `GradleException` fail-fast citant les refs manquantes ; LENIENT → `logger.warn`
+  + rapport ; OFF → no-op, défaut backward-compat).
+- `ConverterDsl.kt` : `+xrefValidation` Property (bloc `converter { }`).
+- `DocumentExtension.kt` : `+abstract xrefValidation` (mirror flat).
+- `DocumentPlugin.kt` : convention OFF, mirror `converter.xrefValidation`, CLI `-Pdocument.xrefValidation`,
+  `registerValidateDocumentXref` (tâche `validateDocumentXref`, groupe `document`).
+- `ValidateDocumentXrefTask.kt` — NOUVEAU (tâche dédiée rapport JSON).
+
+== Tests (pyramide, baby-step DDD/TDD/BDD strict)
+
+- 12 UT `XrefValidatorTest` + 4 UT `XrefValidationReportTest` → GREEN.
+- 4 FT `ConvertDocumentTaskXrefValidationFunctionalTest` + 3 FT `ValidateDocumentXrefTaskFunctionalTest` → GREEN.
+- 5 scénarios Cucumber `@xref-validation` (`xref_validation.feature` + `XrefValidationCucumberRunner`
+  + `XrefValidationSteps` + `CucumberTaskSpec("xrefValidationCucumberTest")`) → 5/5 GREEN.
+- Total : 16 UT + 7 FT + 5 BDD, tous GREEN. 6 runners Cucumber dédiés GREEN.
+
+== Non-régression / ENV
+
+- `compileKotlin` VERT.
+- `DocumentPluginFunctionalTest` « 8 tâches » non cassé (assert liste les noms, pas count exact →
+  la 9e tâche `validateDocumentXref` ne le brise pas).
+- Échecs préexistants (hors périmètre) : `DocumentConverterTest.convertToPdf/Epub` +
+  `FpaBookArtifactGenerationTest` sur `LoadError asciidoctor-pdf` / `asciidoctor-epub3`
+  (gems Ruby absents de l'environnement, notés S-213/S-215). Aucune régression liée au xref.
+
+== Gouvernance
+
+- BACKLOG.adoc : section EPIC DOC-XREF-VALIDATE ajoutée ✅ ; désync `🟡` → `✅` corrigée (lignes 921/927).
+- INDEX.adoc : roadmap + sessions + portefeuille (224) mis à jour.
+- PROMPT_REPRISE.adoc (session 224 → 225), SESSIONS_HISTORY.adoc (ligne + section), TEST_COVERAGE_ANALYSIS.adoc (S224).
+
+== Décision
+
+Commit + push autorisés par l'utilisateur (fin de session).

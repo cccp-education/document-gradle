@@ -2,6 +2,7 @@
 
 |===
 | # | Date | Type | Sujet | Score
+| 224 | 2026-08-30 | feat + TDD/BDD | **EPIC DOC-XREF-VALIDATE ✅ TERMINÉ (4/4 US)** — Validation références croisées AsciiDoc (`<<id>>`/`xref:id[]`). DDD `document.xref` (`XrefValidationMode` OFF/STRICT/LENIENT, `XrefValidationResult` sealed, `XrefValidator` extractAnchors/extractReferences/validate, `XrefValidationReport` JSON). Câblage `ConvertDocumentTask` (STRICT fail-fast / LENIENT warn+report / OFF skip) + DSL `converter { xrefValidation = ... }` (mirror flat + CLI `-Pdocument.xrefValidation`) + tâche dédiée `validateDocumentXref` (rapport `build/docs/document/xref-validation-report.json`). Baby-step DDD/TDD/BDD : 12 UT `XrefValidatorTest` + 4 UT `XrefValidationReportTest` + 7 FT (`ConvertDocumentTaskXrefValidationFunctionalTest` 4 + `ValidateDocumentXrefTaskFunctionalTest` 3) + 5 scénarios Cucumber `@xref-validation` (runner `XrefValidationCucumberRunner` + steps `XrefValidationSteps` + tâche `xrefValidationCucumberTest`). Tous GREEN. 6 runners Cucumber dédiés GREEN. ENV : `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest` échouent sur gems `asciidoctor-pdf`/`asciidoctor-epub3` absents (préexistant S-213, hors périmètre xref). | 10/10
 | 221 | 2026-08-29 | feat + TDD/BDD | **EPIC DOC-CR4 ✅ TERMINÉ (4/4 US)** — Include Path Guard : audit pré-vol `include::` filesystem (STRICT/LENIENT/OFF) dans `ConvertDocumentTask`. DDD `document.security` (IncludeGuardMode, IncludeDirective, IncludeValidationResult, IncludePathValidator, DocumentIncludeGuard). DSL `converter { includeGuard }` + flat mirror + CLI `-Pdocument.includeGuard`. Baby-step DDD/TDD/BDD : 12 UT `IncludePathValidatorTest` + 5 FT `ConvertDocumentTaskIncludeGuardFunctionalTest` (STRICT reject / LENIENT convert / OFF default / CLI override) TOUS GREEN. Artifacts Cucumber `@converter-include-guard` ajoutés (`converter_include_guard.feature`, `IncludeGuardCucumberRunner`, `IncludeGuardSteps`, tâche `includeGuardCucumberTest`). Bug préexistant corrigé : `registerBookPipeline` overridait inconditionnellement `convertDocumentToHtml.sourceFile` sur le livre assemblé → conversion standalone cassée ; fix via `taskGraph.whenReady` (override seulement si `bookPipeline` dans le graphe). Note : infra Cucumber borough (conventions plugin duplicate classpath) affecte aussi S-220 — non bloquant DOC-CR4. **Diagnostic corrigé S-223** : le doublon réel était une step définition dupliquée dans les tests document-gradle, pas le plugin conventions. | 10/10
 | 222 | 2026-08-30 | feat + TDD/BDD | **EPIC DOC-CR5 ✅ TERMINÉ (3/3 US)** — Conversion Security Policy : cohérence SafeMode × includeGuard. DDD `document.security` (SecurityAdvice sealed Valid/Warn/Reject, DocumentSecurityPolicy.advise). Intégration `ConvertDocumentTask.convert()` (STRICT reject → GradleException, LENIENT warn, OFF skip). Baby-step DDD/TDD/BDD : 12 UT `DocumentSecurityPolicyTest` + 3 FT `ConvertDocumentTaskSecurityPolicyFunctionalTest` (STRICT+UNSAFE reject / LENIENT+UNSAFE warn / SERVER+STRICT valid) TOUS GREEN + 3 scénarios Cucumber `@converter-security-policy` (runner dédié `SecurityPolicyCucumberRunner` + `SecurityPolicySteps` + tâche `securityPolicyCucumberTest`). Compose safeMode (CR3-2) + includeGuard (CR4), zéro nouveau knob. Note : infra Cucumber borough (conventions duplicate classpath) bruit le moteur global — runner dédié GREEN, non bloquant DOC-CR5. **Diagnostic corrigé S-223** : le bruit venait d'un doublon de step définition dans les tests document-gradle, résolu en S-223. | 10/10
 | 223 | 2026-08-30 | fix + TDD/BDD | **Infra Cucumber borough ✅ résolue** — Diagnostic corrigé : le `DuplicateStepDefinitionException` du moteur global n'était PAS dû au plugin conventions (classpath doublonnait seulement le `jar` projet, redondant, inoffensif). Cause réelle : step `a document gradle project with no converter configuration` définie dans DEUX classes (`IncludeGuardSteps.kt` + `ConverterSafeModeSteps.kt`) ; moteur global sans `glue` restreint → exception. Fix (commit `f67eb8e`) : textes de step distincts (`no include guard configuration` / `no safe mode configuration`) + features mises à jour. Vérifié : `securityPolicyCucumberTest`/`includeGuardCucumberTest`/`converterSafeModeCucumberTest` → BUILD SUCCESSFUL. Hygiene conventions (commit `1c13b7e` conventions-gradle) : `CucumberConventionsPlugin` + `build.gradle.kts` utilisent `testRuntimeClasspath + test.output + main.output` (jar redondant supprimé) + test fonctionnel régression `CP_JAR_PRESENT=false`. | 10/10
@@ -251,3 +252,25 @@ directe vers codex-gradle.
 - 5/5 PASSED ; non-régression book-tree 6/6 + UT/FT book GREEN
 
 **Suite** : S-217 (rapprochement FPA-BOOK-4 ou EPIC suivant)
+
+== Session 224 (2026-08-30) — DOC-XREF-VALIDATE (validation références croisées AsciiDoc)
+
+**Type** : implémentation DDD/TDD/BDD strict
+**Score** : 10/10
+**EPIC** : DOC-XREF-VALIDATE (US-1 + US-2 + US-3 + US-4 livrées → 4/4 US, EPIC CLÔTURÉ)
+
+**Livrables** :
+- `document/xref/XrefValidationMode.kt` — NOUVEAU (enum OFF/STRICT/LENIENT).
+- `document/xref/XrefValidationResult.kt` — NOUVEAU (sealed Valid/Invalid).
+- `document/xref/XrefValidator.kt` — NOUVEAU (extractAnchors/extractReferences/validate, regex sur texte brut).
+- `document/xref/XrefValidationReport.kt` — NOUVEAU (entry + liste, toJson/fromResult).
+- `ConverterDsl.kt` (+`xrefValidation` Property) / `DocumentExtension.kt` (+abstract Property) / `DocumentPlugin.kt` (convention OFF, mirror, CLI `-Pdocument.xrefValidation`, `registerValidateDocumentXref`) / `ConvertDocumentTask.kt` (validation avant conversion) / `ValidateDocumentXrefTask.kt` (NOUVEAU, rapport JSON).
+- `XrefValidatorTest.kt` (12 UT) + `XrefValidationReportTest.kt` (4 UT) — GREEN.
+- `ConvertDocumentTaskXrefValidationFunctionalTest.kt` (4 FT) + `ValidateDocumentXrefTaskFunctionalTest.kt` (3 FT) — GREEN.
+- `xref_validation.feature` (5 scénarios `@xref-validation`) + `XrefValidationCucumberRunner.kt` + `XrefValidationSteps.kt` + `CucumberTaskSpec("xrefValidationCucumberTest")` — 5/5 PASSED.
+
+**Tests** : 16 UT + 7 FT + 5 BDD, tous GREEN. 6 runners Cucumber dédiés GREEN (xref + includeGuard/securityPolicy/converterSafeMode/bookTree/bookValidation).
+
+**Non-régression** : `compileKotlin` VERT. Les seuls échecs `:test`/`:functionalTest` sont les gems `asciidoctor-pdf`/`asciidoctor-epub3` absents (LoadError, préexistant S-213/S-215), indépendants du xref.
+
+**Suite** : S-225 (DOC-TABLE/PLANTUML hardening, ou dogfooding livre FPA SERVER)

@@ -11,6 +11,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 import document.ValidationMode
 import document.security.IncludeGuardMode
+import document.xref.XrefValidationMode
 import org.asciidoctor.SafeMode
 
 /**
@@ -106,6 +107,12 @@ abstract class DocumentExtension {
      * [converter].includeGuard.
      */
     abstract val includeGuard: Property<IncludeGuardMode>
+
+    /**
+     * Cross-reference validation strictness applied to every conversion (DOC-XREF-VALIDATE).
+     * [XrefValidationMode.OFF] by default (backward-compatible). Mirrors [converter].xrefValidation.
+     */
+    abstract val xrefValidation: Property<XrefValidationMode>
 
     /**
      * Nested DSL block `enrich { }` (DOC-12). Concrete val initialised in the

@@ -12,6 +12,7 @@ import document.translation.validation.PlantUmlValidationConfig
 import document.translation.validation.TableValidationConfig
 import org.asciidoctor.SafeMode
 import document.security.IncludeGuardMode
+import document.xref.XrefValidationMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -105,6 +106,7 @@ class DocumentPlugin : Plugin<Project> {
             converter = ConverterDsl(
                 safeMode = project.objects.property(SafeMode::class.java),
                 includeGuard = project.objects.property(IncludeGuardMode::class.java),
+                xrefValidation = project.objects.property(XrefValidationMode::class.java),
             ),
         )
 
@@ -179,6 +181,9 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
         ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
         ext.includeGuard.convention(ext.converter.includeGuard)
+        // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
+        ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
+        ext.xrefValidation.convention(ext.converter.xrefValidation)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -207,6 +212,7 @@ class DocumentPlugin : Plugin<Project> {
         registerTranslateDocument(project, ext)
         registerTranslateDocumentBatch(project, ext)
         registerRetranslateFrontmatter(project, ext)
+        registerValidateDocumentXref(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -262,6 +268,7 @@ class DocumentPlugin : Plugin<Project> {
                 task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
                 task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
                 task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
+                task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
                 task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
                 task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
                 task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))
@@ -536,6 +543,16 @@ class DocumentPlugin : Plugin<Project> {
             task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
             task.targetLanguage.set(tgtLang)
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+        }
+    }
+
+    private fun registerValidateDocumentXref(project: Project, ext: DocumentExtension) {
+        project.tasks.register("validateDocumentXref", ValidateDocumentXrefTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Validates AsciiDoc cross-references (<<id>> / xref:id[]) in the source and writes a JSON report. — DOC-XREF-VALIDATE"
+            task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+            task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/xref-validation-report.json"))
         }
     }
 }

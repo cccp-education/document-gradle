@@ -18,6 +18,9 @@ import document.security.DocumentIncludeGuard
 import document.security.DocumentSecurityPolicy
 import document.security.IncludeGuardMode
 import document.security.SecurityAdvice
+import document.xref.XrefValidationMode
+import document.xref.XrefValidationResult
+import document.xref.XrefValidator
 import org.gradle.api.GradleException
 
 /**
@@ -54,6 +57,13 @@ abstract class ConvertDocumentTask() : DefaultTask() {
      */
     @get:Input
     abstract val includeGuard: Property<IncludeGuardMode>
+
+    /**
+     * Cross-reference validation strictness applied before conversion (DOC-XREF-VALIDATE).
+     * [XrefValidationMode.OFF] by default (backward-compatible).
+     */
+    @get:Input
+    abstract val xrefValidation: Property<XrefValidationMode>
 
     @get:Input
     @get:Optional
@@ -113,6 +123,33 @@ abstract class ConvertDocumentTask() : DefaultTask() {
         // DOC-CR4 — pre-flight audit of include:: directives (path traversal / absolute).
         // Runs before any AsciidoctorJ filesystem access, for every backend.
         DocumentIncludeGuard.check(source.readText(), source.parentFile, includeGuard.get(), logger::warn)
+
+        // DOC-XREF-VALIDATE — pre-flight audit of AsciiDoc cross-references (<<id>> / xref:id[]).
+        // Runs before any AsciidoctorJ conversion, for every backend. Severity follows the
+        // xrefValidation mode (STRICT fails fast, LENIENT warns, OFF stays silent).
+        val xrefMode = xrefValidation.get()
+        if (xrefMode != XrefValidationMode.OFF) {
+            val xrefResult = XrefValidator.validate(source.readText())
+            when (xrefMode) {
+                XrefValidationMode.STRICT -> {
+                    if (xrefResult is XrefValidationResult.Invalid) {
+                        throw GradleException(
+                            "xref validation failed (STRICT): ${xrefResult.missing.size} unresolved " +
+                                "cross-reference(s): ${xrefResult.missing.joinToString()}",
+                        )
+                    }
+                }
+                XrefValidationMode.LENIENT -> {
+                    if (xrefResult is XrefValidationResult.Invalid) {
+                        logger.warn(
+                            "xref validation (LENIENT): ${xrefResult.missing.size} unresolved " +
+                                "cross-reference(s): ${xrefResult.missing.joinToString()}",
+                        )
+                    }
+                }
+                XrefValidationMode.OFF -> Unit
+            }
+        }
 
         // DOC-CR5 — defence-in-depth coherence check : an active include guard paired
         // with an UNSAFE AsciidoctorJ SafeMode is an illusion of security (the include

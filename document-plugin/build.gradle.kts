@@ -132,6 +132,12 @@ cucumberConventions {
             tags = listOf("@converter-security-policy"),
             runnerClass = "document.securitypolicy.SecurityPolicyCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "xrefValidationCucumberTest",
+            features = listOf("src/test/resources/features/xref_validation.feature"),
+            tags = listOf("@xref-validation"),
+            runnerClass = "document.xrefvalidation.XrefValidationCucumberRunner",
+        ),
     )
 }
 

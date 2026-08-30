@@ -1,29 +1,30 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 223
+== Mission session 224
 
-Corriger le « bruit » du moteur Cucumber global du borough (`DuplicateStepDefinitionException`).
-Diagnostic corrigé en cours de session : la cause RÉELLE n'est PAS le plugin conventions
-(`education.cccp.build.cucumber` 0.0.2) — son classpath doublonnait seulement le `jar` projet
-(redondant avec `main.output`, inoffensif). La vraie cause était une **étape Cucumber dupliquée
-dans les tests document-gradle** :
+EPIC DOC-XREF-VALIDATE — validation des références croisées AsciiDoc (`<<id>>` / `xref:id[]`)
+avant publication du livre. Suite directe de DOC-CR3-2 (safeMode) + DOC-CR4 (includeGuard)
++ DOC-CR5 (security policy) : complète la solidité documentaire en auditant la navigation interne.
 
-- `a document gradle project with no converter configuration` était définie dans DEUX classes de
-  steps : `IncludeGuardSteps.kt` (package `document.includeguard`) ET `ConverterSafeModeSteps.kt`
-  (package `document.convertersafemode`).
-- Le moteur Cucumber GLOBAL (sans restriction `glue` + tâche `SecurityPolicyCucumberRunner` sans
-  `glue`) scanne tout le classpath → `io.cucumber.core.runner.DuplicateStepDefinitionException`.
-- Les runners DÉDIÉS (`IncludeGuardCucumberRunner`, `ConverterSafeModeCucumberRunner`) restreignent
-  `glue` à leur package → masquaient le doublon.
+*Livré (4/4 US, EPIC CLÔTURÉ)* :
+- DDD `document.xref` : `XrefValidationMode` (OFF/STRICT/LENIENT), `XrefValidationResult`
+  sealed (Valid/Invalid), `XrefValidator` (extractAnchors/extractReferences/validate, regex
+  sur texte brut, IDs `[A-Za-z0-9_][A-Za-z0-9_.-]*`), `XrefValidationReport` (toJson/fromResult).
+- Câblage `ConvertDocumentTask` : valide avant conversion, sévérité (STRICT fail-fast /
+  LENIENT warn + rapport JSON / OFF skip, défaut OFF backward-compat).
+- DSL `converter { xrefValidation = ... }` + mirror flat `xrefValidation` + CLI `-Pdocument.xrefValidation`.
+- Tâche dédiée `validateDocumentXref` (groupe `document`, rapport
+  `build/docs/document/xref-validation-report.json`).
+- Cucumber `@xref-validation` (5 scénarios) + runner `XrefValidationCucumberRunner`
+  + steps `XrefValidationSteps` + tâche `xrefValidationCucumberTest`.
 
-Fix (commit `f67eb8e`, poussé) : textes de step distincts (`no include guard configuration` /
-`no safe mode configuration`) + features mises à jour. Vérifié : `securityPolicyCucumberTest`,
-`includeGuardCucumberTest`, `converterSafeModeCucumberTest` → BUILD SUCCESSFUL (PASSED, plus de
-DuplicateStepDefinitionException).
+*Tests* : 12 UT `XrefValidatorTest` + 4 UT `XrefValidationReportTest` + 7 FT
+(`ConvertDocumentTaskXrefValidationFunctionalTest` 4 + `ValidateDocumentXrefTaskFunctionalTest` 3)
++ 5 BDD. Tous GREEN. 6 runners Cucumber dédiés GREEN.
 
-Hygiene conventions (commit `1c13b7e`, poussé dans conventions-gradle) : `CucumberConventionsPlugin`
-et `build.gradle.kts` du plugin utilisent `testRuntimeClasspath + test.output + main.output`
-(suppression du `jar` redondant) + test fonctionnel de régression `CP_JAR_PRESENT=false`.
+*Note ENV* : `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest` échouent sur
+`LoadError asciidoctor-pdf` / `asciidoctor-epub3` (gems Ruby absents) — préexistant S-213,
+hors périmètre xref, aucune régression liée.
 
 == Règles absolues (AGENT.adoc)
 
@@ -32,16 +33,16 @@ et `build.gradle.kts` du plugin utilisent `testRuntimeClasspath + test.output + 
 - Zéro secret, zéro commit/push sans accord explicite.
 - `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 
-== État du code (S-223)
+== État du code (S-224)
 
-- DOC-CR4 ✅ TERMINÉ (4/4 US) : Include Path Guard.
-- DOC-CR5 ✅ TERMINÉ (3/3 US) : Conversion Security Policy (commit `20aa56c`).
-- Infra Cucumber borough : bruit `DuplicateStepDefinitionException` RÉSOLU (S-223, commit `f67eb8e`).
-- Conventions plugin : classpath Cucumber nettoyé (jar redondant supprimé, S-223, commit `1c13b7e`).
+- DOC-CR3 ✅ / DOC-CR4 ✅ / DOC-CR5 ✅ / DOC-XREF-VALIDATE ✅ TERMINÉS (4/4 US).
+- Infra Cucumber borough ✅ résolue (S-223).
+- 9e tâche `document` enregistrée : `validateDocumentXref` (les 8 historiques + celle-ci).
 
 == À vérifier en ouverture
 
-1. `git status` (document-gradle + conventions-gradle + office/metiers/FPA).
+1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
-3. `./gradlew securityPolicyCucumberTest includeGuardCucumberTest converterSafeModeCucumberTest` VERT.
-4. Prochain EPIC produit : DOC-TABLE / PLANTUML hardening / dogfooding livre FPA SERVER.
+3. `./gradlew xrefValidationCucumberTest includeGuardCucumberTest securityPolicyCucumberTest converterSafeModeCucumberTest` VERT.
+4. Prochain EPIC produit : DOC-TABLE hardening / PLANTUML validation hardening, ou dogfooding
+   livre FPA SERVER (HTML/PDF/EPUB navigables sur corpus FPA réel — voir S-217/218).
