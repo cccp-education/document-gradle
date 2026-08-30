@@ -48,8 +48,8 @@ class IncludeGuardSteps {
         )
     }
 
-    @Given("a document gradle project with no converter configuration")
-    fun `a project with no converter configuration`() {
+    @Given("a document gradle project with no include guard configuration")
+    fun `a project with no include guard configuration`() {
         projectDir = Files.createTempDirectory("doc-include-guard-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-include-guard\"\n")
         projectDir.resolve("build.gradle.kts").writeText(

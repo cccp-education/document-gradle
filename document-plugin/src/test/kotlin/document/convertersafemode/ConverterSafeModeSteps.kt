@@ -47,8 +47,8 @@ class ConverterSafeModeSteps {
         )
     }
 
-    @Given("a document gradle project with no converter configuration")
-    fun `a project with no converter configuration`() {
+    @Given("a document gradle project with no safe mode configuration")
+    fun `a project with no safe mode configuration`() {
         projectDir = Files.createTempDirectory("doc-converter-safe-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-converter-safe\"\n")
         projectDir.resolve("build.gradle.kts").writeText(

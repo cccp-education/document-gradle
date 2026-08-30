@@ -18,7 +18,7 @@ Feature: Converter include-path guard (DOC-CR4)
 
   @converter-include-guard
   Scenario: default includeGuard is OFF when nothing is configured
-    Given a document gradle project with no converter configuration
+    Given a document gradle project with no include guard configuration
     When the plugin is applied and printIncludeGuard runs
     Then the convertDocumentToHtml task includeGuard is "OFF"
 

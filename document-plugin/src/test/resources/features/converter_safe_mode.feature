@@ -18,6 +18,6 @@ Feature: Converter safe-mode guard (DOC-CR3-2)
 
   @converter-safe-mode
   Scenario: default safeMode is UNSAFE when nothing is configured
-    Given a document gradle project with no converter configuration
+    Given a document gradle project with no safe mode configuration
     When the plugin is applied and printSafeMode runs
     Then the convertDocumentToHtml task safeMode is "UNSAFE"
