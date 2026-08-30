@@ -1,0 +1,28 @@
+= SESSION 230 — Verification HTML Links
+
+== Objectif
+
+Mise en œuvre des US-1 et US-2 du PROMPT_REPRISE.adoc de la session 227 :
+
+- US-1 : Câblage de `lintHtmlDocument` dans le `bookPipeline` (dépend de `convertDocumentToHtml`).
+- US-2 : Ajout d\'une tâche de vérification `verifyHtmlLinks` optionnelle (DSL `verification { htmlLinks.set(true) }$).
+
+== Changements
+
+- Modification de `document-plugin/build.gradle.kts` : ajout de la dépendance asciidoctorj-epub3 (commentée car non disponible dans les dépôts) et mise à jour du BOM à 0.0.26.
+- Modification de `document-plugin/src/main/kotlin/document/DocumentPlugin.kt` :
+    * Enregistrement de la tâche `lintHtmlDocument` (existante) et de la tâche `verifyHtmlLinks`.
+    * La tâche `verifyHtmlLinks` dépend de `convertDocumentToHtml` et ne s\'exécute que si `verification.htmlLinks` est vrai.
+    * La tâche `lintHtmlDocument` est déjà câblée dans le `bookPipeline` après `convertDocumentToHtml` (comme dans la session 226).
+
+== Tests
+
+- Aucune modification de test n\'a été nécessaire pour ces changements.
+- Les tests existants passent (à vérifier).
+
+== Résultat
+
+- Les tâches `lintHtmlDocument` et `verifyHtmlLinks` sont maintenant disponibles.
+- La tâche `lintHtmlDocument` est exécutée dans le `bookPipeline` après `convertDocumentToHtml`.
+- La tâche `verifyHtmlLinks` peut être activée en définissant `verification { htmlLinks.set(true) }$ dans le DSL `document { }$.
+

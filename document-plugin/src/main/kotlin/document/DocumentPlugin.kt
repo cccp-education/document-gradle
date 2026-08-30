@@ -327,6 +327,7 @@ class DocumentPlugin : Plugin<Project> {
         registerValidateDocumentXref(project, ext)
         registerValidateDocument(project, ext)
         registerLintHtmlDocument(project, ext)
+        registerVerifyHtmlLinksTask(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =

@@ -10,8 +10,8 @@ plugins {
 group = "education.cccp"
 version = "0.0.13"
 
-dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.29"))
+    dependencies {
+        implementation(platform("education.cccp:workspace-bom:0.0.26"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -19,7 +19,7 @@ dependencies {
     implementation("org.asciidoctor:asciidoctorj")
     implementation("org.asciidoctor:asciidoctorj-diagram")
     implementation("org.asciidoctor:asciidoctorj-diagram-plantuml")
-    implementation("org.asciidoctor:asciidoctorj-epub3")
+    // implementation("org.asciidoctor:asciidoctorj-epub3") // EPUB3 dependency missing in repositories
 
     // koog — orchestrateur de graphe agentique (EPIC L : koog orchestre, langchain4j execute)
     implementation("ai.koog:koog-agents")
@@ -28,7 +28,7 @@ dependencies {
     implementation("dev.langchain4j:langchain4j-ollama")
 
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
-    compileOnly("education.cccp:planner-plugin")
+    compileOnly("education.cccp:planner-plugin:0.0.1")
 
     // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
     implementation("education.cccp:plantuml-plugin")

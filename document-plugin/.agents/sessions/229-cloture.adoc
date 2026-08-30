@@ -1,0 +1,1 @@
+Session clotured. Changes have been made as per the prompt of reprise and backlog. The EPUB3 dependency issue remains unresolved due to missing artifact in repositories, but the wiring of lintHtmlDocument into bookPipeline is in place.
