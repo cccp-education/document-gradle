@@ -1,0 +1,109 @@
+= Cadrage EPIC DOC-VALIDATE-COMPOSITE — Validation composite du document (S-225)
+
+:borough: document-gradle (New Orleans 🟢)
+:epic: DOC-VALIDATE-COMPOSITE
+:session: 225
+:date: 2026-08-30
+:status: Cadrage (gouvernance pure, zéro code)
+
+== Contexte
+
+Les EPICs de garde de conversion (DOC-CR3-2 safeMode, DOC-CR4 include guard,
+DOC-CR5 security policy, DOC-XREF-VALIDATE xref) valident la *source* AsciiDoc
+**pendant** la conversion (`ConvertDocumentTask.convert()`). Une validation
+autonome existe pour les xrefs (`validateDocumentXref`) mais les trois gardes
+ne sont pas orchestrées ensemble en une seule passe pré-vol, et il n'existe pas
+de rapport consolidé unique.
+
+== Constats (audit)
+
+. `ConvertDocumentTask.convert()` exécute séquentiellement `DocumentIncludeGuard.check`
+   (CR4), `XrefValidator.validate` (CR-xref) et `DocumentSecurityPolicy.advise`
+   (CR5) — logique dupliquée en ligne, non réutilisable en dehors de la conversion.
+. `validateDocumentXref` (DOC-XREF-VALIDATE) fournit déjà un patron de tâche
+   autonome + rapport JSON ; les gardes include/security n'ont pas d'équivalent
+   standalone.
+. Les trois validateurs sont des objets DDD *purs* (aucun I/O, aucune dép Gradle) :
+   `IncludePathValidator`, `XrefValidator`, `DocumentSecurityPolicy` — donc
+   composables dans un orchestrateur pur unit-testable.
+. La sévérité est portée par les modes : `IncludeGuardMode` (STRICT/LENIENT/OFF),
+   `XrefValidationMode` (STRICT/LENIENT/OFF), `SafeMode` (UNSAFE/SERVER/SECURE)
+   combiné à `IncludeGuardMode` pour l'advice CR5.
+
+== Décisions architecturales
+
+. *Domaine* : nouveau package `document.validation` (parallèle à
+   `document.security` / `document.xref`), contenant l'orchestrateur pur
+   `DocumentValidator` + le rapport value-object `DocumentValidationReport`.
+. *Orchestrateur pur* : `DocumentValidator.validate(text, baseDir, includeGuardMode,
+   xrefMode, safeMode): DocumentValidationReport` — délègue aux 3 validateurs
+   existants, agrège leurs résultats en un seul rapport sérialisable JSON.
+   Aucun I/O, aucune dépendance Gradle, 100% unit-testable (Loi Économie d'Encre).
+. *Rapport consolidé* : `DocumentValidationReport(includeGuard, xref?, security)`
+   avec `toJson()` (Jackson, indenté, NON_NULL) — un seul fichier
+   `build/docs/document/document-validation-report.json`.
+. *Tâche* : `validateDocument` (groupe `document`) lit `source` + les knobs
+   `converter { includeGuard / xrefValidation / safeMode }` (+ mirror plat +
+   CLI `-Pdocument.*` déjà câblés pour `convertDocumentTo*`), écrit le rapport,
+   et applique la sévérité (fail-fast STRICT / warn LENIENT / skip OFF) :
+   - include guard INVALID + STRICT → `GradleException` (fail-fast)
+   - xref MISSING + STRICT → `GradleException` (fail-fast)
+   - security advice REJECT (STRICT include guard + UNSAFE) → `GradleException`
+   - LENIENT → `logger.warn`, build OK ; OFF → no-op.
+. *Zéro nouveau knob DSL/CLI* : les modes existants (`converter.includeGuard`,
+   `converter.xrefValidation`, `converter.safeMode`, et leurs mirrors plats
+   `includeGuard`/`xrefValidation`/`safeMode` + CLI `-Pdocument.*`) suffisent.
+. *Runner Cucumber dédié* : `documentValidationCucumberTest` (pattern S-082) avec
+   feature `@document-validation` + `DocumentValidationCucumberRunner` + steps
+   préfixés « document-validation » (bug S-088 : pas de collision de step).
+. *Non-régression* : les tâches `convertDocumentTo*` continuent d'appliquer les
+   gardes en ligne (aucune suppression) ; `validateDocument` est *additif*.
+
+== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,2"]
+|===
+| US | Description | Tests | Pts | Dépend de
+
+| DOC-VALIDATE-1
+| DDD `DocumentValidator` orchestrateur + `DocumentValidationReport` (value object
+  JSON). Compose `IncludePathValidator` + `XrefValidator` + `DocumentSecurityPolicy`.
+| UT : `DocumentValidatorTest` (VALID tout mode / include INVALID+STRICT / xref
+  MISSING+STRICT / xref OFF skip / security REJECT / security Valid)
+| 5
+| —
+
+| DOC-VALIDATE-2
+| Tâche `validateDocument` (groupe document) : lit source + knobs
+  (`converter`/`flat`/CLI), écrit `document-validation-report.json`, applique
+  sévérité (STRICT fail-fast / LENIENT warn / OFF skip). Câblage `DocumentPlugin`.
+| FT : `ValidateDocumentTaskFunctionalTest` (STRICT reject / LENIENT warn+report /
+  OFF skip / report JSON écrit)
+| 5
+| VALIDATE-1
+
+| DOC-VALIDATE-3
+| Cucumber BDD `@document-validation` (runner dédié + steps) : 4-5 scénarios
+  (valid, include-escapes-strict, xref-missing-strict, lenient-warn, off-skip).
+| BDD : 5 scénarios `@document-validation` PASSED
+| 5
+| VALIDATE-1, VALIDATE-2
+|===
+
+_Total_ : ~15 pts, 3 US.
+
+== Dépendances (DAG)
+
+----
+VALIDATE-1 (orchestrateur + rapport DDD) ─→ VALIDATE-2 (tâche + câblage) ─→ VALIDATE-3 (Cucumber)
+----
+
+== Projection sessions
+
+* *S225* — VALIDATE-1 + VALIDATE-2 + VALIDATE-3 (EPIC DOC-VALIDATE-COMPOSITE clos, 3/3 US)
+
+== Loi de l'Économie d'Encre
+
+Le rapport est une valeur pure sérialisable ; l'orchestrateur ne lit jamais un
+fichier (le texte lui est passé), la tâche seule fait l'I/O (lecture source +
+écriture rapport). Aucune ré-exécution coûteuse.

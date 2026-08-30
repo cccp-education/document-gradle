@@ -213,6 +213,7 @@ class DocumentPlugin : Plugin<Project> {
         registerTranslateDocumentBatch(project, ext)
         registerRetranslateFrontmatter(project, ext)
         registerValidateDocumentXref(project, ext)
+        registerValidateDocument(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -553,6 +554,18 @@ class DocumentPlugin : Plugin<Project> {
             task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
             task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
             task.reportFile.set(project.layout.buildDirectory.file("docs/document/xref-validation-report.json"))
+        }
+    }
+
+    private fun registerValidateDocument(project: Project, ext: DocumentExtension) {
+        project.tasks.register("validateDocument", ValidateDocumentTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Composite pre-flight validation (include guard + xref + security policy) of the AsciiDoc source, writes a consolidated JSON report. — DOC-VALIDATE-COMPOSITE"
+            task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+            task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
+            task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
+            task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json"))
         }
     }
 }

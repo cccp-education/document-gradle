@@ -1,53 +1,63 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 222
+:session: 226
 :date: 2026-08-30
-:status: Session 221 ✅ DOC-CR4 (Include Path Guard) ; Session 222 ✅ DOC-CR5 (Conversion Security Policy, cohérence SafeMode × IncludeGuard) — les deux EPICs CLÔTURÉS
+:status: Session 225 ✅ DOC-VALIDATE-COMPOSITE (validation composite pré-vol `validateDocument`) — EPIC CLÔTURÉ (3/3 US)
 :max-lines: 70
 
 == Quick Start
 
 ----
 cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0.2 exige JVM 25
+export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0.4 exige JVM 25
 ./gradlew compileKotlin
-./gradlew test --tests "document.security.*"                  # 24 UT (12 CR4 + 12 CR5)
-./gradlew functionalTest --tests "document.ConvertDocumentTaskSecurityPolicyFunctionalTest" --tests "document.ConvertDocumentTaskIncludeGuardFunctionalTest"
-./gradlew securityPolicyCucumberTest                         # runner dédié 3/3 PASSED (global bruite par infra, non bloquant)
+./gradlew test --tests "document.validation.*"                  # 8 UT (orchestrateur + rapport)
+./gradlew functionalTest --tests "document.ValidateDocumentTaskFunctionalTest"
+./gradlew documentValidationCucumberTest                        # runner dédié 5/5 PASSED
 ----
 
 == Contexte de fin
 
-Session 222 (DOC-CR5, défense en profondeur) :
-- DOC-CR5 ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — `DocumentSecurityPolicy.advise`
-  classe la combinaison `safeMode` (CR3-2) × `includeGuard` (CR4) :
-  UNSAFE+OFF=Valid, UNSAFE+LENIENT=Warn, UNSAFE+STRICT=Reject, SERVER/SECURE=Valid.
-  `ConvertDocumentTask.convert()` applique la sévérité via le mode `includeGuard`
-  (STRICT→GradleException fail-fast, LENIENT→warn, OFF→no-op). Zéro nouveau knob.
-- Tests : 12 UT `DocumentSecurityPolicyTest` + 3 FT `ConvertDocumentTaskSecurityPolicyFunctionalTest`
-  (STRICT reject / LENIENT warn / SERVER valid) + 3 scénarios Cucumber `@converter-security-policy`
-  (runner dédié `SecurityPolicyCucumberRunner`) TOUS GREEN.
-- Note infra : le moteur Cucumber *global* borough reste bruite (DuplicateStepDefinitionException
-  conventions plugin 0.0.2) — les runners *dédiés* sont GREEN. Préexistant, non bloquant.
+Session 225 (DOC-VALIDATE-COMPOSITE, validation composite) :
+- EPIC ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — nouvelle tâche `validateDocument`
+  orchestrant en une seule passe pré-vol les trois gardes de conversion :
+  * include-path guard (CR4, `document.security.IncludePathValidator`) ;
+  * cross-reference validation (CR-xref, `document.xref.XrefValidator`) ;
+  * security policy advice (CR5, `document.security.DocumentSecurityPolicy`).
+  Un rapport JSON consolidé `build/docs/document/document-validation-report.json`
+  agrège les trois résultats (`document.validation.DocumentValidationReport`).
+- DDD `document.validation` : `DocumentValidator.validate(text, baseDir, includeGuardMode,
+  xrefMode, safeMode)` objet pur (zéro I/O, zéro dép Gradle, 100% unit-testable) composant
+  les 3 validateurs existants. Sévérité mutualisée : STRICT fail-fast (GradleException après
+  écriture du rapport), LENIENT warn + build OK, OFF skip.
+- Zéro nouveau knob DSL/CLI : les modes `converter { includeGuard / xrefValidation /
+  safeMode }` (et leurs mirrors plats + CLI `-Pdocument.*`) suffisent ; la tâche lit
+  exactement les mêmes knobs que `convertDocumentTo*`. Additif : la conversion continue
+  d'appliquer ses gardes en ligne.
+- Tests : 8 UT `DocumentValidatorTest` + 4 FT `ValidateDocumentTaskFunctionalTest`
+  (STRICT reject+report / STRICT xref / LENIENT warn / OFF skip) + 5 scénarios Cucumber
+  `@document-validation` (runner dédié `DocumentValidationCucumberRunner` + `DocumentValidationSteps`
+  + tâche `documentValidationCucumberTest`) TOUS GREEN. 7 runners Cucumber dédiés GREEN.
 
 == EPICs — état
 
-- DOC-CR4 ✅ TERMINÉ (S-221, 4/4 US) — Include Path Guard.
-- DOC-CR5 ✅ TERMINÉ (S-222, 3/3 US) — Conversion Security Policy.
+- DOC-VALIDATE-COMPOSITE ✅ TERMINÉ (S-225, 3/3 US).
 - Tous les EPICs DOC-x livrés (DOC-0..DOC-15, DOC-TRANSLATE, DOC-TABLE/PLANTUML-VALIDATE,
-  DOC-BOOK-* , CROSS-DOC-BOOK, DOC-CR3/CR4/CR5). Restent : maintenance infra Cucumber
-  (conventions-gradle) ou nouvel EPIC produit.
+  DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE).
+  Restent : maintenance infra Cucumber (conventions-gradle) ou nouvel EPIC produit.
 
-== Reprendre à (session 223)
+== Reprendre à (session 226)
 
 . `git status` dans document-gradle
 . Choisir la prochaine action :
-   . Option A — correction infra Cucumber borough (DuplicateStepDefinitionException conventions
-     plugin 0.0.2, classpath doublon) — débloque `cucumberTest` global pour TOUTES les features.
-   . Option B — EPIC produit : DOC-TABLE / PLANTUML hardening, ou enrichissement avancé.
-   . Option C — dogfooding : publier un livre FPA via `bookPipeline` en mode SERVER.
+   . Option A — dogfooding : publier un livre FPA via `validateDocument`+`bookPipeline`
+     en mode SERVER (rapport consolidé + conversion navigable).
+   . Option B — EPIC produit : DOC-TABLE / PLANTUML hardening (edge cases nested tables,
+     multi-block plantuml), ou enrichissement avancé.
+   . Option C — consolidation : exposer `validateDocument` dans le pipeline N3 runner-gradle
+     (metadata.json signalant le statut de validation).
 . Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches dédiées),
   DDD/TDD/BDD (unit + functional + cucumber).
-. Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) — `conventions-plugin:0.0.2`
+. Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) — `conventions-plugin:0.0.4`
   exige JVM 25.
 
 == Note cross-borough

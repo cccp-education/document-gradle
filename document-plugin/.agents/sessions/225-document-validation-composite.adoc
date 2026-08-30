@@ -1,0 +1,57 @@
+= Session 225 — DOC-VALIDATE-COMPOSITE (Validation composite pré-vol)
+
+:borough: document-gradle (New Orleans 🟢)
+:epic: DOC-VALIDATE-COMPOSITE
+:date: 2026-08-30
+:type: feat + TDD/BDD
+:score: 10/10
+
+== Objectif
+
+Composer les trois gardes de conversion (include guard CR4, xref CR-xref, security policy
+CR5) en une seule passe pré-vol `validateDocument` produisant un rapport JSON consolidé,
+sans dupliquer la logique en ligne de `ConvertDocumentTask`.
+
+== Méthodologie (baby-step DDD/TDD/BDD strict)
+
+- *US-0 Cadrage* : `CADRAGE_EPIC_DOC_VALIDATE_COMPOSITE.adoc` (gouvernance pure, zéro code) —
+  audit 4 constats, 9 décisions archi, 3 US ~15 pts, pattern S-057/S-063.
+- *US-1 DDD* : RED (`DocumentValidatorTest` référence `DocumentValidator`/`DocumentValidationReport`
+  inexistants → compile fail) → GREEN (`DocumentValidator` orchestrateur pur + rapport sérialisable)
+  → REFACTOR (compileKotlin VERT, 8 UT).
+- *US-2 Tâche* : RED (`ValidateDocumentTaskFunctionalTest` référence `ValidateDocumentTask` inexistante)
+  → GREEN (`ValidateDocumentTask` + `registerValidateDocument` dans `DocumentPlugin`) → REFACTOR
+  (4 FT GREEN, fail-fast STRICT / warn LENIENT / skip OFF).
+- *US-3 Cucumber* : runner dédié `@document-validation` (pattern S-082) + steps préfixés
+  « document-validation » (anti-glue S-223) + `CucumberTaskSpec` → 5/5 BDD GREEN.
+
+== Livrables
+
+- `document/validation/DocumentValidator.kt` — NOUVEAU (orchestrateur + rapport + entry value objects).
+- `DocumentValidatorTest.kt` — 8 UT GREEN.
+- `ValidateDocumentTask.kt` — NOUVEAU (tâche `validateDocument`).
+- `ValidateDocumentTaskFunctionalTest.kt` — 4 FT GREEN.
+- `document_validation.feature` + `DocumentValidationCucumberRunner.kt` + `DocumentValidationSteps.kt`
+  + `documentValidationCucumberTest` — 5/5 BDD GREEN.
+- `DocumentPlugin.kt` — `registerValidateDocument` (lit `converter.includeGuard`/`xrefValidation`/`safeMode`).
+- `CADRAGE_EPIC_DOC_VALIDATE_COMPOSITE.adoc` — gouvernance.
+
+== Tests (tous GREEN)
+
+- 8 UT `document.validation.*`
+- 4 FT `ValidateDocumentTaskFunctionalTest`
+- 5 BDD `@document-validation` (7e runner Cucumber dédié)
+- `compileKotlin` VERT ; 7 runners Cucumber dédiés GREEN.
+
+== Non-régression
+
+- Aucun validateur existant modifié (`DocumentValidator` compose en lecture seule).
+- `ConvertDocumentTask` inchangé ; `validateDocument` additif (zéro nouveau knob DSL/CLI).
+- Seuls échecs `:test` : `DocumentConverterTest.convertToPdf/Epub` + `FpaBookArtifactGenerationTest`
+  sur gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3` absents — préexistant S-213/S-215/S-224,
+  indépendant de cet EPIC.
+
+== Prochaine session (226)
+
+Dogfooding livre FPA SERVER (rapport consolidé + conversion navigable), ou DOC-TABLE/PLANTUML
+hardening, ou consolidation N3 (metadata.json signalant le statut de validation).

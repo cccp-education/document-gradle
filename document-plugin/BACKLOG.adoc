@@ -1177,6 +1177,86 @@ sont tous GREEN ; les 6 runners Cucumber dédiés (xref + existants) sont GREEN.
 
 '''
 
+== ✅ EPIC DOC-VALIDATE-COMPOSITE — Validation composite pré-vol (TERMINÉ, Session 225)
+
+__source_ : suite directe de DOC-CR4 (includeGuard) + DOC-XREF-VALIDATE (xref) + DOC-CR5 (security policy).
+_focus_ : orchestrer les trois gardes de conversion en une seule passe pré-vol `validateDocument`
+produisant un rapport JSON consolidé, sans dupliquer la logique en ligne de `ConvertDocumentTask`.
+_statut_ : DOC-VALIDATE-1 ✅ TERMINÉ (S-225, TDD 8 UT), DOC-VALIDATE-2 ✅ TERMINÉ (S-225, 4 FT),
+DOC-VALIDATE-3 ✅ TERMINÉ (S-225, 5 scénarios Cucumber `@document-validation`).
+
+[CAUTION]
+====
+**Motivation** : DOC-CR4, DOC-XREF-VALIDATE et DOC-CR5 valident la *source* AsciiDoc
+**pendant** la conversion (`ConvertDocumentTask.convert()`). Une validation autonome existe
+pour les xrefs (`validateDocumentXref`) mais les trois gardes ne sont pas orchestrées ensemble
+en une passe pré-vol, et il n'existe pas de rapport consolidé unique. Un auteur d'AsciiDoc
+non fiable (OCR/LLM) doit pouvoir auditer include + xref + cohérence sécurité en une commande.
+
+**Règle** : `DocumentValidator.validate(text, baseDir, includeGuardMode, xrefMode, safeMode)`
+objet DDD pur (zéro I/O, zéro dép Gradle) composant `IncludePathValidator` + `XrefValidator` +
+`DocumentSecurityPolicy` → `DocumentValidationReport` sérialisable (`toJson()` Jackson indenté) :
+- `includeGuard` : `OFF` (mode OFF, non audité) / `VALID` / `INVALID` (reason + target + line).
+- `xref` : `null` (mode OFF) / `VALID` / `MISSING` (liste des ids).
+- `security` : `VALID` / `WARN` (LENIENT + UNSAFE) / `REJECT` (STRICT + UNSAFE).
+
+Sévérité mutualisée (même contrat que la conversion) :
+. STRICT (include INVALID / xref MISSING / security REJECT) → `GradleException` fail-fast après
+  écriture du rapport.
+. LENIENT → `logger.warn`, build OK.
+. OFF → no-op (rapport VALID émis).
+
+**Bénéfices** :
+. Audit unique : include + xref + sécurité en une tâche `validateDocument`.
+. Rapport consolidé `build/docs/document/document-validation-report.json` (un seul fichier).
+. DDD pur, testable sans Gradle ni réseau ; réutilise les validateurs existants (zéro duplication).
+. Zéro nouveau knob : lit `converter { includeGuard / xrefValidation / safeMode }` (+ mirror plat + CLI `-Pdocument.*`).
+====
+
+=== User Stories — baby steps DDD/TDD/BDD
+
+[cols="1,4,2,2,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-VALIDATE-1
+| `DocumentValidator` orchestrateur pur + `DocumentValidationReport` (value object JSON) composant `IncludePathValidator` + `XrefValidator` + `DocumentSecurityPolicy`. `includeGuard` OFF/VALID/INVALID, `xref` null/VALID/MISSING, `security` VALID/WARN/REJECT.
+| 8 UT
+| 5
+| ✅ TERMINÉ (S-225)
+
+| DOC-VALIDATE-2
+| Tâche `validateDocument` (groupe `document`) : lit `source` + knobs `converter`/`flat`/CLI, écrit `document-validation-report.json`, applique sévérité (STRICT fail-fast / LENIENT warn / OFF skip). Câblage `DocumentPlugin.registerValidateDocument`.
+| 4 FT
+| 5
+| ✅ TERMINÉ (S-225)
+
+| DOC-VALIDATE-3
+| Cucumber BDD `@document-validation` (OFF skip / LENIENT warn / STRICT include reject / STRICT xref missing / VALID partout) + runner `DocumentValidationCucumberRunner` + steps `DocumentValidationSteps` + tâche `documentValidationCucumberTest`.
+| 5 BDD
+| 5
+| ✅ TERMINÉ (S-225)
+
+|===
+
+=== Livrables S-225
+
+- `document/validation/DocumentValidator.kt` — NOUVEAU (orchestrateur pur + `DocumentValidationReport` + entry value objects).
+- `DocumentValidatorTest.kt` (8 UT) — GREEN.
+- `ValidateDocumentTask.kt` — NOUVEAU (tâche `validateDocument`, sévérité mutualisée).
+- `ValidateDocumentTaskFunctionalTest.kt` (4 FT) — GREEN.
+- `document_validation.feature` + `DocumentValidationCucumberRunner.kt` + `DocumentValidationSteps.kt` + tâche `documentValidationCucumberTest` — 5/5 BDD GREEN.
+- `DocumentPlugin.kt` — câblage `registerValidateDocument` (lit `converter.includeGuard`/`xrefValidation`/`safeMode` + mirror plat + CLI).
+
+=== Note environnement (préexistant, hors DOC-VALIDATE-COMPOSITE)
+
+`DocumentConverterTest.convertToPdf` / `convertToEpub` et `FpaBookArtifactGenerationTest` échouent
+sur `LoadError asciidoctor-pdf` / `asciidoctor-epub3` (gems Ruby absents de l'environnement) —
+préexistant (noté S-213/S-215/S-224), indépendant de cet EPIC. Les tests du composite
+(8 UT + 4 FT + 5 BDD) sont tous GREEN ; les 7 runners Cucumber dédiés sont GREEN.
+
+'''
+
 == ✅ EPIC CROSS-DOC-BOOK — BDD cross-borough Codex→Document Book Pipeline (TERMINÉ, Session 210)
 
 _Source_ : cadrage S-210 (`CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`).

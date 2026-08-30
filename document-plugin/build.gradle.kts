@@ -138,6 +138,12 @@ cucumberConventions {
             tags = listOf("@xref-validation"),
             runnerClass = "document.xrefvalidation.XrefValidationCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "documentValidationCucumberTest",
+            features = listOf("src/test/resources/features/document_validation.feature"),
+            tags = listOf("@document-validation"),
+            runnerClass = "document.validation.DocumentValidationCucumberRunner",
+        ),
     )
 }
 

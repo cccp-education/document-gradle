@@ -33,6 +33,36 @@ tâche dédiée `validateDocumentXref` (rapport JSON), Cucumber `@xref-validatio
 
 *Pyramide S224* :
 
+== Session 225 — DOC-VALIDATE-COMPOSITE : validation composite pré-vol (`validateDocument`)
+
+*Objectif* : orchestrer include guard (CR4) + xref (CR-xref) + security policy (CR5) en une
+passe pré-vol unique avec rapport JSON consolidé. DDD pur `document.validation` composant les
+3 validateurs existants (zéro duplication), tâche `validateDocument` + Cucumber `@document-validation`.
+
+*Tests ajoutés S225* :
+- `document/validation/DocumentValidator.kt` — NOUVEAU (orchestrateur pur + `DocumentValidationReport` + entry value objects `IncludeGuardReportEntry`/`XrefReportEntry`/`SecurityReportEntry`, `toJson()` Jackson indenté).
+- `DocumentValidatorTest.kt` — 8 UT TDD strict (VALID tout mode / include INVALID+STRICT / include INVALID+LENIENT / xref MISSING+STRICT / xref OFF skip / security REJECT / security VALID SERVER / rapport JSON non-vide).
+- `ValidateDocumentTask.kt` — NOUVEAU (tâche `validateDocument`, groupe `document`, lit `converter`/`flat`/CLI, écrit `document-validation-report.json`, sévérité STRICT fail-fast / LENIENT warn / OFF skip).
+- `ValidateDocumentTaskFunctionalTest.kt` — 4 FT GradleTestKit (STRICT include escape fail+report, STRICT xref missing fail, LENIENT warn+report, OFF skip VALID report).
+- `document_validation.feature` — 5 scénarios Cucumber `@document-validation` (VALID partout / STRICT include reject / STRICT xref missing / LENIENT warn / OFF skip).
+- `DocumentValidationCucumberRunner.kt` / `DocumentValidationSteps.kt` — NOUVEAU (package `document.validation`, préfixe « document-validation »).
+- Enregistrement `documentValidationCucumberTest` dans `build.gradle.kts`.
+- `DocumentPlugin.registerValidateDocument` — câblage (lit `converter.includeGuard`/`xrefValidation`/`safeMode` + mirror plat + CLI `-Pdocument.*`).
+
+*Couverture* :
+- Unit : 8/8 PASSED (`DocumentValidatorTest`).
+- Fonctionnel : 4/4 PASSED (`ValidateDocumentTaskFunctionalTest`).
+- Cucumber dédié : 5/5 PASSED (`documentValidationCucumberTest`).
+- `compileKotlin` VERT. 7 runners Cucumber dédiés GREEN (xref + includeGuard + securityPolicy + converterSafeMode + bookTree + bookValidation + documentValidation).
+
+*Non-régression* :
+- Aucun validateur existant modifié : `DocumentValidator` compose `IncludePathValidator` / `XrefValidator` / `DocumentSecurityPolicy` en lecture seule.
+- `ConvertDocumentTask` inchangé : ses gardes en ligne restent applicables ; `validateDocument` est additif.
+- Seuls échecs `:test` : `DocumentConverterTest.convertToPdf/Epub` + `FpaBookArtifactGenerationTest` sur gems Ruby absents — préexistant S-213/S-215/S-224, hors périmètre composite, aucune régression liée.
+
+*Pyramide S225* :
+
+
 [cols="2,1,1,3"]
 |===
 | Couche | Tests | Status | Fichier
