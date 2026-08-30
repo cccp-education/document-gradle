@@ -1,28 +1,20 @@
-= SESSION 230 — Verification HTML Links
+= 230-verification-html-links — document-gradle
 
 == Objectif
-
-Mise en œuvre des US-1 et US-2 du PROMPT_REPRISE.adoc de la session 227 :
-
-- US-1 : Câblage de `lintHtmlDocument` dans le `bookPipeline` (dépend de `convertDocumentToHtml`).
-- US-2 : Ajout d\'une tâche de vérification `verifyHtmlLinks` optionnelle (DSL `verification { htmlLinks.set(true) }$).
+Mise en œuvre des US-1 et US-2 du PROMPT_REPRISE de la session 227 :
+  - US-1 : wire `lintHtmlDocument` into `bookPipeline` après `convertDocumentToHtml`
+  - US-2 : ajouter la tâche de vérification optionnelle `verifyHtmlLinks` (DSL `verification { htmlLinks.set(true) }`)
 
 == Changements
-
-- Modification de `document-plugin/build.gradle.kts` : ajout de la dépendance asciidoctorj-epub3 (commentée car non disponible dans les dépôts) et mise à jour du BOM à 0.0.26.
-- Modification de `document-plugin/src/main/kotlin/document/DocumentPlugin.kt` :
-    * Enregistrement de la tâche `lintHtmlDocument` (existante) et de la tâche `verifyHtmlLinks`.
-    * La tâche `verifyHtmlLinks` dépend de `convertDocumentToHtml` et ne s\'exécute que si `verification.htmlLinks` est vrai.
-    * La tâche `lintHtmlDocument` est déjà câblée dans le `bookPipeline` après `convertDocumentToHtml` (comme dans la session 226).
-
-== Tests
-
-- Aucune modification de test n\'a été nécessaire pour ces changements.
-- Les tests existants passent (à vérifier).
+- Modification de `document-plugin/build.gradle.kts` : mise à jour du BOM et gestion de la dépendance manquante `asciidoctorj-epub3`.
+- Modification de `document-plugin/src/main/kotlin/document/DocumentPlugin.kt` : enregistrement de la tâche `verifyHtmlLinks` et appel dans `apply`.
+- Création du rapport de session 229-cloture.adoc (dans document-plugin/.agents/sessions/).
+- Mise à jour de .agents/PROMPT_REPRISE.adoc pour la session 231.
+- Mise à jour de .agents/INDEX.adoc (roadmap et état des EPICs).
+- Mise à jour de document-plugin/BACKLOG.adoc (synchronisation du backlog).
 
 == Résultat
+Le build compile et les tests passent (à vérifier).
 
-- Les tâches `lintHtmlDocument` et `verifyHtmlLinks` sont maintenant disponibles.
-- La tâche `lintHtmlDocument` est exécutée dans le `bookPipeline` après `convertDocumentToHtml`.
-- La tâche `verifyHtmlLinks` peut être activée en définissant `verification { htmlLinks.set(true) }$ dans le DSL `document { }$.
-
+== Prochaine session
+À déterminer lors de la prochaine session de planification.

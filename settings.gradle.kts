@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "document-gradle"
+include(":document-plugin")

@@ -1,5 +1,5 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 227
+:session: 231
 :date: 2026-08-30
 :max-lines: 70
 
@@ -14,10 +14,13 @@ export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0
 
 == Contexte de fin
 
-Session 226 (DOC-HTML-LINT, lint navigabilité HTML rendu) :
-- EPIC ✅ TERMINÉ (baby-step DDD/TDD/BDD strict) — nouvelle tâche `lintHtmlDocument` DDD (`HtmlLinkLintMode`/`HtmlLinkLintResult`/`HtmlLinkLintReport`) détecte `href="#id"` morts + TOC `id="toc"` dans le HTML rendu, symétrique à DOC-XREF-VALIDATE sur la source.
-- FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + Cucumber `@html-link-lint` (runner dédié `HtmlLinkLintCucumberRunner` + `HtmlLinkLintSteps` + tâche `htmlLinkLintCucumberTest`) TOUS GREEN.
-- 8e runner Cucumber dédié.
+Session 230: Mise en œuvre des US-1 et US-2 du PROMPT_REPRISE de la session 227 :
+  - US-1 : wire `lintHtmlDocument` into `bookPipeline` après `convertDocumentToHtml`
+  - US-2 : ajouter la tâche de vérification optionnelle `verifyHtmlLinks` (DSL `verification { htmlLinks.set(true) }`)
+- Mise à jour des dépendances (BOM, suppression de l'dependency manquante asciidoctorj-epub3).
+- Création des rapports de session 229-cloture.adoc et 230-verification-html-links.adoc.
+- Mise à jour de .agents/INDEX.adoc et .agents/SESSIONS_HISTORY.adoc.
+- Synchronisation du backlog (BACKLOG.adoc).
 
 == EPICs — état
 
@@ -26,7 +29,7 @@ Session 226 (DOC-HTML-LINT, lint navigabilité HTML rendu) :
   DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT).
 - Restent : maintenance infra Cucumber (conventions-gradle) ou nouvel EPIC produit.
 
-== Reprendre à (session 227)
+== Reprendre à (session 231)
 
 . `git status` dans document-gradle
 . Choisir la prochaine action :

@@ -56,6 +56,7 @@ import org.gradle.api.provider.Property
 class DocumentPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
+        println("APPLYING DOCUMENT PLUGIN")
         val ext = project.extensions.create("document", DocumentExtension::class.java)
 
         // Verification DSL - will be initialized in initNested
@@ -684,16 +685,18 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-     private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
-         project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
-             task.group = "document"
-             task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
-             // The HTML file to lint is the output of convertDocumentToHtml
-             task.htmlFile.set(project.layout.buildDirectory.file("docs/document/document.html"))
-              // The linting mode is taken from the converter block (htmlLinkLint)
-              task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
-         }
-     }
+    private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
+        println("REGISTERING lintHtmlDocument TASK")
+        project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
+            task.dependsOn("convertDocumentToHtml")
+            val htmlTask = project.tasks.named("convertDocumentToHtml", ConvertDocumentTask::class.java)
+            task.htmlFile.set(htmlTask.get().outputFile)
+            // The linting mode is taken from the converter block (htmlLinkLint)
+            task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
+        }
+    }
 
     private fun registerVerifyHtmlLinksTask(project: Project, ext: DocumentExtension) {
         project.tasks.register("verifyHtmlLinks") { task ->
@@ -705,8 +708,10 @@ class DocumentPlugin : Plugin<Project> {
                 if (!ext.verification.htmlLinks.get()) {
                     return@doLast
                 }
-                val htmlFile = project.layout.buildDirectory.file("docs/document/document.html")
-                val html = htmlFile.get().getAsFile().readText()
+                // Get the HTML file from the convertDocumentToHtml task
+                val htmlTask = project.tasks.named("convertDocumentToHtml", ConvertDocumentTask::class.java)
+                val htmlFile = htmlTask.get().outputFile.get().getAsFile()
+                val html = htmlFile.readText()
                 val result = HtmlLinkLinter.validate(html)
                 when (result) {
                     is HtmlLinkLintResult.Valid -> {
