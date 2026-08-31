@@ -1,51 +1,49 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 241
+== Mission session 242
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-240 a fermé le
-dernier gap fonctionnel : *EPIC DOC-EPUBCHECK ✅ TERMINÉ 3/3 US* — le critère
-epubcheck US-DOC-04 (backlogged depuis S-005) est couvert. Le plugin est
-servable avec ses 5 gardes. Prochaines options classées :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-241 a exécuté
+l'Option 2 (doc consommateur README) + le dogfooding EPUB :
+
+- *Dogfooding 5e garde ✅* : le VRAI `livre-navigable/book.epub` FPA (464 KB)
+  passe W3C epubcheck via `LibEpubCheckAdapter` — prouvé par
+  `EpubCheckFpaFunctionalTest` 2/2 (audit read-only + preuve négative zip sans
+  `mimetype` → Invalid). Le produit « livre FPA SERVER » estEPUB-valide.
+- *README.md créé* : doc consommateur avec les 5 imports DSL requis
+  (constat S-239 : sans imports, le script consommateur ne compile pas) +
+  quick start + table des tâches + précédence CLI > DSL > convention.
+
+Prochaines options classées :
 
 - *Option 1 (recommandée si publication) — Publication 0.0.15 Maven Central* :
   contenu cumulé = 5e garde EPUB (`validateDocumentEpub`, domaine
   `document.epub`, knob `converter { epubCheck }` + CLI
   `-Pdocument.epubCheck`, rapport `epub-validation-report.json`, dep tierce
-  `org.w3c:epubcheck:5.2.1`). Accord pilote requis (Règle 2). Version
-  hardcodée 0.0.14 actuelle — bump 1 ligne. Audit nmcp déjà vert S-237.
-- *Option 2 — Doc consommateur* : ajouter au README plugin la liste des
-  imports DSL requis (`document.epub.EpubValidationMode`,
-  `document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
-  `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`) —
-  constat S-239 : sans imports, le script consommateur ne compile pas.
-  Inclure maintenant `EpubValidationMode` (5e garde S-240).
-- *Dogfooding FPA* : auditer l'EPUB réel du livre avec la 5e garde —
-  `livre-navigable/book.epub` existe (S-217/218) ; `validateDocumentEpub`
-  lisible directement (Rule 7 read-only, économie d'encre : ne pas
-  régénérer, audit seulement).
+  `org.w3c:epubcheck:5.2.1`) + FT dogfooding epub + README consommateur.
+  Accord pilote requis (Règle 2). Version hardcodée 0.0.14 actuelle — bump
+  1 ligne. Audit nmcp déjà vert S-237.
+- *Dogfooding PDF FPA* : la garde couvre l'EPUB ; le PDF du livre n'a pas
+  d'équivalent epubcheck (pas de garde PDF — extension possible mais pas de
+  besoin réel remonté).
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
   jusqu'à besoin N3 réel (décision 4 cadrage S-240 — le composite audite du
   texte, l'epubcheck coûte des secondes sur un binaire).
 
-== État du code (S-240)
+== État du code (S-241)
 
 - *0.0.14 PUBLIÉE* Maven Central ET Plugin Portal (S-237/239). 0.0.15 NON
-  publiée (contenu DOC-EPUBCHECK en attente d'accord).
-- *EPIC DOC-EPUBCHECK ✅ 3/3 US* : domaine `document.epub` (5 fichiers :
-  Mode/Result/port `EpubCheckRunner`/adapter `LibEpubCheckAdapter`/report) +
-  UT 17/17 + tâche `validateDocumentEpub` (+FT 4/4) + feature
-  `epub_check.feature` 4/4 (runner 17e `epubCheckCucumberTest`).
-- *Bug réel fixé* : epubcheck appelle `info(null, ...)` — paramètre Kotlin
-  `feature` rendu nullable dans le `CollectingReport`.
-- *Piège confirmé S-240* : `@InputFile` valide l'existence avant l'action —
-  la garde porte `epubFile` en `@Input @Optional Property<String>` (miroir
-  `htmlFilePath` S-232).
-- Baselines : UT epub 17/0, FT epub 4/4, `epubCheckCucumberTest` 4/4,
-  `DocumentPluginFunctionalTest` VERT, `validatePlugins` VERT.
-- Baselines globales (S-238/239, hors EPUB) : FT 122/122, UT 3037/0,
-  `cucumberTest` 2320/0.
+  publiée (contenu DOC-EPUBCHECK + README en attente d'accord).
+- *EPIC DOC-EPUBCHECK ✅ 3/3 US* + dogfooding : FT `EpubCheckFpaFunctionalTest`
+  2/2 (audit `book.epub` réel + preuve négative structurelle — corruption zip
+  sans `mimetype` détectée ; le flip d'octet naïf est TOLÉRÉ par epubcheck,
+  ne pas s'en servir comme preuve négative).
+- *README.md* : quick start + 5 imports DSL + exemple 5 gardes + table
+  tâches.
+- Baselines : UT 3039/0 (3037 + 2 dogfooding epub), FT 126/126, 17 runners
+  Cucumber dédiés VERTS (`epubCheckCucumberTest` 4/4), `validatePlugins`
+  VERT, `cucumberTest` global 2320/0 (S-238).
 
-== Pièges Gradle à retenir (S-232..S-240)
+== Pièges Gradle à retenir (S-232..S-241)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -60,11 +58,15 @@ servable avec ses 5 gardes. Prochaines options classées :
    / `epubFile`).
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
    annotation du runner (`FEATURES_PROPERTY_NAME`).
-8. *Imports DSL consommateur* (S-239) : les enums des gardes ne sont pas
-   résolus implicitement — importer explicitement côté `build.gradle.kts`
-   tiers. Désormais : 5 enums (`EpubValidationMode` ajouté S-240).
-9. *epubcheck callbask Java → null* : `info(feature, ...)` reçoit null —
+8. *Imports DSL consommateur* (S-239, documenté S-241) : les enums des
+   gardes ne sont pas résolus implicitement — importer explicitement côté
+   `build.gradle.kts` tiers. Liste dans README.md.
+9. *epubcheck callback Java → null* : `info(feature, ...)` reçoit null —
    signature nullable obligatoire côté Kotlin (NPE sinon).
+10. *Preuve négative epubcheck* (S-241) : le flip d'octet naïf est TOLÉRÉ
+   (zip toujours lisible) — corrompre la STRUCTURE (supprimer lentrée
+   `mimetype` non compressée, première entrée OCF obligatoire) pour
+   déclencher `Invalid`.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -85,7 +87,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (S-240 : accord de commit/push
+- Zéro secret, zéro commit/push sans accord (S-241 : accord de commit/push
   accordé en fin de session — exécuté).
 - `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary
   Codex READ / Document WRITE+PUBLISH).
@@ -97,14 +99,13 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT.
 4. Central + Plugin Portal : `document-plugin` `<latest>` = 0.0.14.
-5. Baseline : UT epub 17/17, `epubCheckCucumberTest` 4/4, FT epub 4/4.
+5. Baseline : UT 3039/0, `epubCheckCucumberTest` 4/4, FT 126/126.
 
 == Vision « livre FPA SERVER »
 
-Verrous levés S-233..S-240 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-241 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central, et désormais *5 gardes documentaires*
-(includeGuard / xref / security / htmlLint sur texte+HTML, epubcheck sur
-l'artefact EPUB). Le produit est servable et auditable de bout en bout.
-Reste : publication 0.0.15 (accord pilote), doc consommateur (5 imports
-DSL), dogfooding EPUB FPA (audit sans régénération).
+externe prouvée depuis Central, 5 gardes documentaires, et désormais *EPUB
+FPA prouvé valide* (epubcheck W3C sur l'artefact réel) + *README
+consommateur* (5 imports DSL documentés). Le produit est servable, auditable
+et documenté de bout en bout. Reste : publication 0.0.15 (accord pilote).

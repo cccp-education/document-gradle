@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 239 — **Hygiene + consommation externe 0.0.14 PROUVÉE** — 20 fichiers `.bak`/`*.backup*` purgés (historisés git) ; projet tiers Gradle 9.7/JDK 25 consomme `education.cccp.document:0.0.14` depuis Central : 4 gardes composite VALID + knob `-Pdocument.outputFileName=gone-custom` vivant de bout en bout (conversion → gardes → collect, artefact custom indexé composite-context.json, validationStatus=PASS) + preuve négative include traversal STRICT → BUILD FAILED ; Option E CADUQUE. Zéro code prod modifié — baseline S-238 inchangée)
+_Date revision_ : 2026-08-31 (session 241 — **Dogfooding EPUB FPA réel + doc consommateur README** — FT `EpubCheckFpaFunctionalTest` 2/2 : le VRAI `livre-navigable/book.epub` FPA passe W3C epubcheck (audit read-only via `LibEpubCheckAdapter`, zéro régénération) + preuve négative structurelle (zip sans `mimetype` OCF → Invalid ; piège : flip d'octet naïf TOLÉRÉ par epubcheck). README.md consommateur créé — les 5 imports DSL requis documentés (constat S-239). Zéro code prod modifié — UT 3039/0, FT 126/126. Publication 0.0.15 restée en attente d'accord pilote)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1849,4 +1849,17 @@ _Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`)._
 - Gates : `compileKotlin` VERT, `validatePlugins` VERT,
   `DocumentPluginFunctionalTest` VERT, secrets RAS. Zéro bump BOM.
 - Suite : publication 0.0.15 (accord pilote) pour distribuer la garde.
+
+*Suivi S-241 (dogfooding + doc)* :
+- FT dogfooding `EpubCheckFpaFunctionalTest` 2/2 — le VRAI
+  `livre-navigable/book.epub` FPA (464 KB) passe W3C epubcheck via
+  `LibEpubCheckAdapter` (audit read-only Rule 7, zéro régénération JRuby) ;
+  preuve négative structurelle : zip COPY sans entrée `mimetype` OCF →
+  `Invalid`. Piège TDD : le flip d'octet naïf au milieu de l'archive est
+  TOLÉRÉ par epubcheck (zip lisible → Valid) — corrompre la STRUCTURE.
+- README.md consommateur créé à la racine du plugin : quick start,
+  les 5 imports DSL requis (constat S-239 : sans imports le script
+  consommateur ne compile pas), exemple 5 gardes, table des tâches,
+  précédence CLI > DSL > convention.
+- Publication 0.0.15 : contenu cumulé = 5e garde + FT dogfooding + README.
 ====

@@ -2,6 +2,23 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 241 (2026-08-31) — Dogfooding EPUB FPA réel + doc consommateur README
+
+*Type* : dogfooding + docs (baby-step TDD, zéro code prod)
+*Score* : 10/10
+
+*Résumé* :
+- FT dogfooding `EpubCheckFpaFunctionalTest` 2/2 (pattern S-226) : le VRAI
+  `book.epub` FPA (464 KB) passe W3C epubcheck → produit « livre FPA
+  SERVER » EPUB-valide ; preuve négative structurelle (zip sans `mimetype`
+  OCF → Invalid). Piège : flip d'octet naïf TOLÉRÉ par epubcheck.
+- README.md consommateur créé : quick start + les 5 imports DSL requis +
+  exemple 5 gardes + table des tâches + précédence.
+- Gates : compileKotlin VERT, FT 126/126, validatePlugins VERT,
+  epubCheckCucumberTest VERT, secrets RAS. UT 3037 → 3039/0.
+- Publication 0.0.15 (5e garde + README) : restée en attente d'accord
+  pilote (Règle 2).
+
 === Session 240 (2026-08-31) — EPIC DOC-EPUBCHECK ✅ TERMINÉ (5e garde : validation epubcheck)
 
 *Type* : feat + TDD/BDD (cadrage + 3 US)

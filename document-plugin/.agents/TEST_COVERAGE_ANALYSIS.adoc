@@ -1,6 +1,31 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 240
+:session: 241
+
+== Session 241 — Dogfooding EPUB FPA + README consommateur
+
+*Objectif* : prouver la 5e garde sur l'artefact réel (dogfooding) et
+documenter les imports DSL côté consommateur (constat S-239).
+
+*Nouveaux tests (+2)* :
+- FT dogfooding `EpubCheckFpaFunctionalTest` (suite `test`, miroir du
+  placement `HtmlLinkLintFunctionalTest` S-226) :
+  . `real FPA book epub passes epubcheck` — lit le VRAI
+    `office/metiers/FPA/.../livre-navigable/book.epub` (464 KB) en
+    read-only (Rule 7, zéro régénération JRuby) et assert `Valid` via
+    `LibEpubCheckAdapter` (même port que la tâche `validateDocumentEpub`).
+  . `altered FPA book epub copy is reported Invalid - negative proof` —
+    rebuild zip SANS l'entrée `mimetype` (obligatoire, première entrée non
+    compressée OCF) sur une COPY temporaire → assert `Invalid` avec issues.
+    Self-skips (`assumeTrue`) hors machine de dev.
+- *Piège TDD retenu* : le flip d'octet naïf au milieu de l'archive est
+  TOLÉRÉ par epubcheck (le zip reste lisible → `Valid`) — une preuve
+  négative epubcheck doit corrompre la STRUCTURE (suppression `mimetype`).
+
+*Baseline* : UT 3037 → 3039/0 (+2 dogfooding), FT 126/126 (122 S-238 + 4 FT
+epub S-240), 17 runners Cucumber dédiés VERTS, `validatePlugins` VERT.
+
+_Zéro code prod modifié — pure test + documentation (README.md)._
 
 == Session 240 — DOC-EPUBCHECK : 5e garde (validation epubcheck de l'EPUB)
 

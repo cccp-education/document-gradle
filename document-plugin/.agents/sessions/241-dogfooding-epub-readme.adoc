@@ -1,0 +1,81 @@
+= Session 241 — Dogfooding EPUB FPA + doc consommateur README
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans (document-gradle) — DORMANT (maintenance + dogfooding)
+_Portée_ : dogfooding 5e garde sur EPUB réel + doc consommateur (README)
+_Méthode_ : baby-step TDD (RED → GREEN → REFACTOR), zéro bump de version
+
+== Mission (PROMPT_REPRISE 240)
+
+Options S-241 classées : Option 1 publication 0.0.15 (accord pilote requis —
+non exécutée), Option 2 doc consommateur (5 imports DSL), dogfooding EPUB FPA
+(read-only). La session exécute l'Option 2 + le dogfooding. La publication
+reste en attente d'accord.
+
+== Livraison 1 — Dogfooding 5e garde sur l'EPUB FPA réel
+
+*FT dogfooding `EpubCheckFpaFunctionalTest` (2 tests, pattern
+[HtmlLinkLintFunctionalTest] S-226)* :
+
+- Test 1 `real FPA book epub passes epubcheck` : audite le VRAI artefact
+  `office/metiers/FPA/.../livre-navigable/book.epub` (464 KB, mtime
+  2026-08-31) via `LibEpubCheckAdapter` — le même port que la tâche
+  `validateDocumentEpub`. Read-only Rule 7 : lecture seule, JAMAIS de
+  régénération JRuby (économie d'encre).
+- Test 2 (preuve négative) : reconstruit une COPY temporaire du zip SANS
+  l'entrée obligatoire `mimetype` (non compressée, première entrée OCF) →
+  `Invalid` avec liste d'issues. La source n'est jamais altérée.
+
+*Baby-step TDD strict* :
+- RED : première version de la preuve négative par flip d'octet naïf —
+  epubcheck la tolère (le zip reste lisible) → `Valid` inattendu → 1 failure.
+- Fix (REFACTOR test) : corruption *structurelle* réelle (suppression
+  `mimetype` du zip) — la violation de conteneur OCF est détectée.
+- GREEN : 2/2 PASSED (12s).
+
+*Gates* : `test --tests document.EpubCheckFpaFunctionalTest` 2/2 GREEN.
+
+== Livraison 2 — Doc consommateur (README.md)
+
+*Constat S-239/S-240* : les 5 enums des gardes ne sont pas résolus
+implicitement dans un `build.gradle.kts` consommateur — sans imports explicites
+le script ne compile pas. Aucun README n'existait dans le borough.
+
+*README.md créé à la racine du plugin* (artefact code → English only) :
+- Quick start : plugin id `education.cccp.document` 0.0.14, DSL minimal,
+  tâches principales.
+- Section « Consumer imports » : les 5 imports requis
+  (`document.epub.EpubValidationMode`, `document.security.IncludeGuardMode`,
+  `document.validation.HtmlLinkLintMode`, `document.xref.XrefValidationMode`,
+  `org.asciidoctor.SafeMode`) avec exemple complet des 5 gardes + sémantique
+  de sévérité (OFF/LENIENT/STRICT).
+- Table des tâches exposées + règle de précédence CLI > DSL > convention.
+
+Zéro code prod modifié — pure documentation.
+
+== Baselines de non-régression
+
+- `compileKotlin` VERT.
+- FT 126/126 (0 failure, 0 error — XML agrégé ; baseline 122 → +4 n'était
+  pas à jour car S-240 a livré FT epub 4/4 déjà comptés... vérifié :
+  126 = 122 baseline S-238 + 4 FT epub S-240 — cohérent, le FT dogfooding
+  epub (2 tests) tourne sous la tâche `test` unitaire, pas sous
+  functionalTest — cf. note infra).
+- `validatePlugins` VERT, `epubCheckCucumberTest` VERT.
+- Scan secrets : RAS.
+
+== Note technique — placement du FT dogfooding
+
+`EpubCheckFpaFunctionalTest` est placé dans `src/test/kotlin` (suite `test`,
+comme `HtmlLinkLintFunctionalTest` qui y vit déjà — convention borough pour
+les audits dogfooding read-only sans TestKit). Les vrais FT TestKit restent
+sous `functionalTest` (122 → 126 avec les FT epub S-240).
+
+== Limites & suivis
+
+- Publication 0.0.15 (contenu DOC-EPUBCHECK) — toujours en attente d'accord
+  pilote (Règle 2). Option 1 non exécutée cette session.
+- Le FT dogfooding self-skips (`assumeTrue`) hors machine de dev (corpus FPA
+  absent) — pas de couplage CI.
+- La preuve négative reconstruit un zip invalide en mémoire (tmp file
+  supprimé) — zéro écriture hors workspace, Rule 7 respectée.
