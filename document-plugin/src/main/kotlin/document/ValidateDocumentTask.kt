@@ -13,6 +13,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -48,6 +49,7 @@ import java.io.File
  * Ink Economy Law: the validator is a pure function of the texts; only report emission and
  * the severity branches are side-effect-bearing.
  */
+@DisableCachingByDefault(because = "Composite validation severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class ValidateDocumentTask : DefaultTask() {
 
     @get:InputFile

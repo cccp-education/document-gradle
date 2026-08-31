@@ -518,3 +518,33 @@ Central `<latest>0.0.12</latest>` = source de vérité).
 
 *Prochaine session 238* : option D actée pilote — diagnostic moteur Cucumber
 global (`cucumberTest`, 82 failures `UndefinedStepException` glue scoping).
+
+== S-238 (2026-08-31) — Option D : moteur Cucumber global `cucumberTest` VERTE ✅
+
+*Diagnostic complet* (audit XML, zéro Python) : 73 failures = 70 glue scoping
+(16 features étrangères au runner global) + 3 steps réellement manquants dans
+la glue `document.scenarios` (scénarios `@template` DOC-13 : vrai bug de
+couverture BDD — Given présent, Then jamais écrit).
+
+*US-1 (baby-step TDD)* :
+- `@Then("the generated document should contain {string}")` — scan
+  `build/docs/document/*.adoc` (knob DOC-13 `outputFileName` dérive le nom).
+- `@Then("the build should fail")` — `result.output` contient FAILED (TestKit).
+- `DocumentWorld.templateGeneratedDocuments()`.
+- document.feature 65/65, failures 73 → 70 (les 70 restantes = pure glue scoping).
+
+*US-2 (règle de propriété)* : `CucumberTestRunner` restreint à ses 3 features
+possédées (`document` + `release-notes` + `frontmatter_retranslate`). Zéro
+perte de couverture (chaque feature étrangère a son runner dédié).
+
+*Fix bonus validatePlugins* (régression préexistante prouvée stash, S-232/S-233) :
+`LintHtmlDocumentTask` / `ValidateDocumentTask` / `ValidateDocumentXrefTask`
+`@DisableCachingByDefault` + `RetranslateFrontmatterTask.sourceDir`
+`@PathSensitive(RELATIVE)`.
+
+*Gates* : `cucumberTest` BUILD SUCCESSFUL (2320 tests / 2165 skipped
+dédiés filtrés / 0 failure — 1re fois verte depuis S-221), FT 122/122,
+UT 3037/0, secrets RAS. Rapport : `.agents/sessions/238-cucumber-global-verte.adoc`.
+
+*Prochaine session 239* : hygiène .bak/backup résiduels, consommation
+externe 0.0.14 (projet tiers), option E `assembleBook` knob si besoin réel.

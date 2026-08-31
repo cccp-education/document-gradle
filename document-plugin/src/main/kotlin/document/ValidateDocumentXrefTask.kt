@@ -10,6 +10,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory
  * Ink Economy Law: the validator is a pure function of the text; severity is the
  * only side-effect-bearing branch.
  */
+@DisableCachingByDefault(because = "Xref validation severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class ValidateDocumentXrefTask : DefaultTask() {
 
     @get:InputFile

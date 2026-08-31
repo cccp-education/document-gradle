@@ -171,6 +171,16 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(world.buildResult).isNotNull
     }
 
+    @Then("the build should fail")
+    fun buildShouldFail() {
+        val result = world.buildResult
+        assertThat(result).isNotNull
+        val output = result?.output ?: ""
+        assertThat(output)
+            .`as`("expected the build to fail but it succeeded")
+            .contains("FAILED")
+    }
+
     @Then("the output should contain {string}")
     fun outputShouldContain(text: String) {
         assertThat(world.buildResult?.output).contains(text)
@@ -182,6 +192,14 @@ class DocumentSteps(private val world: DocumentWorld) {
         assertThat(doc).exists()
         val content = doc!!.readText()
         assertThat(content).contains("= ")
+    }
+
+    @Then("the generated document should contain {string}")
+    fun generatedDocumentShouldContain(expected: String) {
+        val templateOutputs = world.templateGeneratedDocuments()
+        assertThat(templateOutputs).isNotEmpty
+        val content = templateOutputs.joinToString("\n") { it.readText() }
+        assertThat(content).contains(expected)
     }
 
     @Then("the converted HTML file should exist")

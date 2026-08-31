@@ -14,6 +14,16 @@ import org.junit.platform.suite.api.Suite
     key = PLUGIN_PROPERTY_NAME,
     value = "pretty, html:build/reports/cucumber.html, json:build/reports/cucumber.json"
 )
-@ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "src/test/resources/features")
+// Option D (S-238): the global runner only discovers the features it OWNS.
+// Its glue (`document.scenarios`) covers exactly these three; every other
+// feature is owned by a dedicated runner (16th pattern) with its own glue.
+// Discovering the whole features directory produced 70+ UndefinedStepException
+// noise failures that masked real regressions on the `cucumberTest` gate.
+@ConfigurationParameter(
+    key = FEATURES_PROPERTY_NAME,
+    value = "src/test/resources/features/document.feature," +
+        "src/test/resources/features/release-notes.feature," +
+        "src/test/resources/features/frontmatter_retranslate.feature"
+)
 @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "not @wip")
 class CucumberTestRunner

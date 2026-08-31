@@ -376,3 +376,48 @@ exclusivement Read/Grep/xmllint/rapports Gradle natifs.
 
 **Suite** : S-236 — option C (publication 0.0.14, accord pilote requis),
 option D (moteur global), suivi collector N3 noms custom.
+
+== Session 238 — 2026-08-31 — Option D : moteur Cucumber global `cucumberTest` VERTE
+
+**Type** : fix + TDD/BDD — baby-step DDD/TDD/BDD strict.
+**Baseline auditée** (XML, zéro Python) : 2390 tests / 73 failed / 2165 skipped.
+Le runner global (`CucumberTestRunner`, glue `document.scenarios`, tags
+`not @wip`) découvrait les 18 features mais ne possède que 3 → 70
+`UndefinedStepException` pur bruit + 3 vrais steps manquants (`@template`
+DOC-13 de `document.feature` : le Given existait (DocumentSteps 881+),
+le Then `the generated document should contain` n'a jamais été écrit ;
+`the build should fail` absent aussi).
+
+**US-1 (TDD)** : 2 steps + 1 helper — `generatedDocumentShouldContain`
+(scan `build/docs/document/*.adoc`, knob DOC-13 `outputFileName` dérive
+le nom, pas de chemin codé en dur) + `buildShouldFail` (`result.output`
+contient FAILED, pattern TestKit). RED prouvé par XML de baseline avant
+tout code. GREEN : `document.feature` 65/65, failures 73 → 70.
+
+**US-2 (scoping)** : `FEATURES_PROPERTY_NAME` restreint aux 3 features
+possédées (`document`, `release-notes`, `frontmatter_retranslate`).
+Règle de propriété documentée : une feature = un runner propriétaire ;
+nouvelle feature → runner dédié (16e pattern, CucumberTaskSpec) ou
+explicitement le global avec steps dans `document.scenarios`.
+
+**Fix bonus validatePlugins** : ROUGE sur main SANS modifications
+(proof `git stash` — régression S-232/S-233). 4 problèmes :
+`LintHtmlDocumentTask` / `ValidateDocumentTask` /
+`ValidateDocumentXrefTask` `@DisableCachingByDefault` (convention
+borough, Loi Économie d'Encre — sévérité side-effect-bearing) +
+`RetranslateFrontmatterTask.sourceDir` `@PathSensitive(RELATIVE)`.
+
+**Gates** : `cucumberTest` BUILD SUCCESSFUL — 2320 tests / 2165 skipped
+(dédiés co-exécutés filtrés par tags — normal) / 0 failure, 1re fois
+verte depuis S-221. FT 122/122 (baseline élargie FPA). UT 3037/0.
+validatePlugins VERT. Secrets RAS.
+
+**Pièges retenus** : `--tests` Gradle ne réduit PAS la découverte
+Cucumber (`cucumber.features` property gagne, warning cucumber
+documenté) — filtrer côté annotation du runner ; totaux XML
+multi-suites mélangent PASSED (global) et SKIPPED (dédiés) — le
+diagnostic se fait par feature propriétaire ; `BuildResult.output` est
+déjà un String (pas de `takeSubstring`).
+
+**Suite** : S-239 — hygiene .bak/backup residuels, consommation externe
+0.0.14 (projet tiers), option E assembleBook knob si besoin réel.

@@ -1762,3 +1762,44 @@ Un build unique est impossible : `collect.outputDir` (@OutputDirectory) couvre l
   **✅ RÉSOLU S-234** : `ext.translation.outputFileName.convention("document")`
   ajoutée (DocumentPlugin.kt). Baseline FT 68/68 VERT, preuve BDD comparative
   moteur global 144/86 → 148/82.
+
+'''
+
+== ✅ S-238 — Option D : moteur Cucumber global `cucumberTest` VERTE (TERMINÉ, Session 238)
+
+_statut_ : ✅ TERMINÉ (S-238 — diagnostic + US-1 steps manquants + US-2 scoping runner global).
+
+[NOTE]
+====
+**Motivation** : la gate `cucumberTest` globale bruitait depuis S-221
+(70-82 failures `UndefinedStepException` glue scoping — le runner global
+découvrait les 18 features mais sa glue `document.scenarios` ne couvre que
+3). Le bruit masquait les régressions réelles.
+
+**Diagnostic XML (zéro Python)** : 73 failures = 70 glue scoping (16
+features étrangères chacune couverte par son runner dédié) + **3 steps
+réellement manquants** dans la glue globale (scénarios `@template` DOC-13 :
+`the generated document should contain` + `the build should fail` — le
+Given existait, le Then jamais écrit ; vrai bug de couverture BDD).
+
+**Fix** :
+. US-1 (baby-step TDD) : 2 steps + `DocumentWorld.templateGeneratedDocuments()`
+  (scan `build/docs/document/*.adoc` — knob `outputFileName` dérive le nom).
+  document.feature 65/65.
+. US-2 (règle de propriété) : `CucumberTestRunner` restreint à ses 3 features
+  possédées (`document` + `release-notes` + `frontmatter_retranslate`).
+  Zéro perte de couverture — chaque feature étrangère a son runner dédié.
+. Fix bonus `validatePlugins` (régression préexistante prouvée stash) :
+  3 × `@DisableCachingByDefault` + 1 × `@PathSensitive(RELATIVE)`.
+
+**Résultat** : gate `cucumberTest` VERTE (2320 tests / 0 failure, 1re fois
+depuis S-221), FT 122/122, UT 3037/0. La gate reflète désormais les vraies
+régressions.
+====
+
+=== Limites reportées (S-238 → restant)
+
+- Hygiene `*.backup*`/`*.bak` résiduels racine (settings, build.gradle.kts,
+  BACKLOG, INDEX, SESSIONS_HISTORY) — économie d'encre, session 239.
+- Option E : `assembleBook` knob séparé (`book` vs `outputFileName`) —
+  pas de besoin réel remonté, extension seulement si besoin réel.

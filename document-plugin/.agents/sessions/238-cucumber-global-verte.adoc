@@ -1,0 +1,107 @@
+= Session 238 — Option D : moteur Cucumber global `cucumberTest` VERTE
+_Borough_ : document-gradle (New Orleans 🟢) — DORMANT (maintenance)
+_Date_ : 2026-08-31
+_Type_ : fix + TDD/BDD
+
+== Mission (actée S-237)
+
+Diagnostic + réparation du moteur Cucumber *global* `cucumberTest` — 82
+failures `UndefinedStepException` préexistantes (glue scoping, connu
+S-221/S-223/S-234) qui bruitaient la gate quality et masquaient les
+régressions réelles.
+
+== État des lieux (audit XML zéro Python)
+
+Run de baseline `cucumberTest` (7m46s) : *2390 tests, 73 failed, 2165
+skipped* (le compte S-234 148/82 a bougé depuis S-235/S-236). Analyse des
+XML `build/test-results/cucumberTest/` :
+
+. *Couches de problème identifiées* :
+  .. *Glue scoping* (70 failures, 16 features étrangères) : le runner global
+     (`CucumberTestRunner`, glue `document.scenarios`, tags `not @wip`)
+     découvrait TOUT le répertoire `features/` (18 features) mais sa glue ne
+     couvre que ses 3 features possédées. Chaque feature étrangère a déjà un
+     runner dédié (pattern S-082/S-236) → pur bruit.
+  .. *Steps réellement manquants dans la glue globale* (3 failures sur
+     `document.feature`) : les scénarios `@template` (DOC-13) utilisaient
+     `the generated document should contain {string}` et le scénario
+     `fails on missing variable` utilisait `the build should fail` — jamais
+     implémentés dans `DocumentSteps.kt`. Vrai bug de couverture BDD.
+  .. *2165 skipped* : les 16 runners dédiés co-exécutés dans la même JVM
+     (task `Test` unique, filtres tags/features par suite), écartant les
+     scénarios hors de leur périmètre — comportement normal, pas un bug.
+
+== US-1 — steps manquants glue globale (baby-step TDD)
+
+*RED* : prouvé par le run de baseline (3 `UndefinedStepException`
+documentées dans les XML avant tout code — méthode comparative
+sans `git stash` nécessaire, les rapports de l'audit font foi).
+
+*GREEN* : 2 steps ajoutés à `DocumentSteps.kt` + 1 helper au World :
+- `@Then("the generated document should contain {string}")` — lit les
+  outputs `.adoc` de `build/docs/document` (le knob DSL DOC-13
+  `outputFileName.set("my-doc")` produit `my-doc.adoc`, pas
+  `document.adoc` → scan répertoire plutôt que chemin codé en dur).
+- `@Then("the build should fail")` — `result.output` contient `FAILED`
+  (pattern TestKit ; la glue globale n'avait que `the build should succeed`).
+- `DocumentWorld.templateGeneratedDocuments()` (scan `*.adoc`).
+
+*Preuve* : `document.feature` 65/65 GREEN (failures du global 73 → 70,
+les 70 restantes étant exclusivement le glue scoping).
+
+== US-2 — runner global restreint aux features possédées
+
+`CucumberTestRunner.kt` : `FEATURES_PROPERTY_NAME` passe du répertoire
+complet aux 3 features possédées (`document.feature`,
+`release-notes.feature`, `frontmatter_retranslate.feature` — cette
+dernière a ses steps dans la glue globale, vérifié). Commentaire S-238
+documente la règle de propriété (ownership). Zéro perte de couverture :
+chaque feature étrangère garde son runner dédié.
+
+*GREEN global* : `./gradlew cucumberTest` → *BUILD SUCCESSFUL*
+(10m38s) — 2320 tests, 0 failure, 0 error. Première gate globale VERTE
+depuis S-221 (7 sessions).
+
+== Fix bonus — validatePlugins (régression préexistante prouvée stash)
+
+La passe `check -x test -x functionalTest --rerun-tasks` a révélé
+`validatePlugins` ROUGE sur *main sans mes modifications* (preuve
+`git stash`) — régression S-232/S-233 : 3 tâches sans annotation de
+cache + 1 `@InputDirectory` sans normalisation :
+
+. `LintHtmlDocumentTask` → `@DisableCachingByDefault(because = ...)`.
+. `ValidateDocumentTask` → idem (sévérité side-effect-bearing).
+. `ValidateDocumentXrefTask` → idem.
+. `RetranslateFrontmatterTask.sourceDir` → `@PathSensitive(PathSensitivity.RELATIVE)`.
+
+Convention borough respectée (`ApplyDocumentTemplateTask` : LLM/knobs
+non déterministes → disable caching, Loi Économie d'Encre).
+
+== Gates finales
+
+- `compileKotlin` + `validatePlugins` : VERT.
+- `cucumberTest` (--rerun-tasks, 16 dédiés + global) : *2320 tests /
+  2165 skipped (dédiés filtrés) / 0 failure / 0 error*.
+- `functionalTest` : *122 / 0 failure* (baseline élargie dogfooding FPA).
+- `test` (UT) : *3037 / 0 failure*.
+- Secrets : RAS. Zéro Python (analyse XML exclusivement grep/xmllint).
+
+== Pièges Gradle à retenir (nouveaux)
+
+1. *Runner global multi-suites dans une JVM* : la task `Test` unique du
+   global co-exécute les 16 runners dédiés (skips par filtre tags) —
+   les totaux XML mélangent PASSED (global) et SKIPPED (dédiés).
+2. *Le compte global 148/82 (S-234) n'était pas le « vrai » moteur
+   global* : c'était la même JVM avec les steps @doc-translate fixés ;
+   le diagnostic doit se faire par feature propriétaire.
+3. *`.output.takeSubstring()` n'existe pas* — `result.output` retourne
+   directement un String.
+
+== Limites et reports
+
+- Le `--tests` filter Gradle sur `cucumberTest` ne réduit PAS la
+  découverte Cucumber (`cucumber.features` property gagne toujours,
+  warning cucumber documenté) — le filtre par feature se fait côté
+  annotation du runner, pas par la CLI.
+- Option E (`assembleBook` knob séparé) non traitée — pas de besoin réel
+  remonté, économie d'encre.

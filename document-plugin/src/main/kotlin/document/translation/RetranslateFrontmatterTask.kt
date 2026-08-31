@@ -6,6 +6,8 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory
 abstract class RetranslateFrontmatterTask : DefaultTask() {
 
     @get:org.gradle.api.tasks.InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val sourceDir: DirectoryProperty
 
     @get:org.gradle.api.tasks.Input

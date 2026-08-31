@@ -505,6 +505,18 @@ class DocumentWorld {
         return dir.resolve("build/docs/document/document.adoc")
     }
 
+    /**
+     * AsciiDoc outputs produced by the template task (`applyDocumentTemplate`).
+     * The output file name follows the `outputFileName` knob (DOC-13 DSL),
+     * so we scan the document docs directory instead of assuming a fixed name.
+     */
+    fun templateGeneratedDocuments(): List<File> {
+        val dir = projectDir ?: return emptyList()
+        val docsDir = dir.resolve("build/docs/document")
+        if (!docsDir.isDirectory) return emptyList()
+        return docsDir.listFiles { file -> file.isFile && file.extension == "adoc" }?.toList() ?: emptyList()
+    }
+
     fun createGradleProjectWithOcrPages(photos: Boolean = false, formats: Boolean = false): File {
         val dir = Files.createTempDirectory("doc-bdd-book").toFile()
         dir.resolve("settings.gradle.kts").writeText(

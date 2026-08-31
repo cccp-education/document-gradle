@@ -1,57 +1,69 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 238
+== Mission session 239
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Mission actée S-237 :
-- *Option D* : diagnostic du moteur Cucumber *global* (`cucumberTest`) — 82
-  failures `UndefinedStepException` préexistantes (scoping glue runner global
-  vs 16 runners dédiés, connu S-221/S-223/S-234). La gate qualité reste les
-  runners dédiés ; le moteur global bruit et masque les régressions.
-  Baby-step TDD/BDD attendu : caractériser le scoping glue (features vues /
-  steps résolus par le runner global), choisir la stratégie (runner global
-  filtré par tags vs suppression vs découpage glue), RED preuve,
-  GREEN sans casser les 16 dédiés (144 scénarios PASSED baseline S-234).
-- *Option E (si temps)* : `assembleBook` knob séparé (défaut `"book"`) —
-  le collect N3 (S-236) ne couvre pas les books custom-named (contrat
-  canonique `book.adoc` inchangé). Extension seulement si besoin réel.
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Mission actée S-238 :
+- Epuration dette technique légère : les `.bak` et `*.backup*` résiduels à la
+  racine `document-plugin/` (build.gradle.kts.backup*, settings.gradle.kts.bak,
+  BACKLOG.adoc.bak, INDEX.adoc.bak, SESSIONS_HISTORY.adoc.bak) — hygiene pure.
+- Consommateur externe : vérifier que la 0.0.14 (Central) consomme bien les
+  4 gardes composite + knob `outputFileName` depuis un projet tiers (test
+  consommation réelle hors borough).
+- *Option E (si besoin réel remonté)* : `assembleBook` knob séparé (défaut
+  `"book"`) — le collect N3 (S-236) ne couvre pas les books custom-named.
+  Extension seulement si besoin réel.
 
-== État du code (S-237)
+== État du code (S-238)
 
-- *0.0.14 PUBLIÉE Maven Central* (bundle accepté AUTOMATIC, propagation ~7 min
-  vérifiée : metadata `<latest>0.0.14</latest>`, POM+JAR HTTP 200). Contenu :
-  gems runtimeOnly (S-233), knob `outputFileName` bout-en-bout (S-235/236),
-  4 gardes composite + metadata validationStatus (S-231/232/233). POM complet
-  (name/description/scm/Apache-2.0). Local = Central (versions alignées).
-- 16/16 runners Cucumber dédiés VERTS (baseline S-234/S-235/S-236).
-- FT baseline verte (68/68, fix S-234). Moteur global `cucumberTest` :
-  82 failures préexistantes (glue scoping — périmètre option D).
+- *0.0.14 PUBLIÉE Maven Central* (S-237 : metadata `<latest>0.0.14</latest>`,
+  POM+JAR HTTP 200, gems PDF/EPUB portées).
+- *Gate `cucumberTest` globale VERTE pour la première fois depuis S-221* :
+  2320 tests / 0 failure / 0 error / 2165 skipped (16 runners dédiés
+  co-exécutés, filtrés par tags — normal). Runner global restreint à ses
+  3 features possédées (ownership rule S-238).
+- FT baseline : *122 / 0 failure*. UT baseline : *3037 / 0 failure*.
+- `validatePlugins` VERT (fix régression préexistante S-232/S-233 : 3
+  `@DisableCachingByDefault` + 1 `@PathSensitive(RELATIVE)`).
 
-== Pièges Gradle à retenir (S-233/234/235/236)
+== Ce qui a été fait S-238 (Option D : moteur global Cucumber)
+
+1. *Audit XML* (zéro Python) : 73 failures = 70 glue scoping (16 features
+   étrangères au global) + 3 steps réellement manquants dans la glue
+   `document.scenarios` (scénarios `@template` DOC-13 : `the generated
+   document should contain` + `the build should fail` — vrai bug de
+   couverture BDD).
+2. *US-1* : 2 steps + 1 helper World ajoutés (`DocumentSteps.kt`,
+   `DocumentWorld.templateGeneratedDocuments()` — scan `build/docs/document/*.adoc`
+   car le knob `outputFileName` DOC-13 dérive le nom de sortie).
+3. *US-2* : `CucumberTestRunner` FEATURES_PROPERTY_NAME restreint aux 3
+   features possédées (`document`, `release-notes`, `frontmatter_retranslate`).
+4. *validatePlugins* : 4 problèmes préexistants corrigés (prouvés par
+   `git stash` — pas causés par S-238).
+
+== Pièges Gradle à retenir (S-233..S-238)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
-   (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport de
-   validation (bookPipeline dependsOn collect pendant que le rapport n'existe
-   pas, piège S-232 #3).
-2. *mustRunAfter inverse la CLI* : `validateDocument.mustRunAfter(collect)`
-   inverse la chaîne CLI `validateDocument collectDocumentRetrieve` (le collect
-   tournerait d'abord → n/a). Conflit d'inputs seulement si 2 tâches partagent
+   (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
+2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent
    un build.
-3. *Chaîne N3 staged* : produce → validate → collect (3 builds) — un cycle
-   Gradle interdit l'ordre métier en un seul build.
-4. *Property DSL sans convention reste unset même derrière `.orElse(...)`* :
-   piége S-234 — ajouter `.convention("document")` sur les knobs chaînés.
-5. *Dérivation knob sans dépendance de tâche* (S-235) : dériver le chemin du
-   MÊME knob (layout + knob flatMap), jamais provider vers `outputFile` du
-   producteur (dépendance implicite), jamais `.get()` configuration-time.
+3. *Chaîne N3 staged* : produce → validate → collect (3 builds).
+4. *Property DSL sans convention reste unset même derrière `.orElse(...)`*.
+5. *Dérivation knob sans dépendance de tâche* : jamais provider vers
+   `outputFile` du producteur, jamais `.get()` configuration-time.
+6. *Runner global multi-suites dans une JVM* : les totaux XML mélangent
+   PASSED (global) et SKIPPED (dédiés filtrés) — diagnostiquer par feature
+   propriétaire, pas par compte global.
+7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
+   annotation du runner (`FEATURES_PROPERTY_NAME`), pas par la CLI.
 
-== Anti-glue Cucumber (le cœur de l'option D)
+== Anti-glue Cucumber (règle de propriété — S-238)
 
-Le runner *global* (glue `document.scenarios`) ne voit pas les steps des
-runners dédiés (autres packages glue) → `UndefinedStepException` pour les
-features hors glue. Un step identique dans 2 classes →
-`DuplicateStepDefinitionException` (fix S-223 : textes distincts). Méthode
-comparative `git stash` pour isoler l'impact d'un fix (S-234). Faux positifs
-d'assertion : choisir des fragments discriminants (S-235).
+Chaque feature a UN runner propriétaire. Le runner global (glue
+`document.scenarios`) ne découvre que `document.feature` +
+`release-notes.feature` + `frontmatter_retranslate.feature`. Toute
+nouvelle feature doit soit rejoindre un runner dédié (16e pattern :
+runner + glue + tag + CucumberTaskSpec dans build.gradle.kts), soit
+explicitement rejoindre le global avec ses steps dans `document.scenarios`.
 
 == Méthode
 
@@ -74,12 +86,13 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT.
 4. Central : `document-plugin` `<latest>` >= 0.0.14 (publiée S-237).
-5. Baseline : 16 runners dédiés VERTS + FT 68/68 (S-234).
+5. Baseline : `cucumberTest` VERT (2320/0), FT 122/122, UT 3037/0 (S-238).
 
 == Vision « livre FPA SERVER »
 
 Statut N3 verrouillé (validationStatus=PASS prouvé S-233). Knob
 `outputFileName` vivant de bout en bout (S-235/236). Publication 0.0.14
-réalisée S-237 — les consommateurs externes convertissent PDF/EPUB.
-Prochain verrou : moteur global Cucumber (option D) pour rendre la gate
-`cucumberTest` lisible (82 faux échecs glue scoping).
+réalisée S-237. Gate `cucumberTest` globale lisible (S-238 — 0 faux
+échecs, la gate reflète les vraies régressions). Prochain verrou :
+consommation externe prouvée (projet tierce consommant 0.0.14 depuis
+Central) puis, si besoin réel, option E (assembleBook knob).
