@@ -3,20 +3,33 @@
 == Mission session 240
 
 Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-239 a fermé la
-boucle « publication → consommation externe ». Options classées :
-- *Dogfooding FPA réel* : re-dérouler `bookPipeline` sur le corpus
-  `office/metiers/FPA` (Rule 7 read-only) si le corpus évolue — l'artefact
-  `livre-navigable/` reste la vérité (économie d'encre : ne pas régénérer).
+boucle « publication → consommation externe » ET audité le BACKLOG complet.
+*Un seul gap fonctionnel subsiste* : le critère epubcheck de US-DOC-04.
+Options classées :
+
+- *Option A (recommandée) — EPIC DOC-EPUBCHECK* : implémenter le critère
+  « Le fichier passe la validation epubcheck » (US-DOC-04, P2, backlogged
+  depuis S-005 jamais couvert). Cadrage d'abord (gouvernance pure, pattern
+  S-057/S-063) : choisir l'approche (epubcheck CLI téléchargé/e Docker,
+  wrapper Java `epubcheck.jar`, ou dégradation documentée) + décider si la
+  gate est STRICT (fail build) ou LENIENT (rapport). Puis baby-step
+  DDD/TDD/BDD : UT domaine `document.epub` (EpubValidator pur, zéro
+  Gradle) → FT TestKit → BDD runner dédié `@epub-validation`. Consommateur
+  naturel : livre FPA EPUB (S-217/218).
 - *Doc consommateur* : ajouter au README plugin la liste des imports DSL
   requis (`document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
   `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`) —
   constat S-239 : sans imports, le script consommateur ne compile pas.
+- *Dogfooding FPA réel* : re-dérouler `bookPipeline` sur le corpus
+  `office/metiers/FPA` (Rule 7 read-only) si le corpus évolue — l'artefact
+  `livre-navigable/` reste la vérité (économie d'encre : ne pas régénérer).
 - *Option E (assembleBook knob séparé, défaut `"book"`)* : CADUQUE jusqu'à
   besoin réel remonté par un consommateur.
 
 == État du code (S-239)
 
-- *0.0.14 PUBLIÉE Maven Central* (S-237) — consommation externe PROUVÉE S-239 :
+- *0.0.14 PUBLIÉE Maven Central ET Plugin Portal* (S-237 ; vérifié S-239 :
+  les deux metadata `latest=0.0.14`). Consommation externe PROUVÉE S-239 :
   projet tiers `/tmp/opencode/doc-consumer-014` (Gradle 9.7, JDK 25) consomme
   `education.cccp.document:0.0.14` depuis Central.
 - *Preuves S-239 (positif)* : `convertDocumentToHtml` + `validateDocument` →
@@ -28,8 +41,22 @@ boucle « publication → consommation externe ». Options classées :
   BUILD FAILED « include escapes allowed root » — les gardes sont réelles
   depuis l'extérieur.
 - *Hygiene S-239* : 20 fichiers `.bak`/`*.backup*` purgés (tous historisés git).
+- *Sync gouvernance S-239 (audit BACKLOG complet)* : marqueurs manquants
+  corrigés — US-DOC-01/02 (✅ S-003/S-004), US-DOC-04 (✅ S-005 sauf epubcheck,
+  gap documenté inline), DOC-TRANSLATE-5 (✅ S-024, vérifié : bakery consomme
+  `document-plugin:0.0.12` + imports `document.translation.*`),
+  DOC-PLANTUML-VALIDATE-1..5 (✅ S-038/S-039/S-040).grep marqueurs périmés : zéro.
 - Baselines inchangées : FT 122/122, UT 3037/0, `cucumberTest` 2320/0 (S-238).
 - `validatePlugins` VERT (fixé S-238).
+
+== Gap restant (audit S-239 — le seul)
+
+*US-DOC-04 critère epubcheck NON couvert* : « Le fichier passe la validation
+epubcheck » n'a jamais de test ni d'outil dans le build. Seul
+`DocumentConverterTest:276` (`convertToEpub`) asserte qu'un EPUB3 « valide »
+est écrit. EPIC DOC-EPUBCHECK à cadrer S-240 si le pilote l'acte (P2 —
+le consommateur Kindle/Kobo réel n'a jamais réclamé la gate, l'économie
+d'encre suggère de ne l'implémenter que si un besoin réel existe).
 
 == Pièges Gradle à retenir (S-233..S-239)
 
@@ -79,8 +106,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT.
-4. Central : `document-plugin` `<latest>` = 0.0.14 (publiée S-237, prouvée
-   consommable S-239).
+4. Central + Plugin Portal : `document-plugin` `<latest>` = 0.0.14 (publiée
+   S-237, prouvée consommable S-239).
 5. Baseline : `cucumberTest` VERT (2320/0), FT 122/122, UT 3037/0 (S-238).
 
 == Vision « livre FPA SERVER »
@@ -89,5 +116,6 @@ Verrous levés S-233..S-239 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout (convert → gardes → collect), gems PDF/EPUB
 packagées, gate `cucumberTest` lisible, consommation externe prouvée depuis
 Central (4 gardes + knob, preuve négative STRICT). Le produit est servable
-depuis un projet tiers. Reste : maintenance + dogfooding FPA + doc consommateur
-(imports DSL). Option E caduque jusqu'à besoin réel.
+depuis un projet tiers. Reste : epubcheck (gap unique, cadrage au choix du
+pilote — gate STRICT vs besoin réel), doc consommateur (imports DSL),
+dogfooding FPA au besoin. Option E caduque jusqu'à besoin réel.

@@ -61,6 +61,30 @@ Preuves collectées (négatif) :
 inchangé, aucun consommateur externe ne l'a demandé). Décision : reporté
 jusqu'à besoin réel (économie d'encre).
 
+=== Audit BACKLOG complet (demande pilote post-US-2)
+
+Question pilote : « il ne reste plus rien dans le backlog/roadmap/vision ? ».
+Réponse audité BACKLOG vs code :
+
+* Tous les EPICs roadmap INDEX sont `✅ TERMINÉ` (DOC-0→12, TRANSLATE,
+  TABLE/PLANTUML-VALIDATE, BOOK-VALIDATE/DOMAIN, CR3/4/5, XREF, COMPOSITE,
+  HTML-LINT, METADATA, CROSS-DOC-BOOK, S-233, S-238).
+* Plugin Portal suit Central : `0.0.14` (metadata vérifiée).
+* DOC-TRANSLATE-5 (câblage bakery) : fait en réalité — bakery consomme
+  `document-plugin:0.0.12` + importe `document.translation.*`
+  (MigrateContentI18nTask, ValidationReport, RtlDirectionInjector).
+* Marqueurs BACKLOG corrigés (sync) : US-DOC-01/02/04 sans balise `*Statut*`,
+  ligne DOC-TRANSLATE-5 sans ✅, lignes DOC-PLANTUML-VALIDATE-1..5 sans
+  marqueurs.
+* *Seul gap fonctionnel restant* : **critère epubcheck de US-DOC-04**
+  (« Le fichier passe la validation epubcheck » — jamais implémenté, aucun
+  epubcheck dans le build ; seul `DocumentConverterTest:276` asserte qu'un
+  EPUB3 est écrit). EPIC DOC-EPUBCHECK à cadrer S-240 (P2 — économie
+  d'encre : gate seulement si besoin réel Kindle/Kobo).
+* DT-04 (compileOnly plantuml) : P3 « reporté » légitime, optionnel.
+* Items maintenance actifs S-240 : doc consommateur (imports DSL),
+  dogfooding FPA au besoin, Option E caduque.
+
 == Gates
 
 * `compileKotlin` VERT (open + post-purge), `validatePlugins` VERT.

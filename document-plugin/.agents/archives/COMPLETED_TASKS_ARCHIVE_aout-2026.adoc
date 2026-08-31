@@ -24,6 +24,11 @@
   (`document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
   `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`).
 - US-3 : Option E (`assembleBook` knob séparé) CADUQUE — aucun besoin réel.
+- Audit BACKLOG complet (post-session) : marqueurs sync corrigés
+  (US-DOC-01/02, US-DOC-04 epubcheck gap inline, DOC-TRANSLATE-5 vérifié
+  bakery consomme 0.0.12, DOC-PLANTUML-VALIDATE-1..5). *Seul gap
+  fonctionnel restant : critère epubcheck US-DOC-04 (P2) — EPIC
+  DOC-EPUBCHECK à cadrer S-240.*
 
 *Aucun code production modifié* — baseline FT 122 / UT 3037 / cucumberTest
 2320 inchangée (S-238). La boucle « publication → consommation externe »

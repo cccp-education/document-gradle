@@ -56,6 +56,7 @@ Voir `.agents/ARCHITECTURE_BOUNDARY.adoc` pour le detail complet.
 
 *Priorite* : P1
 *EPIC* : DOC-2
+*Statut* : ✅ TERMINÉ (session 003)
 
 .Valeur
 Gagner du temps sur la redaction de documentation technique : un prompt
@@ -72,6 +73,7 @@ structure produit un document AsciiDoc coherent, que l'humain valide et enrichit
 
 *Priorite* : P1
 *EPIC* : DOC-4
+*Statut* : ✅ TERMINÉ (session 004)
 
 .Valeur
 Un SPG/SPD redige en AsciiDoc devient un PDF imprimable pour le stagiaire,
@@ -87,6 +89,7 @@ avec mise en page professionnelle (Asciidoctor PDF).
 
 *Priorite* : P1
 *EPIC* : DOC-3
+*Statut* : ✅ TERMINÉ (session 004)
 
 .Valeur
 Une documentation technique en AsciiDoc devient une page HTML navigable,
@@ -102,16 +105,19 @@ ideale pour publication sur site statique ou GitHub Pages.
 
 *Priorite* : P2
 *EPIC* : DOC-5
+*Statut* : ✅ TERMINÉ (session 005) — *critère `epubcheck` NON couvert : seul test restant (P2, voir EPIC DOC-EPUBCHECK à cadrer)*
 
 .Valeur
 Les sessions de formation sont lisibles hors-ligne sur liseuse Kindle/Kobo
 ou application de lecture EPUB.
 
 .Criteres d'acceptation
-- `convertDocumentToEpub` produit un fichier `.epub` valide
-- La structure du document (chapitres, sections) est preservee dans la navigation
-- Les images sont integrees au format EPUB
-- Le fichier passe la validation epubcheck
+- ✅ `convertDocumentToEpub` produit un fichier `.epub` valide
+- ✅ La structure du document (chapitres, sections) est preservee dans la navigation
+- ✅ Les images sont integrees au format EPUB
+- [ ] Le fichier passe la validation epubcheck — *NON IMPLÉMENTÉ* (aucun epubcheck
+  dans le build ; seul `convertToEpub` asserte qu'un EPUB3 est écrit,
+  `DocumentConverterTest:276`)
 
 === US-DOC-05 — En tant qu'integrateur, je veux que les documents soient consommables par runner-gradle N3
 
@@ -529,6 +535,8 @@ CONVERT + PUBLISH), le bounded context naturel pour la manipulation d'AsciiDoc.
 | FT + BDD : 0 régression bakery, tous les tests bakery passent
 | 8
 | TRANSLATE-4
+| ✅ TERMINÉ (session 024 — vérifié S-239 : bakery consomme `document-plugin:0.0.12`,
+  imports `document.translation.*` actifs dans `bakery.i18n`)
 |===
 
 _Total_ : ~34 pts, 5 US.
@@ -732,6 +740,7 @@ versionne déjà `plantuml-plugin` comme dépendance.
 | Compile OK + 1 FT (vérifie que PlantumlService est instanciable)
 | 3
 | —
+| ✅ TERMINÉ (S-038)
 
 | DOC-PLANTUML-VALIDATE-2
 | *`PlantUmlSyntaxValidator` wrapper DDD* — value object dans
@@ -745,6 +754,7 @@ versionne déjà `plantuml-plugin` comme dépendance.
 | UT : 8-10 (valid diagram, missing @startuml, syntax error, strategy context)
 | 5
 | VALIDATE-1
+| ✅ TERMINÉ (S-038)
 
 | DOC-PLANTUML-VALIDATE-3
 | *Intégration dans `PlantUmlTranslationAdapter.translate()`* — après traduction
@@ -754,6 +764,7 @@ versionne déjà `plantuml-plugin` comme dépendance.
 | UT : 5-8 (valid after translation, corrupted by LLM, preserveTechnical skip)
 | 5
 | VALIDATE-2
+| ✅ TERMINÉ (S-039)
 
 | DOC-PLANTUML-VALIDATE-4
 | *Mode `--strict` vs `--lenient`* — DSL `translation { plantumlValidation { mode = STRICT } }`.
@@ -764,6 +775,7 @@ versionne déjà `plantuml-plugin` comme dépendance.
 | UT : 3-5 (strict throws, lenient warns, off skips) + FT : 1 (CLI -Pdocument.translatePlantumlValidation=strict)
 | 3
 | VALIDATE-3
+| ✅ TERMINÉ (S-039)
 
 | DOC-PLANTUML-VALIDATE-5
 | *Cucumber BDD* — scénarios end-to-end :
@@ -775,6 +787,7 @@ versionne déjà `plantuml-plugin` comme dépendance.
 | BDD : 5 scénarios
 | 5
 | VALIDATE-4
+| ✅ TERMINÉ (S-040)
 |===
 
 _Total_ : ~21 pts, 5 US.
