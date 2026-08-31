@@ -105,7 +105,7 @@ ideale pour publication sur site statique ou GitHub Pages.
 
 *Priorite* : P2
 *EPIC* : DOC-5
-*Statut* : ✅ TERMINÉ (session 005) — *critère `epubcheck` NON couvert : seul test restant (P2, voir EPIC DOC-EPUBCHECK à cadrer)*
+*Statut* : ✅ TERMINÉ (session 005 + session 240 — EPIC DOC-EPUBCHECK : critère `epubcheck` couvert)
 
 .Valeur
 Les sessions de formation sont lisibles hors-ligne sur liseuse Kindle/Kobo
@@ -115,9 +115,8 @@ ou application de lecture EPUB.
 - ✅ `convertDocumentToEpub` produit un fichier `.epub` valide
 - ✅ La structure du document (chapitres, sections) est preservee dans la navigation
 - ✅ Les images sont integrees au format EPUB
-- [ ] Le fichier passe la validation epubcheck — *NON IMPLÉMENTÉ* (aucun epubcheck
-  dans le build ; seul `convertToEpub` asserte qu'un EPUB3 est écrit,
-  `DocumentConverterTest:276`)
+- [x] Le fichier passe la validation epubcheck — *IMPLÉMENTÉ S-240* (`validateDocumentEpub`
+  + domaine `document.epub`, EPIC DOC-EPUBCHECK)
 
 === US-DOC-05 — En tant qu'integrateur, je veux que les documents soient consommables par runner-gradle N3
 
@@ -1822,3 +1821,32 @@ régressions.
   traversal → BUILD FAILED). Imports DSL gardes requis côté consommateur.
 - Option E : `assembleBook` knob séparé (`book` vs `outputFileName`) —
   pas de besoin réel remonté, extension seulement si besoin réel (S-239 : CADUQUE).
+
+'''
+== EPIC DOC-EPUBCHECK — Validation epubcheck de l'EPUB produit ✅ TERMINÉ (S-240, 3/3 US)
+
+_Cadré Session 240 — `.agents/CADRAGE_EPIC_DOC_EPUBCHECK.adoc`._
+_Critère US-DOC-04 backlogged depuis S-005 — couvert S-240, EPIC clôturé._
+_Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`)._
+
+[NOTE]
+====
+**Livrée S-240 (baby-step DDD/TDD/BDD)** :
+- US-1 : domaine `document.epub` (5 fichiers) — port `EpubCheckRunner`
+  (fun interface stateless) + `LibEpubCheckAdapter` (bridge
+  `org.w3c:epubcheck:5.2.1`) + `EpubValidationMode`/`Result`/`Report`
+  (miroir xref). 17 UT (dont EPUB3 minimal construit à la main). Bug
+  réel TDD : callback Java `info(null, ...)` → fix paramètre nullable.
+- US-2 : tâche `validateDocumentEpub` (+4 FT) — sévérité STRICT fail-fast
+  après rapport / LENIENT warn / OFF skip ; EPUB absent non-OFF →
+  `<epub-file-missing>` (miroir règle HTML S-232). DSL
+  `converter { epubCheck }` + mirror plat + CLI `-Pdocument.epubCheck`,
+  chemin dérivé du même knob `outputFileName` que la conversion.
+  Piège confirmé : `@InputFile` valide avant l'action → chemin porté en
+  `@Input @Optional Property<String>` (miroir `htmlFilePath`).
+- US-3 : `epub_check.feature` 4/4 PASSED + runner dédié 17e
+  `epubCheckCucumberTest` (glue `document.epubcheck`, steps préfixés).
+- Gates : `compileKotlin` VERT, `validatePlugins` VERT,
+  `DocumentPluginFunctionalTest` VERT, secrets RAS. Zéro bump BOM.
+- Suite : publication 0.0.15 (accord pilote) pour distribuer la garde.
+====

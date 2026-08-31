@@ -1,0 +1,116 @@
+= Session 240 — EPIC DOC-EPUBCHECK ✅ TERMINÉ (5e garde : validation epubcheck de l'EPUB produit)
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : feat + TDD/BDD
+_Mission_ : option A du PROMPT_REPRISE 240 — couvrir le seul gap fonctionnel
+restant (critère epubcheck US-DOC-04, backlogged depuis S-005). Cadrage
+gouvernance pure d'abord (`.agents/CADRAGE_EPIC_DOC_EPUBCHECK.adoc`, pattern
+S-057/S-063), puis baby-step DDD/TDD/BDD (US-1 UT → US-2 FT → US-3 BDD).
+_Méthode_ : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+
+== Constats (audit ouverture + cadrage)
+
+. Seul `DocumentConverterTest.convertToEpub` asserte qu'un EPUB est écrit —
+  aucune validation de conformité EPUB nulle part.
+. `org.w3c:epubcheck:5.2.1` (référence W3C, succession `org.idpf:epubcheck`)
+  existe en bibliothèque Java native sur Central — zéro CLI, zéro Docker.
+. Les 4 gardes composite auditent source AsciiDoc / HTML rendu — l'artefact
+  EPUB binaire n'est audité par personne.
+. Le domaine `document.epub` (US-1 partiellement écrit avant session :
+  mode/result/port/adapter/report) a été repris, épinglé et câblé.
+
+== Résumé livré
+
+=== US-1 (TDD, UT) — domaine `document.epub` pur + adapter épinglé
+
+- Domaine Gradle-free : `EpubValidationMode` {OFF/LENIENT/STRICT, défaut OFF},
+  `EpubValidationResult` sealed {Valid/Invalid(issues)}, port
+  `EpubCheckRunner` (fun interface, stateless, ne throw jamais),
+  adapter `LibEpubCheckAdapter` (bridge `EpubChecker.check()` collectant
+  chaque message `ID severity: text (path:line)`, filtre
+  SUPPRESSED/USAGE/INFO), `EpubValidationReport` JSON (miroir xref,
+  NON_NULL).
+- UT existantes (port + rapport) conservées vertes.
+- UT adapter créées (`LibEpubCheckAdapterTest`, 5 tests) : fichier manquant/
+  répertoire → `<epub-file-missing>`, non-EPUB → Invalid avec issues,
+  EPUB3 minimal construit à la main (mimetype STORED + container + OPF +
+  nav + chapter, zéro binaire versionné — économie d'encre) → Valid,
+  réutilisation stateless.
+- *Bug réel attrapé par le TDD* : epubcheck appelle `info(null, ...)` depuis
+  Java → NullPointerException sur le paramètre Kotlin non-null `feature`.
+  Fix : signature nullable (`feature: String?`). RED (2 failures NPE) →
+  GREEN (17 UT epub 0 FAIL).
+- Dep `org.w3c:epubcheck:5.2.1` via catalogue (`libs.epubcheck`),
+  `implementation` — consommée uniquement par l'adapter. Zéro bump BOM.
+
+=== US-2 (TDD, FT TestKit) — tâche `validateDocumentEpub` + DSL + CLI
+
+- `ValidateDocumentEpubTask` (`@DisableCachingByDefault`) : mode
+  OFF skip / LENIENT warn + rapport / STRICT fail-fast après écriture du
+  rapport. EPUB absent sous mode non-OFF → rapport `Invalid
+  <epub-file-missing>` + fail STRICT / warn LENIENT (miroir de la règle
+  HTML-absent = DEAD S-232 — visibilité sur silence).
+- *Piège S-232 #3 évité* : `epubFile` porté en `@get:Input @get:Optional
+  Property<String>` (chemin) et PAS en `@InputFile` — un `@InputFile` valide
+  l'existence AVANT l'action (`Input file does not exist`), ce qui interdit
+  la règle « EPUB absent = finding ». Miroir exact de
+  `ValidateDocumentTask.htmlFilePath` (S-232).
+- Câblage `DocumentPlugin.registerValidateDocumentEpub` : chemin EPUB dérivé
+  du même knob `outputFileName` que la conversion (jamais le provider
+  outputFile du producteur — dépendance implicite interdite, `.get()`
+  config-time interdit), mode `converter { epubCheck }` + mirror plat
+  `ext.epubCheck` (défaut OFF back-compat) + CLI `-Pdocument.epubCheck`,
+  `mustRunAfter("convertDocumentToEpub")` (piège S-233 #2 : mustRunAfter
+  ordonne sans coupler), rapport `build/docs/document/epub-validation-report.json`.
+- FT `ValidateDocumentEpubTaskFunctionalTest` 4/4 : OFF skip sans rapport /
+  STRICT absent → GradleException + rapport `<epub-file-missing>` / LENIENT
+  absent → warn + build vert + rapport / STRICT + EPUB fraîchement converti
+  (`convertDocumentToEpub, validateDocumentEpub`) → VALID.
+- Non-régression : `DocumentPluginFunctionalTest` BUILD SUCCESSFUL.
+
+=== US-3 (BDD) — scénarios Cucumber `@epub-check`
+
+- `epub_check.feature` : 4 scénarios (OFF silencieux / STRICT absent →
+  fail + `<epub-file-missing>` / LENIENT absent → build vert / STRICT
+  accepte un EPUB fraîchement converti).
+- Runner dédié 17e : `EpubCheckCucumberRunner` (glue `document.epubcheck`,
+  tag `@epub-check`) + `EpubCheckSteps` (préfixe `epub-check` anti-glue
+  S-223) + `CucumberTaskSpec("epubCheckCucumberTest")` (build.gradle.kts).
+- 4/4 scénarios PASSED (XML : tests=4, failures=0, errors=0).
+
+== Gates de non-régression
+
+- `compileKotlin` VERT, `validatePlugins` VERT.
+- UT `document.epub.*` : 17/17 GREEN.
+- FT epub 4/4 + `DocumentPluginFunctionalTest` VERT.
+- `epubCheckCucumberTest` : 4/4 PASSED, 0 failure / 0 error XML.
+- Scan secrets : RAS (`TOKEN|SECRET|PASSWORD|API_KEY|gho_|ghp_` zéro match).
+- Zéro bump BOM — `epubcheck` est une dep tierce `org.w3c`, pas un artefact
+  `education.cccp`.
+
+== Livrables
+
+- `src/main/kotlin/document/epub/` — domaine (5 fichiers : Mode, Result,
+  port, adapter, report).
+- `src/main/kotlin/document/ValidateDocumentEpubTask.kt` — 5e garde.
+- `src/main/kotlin/document/DocumentPlugin.kt` — conventions + registration.
+- `src/main/kotlin/document/ConverterDsl.kt` + `DocumentExtension.kt` — knob
+  `epubCheck` (nested + mirror plat).
+- `build.gradle.kts` (+dep `libs.epubcheck`, +CucumberTaskSpec) +
+  `gradle/libs.versions.toml` (+`epubcheck = 5.2.1`).
+- Tests : `LibEpubCheckAdapterTest.kt` (5 UT), `epub_check.feature` (4
+  scénarios), `EpubCheckCucumberRunner.kt`, `EpubCheckSteps.kt`,
+  `ValidateDocumentEpubTaskFunctionalTest.kt` (4 FT).
+
+== Limites & suivis
+
+- La garde EPUB est *autonome* (tâche dédiée) — NON intégrée au composite
+  `validateDocument` (décision 4 du cadrage : le composite audite du texte,
+  la validation epubcheck coûte des secondes sur un binaire). Fusion future
+  seulement si besoin N3 réel.
+- Publication 0.0.15 (contenu cumulé DOC-EPUBCHECK) — accord pilote requis
+  (Règle 2).
+- Dogfooding FPA : l'EPUB du livre (`livre-navigable/book.epub`) peut être
+  audité par `validateDocumentEpub -Pdocument.epubCheck=STRICT` au besoin —
+  pas régénéré (économie d'encre).

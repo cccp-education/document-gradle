@@ -1,0 +1,79 @@
+= CADRAGE EPIC DOC-EPUBCHECK — Validation epubcheck de l'EPUB produit
+
+_Session 240 — gouvernance pure (pattern S-057/S-063), zéro code modifié._
+_Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`, S-217/218).
+Critère US-DOC-04 : « Le fichier passe la validation epubcheck » — backlogged
+depuis S-005, jamais couvert (gap unique identifié par l'audit BACKLOG S-239)._
+
+== Constats (audit 2026-08-31)
+
+. Seul `DocumentConverterTest.convertToEpub` (`DocumentConverterTest:276`)
+  asserte qu'un fichier EPUB3 est écrit — aucune validation de conformité
+  EPUB nulle part dans le build.
+. `epubcheck` (outil de référence W3C) existe en **bibliothèque Java native**
+  sur Maven Central : `org.w3c:epubcheck:5.2.1` (maintenu, 14 versions,
+  succession d'`org.idpf:epubcheck` 4.1.1). API `EpubChecker.check()`.
+. Les 4 gardes composite existantes (includeGuard/xref/security/htmlLint)
+  auditent la *source* AsciiDoc ou le *HTML rendu* — aucune n'audite l'artefact
+  *EPUB* (zip binaire) post-`convertDocumentToEpub`.
+. Le plugin embarque déjà `asciidoctorj-epub3:2.2.0` en `runtimeOnly` (S-233) —
+  l'EPUB produit est le point d'entrée logique d'une garde 5e.
+. Économie d'encre : le consommateur Kindle/Kobo réel n'a jamais réclamé la
+  gate — mais le critère est acté dans le BACKLOG (US-DOC-04) et l'option de
+  dégradation silencieuse est exclue par honnêteté contractuelle.
+
+== Décisions (10)
+
+. *Wrapper Java bibliothèque* — `org.w3c:epubcheck:5.2.1` via catalogue
+  (`libs.epubcheck`). Zéro CLI téléchargée, zéro Docker (contrainte écosystème
+  JVM exclusif), zéro téléch. runtime.
+. *Port/adapter DDD* — nouveau domaine `document.epub` :
+  - `EpubValidationMode` enum { OFF, LENIENT, STRICT } (défaut OFF, miroir
+    `XrefValidationMode`/`HtmlLinkLintMode`) ;
+  - `EpubValidationResult` sealed { Valid, Invalid(issues) } ;
+  - port `EpubCheckRunner` (fun interface `validate(file): EpubValidationResult`)
+    — le domaine Gradle-free, unit-testable avec un fake ;
+  - adapter `LibEpubCheckAdapter` (bridge `EpubChecker.check()` de la lib, I/O
+    isolé) ;
+  - `EpubValidationReport` (entry + liste + `toJson()`/`fromResult()`, miroir
+    `XrefValidationReport`).
+. *Tâche dédiée `validateDocumentEpub`* (groupe `document`) — `@InputFile`
+  epubFile, `@Input` mode, `@OutputFile` rapport
+  `build/docs/document/epub-validation-report.json`, sévérité STRICT
+  fail-fast (après écriture du rapport) / LENIENT warn / OFF skip.
+  `mustRunAfter("convertDocumentToEpub")` (piège S-233 #2 respecté :
+  mustRunAfter inverse la CLI — l'ordre déclaré ne crée pas de dépendance).
+. *Zéro intégration au composite `validateDocument` pour l'instant* — les 4
+  gardes composite auditaient du *texte source/HTML* ; l'EPUB est un binaire
+  dont la validation coûte secondes (pas ms). Le composite reste léger ;
+  la garde EPUB est **autonome** (tâche dédiée). Fusion composite future
+  seulement si un besoin N3 réel émerge (économie d'encre).
+. *DSL `converter { epubCheck }`* + mirror plat + CLI
+  `-Pdocument.epubCheck` (STRICT/LENIENT/OFF) — même knob que les 4 gardes.
+. *EPUB absent sous mode non-OFF* → report `Invalid` avec entry
+  `<epub-file-missing>` pattern (miroir « HTML absent = DEAD » S-232) —
+  visibilité sur silence, jamais de skip muet.
+. *Baby-step* 3 US : US-1 domaine pur (UT, RED→GREEN strict) → US-2 câblage
+  tâche+DSL+CLI (FT TestKit) → US-3 Cucumber `@epub-check` (runner dédié
+  17e `CucumberTaskSpec`, glue `document.epubcheck`, steps préfixés
+  anti-glue S-223).
+. *Zéro bump BOM* — `epubcheck` est une dep tierce `org.w3c:epubcheck:5.2.1`,
+  pas un artefact `education.cccp`.
+. *Pas de publication* cette session (0.0.14 déjà sur Central ; la 0.0.15
+  publiera le contenu cumulé EPIC DOC-EPUBCHECK — accord pilote requis,
+  Règle 2).
+. *Dogfooding FPA non régénéré* : le FT/BDD lit le rapport produit sur un
+  EPUB de fixture construit par `convertDocumentToEpub` dans le build de test
+  (pas un binaire versionné).
+
+== Périmètre hors scope
+
+- epubcheck accessibility flags (`-a11y`), media type overrides, profils
+  personnalisés — version simple par défaut.
+- Intégration dans `DocumentValidator` composite (décision 4).
+- Publication 0.0.15 (décision 9, session future).
+
+== Suite
+
+*US-1* → domaine `document.epub` + UT strict. *US-2* → tâche + FT.
+*US-3* → Cucumber BDD + clôture EPIC.

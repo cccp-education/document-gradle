@@ -21,12 +21,14 @@ plantuml-plugin = "0.0.3"
 i18n-contracts = "0.0.2"
 opencode-session-contracts = "0.0.2"
 pipeline-contracts = "0.0.2"
+epubcheck = "5.2.1"
 coroutines = "1.10.2"
 
 [libraries]
 i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
 opencode-session-contracts = { module = "education.cccp:opencode-session-contracts", version.ref = "opencode-session-contracts" }
 pipeline-contracts = { module = "education.cccp:pipeline-contracts", version.ref = "pipeline-contracts" }
+epubcheck = { module = "org.w3c:epubcheck", version.ref = "epubcheck" }
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
 asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram-plantuml", version.ref = "asciidoctorj-diagram-plantuml" }

@@ -1,5 +1,7 @@
 package document
 
+import document.epub.EpubValidationMode
+
 import document.batch.BatchDsl
 import document.template.TemplateDsl
 import document.translation.TranslationDsl
@@ -177,6 +179,13 @@ abstract class DocumentExtension {
      * HTML link linting mode (DOC-HTML-LINT). Mirrors [converter].htmlLinkLint.
      */
     abstract val htmlLinkLint: Property<HtmlLinkLintMode>
+
+    /**
+     * EPUB (epubcheck) validation strictness for the converted artifact
+     * (DOC-EPUBCHECK). [EpubValidationMode.OFF] by default (backward-compatible).
+     * Mirrors [converter].epubCheck.
+     */
+    abstract val epubCheck: Property<EpubValidationMode>
 
     internal fun initNested(
         enrich: DocumentEnrichDsl,

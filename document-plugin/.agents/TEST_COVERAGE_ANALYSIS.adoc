@@ -1,6 +1,36 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 237
+:session: 240
+
+== Session 240 — DOC-EPUBCHECK : 5e garde (validation epubcheck de l'EPUB)
+
+*Objectif* : fermer le dernier gap fonctionnel du BACKLOG (critère US-DOC-04
+epubcheck, backlogged depuis S-005) — EPIC DOC-EPUBCHECK 3/3 US.
+
+*Nouveaux tests (14 + 2 feature-fichiers)* :
+- Unit (domaine pur + adapter) : 17 UT `document.epub.*` au total —
+  4 UT `EpubCheckRunnerTest` (port + fake : file forwarded, issues portées,
+  Valid sans issues, stateless) + 8 UT `EpubValidationReportTest`
+  (fromResult Valid/Invalid, JSON NON_NULL, round-trip fromJson,
+  dégradé silencieux blank/invalid JSON) + 5 UT `LibEpubCheckAdapterTest`
+  (fichier manquant/répertoire → `<epub-file-missing>`, non-zip → Invalid,
+  EPUB3 minimal construit à la main → Valid, adapter stateless).
+  *Bug réel attrapé TDD* : callback Java `info(null, ...)` — NPE paramètre
+  Kotlin non-null `feature`, fix signature nullable.
+- Fonctionnel TestKit : 4 FT `ValidateDocumentEpubTaskFunctionalTest`
+  (OFF skip sans rapport / STRICT absent → fail + `<epub-file-missing>` +
+  rapport écrit / LENIENT absent → warn + build vert + rapport / STRICT
+  + EPUB fraîchement converti → VALID).
+- Cucumber BDD : `epub_check.feature` 4 scénarios `@epub-check` + 17e
+  runner dédié `EpubCheckCucumberRunner` (glue `document.epubcheck`) +
+  steps préfixés « epub-check » (anti-glue S-223) +
+  `CucumberTaskSpec("epubCheckCucumberTest")` — 4/4 PASSED,
+  0 failure / 0 error XML.
+
+*Non-régression* : `compileKotlin` VERT, `validatePlugins` VERT,
+`DocumentPluginFunctionalTest` BUILD SUCCESSFUL, UT port+rapport
+préexistantes (12) inchangées et vertes. Zéro bump BOM (dep tierce
+`org.w3c:epubcheck:5.2.1`).
 
 == Session 237 — Option C : republication 0.0.14 Maven Central
 

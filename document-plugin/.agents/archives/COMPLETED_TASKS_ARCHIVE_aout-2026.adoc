@@ -2,6 +2,50 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 240 (2026-08-31) — EPIC DOC-EPUBCHECK ✅ TERMINÉ (5e garde : validation epubcheck)
+
+*Type* : feat + TDD/BDD (cadrage + 3 US)
+*Score* : 10/10
+
+*Résumé* :
+- Cadrage gouvernance pure : `.agents/CADRAGE_EPIC_DOC_EPUBCHECK.adoc`
+  (5 constats, 10 décisions). Gap US-DOC-04 (epubcheck, backlogged depuis
+  S-005) = dernier gap fonctionnel du BACKLOG.
+- US-1 (TDD strict) : domaine `document.epub` Gradle-free — port
+  `EpubCheckRunner` (fun interface stateless) + adapter `LibEpubCheckAdapter`
+  (bridge `org.w3c:epubcheck:5.2.1` via catalogue, messages
+  `ID severity: text (path:line)` filtrés WARN/ERROR/FATAL) +
+  `EpubValidationMode`/`EpubValidationResult`/`EpubValidationReport`
+  (miroir xref). 5 UT `LibEpubCheckAdapterTest` (EPUB3 minimal construit à
+  la main — mimetype STORED + container + OPF + nav + chapter, zéro binaire
+  versionné). *Bug réel attrapé par le TDD* : epubcheck appelle
+  `info(null, ...)` → NPE Kotlin, fix paramètre `feature` nullable.
+  17 UT domain epub 0 FAIL.
+- US-2 (FT TestKit) : tâche `validateDocumentEpub`
+  (`@DisableCachingByDefault`, STRICT fail-fast après rapport / LENIENT
+  warn / OFF skip ; EPUB absent non-OFF → `<epub-file-missing>`, miroir
+  règle HTML S-232) + DSL `converter { epubCheck }` + mirror plat +
+  CLI `-Pdocument.epubCheck` + chemin EPUB dérivé du même knob
+  `outputFileName` que la conversion (jamais provider producteur) +
+  `mustRunAfter("convertDocumentToEpub")`. *Piège S-232 #3 confirmé* :
+  `@InputFile` valide l'existence AVANT l'action → `epubFile` = `@Input
+  @Optional Property<String>` (miroir `htmlFilePath`). 4 FT GREEN
+  (dont STRICT valide sur EPUB fraîchement converti).
+- US-3 (BDD) : `epub_check.feature` 4 scénarios `@epub-check` (OFF /
+  STRICT absent / LENIENT absent / STRICT valide) + runner dédié 17e
+  `EpubCheckCucumberRunner` (glue `document.epubcheck`) + steps préfixe
+  « epub-check » (anti-glue S-223) + `CucumberTaskSpec
+  ("epubCheckCucumberTest")` — 4/4 PASSED.
+- Gates : `compileKotlin` VERT, `validatePlugins` VERT, FT epub 4/4 +
+  `DocumentPluginFunctionalTest` VERT, secrets RAS. Zéro bump BOM (dep
+  tierce org.w3c). Publication 0.0.15 en attente d'accord pilote.
+
+*Livrables* : `document/epub/` (5 fichiers domaine), `ValidateDocumentEpubTask.kt`,
+`DocumentPlugin.kt`/`ConverterDsl.kt`/`DocumentExtension.kt` (knob),
+`build.gradle.kts` + `libs.versions.toml` (+`epubcheck = 5.2.1`),
+`LibEpubCheckAdapterTest.kt`, `ValidateDocumentEpubTaskFunctionalTest.kt`,
+`epub_check.feature` + `EpubCheckCucumberRunner.kt` + `EpubCheckSteps.kt`.
+
 === Session 239 (2026-08-31) — Hygiene + consommation externe 0.0.14 PROUVÉE
 
 *Type* : maintenance + preuve consommation externe

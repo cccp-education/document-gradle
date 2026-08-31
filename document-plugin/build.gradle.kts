@@ -53,6 +53,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
 
+    // DOC-EPUBCHECK — W3C epubcheck as a Java library (org.w3c:epubcheck 5.2.1) for
+    // the EpubCheckRunner port adapter. US-1 domain stays Gradle-free; this dep is
+    // consumed only by the adapter (LibEpubCheckAdapter).
+    implementation(libs.epubcheck)
+
     // SLF4J — logging in ContentTranslationService
     implementation("org.slf4j:slf4j-api")
 
@@ -175,6 +180,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/n3_collect_custom.feature"),
             tags = listOf("@n3-collect-custom"),
             runnerClass = "document.n3collect.N3CollectCustomCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "epubCheckCucumberTest",
+            features = listOf("src/test/resources/features/epub_check.feature"),
+            tags = listOf("@epub-check"),
+            runnerClass = "document.epubcheck.EpubCheckCucumberRunner",
         ),
     )
 }

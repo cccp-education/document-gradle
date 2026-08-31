@@ -2,6 +2,7 @@ package document
 
 import document.batch.BatchConvertDocumentsTask
 import document.batch.BatchDsl
+import document.epub.EpubValidationMode
 import document.template.ApplyDocumentTemplateTask
 import document.template.TemplateDsl
 import document.translation.TranslateDocumentTask
@@ -139,6 +140,7 @@ class DocumentPlugin : Plugin<Project> {
                  includeGuard = project.objects.property(IncludeGuardMode::class.java),
                  xrefValidation = project.objects.property(XrefValidationMode::class.java),
                  htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
+                 epubCheck = project.objects.property(EpubValidationMode::class.java),
              ),
               verification = VerificationDsl(project.objects.property(Boolean::class.java)),
         )
@@ -200,6 +202,9 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
         ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
         ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
+        // DOC-EPUBCHECK — converter epubCheck default OFF (backward-compatible) + mirror flat property
+        ext.converter.epubCheck.convention(EpubValidationMode.OFF)
+        ext.epubCheck.convention(ext.converter.epubCheck)
         // Verification DSL conventions
         ext.verification.htmlLinks.convention(false)
 
@@ -250,6 +255,7 @@ class DocumentPlugin : Plugin<Project> {
         registerTranslateDocumentBatch(project, ext)
         registerRetranslateFrontmatter(project, ext)
         registerValidateDocumentXref(project, ext)
+        registerValidateDocumentEpub(project, ext)
         registerValidateDocument(project, ext)
         registerLintHtmlDocument(project, ext)
         registerVerifyHtmlLinksTask(project, ext)
@@ -598,6 +604,25 @@ class DocumentPlugin : Plugin<Project> {
             task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
             task.targetLanguage.set(tgtLang)
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+        }
+    }
+
+    private fun registerValidateDocumentEpub(project: Project, ext: DocumentExtension) {
+        project.tasks.register("validateDocumentEpub", ValidateDocumentEpubTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Validates the EPUB artifact produced by convertDocumentToEpub with epubcheck and writes a JSON report. — DOC-EPUBCHECK"
+            task.epubFile.set(
+                cliProp(project, "outputFileName")
+                    .orElse("document")
+                    .flatMap { name -> project.layout.buildDirectory.file("docs/document/$name.epub") }
+                    .map { it.asFile.absolutePath },
+            )
+            task.epubCheck.set(cliProp(project, "epubCheck").map { EpubValidationMode.valueOf(it.uppercase()) }.orElse(ext.epubCheck))
+            // Pitfall S-233 #2 — mustRunAfter orders but never couples: the audit runs
+            // after the EPUB conversion when both are requested, but stays usable
+            // standalone (no implicit dependence on the producer's outputFile).
+            task.mustRunAfter("convertDocumentToEpub")
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/epub-validation-report.json"))
         }
     }
 
