@@ -549,14 +549,18 @@ TRANSLATE-1 (PivotModel + Parser) ─→ TRANSLATE-2 (Renderers) ─→ TRANSLAT
 Projection conservatrice : 5 sessions, ~34 pts, méthodo baby step DDD/TDD/BDD.
 
 '''
-== EPIC PUB — Publication Maven Central + Plugin Portal
+== ✅ EPIC PUB — Publication Maven Central + Plugin Portal (TERMINÉ, sessions 018/043/237)
 
 _Source : configuration/EPIC_PUB.adoc (Session 096)_
 
-_Note_ : document-gradle n'est pas dans le plan de publication Maven Central pour l'instant.
-Seul le relocation comment est a mettre a jour pour coherence transverse.
+_Note mise à jour (S-237) : document-gradle EST publié sur Maven Central —
+`education.cccp:document-plugin` versions publiées : 0.0.1 (S-018, bundle
+4d15e522), 0.0.3 (S-207/S-043), 0.0.12 (2026-08-30), **0.0.14 (S-237,
+Option C — gems PDF/EPUB packagées runtimeOnly propagées aux consommateurs,
+propagation vérifiée polling metadata ~7 min)**. La 0.0.13 (jamais publiée)
+est absorbée par 0.0.14 (contenu cumulé S-231..S-236).*
 
-=== PUB-2.2 — Mettre a jour le commentaire relocation
+=== ✅ PUB-2.2 — Mettre a jour le commentaire relocation (TERMINÉ, commit d40d04f)
 
 Dans le `build.gradle.kts`, remplacer :
 ```kotlin
@@ -572,10 +576,16 @@ Par :
 // Activable avec -Prem relocationGroup="<futur-namespace>"
 ```
 
-=== PUB-5 — Verification que le relocation est bien cable
+_statut_ : ✅ TERMINÉ — le commentaire cible est en place (build.gradle.kts).
+
+=== ✅ PUB-5 — Verification que le relocation est bien cable (TERMINÉ)
 
 Verifier que le bloc `maven-publish` + `signing` dans `build.gradle.kts` contient
 bien la section `<relocation>` conditionnelle via `-Prem relocationGroup=...`.
+
+_statut_ : ✅ TERMINÉ — publishingConventions 0.0.4 (education.cccp.build.publishing)
+câble signing + relocation ; publications vérifiées à chaque publication
+(0.0.14 : signatures .asc présentes dans mavenLocal + Central).
 
 '''
 == EPIC DOC-TABLE-VALIDATE — Validation syntaxique des tableaux AsciiDoc post-traduction

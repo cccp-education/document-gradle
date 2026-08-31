@@ -1,6 +1,24 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 236
+:session: 237
+
+== Session 237 — Option C : republication 0.0.14 Maven Central
+
+*Objectif* : républier 0.0.14 sur Central (gems PDF/EPUB packagées runtimeOnly
+S-233, knob `outputFileName` vivant S-235/236) pour les consommateurs externes.
+
+*Zéro test modifié/créé* — session PUB pure (bump version 1 ligne + publishing).
+Baselines inchangées et non ré-exécutées (économie d'encre — aucun code
+production modifié, la baseline S-235/S-236 fait foi) :
+- Unit : `test` VERT (dernier run S-234/S-236).
+- FT : `functionalTest` 68/68 (baseline S-234).
+- Cucumber dédiés : 16/16 runners, 146 scénarios PASSED (baseline S-236).
+- Cucumber global : hors gate (82 failures glue scoping préexistantes —
+  périmètre option D session 238).
+
+*Gates publication* : `compileKotlin` VERT, `publishToMavenLocal` VERT
+(6 artefacts + signatures), propagation Central vérifiée (HTTP 200 POM+JAR,
+metadata `<latest>0.0.14</latest>`).
 
 == Session 234 — Fix Option A : hygiène FT (convention `translation.outputFileName`)
 

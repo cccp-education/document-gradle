@@ -1,0 +1,74 @@
+= Session 237 — Option C : republication 0.0.14 sur Maven Central (gems PDF/EPUB packagées)
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : PUB (publication Maven Central, accord pilote accordé en session)
+_Mission_ : Option C du PROMPT_REPRISE 237 — republier le plugin avec les gems
+PDF/EPUB `runtimeOnly` (S-233) : les consommateurs externes de `document-plugin`
+ont besoin de cette version pour convertir PDF/EPUB sans provision Ruby locaux.
+_Méthode_ : gouvernance de publication (zéro code production modifié, 1 ligne version).
+
+== Constats (audit ouverture)
+
+. *Version locale 0.0.13 non publiée* — `build.gradle.kts:11` portait 0.0.13
+  (bump S-233 gems) alors que Central s'arrêtait à 0.0.12. Tout le travail
+  S-233..S-236 (gems runtimeOnly, knob `outputFileName` bout-en-bout, gardes
+  composite 4, metadata validationStatus) n'était disponible que par mavenLocal.
+. *Delta PROMPT_REPRISE* — le texteannonçait 0.0.14 ; réalité locale 0.0.13 →
+  le bump 0.0.13 → 0.0.14 aligne les deux.
+. *Prérequis nmcp déjà satisfaits* — settings.gradle.kts (nmcp.settings 1.5.0,
+  AUTOMATIC, creds `ossrhUsername`/`ossrhPassword` depuis ~/.gradle/gradle.properties),
+  POM name/description `withType<MavenPublication>`, `signing useGpgCmd()` via
+  conventions publishing 0.0.4, `repositories.mavenCentral()`.
+
+== Audit prérequis publication (méthode standard nmcp)
+
+- Version 0.0.13 → 0.0.14 hardcodé `build.gradle.kts:11` (pas via catalogue).
+- Deps `education.cccp` : toutes des *releases Central* — plantuml-plugin 0.0.4,
+  i18n/opencode-session/pipeline-contracts 0.0.2 (BOM 0.0.26), planner-plugin
+  0.0.1 (compileOnly, non portée au POM runtime).
+- Gems PDF/EPUB `org.asciidoctor` : Central (2.3.23 / 2.2.0), runtimeOnly.
+- `compileKotlin` VERT (gate build, JDK 25).
+- `publishToMavenLocal` VERT (8s) — artefacts vérifiés dans ~/.m2 :
+  jar + pom + module + sources + javadoc + 6 signatures .asc.
+  POM vérifié : name, scm, Apache-2.0, asciidoctorj-pdf + epub3 présents.
+
+== Résumé livré
+
+=== Publication Central (nmcp AUTOMATIC)
+
+- `./gradlew publishAggregationToCentralPortal --no-daemon` → BUILD SUCCESSFUL
+  (27s), deployment validé par le portail.
+- Propagation vérifiée par polling `maven-metadata.xml` : 0.0.12 → 0.0.14
+  après ~7 minutes (8 vérifications espacées ~55s).
+- Vérification artefacts Central : POM et JAR → HTTP 200 ;
+  POM porte bien `asciidoctorj-pdf:2.3.23` + `asciidoctorj-epub3:2.2.0`
+  (runtime deps gem visibles par les consommateurs externes).
+
+=== Contenu fonctionnel de 0.0.14 (delta 0.0.12 → 0.0.14)
+
+- S-231 metadata validation status N3 (`validationStatus` dans metadata.json).
+- S-232 4e garde composite (lint HTML rejoint validateDocument).
+- S-233 dogfooding N3 complet livre FPA + runtimeOnly gems PDF/EPUB + ENV fix.
+- S-234 fix convention `translation.outputFileName` (baseline FT verte).
+- S-235 knob `outputFileName` vivant : conversions + 4e garde audite le HTML réel.
+- S-236 collect N3 knob-aware (artifacts custom indexés composite-context.json).
+
+== Gates
+
+- `compileKotlin` VERT.
+- `publishToMavenLocal` VERT (jar, pom, signatures).
+- Central : metadata `<latest>0.0.14</latest>`, POM/JAR HTTP 200, gem deps présentes.
+- Zéro secret (grep standard RAS), zéro code production modifié (version uniquement).
+- Zéro bump BOM (deps déjà contraintes par BOM 0.0.26 alignée).
+
+== Décisions
+
+- Pas de bump BOM workspace-bom : document-gradle n'est pas un contrat N0
+  consommé par d'autres boroughs via le BOM — aucun cascade requis. Les
+  consommateurs externes bumpent leur constraint `document-plugin` 0.0.13/12 → 0.0.14.
+- Option D (moteur Cucumber global, 82 failures préexistantes) reportée
+  session 238 — PROMPT_REPRISE déjà orienté.
+- Les `.bak`/`backup` résiduels du Workspace (BACKLOG.adoc.bak,
+  build.gradle.kts.backup*, INDEX.adoc.bak, settings.bak) non purgés cette
+  session (économie d'encre, hors périmètre PUB) — hygiène future.

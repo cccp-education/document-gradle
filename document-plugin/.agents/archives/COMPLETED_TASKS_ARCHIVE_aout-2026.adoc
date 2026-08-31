@@ -474,3 +474,47 @@ Gates : 16/16 runners Cucumber dédiés VERTS (0 failure / 0 error XML,
 `-Pdocument.outputFileName` suit désormais conversion → garde → collect.
 Options restantes : C (publication 0.0.14, accord pilote requis), D (moteur
 global), E (assembleBook knob séparé `book`).
+
+=== Session 237 (2026-08-31) — Option C : republication 0.0.14 Maven Central
+
+*Type* : PUB (publication Maven Central, accord pilote explicite session)
+*Score* : 10/10
+
+*Résumé* : Option C du PROMPT_REPRISE 237 exécutée — republication 0.0.14
+pour que les consommateurs externes du plugin disposent des gems PDF/EPUB
+packagées `runtimeOnly` (S-233) et du knob `outputFileName` bout-en-bout
+(S-235/236).
+
+*Audit prérequis nmcp* (méthode standard nmcp) :
+- `settings.gradle.kts` : `com.gradleup.nmcp.settings` 1.5.0 + `nmcpSettings`
+  `centralPortal` (username/password depuis `~/.gradle/gradle.properties`,
+  `publishingType = "AUTOMATIC"`) — déjà en place depuis DOC-7/DOC-8.5.
+- POM `withType<MavenPublication>` : name "Document Gradle Plugin", description,
+  license Apache-2.0, developer cccp-education, scm (via publishingConventions).
+- `repositories { mavenCentral() }` (pas staging Sonatype legacy).
+- Deps `education.cccp` toutes des releases Central : planner-plugin 0.0.1
+  (compileOnly), plantuml-plugin 0.0.4, i18n-contracts 0.0.2,
+  opencode-session-contracts 0.0.2, pipeline-contracts 0.0.2,
+  workspace-bom 0.0.26 (platform). Gems `org.asciidoctor` Central.
+- Build compile (`compileKotlin` VERT).
+
+*Publication* :
+- Bump `version = "0.0.13"` → `"0.0.14"` (build.gradle.kts:11 — seule ligne
+  production modifiée).
+- `publishToMavenLocal` VERT (8s) : jar 773 KB + pom + module + sources +
+  javadoc + signatures .asc ; POM vérifié (license Apache-2.0, scm, deps gems
+  asciidoctorj-pdf 2.3.23 + asciidoctorj-epub3 2.2.0).
+- `publishAggregationToCentralPortal --no-daemon` BUILD SUCCESSFUL (27s,
+  deployment accepted AUTOMATIC).
+- Propagation Central vérifiée par polling `maven-metadata.xml` (8 requêtes,
+  ~7 min) : `<latest>0.0.14</latest>`, POM+JAR HTTP 200, POM porte les gems.
+
+*Delta versions* : Central 0.0.12 → 0.0.14 (0.0.13 jamais publiée — contenu
+cumulé S-231..S-236 embarqué dans 0.0.14).
+
+*Écart noté* : le PROMPT_REPRISE 237 annonçait « republication 0.0.14 » alors
+que le local était 0.0.13 — réalité locale auditée avant bump (métadonnée
+Central `<latest>0.0.12</latest>` = source de vérité).
+
+*Prochaine session 238* : option D actée pilote — diagnostic moteur Cucumber
+global (`cucumberTest`, 82 failures `UndefinedStepException` glue scoping).

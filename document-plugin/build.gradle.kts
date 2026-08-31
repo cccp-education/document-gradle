@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "education.cccp"
-version = "0.0.13"
+version = "0.0.14"
 
 dependencies {
     implementation(platform("education.cccp:workspace-bom:0.0.26"))
