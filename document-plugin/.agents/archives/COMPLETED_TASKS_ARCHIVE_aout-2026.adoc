@@ -352,3 +352,40 @@ trippliqué `DocumentPlugin.apply()`.
 
 *Gates* : compileKotlin VERT / test 2622 (11 failures ENV gems Ruby préexistantes) /
 10 runners Cucumber dédiés VERTS / zéro secret / zéro régression.
+
+=== Session 232 (2026-08-31) — EPIC DOC-VALIDATE-HTML-LINT : 4e garde composite
+
+*Type* : feat + TDD/BDD
+*Score* : 10/10
+
+*Résumé* : Lint HTML du rendu (`HtmlLinkLinter`, S-226) rejoint la validation
+composite `validateDocument` comme 4e garde (include guard CR4 + xref CR-xref +
+security CR5 + htmlLint DOC-HTML-LINT).
+- US-1 (TDD strict RED→GREEN) : `DocumentValidator.validate(..., htmlLintMode=OFF,
+  html=null)` defaults backward-compat + `HtmlLintReportEntry` (VALID/DEAD,
+  deadLinks nullable NON_NULL) + `DocumentValidationReport.htmlLint`
+  (@JsonInclude NON_NULL sur le conteneur — JSON backward-compat) +
+  `overallStatus()` FAIL si DEAD + `fromJson` sans bloc htmlLint → null PASS +
+  règle « HTML absent sous mode non-OFF » = DEAD `<html-file-missing>`
+  (visibilité sur silence). 10 UT `HtmlLintGuardTest`.
+- US-2 (FT TestKit) : `ValidateDocumentTask.htmlLinkLint` + `htmlFilePath`
+  (@Input @Optional String — PAS @InputFile : Gradle validerait l'existence)
+  + sévérité STRICT/LENIENT/OFF symétrique xref + câblage plugin (même knob
+  `converter { htmlLinkLint }` + mirror + CLI, chemin statique
+  `build/docs/document/document.html`, `mustRunAfter("convertDocumentToHtml")`).
+  4 FT. 3 pièges Gradle résolus : dépendance implicite provider outputFile /
+  `.get()` configuration-time interdit / `@InputFile @Optional` valide l'existence.
+- US-3 (BDD) : 3 scénarios `@document-validation-html-lint` (STRICT fail DEAD
+  + message / STRICT pass VALID / LENIENT DEAD sans échec) + steps Given dédié
+  anti-glue S-223 + configs STRICT_HTML/LENIENT_HTML (safeMode SERVER,
+  pattern STRICT_SERVER) — 8/8 PASSED au runner dédié.
+
+*Livrables* : `DocumentValidator.kt` (+4e garde +HtmlLintReportEntry +overallStatus
++NON_NULL), `ValidateDocumentTask.kt` (+inputs +sévérité), `DocumentPlugin.kt`
+(câblage), `HtmlLintGuardTest.kt` (10 UT), `ValidateDocumentTaskHtmlLintFunctionalTest.kt`
+(4 FT), `document_validation.feature` (+3 scénarios), `DocumentValidationSteps.kt` (+steps).
+
+*Gates* : compileKotlin VERT / 10 runners Cucumber dédiés SUCCESS (8m23s) /
+FT composite 4/4 + html-lint 4/4 / test 2671 / 11 failures ENV gems Ruby
+préexistantes (S-213/215/224/231) / domaine validation 37 UT / 0 fail /
+zéro secret / zéro régression.

@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 231 — EPIC DOC-METADATA-VALIDATION ✅ TERMINÉ 3/3 US : statut de validation composite exposé dans metadata.json N3 — `DocumentValidationReport.overallStatus()` + `fromJson()` (7 UT TDD), `DocumentMetadata.validationStatus` porté par `collectDocumentRetrieve` depuis `document-validation-report.json` (lecture seule, dégradé silencieux, 5 UT + 3 FT GREEN), Cucumber `@metadata-validation` 3/3 PASSED (runner dédié) + hygiène S-227 (purge 2 `println` debug, dédup bloc conventions trippliqué de `apply()`)
+_Date revision_ : 2026-08-31 (session 232 — EPIC DOC-VALIDATE-HTML-LINT ✅ TERMINÉ 3/3 US : 4e garde composite dans `validateDocument` — lint HTML du rendu (`HtmlLinkLinter`) rejoint include guard + xref + security ; `DocumentValidator.validate(..., htmlLintMode=OFF, html=null)` + `HtmlLintReportEntry` + `overallStatus()` FAIL si DEAD + fromJson backward-compat ; tâche `htmlFilePath` @Input @Optional (3 pièges Gradle documentés) + même knob `converter { htmlLinkLint }` ; 10 UT + 4 FT + 3 scénarios BDD 8/8 PASSED)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1598,3 +1598,75 @@ _Total_ : ~12 pts, 3 US. *Épic clôturé en 1 session (S-231).*
 - Déduplication du bloc conventions **trippliqué** dans `DocumentPlugin.apply()`
   (blocs identiques copiés 3×) + suppression du doublon mirror `htmlLinkLint`
   + ligne parasite au milieu du bloc outputs. `compileKotlin` VERT.
+
+'''
+== ✅ EPIC DOC-VALIDATE-HTML-LINT — 4e garde composite : lint HTML du rendu dans validateDocument (TERMINÉ, Session 232)
+
+_Suite directe de DOC-VALIDATE-COMPOSITE (S-225) + DOC-HTML-LINT (S-226) + DOC-METADATA-VALIDATION (S-231).
+Option B du PROMPT_REPRISE 227/230/232 : hardening du câblage lint HTML dans la validation composite._
+_statut_ : ✅ TERMINÉ (S-232 — 3/3 US).
+
+[CAUTION]
+====
+**Motivation** : la validation composite `validateDocument` (S-225) orchestrait trois gardes sur la
+*source* AsciiDoc, tandis que le lint de navigabilité (`HtmlLinkLinter`, S-226) opérait sur le HTML
+*rendu* mais restait en dehors du composite (tâche `lintHtmlDocument` dédiée, câblée S-227). Le
+rapport consolidé ne disait donc rien de la navigabilité du HTML publié — un lien mort
+`href="#dead"` passait `validateDocument` sans trace dans `document-validation-report.json`, et
+`overallStatus()` (metadata.json N3, S-231) ignorait un livre non navigable.
+
+**Règle** : miroir exact du bloc `xref` (patrimoine DDD du domaine `document.validation`) :
+- `DocumentValidator.validate(text, baseDir, includeGuardMode, xrefMode, safeMode, htmlLintMode = OFF, html = null)`
+  — defaults backward-compat (les appels 3-gardes existants compilent sans changement).
+- `HtmlLintReportEntry(status = VALID | DEAD, deadLinks, reason)` — `deadLinks` null pour VALID,
+  liste triée dédupliquée pour DEAD ; `@JsonInclude(NON_NULL)` partout.
+- `DocumentValidationReport.htmlLint` nullable : bloc absent du JSON quand mode OFF (backward-compat
+  `fromJson` des rapports existants, PASS).
+- `overallStatus()` étendu : `htmlLint.status == "DEAD"` → FAIL (un lien mort casse la navigabilité
+  N3 quel que soit le mode — visibilité même en LENIENT).
+- HTML absent sous mode non-OFF → DEAD avec entry `<html-file-missing>` (visibilité sur silence,
+  jamais de skip muet).
+- Sévérité tâche symétrique xref : STRICT fail-fast (rapport écrit avant), LENIENT warn, OFF skip.
+====
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-VALIDATE-HTML-LINT-1
+| Domaine pur — `DocumentValidator.validate` 4e garde (params `htmlLintMode` + `html`),
+  `HtmlLintReportEntry`, `DocumentValidationReport.htmlLint` (NON_NULL), `overallStatus()`
+  FAIL si DEAD, `fromJson` backward-compat, règle HTML absent = DEAD `<html-file-missing>`.
+| 10 UT (`HtmlLintGuardTest`) + non-régression 8 UT Validator + 7 UT ReportStatus
+| 4
+| ✅ TERMINÉ (S-232)
+
+| DOC-VALIDATE-HTML-LINT-2
+| Câblage — `ValidateDocumentTask` inputs `htmlLinkLint` (+ `htmlFilePath` @Input @Optional,
+  lecture optionnelle, sévérité STRICT/LENIENT/OFF symétrique xref) ;
+  `DocumentPlugin.registerValidateDocument` (même knob `converter { htmlLinkLint }` + mirror
+  + CLI `-Pdocument.htmlLinkLint`, chemin statique `build/docs/document/document.html`,
+  `mustRunAfter("convertDocumentToHtml")`).
+| 4 FT (`ValidateDocumentTaskHtmlLintFunctionalTest`)
+| 4
+| ✅ TERMINÉ (S-232)
+
+| DOC-VALIDATE-HTML-LINT-3
+| Cucumber BDD `@document-validation-html-lint` (STRICT fail DEAD + message / STRICT pass VALID /
+  LENIENT DEAD sans échec) — Given dédié anti-glue S-223, configs STRICT_HTML/LENIENT_HTML
+  (safeMode SERVER), Whens `runs with the HTML conversion`.
+| 3 BDD — 8/8 PASSED au runner dédié
+| 4
+| ✅ TERMINÉ (S-232)
+|===
+
+_Total_ : ~12 pts, 3 US. *EPIC clôturé en 1 session (S-232).*
+
+=== Limites documentées (S-232)
+
+- Le 4e garde lit le chemin HTML *statique* `build/docs/document/document.html` — si
+  `outputFileName` est customisé, l'output réel diffère ; les 3 pièges Gradle (dépendance
+  implicite via provider `outputFile`, `.get()` configuration-time interdit, `@InputFile
+  @Optional` valide l'existence avant l'action) documentés dans le rapport S-232.
+  Extension future possible (session 233 option B).
+- La tâche dédiée `lintHtmlDocument` (S-227) reste utile hors composite (bookPipeline, usage autonome).

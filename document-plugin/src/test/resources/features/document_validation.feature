@@ -36,3 +36,22 @@ Feature: Composite document validation (include guard + xref + security policy)
     Given a document gradle project with document-validation config "OFF" and source "include::/etc/passwd[]\n\nSee <<missing>> here.\n"
     When the validateDocument task runs successfully
     Then the document-validation-report.json contains no INVALID or MISSING block
+
+  @document-validation @document-validation-html-lint
+  Scenario: HTML lint STRICT fails fast on a dead internal link of the rendered HTML
+    Given a document gradle project with document-validationHtml config "STRICT_HTML" and source "= Title\n\n++++\n<p><a href=\"#missing\">gone</a></p>\n++++\n"
+    When the validateDocument task runs with the HTML conversion and fails
+    Then the document-validation-report.json marks htmlLint DEAD listing "missing"
+    And the build fails with document-validation message "HTML link lint"
+
+  @document-validation @document-validation-html-lint
+  Scenario: HTML lint VALID when the rendered HTML is navigable
+    Given a document gradle project with document-validationHtml config "STRICT_HTML" and source "= Title\n\n[[intro]]\n== Intro\n\nSee <<intro>> here.\n"
+    When the validateDocument task runs with the HTML conversion
+    Then the document-validation-report.json marks htmlLint VALID
+
+  @document-validation @document-validation-html-lint
+  Scenario: HTML lint LENIENT reports DEAD without failing the build
+    Given a document gradle project with document-validationHtml config "LENIENT_HTML" and source "= Title\n\n++++\n<p><a href=\"#missing\">gone</a></p>\n++++\n"
+    When the validateDocument task runs with the HTML conversion
+    Then the document-validation-report.json marks htmlLint DEAD listing "missing"

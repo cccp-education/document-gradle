@@ -1,64 +1,60 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 232
-:date: 2026-08-31
-:max-lines: 70
 
-== Quick Start
+== Mission session 233
 
-----
-cd /home/cheroliv/workspace/foundry/public/document-gradle/document-plugin
-export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0.4 exige JVM 25
-./gradlew compileKotlin
-./gradlew test
-----
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
+- *Option A (recommandée)* : dogfooding pipeline N3 complet — `validateDocument` (4 gardes : include
+  guard + xref + security + htmlLint, S-232) + `collectDocumentRetrieve` mode SERVER sur le livre FPA
+  (`office/metiers/FPA/livre-navigable/`), vérifier `metadata.json` porte `validationStatus=PASS`.
+- *Option B* : résoudre la limite S-232 — la 4e garde pointe sur le chemin HTML *statique*
+  (`build/docs/document/document.html`) ; exposer l'output réel si `outputFileName` customisé.
+- *Option C* : maintenance ENV gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3` (blockers historiques
+  des tests `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest`, 11 failures).
 
-== Contexte de fin
+== Méthode
 
-Session 231 (2026-08-31) :
-  - Hygiène S-227 : purge 2 `println` debug + déduplication du bloc
-    conventions trippliqué de `DocumentPlugin.apply()`.
-  - EPIC DOC-METADATA-VALIDATION ✅ TERMINÉ (3/3 US, Option C du 227) :
-    le statut de la validation composite (`validateDocument`) est porté
-    dans `metadata.json` pour le consommateur N3 runner-gradle.
-    * US-1 (TDD) : `DocumentValidationReport.overallStatus()` (PASS/FAIL
-      dérivé) + `fromJson()` round-trip (7 UT, dep `jackson-module-kotlin`).
-    * US-2 (FT) : `DocumentMetadata.validationStatus` (NON_NULL) +
-      `CollectDocumentRetrieveTask.validationReportPath` (lecture seule du
-      rapport, dégradé silencieux / absent → omis) + 3 FT TestKit.
-    * US-3 (BDD) : `@metadata-validation` 3/3 PASSED (runner dédié
-      `MetadataValidationCucumberRunner`, CucumberTaskSpec).
-  - Gates : `test` 2622 tests / 11 failures = ENV préexistantes (gems Ruby
-    PDF/EPUB absentes, hors périmètre). Runners Cucumber dédiés VERTS.
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+Pattern : miroir `document.xref` (XrefValidator/Report/Mode) pour toute nouvatelle garde.
 
-== EPICs — état
+== Règles absolues (AGENT.adoc)
 
-- Tous les EPICs DOC-x livrés (DOC-0..DOC-15, DOC-TRANSLATE, DOC-TABLE/
-  PLANTUML-VALIDATE, DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5,
-  DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT,
-  DOC-METADATA-VALIDATION).
+- English only dans le code/commentaires/tests (gouvernance .adoc en français).
+- Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
+- Zéro secret, zéro commit/push sans accord.
+- `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
+- Ne jamais lancer `./gradlew test` complet en fin de session sans permission (ENV gems Ruby : 11 failures préexistantes).
 
-== Reprendre à (session 232)
+== État du code (S-232)
 
-. `git status` dans document-gradle
-. Choisir la prochaine action :
-    . Option A — dogfooding : publier un livre FPA via `validateDocument`+
-      `collectDocumentRetrieve` (metadata.json signale désormais le statut
-      PASS/FAIL — pipeline N3 complet en mode SERVER).
-    . Option B — hardening : câbler le lint HTML dans `validateDocument`
-      (4e garde du composite, statut `htmlLint` dans le rapport consolidé)
-      réutilisant le pattern des 3 gardes existantes.
-    . Option C — maintenance : `DocumentPlugin.apply()` garde ~40 lignes
-      de conventions plates refactorables ; ENV gems Ruby PDF/EPUB à
-      provisionner pour débloquer les 11 tests préexistant.
-. Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches
-  dédiées), DDD/TDD/BDD (unit + functional + cucumber).
-. Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) —
-  `conventions-plugin:0.0.4` exige JVM 25.
+- EPIC DOC-VALIDATE-HTML-LINT ✅ TERMINÉ (3/3 US) : 4e garde htmlLint dans le composite.
+- `DocumentValidator.validate(text, baseDir, includeGuardMode, xrefMode, safeMode, htmlLintMode=OFF, html=null)`.
+- `DocumentValidationReport` : 4e bloc `htmlLint` (VALID/DEAD), `overallStatus()` FAIL si DEAD,
+  `fromJson` backward-compat (rapport sans htmlLint → null).
+- `validateDocument` : mode depuis `converter { htmlLinkLint }` (+ mirror flat + CLI `-Pdocument.htmlLinkLint`),
+  `htmlFilePath` @Input @Optional (chemin statique `build/docs/document/document.html`),
+  `mustRunAfter("convertDocumentToHtml")`, sévérité STRICT/LENIENT/OFF symétrique xref.
+- Baseline : `test` 2671 tests / 11 failures ENV gems Ruby (préexistant) ; 10 runners Cucumber
+  dédiés VERTS ; FT composite + html-lint GREEN.
 
-== Note cross-borough
+== Pièges Gradle à retenir (S-232)
 
-Le domaine « Book » (`BookTree`, `BookValidator`, `BookLayout`, `BookNumbering`)
-est consommé par `office/metiers/FPA`. Aucun contenu FPA n'entre dans
-document-gradle (frontière licence). `metadata.json` reste la seule sortie
-N3 (contrat runner-gradle : `{source, type, sessions, ...}` + optionnel
-`releaseNotes*`, `validationStatus`).
+1. `task.htmlFile.set(producer.outputFile)` crée une dépendance implicite → le producer s'exécute
+   même quand la tâche est lancée seule. Snapshot de valeur à la configuration ou chemin statique.
+2. `.get()` sur un provider mappé d'une tâche non terminée → `Querying the mapped value ... is not
+   supported` (configuration-time). Résoudre depuis `project.layout` plutôt.
+3. `@InputFile @Optional` non-null valide l'existence du fichier AVANT l'action → `Input file does
+   not exist`. Pour un fichier optionnel produit par une autre tâche : `@Input @Optional String`.
+
+== À vérifier en ouverture
+
+1. `git status` (document-gradle + office/metiers/FPA).
+2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
+3. `./gradlew compileKotlin` VERT.
+4. `./gradlew documentValidationCucumberTest htmlLinkLintCucumberTest` VERT (baseline S-232).
+5. Vérifier le livre FPA `livre-navigable/book.html` existe (option A).
+
+== Vision « livre FPA SERVER »
+
+Surveiller l'avancement du toc.adoc racine dans `office/metiers/FPA`. Le livre HTML réel est
+navigable (lint S-226 Valid, TOC présente) — le statut N3 complet (`validateDocument` →
+`metadata.json` → `composite-context.json`) est le prochain verrou (option A).

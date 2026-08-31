@@ -1,0 +1,98 @@
+= Session 232 — EPIC DOC-VALIDATE-HTML-LINT : 4e garde composite (lint HTML rendu dans validateDocument)
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : feat + TDD/BDD
+_Mission_ : Option B de la S-232 (INDEX) — lint HTML comme 4e garde composite dans `validateDocument`.
+_Méthode_ : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+
+== Contexte ouverture
+
+- Mission S-227 (PROMPT_REPRISE) **déjà livrée** (commits `cdce50a`, `8091b9d`) : `lintHtmlDocument`
+  câblé dans `bookPipeline` après `convertDocumentToHtml`, tâche `verifyHtmlLinks` optionnelle.
+- L'INDEX fixe pour la S-232 trois options — option B retenue : hardening câblage lint HTML dans
+  `validateDocument` (4e garde composite), prolongement naturel de DOC-VALIDATE-COMPOSITE (S-225).
+- État git propre, `compileKotlin` VERT, baseline : 10 runners Cucumber dédiés VERTS.
+
+== Résumé livré
+
+La validation composite `validateDocument` orchestre désormais **quatre** gardes au lieu de trois :
+include guard (CR4) + xref (CR-xref) + security policy (CR5) + **HTML link lint du rendu**
+(DOC-HTML-LINT, S-226). Le rapport consolidé `document-validation-report.json` porte un 4e bloc
+`htmlLint` (`status` VALID/DEAD, `deadLinks`), symétrique du bloc `xref`.
+
+=== US-1 (TDD strict) — 4e garde dans le domaine pur
+
+- `DocumentValidator.validate(...)` étendu : paramètres `htmlLintMode: HtmlLinkLintMode = OFF`
+  + `html: String? = null` (defaults backward-compat, les 5 appels existants compilent sans changement).
+- `HtmlLintReportEntry` (status/deadLinks/reason, `@JsonInclude(NON_NULL)` — `deadLinks` nullable :
+  null pour VALID, liste triée pour DEAD).
+- `DocumentValidationReport.htmlLint: HtmlLintReportEntry? = null` + `@JsonInclude(NON_NULL)` sur la
+  classe conteneur → JSON backward-compat (bloc absent en OFF).
+- `overallStatus()` étendu : `htmlLint.status == "DEAD"` → FAIL (un lien mort casse la navigabilité
+  N3 quel que soit le mode — visibilité même en LENIENT).
+- `fromJson` backward-compat : rapport sans `htmlLint` → `null`, PASS.
+- Règle « HTML absent sous mode non-OFF » : `DEAD` avec entry `<html-file-missing>` (visibilité sur
+  silence, jamais de skip muet).
+- 10 UT `HtmlLintGuardTest` (RED : `No parameter with name 'htmlLintMode'` → GREEN).
+
+=== US-2 (FT TestKit) — câblage tâche + plugin
+
+- `ValidateDocumentTask` : inputs `htmlLinkLint` (Property) + `htmlFilePath` (`@Input @Optional`
+  String — volontairement PAS un `@InputFile` : Gradle validerait l'existence du fichier absent
+  avant l'action, brisant le rapport consolidé en STRICT), lecture optionnelle du HTML, sévérité
+  STRICT fail-fast / LENIENT warn / OFF skip (même contrat que xref).
+- `DocumentPlugin.registerValidateDocument` : mode depuis `converter { htmlLinkLint }` + mirror flat
+  + CLI `-Pdocument.htmlLinkLint` (même knob que `lintHtmlDocument`, zéro nouveau concept) ; chemin
+  HTML résolu depuis la convention statique de sortie `build/docs/document/document.html` (parité
+  lecture-seule metadata-validation) ; `mustRunAfter("convertDocumentToHtml")`.
+- Enseignements de câblage (3 pièges Gradle corrigés en itération) :
+  1. `Property<RegularFile>` → le provider du producer crée une **dépendance implicite** : lancer
+     `validateDocument` seul déclenchait `convertDocumentToHtml` (échec include-guard STRICT avant
+     écriture du rapport) → snapshot de la valeur du chemin à la configuration.
+  2. `.get()` sur `outputFile.map{}` à la configuration → `Querying the mapped value ... before the
+     task has completed is not supported` → chemin résolu depuis le layout (convention statique).
+  3. `@InputFile @Optional` non-null → `Input file does not exist` bloquant → `@Input @Optional`
+     String (le fichier absent est un finding, pas une erreur).
+- 4 FT `ValidateDocumentTaskHtmlLintFunctionalTest` (OFF skip / STRICT fail + DEAD + liste fragment /
+  STRICT pass + VALID / LENIENT warn) — RED puis GREEN.
+
+=== US-3 (BDD) — scénarios Cucumber
+
+- `document_validation.feature` étendu : 3 scénarios `@document-validation-html-lint`
+  (STRICT fail-fast DEAD + message task / STRICT pass VALID / LENIENT DEAD sans échec).
+- `DocumentValidationSteps` : Given dédié `document-validationHtml config` (texte distinct, anti-glue
+  S-223), configs `STRICT_HTML`/`LENIENT_HTML` (`safeMode SERVER` — cohérence CR5, pattern
+  STRICT_SERVER S-225), Whens `runs with the HTML conversion` (conversion + validation dans le graphe),
+  Thens `marks htmlLint DEAD listing` / `marks htmlLint VALID` (préfixe rapport, pas de doublon glue).
+- 8/8 scénarios PASSED au runner dédié `DocumentValidationCucumberRunner` (5 existants + 3 nouveaux).
+
+== Gates de non-régression
+
+- `compileKotlin` VERT.
+- Runners Cucumber dédiés : `documentValidation + htmlLinkLint + metadataValidation + xrefValidation +
+  includeGuard + securityPolicy + converterSafeMode + bookTree + bookValidation + frontmatterRetranslate`
+  → BUILD SUCCESSFUL (8m23s).
+- `functionalTest` : `ValidateDocumentTaskFunctionalTest` 4/4 + `ValidateDocumentTaskHtmlLintFunctionalTest`
+  4/4 GREEN.
+- `test` : 2671 tests / 11 failures = ENV préexistantes gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3`
+  (S-213/S-215/S-224/S-231, hors périmètre, inchangé). Domaine validation : 37 UT / 0 fail
+  (DocumentValidator 8, ReportStatus 7, HtmlLinkLinter 12, HtmlLintGuard 10).
+- Scan secrets : RAS.
+
+== Livrables
+
+- `document/validation/DocumentValidator.kt` — 4e garde + `HtmlLintReportEntry` + `overallStatus()` + JSON NON_NULL.
+- `document/ValidateDocumentTask.kt` — inputs `htmlLinkLint`/`htmlFilePath` + sévérité 4e garde.
+- `document/DocumentPlugin.kt` — câblage `registerValidateDocument` (knob existant, chemin statique, mustRunAfter).
+- Tests : `HtmlLintGuardTest.kt` (10 UT), `ValidateDocumentTaskHtmlLintFunctionalTest.kt` (4 FT),
+  `document_validation.feature` (+3 scénarios), `DocumentValidationSteps.kt` (+steps 4e garde).
+
+== Limites & suivis
+
+- Chemin HTML statique : si `outputFileName` est customisé, la 4e garde pointe toujours sur
+  `document.html` — acceptable (consommation : `mustRunAfter` + convention partagée) ; extension
+  possible US future : exposer l'output réel via une convention dérivée sans dépendance de tâche.
+- `lintHtmlDocument` (tâche dédiée, S-227) et `validateDocument` (composite, S-232) partagent le même
+  mode `converter { htmlLinkLint }` — la tâche dédiée reste utile hors bookPipeline.
+- ENV gems Ruby (PDF/EPUB) toujours absentes : blockers historiques, hors périmètre.

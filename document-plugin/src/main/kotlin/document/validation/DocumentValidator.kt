@@ -18,11 +18,13 @@ import java.io.File
  * Pure DDD orchestrator composing the document conversion guards (DOC-VALIDATE-COMPOSITE) :
  * - include-path guard (DOC-CR4, [document.security.IncludePathValidator]) ;
  * - cross-reference validation (DOC-XREF-VALIDATE, [document.xref.XrefValidator]) ;
- * - conversion security policy advice (DOC-CR5, [document.security.DocumentSecurityPolicy]).
+ * - conversion security policy advice (DOC-CR5, [document.security.DocumentSecurityPolicy]) ;
+ * - HTML link lint of the rendered output (DOC-HTML-LINT, [HtmlLinkLinter] — DOC-VALIDATE-HTML-LINT,
+ *   fourth guard, operates on the rendered HTML rather than the AsciiDoc source).
  *
- * Ink Economy Law : [validate] is a deterministic pure function of the source text and the
- * three guard modes — no file is read, no Gradle dependency, fully unit-testable. The caller
- * (the task) performs I/O (read source, write report). The orchestrator only classifies.
+ * Ink Economy Law : [validate] is a deterministic pure function of the source text, the HTML
+ * text and the guard modes — no file is read, no Gradle dependency, fully unit-testable. The caller
+ * (the task) performs I/O (read source, read HTML, write report). The orchestrator only classifies.
  */
 object DocumentValidator {
 
@@ -32,6 +34,8 @@ object DocumentValidator {
         includeGuardMode: IncludeGuardMode,
         xrefMode: XrefValidationMode,
         safeMode: SafeMode,
+        htmlLintMode: HtmlLinkLintMode = HtmlLinkLintMode.OFF,
+        html: String? = null,
     ): DocumentValidationReport {
         val includeEntry = if (includeGuardMode == IncludeGuardMode.OFF) {
             IncludeGuardReportEntry(status = "OFF")
@@ -64,7 +68,31 @@ object DocumentValidator {
             is SecurityAdvice.Reject -> SecurityReportEntry(advice = "REJECT", reason = advice.reason)
         }
 
-        return DocumentValidationReport(includeGuard = includeEntry, xref = xrefEntry, security = securityEntry)
+        // Fourth guard (DOC-VALIDATE-HTML-LINT) — audits the *rendered* HTML when a mode
+        // other than OFF is requested. A missing HTML file (html == null) under a non-OFF
+        // mode is a DEAD finding pointing at the conversion prerequisite, not a silent skip.
+        val htmlLintEntry = when {
+            htmlLintMode == HtmlLinkLintMode.OFF -> null
+            html == null ->
+                HtmlLintReportEntry(
+                    status = "DEAD",
+                    deadLinks = listOf("<html-file-missing>"),
+                    reason = "htmlLintMode=${htmlLintMode.name} requires the rendered HTML of convertDocumentToHtml",
+                )
+            else ->
+                when (val result = HtmlLinkLinter.validate(html)) {
+                    is HtmlLinkLintResult.Valid -> HtmlLintReportEntry(status = "VALID")
+                    is HtmlLinkLintResult.Invalid ->
+                        HtmlLintReportEntry(status = "DEAD", deadLinks = result.deadLinks)
+                }
+        }
+
+        return DocumentValidationReport(
+            includeGuard = includeEntry,
+            xref = xrefEntry,
+            security = securityEntry,
+            htmlLint = htmlLintEntry,
+        )
     }
 }
 
@@ -94,10 +122,26 @@ data class SecurityReportEntry(
     val reason: String? = null,
 )
 
+/**
+ * Fourth composite guard entry (DOC-VALIDATE-HTML-LINT) — mirrors the shape of
+ * [XrefReportEntry] : status is `VALID` (every internal link resolves) or `DEAD`
+ * (dead internal links found, listed in [deadLinks]). `null` when the guard mode
+ * is OFF (not audited). `NON_NULL` on [deadLinks] keeps backward-compatible JSON
+ * for VALID entries.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class HtmlLintReportEntry(
+    val status: String,
+    val deadLinks: List<String>? = null,
+    val reason: String? = null,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class DocumentValidationReport(
     val includeGuard: IncludeGuardReportEntry,
     val xref: XrefReportEntry?,
     val security: SecurityReportEntry,
+    val htmlLint: HtmlLintReportEntry? = null,
 ) {
     fun toJson(): String =
         ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(this)
@@ -114,7 +158,8 @@ data class DocumentValidationReport(
     fun overallStatus(): String =
         if (includeGuard.status == "INVALID" ||
             xref?.status == "MISSING" ||
-            security.advice == "REJECT"
+            security.advice == "REJECT" ||
+            htmlLint?.status == "DEAD"
         ) "FAIL" else "PASS"
 
     companion object {

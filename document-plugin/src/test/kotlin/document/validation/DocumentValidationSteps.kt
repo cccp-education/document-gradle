@@ -32,6 +32,20 @@ class DocumentValidationSteps {
         reportFile = projectDir.resolve("build/docs/document/document-validation-report.json")
     }
 
+    /**
+     * Fourth guard scenarios (DOC-VALIDATE-HTML-LINT) : distinct step text (anti-glue
+     * pattern S-223) driving the `converter { htmlLinkLint = ... }` knob, then two tasks —
+     * the HTML conversion (producer of the rendered output) and the composite validation.
+     */
+    @Given("a document gradle project with document-validationHtml config {string} and source {string}")
+    fun `a project with document-validationHtml config and source`(config: String, source: String) {
+        projectDir = Files.createTempDirectory("doc-validation-html-").toFile()
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-validation-html\"\n")
+        projectDir.resolve("build.gradle.kts").writeText(buildScript(config))
+        projectDir.resolve("doc.adoc").writeText(source)
+        reportFile = projectDir.resolve("build/docs/document/document-validation-report.json")
+    }
+
     private fun buildScript(config: String): String {
         val block = when (config) {
             "STRICT" ->
@@ -44,10 +58,15 @@ class DocumentValidationSteps {
                 "converter { includeGuard = IncludeGuardMode.LENIENT; xrefValidation = XrefValidationMode.LENIENT; safeMode = SafeMode.UNSAFE }"
             "OFF" ->
                 "converter { includeGuard = IncludeGuardMode.OFF; xrefValidation = XrefValidationMode.OFF; safeMode = SafeMode.UNSAFE }"
+            "STRICT_HTML" ->
+                "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
+            "LENIENT_HTML" ->
+                "converter { htmlLinkLint = HtmlLinkLintMode.LENIENT; safeMode = SafeMode.SERVER }"
             else -> "converter { }"
         }
         return """
             import document.security.IncludeGuardMode
+            import document.validation.HtmlLinkLintMode
             import document.xref.XrefValidationMode
             import org.asciidoctor.SafeMode
 
@@ -60,6 +79,28 @@ class DocumentValidationSteps {
                 $block
             }
             """.trimIndent()
+    }
+
+    @When("the validateDocument task runs with the HTML conversion")
+    fun `validateDocument runs with the HTML conversion`() {
+        buildOutput = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml", "validateDocument")
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
+            .output
+    }
+
+    @When("the validateDocument task runs with the HTML conversion and fails")
+    fun `validateDocument runs with the HTML conversion and fails`() {
+        buildOutput = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml", "validateDocument")
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
+            .output
     }
 
     @When("the validateDocument task runs successfully")
@@ -134,5 +175,23 @@ class DocumentValidationSteps {
         val json = reportFile.readText()
         assertFalse(json.contains("INVALID"), "en OFF l'include n'est pas audité")
         assertFalse(json.contains("MISSING"), "en OFF le xref n'est pas audité")
+    }
+
+    @Then("the document-validation-report.json marks htmlLint DEAD listing {string}")
+    fun `report marks htmlLint DEAD listing`(fragment: String) {
+        assertTrue(reportFile.exists(), "le rapport consolidé doit être écrit")
+        val json = reportFile.readText()
+        assertTrue(json.contains("\"status\" : \"DEAD\""), "le lint HTML doit être DEAD (json: $json)")
+        assertTrue(json.contains(fragment), "le fragment mort '$fragment' doit être listé")
+        assertTrue(json.contains("htmlLint"), "le rapport doit porter le bloc 4e garde htmlLint")
+    }
+
+    @Then("the document-validation-report.json marks htmlLint VALID")
+    fun `report marks htmlLint VALID`() {
+        assertTrue(reportFile.exists(), "le rapport consolidé doit être écrit")
+        val json = reportFile.readText()
+        assertTrue(json.contains("htmlLint"), "le rapport doit porter le bloc 4e garde htmlLint")
+        assertTrue(json.contains("\"status\" : \"VALID\""), "le lint HTML doit être VALID (json: $json)")
+        assertFalse(json.contains("DEAD"), "aucun lien mort attendu (json: $json)")
     }
 }

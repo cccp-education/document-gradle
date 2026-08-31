@@ -602,11 +602,24 @@ class DocumentPlugin : Plugin<Project> {
     private fun registerValidateDocument(project: Project, ext: DocumentExtension) {
         project.tasks.register("validateDocument", ValidateDocumentTask::class.java) { task ->
             task.group = "document"
-            task.description = "Composite pre-flight validation (include guard + xref + security policy) of the AsciiDoc source, writes a consolidated JSON report. — DOC-VALIDATE-COMPOSITE"
+            task.description = "Composite pre-flight validation (include guard + xref + security policy + HTML link lint) of the AsciiDoc source, writes a consolidated JSON report. — DOC-VALIDATE-COMPOSITE + DOC-VALIDATE-HTML-LINT"
             task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
             task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
             task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
             task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
+            // Fourth guard (DOC-VALIDATE-HTML-LINT) — same knob as `lintHtmlDocument` :
+            // converter { htmlLinkLint } + flat mirror + CLI `-Pdocument.htmlLinkLint`.
+            task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.htmlLinkLint))
+            // The rendered HTML audited by the fourth guard is the output of
+            // convertDocumentToHtml (same file `lintHtmlDocument` consumes). The path is
+            // resolved from the *static* output convention (build/docs/document/document.html)
+            // — parity with the metadata-validation read-only pattern — so `validateDocument`
+            // never implicitly depends on the conversion. Ordering with the conversion is
+            // expressed via mustRunAfter; an absent file yields a `<html-file-missing>` finding.
+            task.htmlFilePath.set(
+                project.layout.buildDirectory.file("docs/document/document.html").map { it.asFile.absolutePath },
+            )
+            task.mustRunAfter("convertDocumentToHtml")
             task.reportFile.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json"))
         }
     }

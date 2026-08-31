@@ -1,6 +1,39 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 231
+:session: 232
+
+== Session 232 — DOC-VALIDATE-HTML-LINT : 4e garde composite (lint HTML rendu dans validateDocument)
+
+*Objectif* : le lint HTML du rendu (`HtmlLinkLinter`, DOC-HTML-LINT S-226) rejoint
+la validation composite en tant que 4e garde — symétrique du bloc `xref` (miroir
+exact : sealed result → entry JSON). Domaine pur sans I/O, câblage tâche minimal
+(même knob `converter { htmlLinkLint }`), BDD scénarios sévérité.
+
+*Tests ajoutés S232* :
+- `HtmlLintGuardTest.kt` — 10 UT TDD strict RED→GREEN (entry null en OFF / VALID
+  liens résolus / DEAD + fragment listé + tri / DEAD en LENIENT visible en
+  overallStatus FAIL / fromJson backward-compat sans bloc htmlLint / round-trip
+  DEAD / toJson contient htmlLint / HTML absent → DEAD `<html-file-missing>`).
+- `ValidateDocumentTaskHtmlLintFunctionalTest.kt` — 4 FT GradleTestKit (OFF skip /
+  STRICT fail-fast DEAD + liste fragment / STRICT pass VALID sur navigable /
+  LENIENT DEAD sans échec).
+- `document_validation.feature` — +3 scénarios `@document-validation-html-lint`
+  (STRICT fail DEAD+message / STRICT pass VALID / LENIENT DEAD sans échec).
+- `DocumentValidationSteps.kt` — Given dédié `document-validationHtml config`
+  (texte distinct anti-glue S-223), configs STRICT_HTML/LENIENT_HTML
+  (safeMode SERVER — cohérence CR5, pattern STRICT_SERVER S-225), Whens
+  `runs with the HTML conversion`, Thens `marks htmlLint DEAD listing` /
+  `marks htmlLint VALID`.
+
+*Couverture* :
+- Unit : 37 UT domaine validation / 0 fail (Validator 8, ReportStatus 7,
+  HtmlLinkLinter 12, HtmlLintGuard 10).
+- Fonctionnel : FT composite 4/4 + FT html-lint 4/4 PASSED.
+- Cucumber dédié : 8/8 PASSED (5 existants + 3 nouveaux).
+
+*Non-régression* : `test` 2671 tests, 11 failures = ENV préexistantes uniquement
+(gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3` absentes, S-213/S-215/S-224/231).
+10 runners Cucumber dédiés SUCCESS. Zéro secret, zéro régression.
 
 == Session 231 — DOC-METADATA-VALIDATION : statut de validation composite dans metadata.json N3
 
