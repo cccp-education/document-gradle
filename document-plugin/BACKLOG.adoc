@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 236 — **Follow-up S-235 : collect N3 knob-aware** — `DocumentArtifactCollector.collect(sourceAdoc, outputFileName = "document")` + `CollectDocumentRetrieveTask.outputFileName` câblé même-knob que les conversions : les artifacts custom suivent le knob S-235 jusqu'au snapshot N3 composite-context.json ; 3 UT + 2 FT + 2 BDD (16e runner dédié `n3CollectCustomCucumberTest`) ; 16/16 runners dédiés VERTS 0 failure)
+_Date revision_ : 2026-08-31 (session 239 — **Hygiene + consommation externe 0.0.14 PROUVÉE** — 20 fichiers `.bak`/`*.backup*` purgés (historisés git) ; projet tiers Gradle 9.7/JDK 25 consomme `education.cccp.document:0.0.14` depuis Central : 4 gardes composite VALID + knob `-Pdocument.outputFileName=gone-custom` vivant de bout en bout (conversion → gardes → collect, artefact custom indexé composite-context.json, validationStatus=PASS) + preuve négative include traversal STRICT → BUILD FAILED ; Option E CADUQUE. Zéro code prod modifié — baseline S-238 inchangée)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1797,9 +1797,15 @@ depuis S-221), FT 122/122, UT 3037/0. La gate reflète désormais les vraies
 régressions.
 ====
 
-=== Limites reportées (S-238 → restant)
+=== Limites reportées (S-238 → S-239)
 
-- Hygiene `*.backup*`/`*.bak` résiduels racine (settings, build.gradle.kts,
-  BACKLOG, INDEX, SESSIONS_HISTORY) — économie d'encre, session 239.
+- ~~Hygiene `*.backup*`/`*.bak` résiduels racine (settings, build.gradle.kts,
+  BACKLOG, INDEX, SESSIONS_HISTORY)~~ → **✅ RÉSOLU S-239** : 20 fichiers purgés
+  (`git rm`, tous historisés git, zéro référence code).
+- ~~Consommation externe 0.0.14 à prouver~~ → **✅ RÉSOLU S-239** : projet tiers
+  Gradle 9.7/JDK 25 (`/tmp/opencode/doc-consumer-014`) consomme
+  `education.cccp.document:0.0.14` depuis Central — 4 gardes VALID, knob
+  `outputFileName` vivant de bout en bout, preuve négative STRICT (include
+  traversal → BUILD FAILED). Imports DSL gardes requis côté consommateur.
 - Option E : `assembleBook` knob séparé (`book` vs `outputFileName`) —
-  pas de besoin réel remonté, extension seulement si besoin réel.
+  pas de besoin réel remonté, extension seulement si besoin réel (S-239 : CADUQUE).

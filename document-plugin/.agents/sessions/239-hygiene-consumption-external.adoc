@@ -1,0 +1,90 @@
+= Session 239 — Hygiène dette technique + consommation externe 0.0.14 prouvée
+
+_Date_ : 2026-08-31
+_Type_ : maintenance + preuve consommation externe
+_Consommation_ : gouvernance + projet tiers /tmp (zéro code prod modifié, zéro publication)
+
+== Mission (PROMPT_REPRISE S-238/S-239)
+
+Borough DORMANT. Trois options actées :
+. Épuration dette technique (`.bak`/`*.backup*` résiduels racine) — hygiene pure.
+. Consommation externe 0.0.14 (4 gardes composite + knob `outputFileName`)
+  depuis un projet tiers hors borough.
+. Option E (`assembleBook` knob séparé) — seulement si besoin réel remonté.
+
+== Ce qui a été fait
+
+=== US-1 — Purge hygiene (20 fichiers)
+
+* `git rm` de 20 fichiers historisés dans git (sûr) :
+** 13 × `build.gradle.kts.backup*` (dont `_before_epub3`, `_before_fix*`,
+   `_before_java_*`, `_before_removing_javaToolchain`)
+** `settings.gradle.kts.bak` (racine document-gradle + document-plugin)
+** `BACKLOG.adoc.bak`, `.agents/INDEX.adoc.bak`, `.agents/SESSIONS_HISTORY.adoc.bak`
+* Vérification préalable : zéro référence `.bak`/`.backup` dans `*.kts`
+  ni dans les sections actives de la gouvernance.
+* Les fichiers sont historisés dans git (commits `eb8d574` et antérieurs) —
+  récupération possible via l'historique.
+
+=== US-2 — Consommation externe 0.0.14 (projet tiers `/tmp/opencode/doc-consumer-014`)
+
+Projet Gradle 9.7 / JDK 25, consommation réelle depuis Maven Central :
+[source,kotlin]
+----
+plugins { id("education.cccp.document") version "0.0.14" }
+----
+
+Preuves collectées (positif) :
+. Marker plugin `education.cccp.document.gradle.plugin/0.0.14` HTTP 200 +
+  `document-plugin-0.0.14.jar` HTTP 200 (`<latest>0.0.14</latest>`).
+. *4 gardes composite VALID depuis l'extérieur* — `convertDocumentToHtml` +
+  `validateDocument` BUILD SUCCESSFUL ; `document-validation-report.json` :
+  `includeGuard=VALID`, `xref=VALID (missing [])`, `security=VALID`, `htmlLint=VALID`
+  (config DSL `converter { }` : STRICT/LENIENT/STRICT/SERVER).
+. *Knob `outputFileName` vivant de bout en bout* (S-235/S-236) via
+  `-Pdocument.outputFileName=gone-custom` : `gone-custom.html` produit,
+  `composite-context.json` indexe l'artefact custom (canonique absent), collect
+  « 1 artifacts indexed », `metadata.json.validationStatus=PASS`.
+. Imports DSL requis côté consommateur (à documenter) :
+  `document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
+  `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`.
+
+Preuves collectées (négatif) :
+. *Include guard STRICT rejette depuis l'extérieur* : source avec
+  `include::../../../etc/passwd[]` → BUILD FAILED —
+  « Include guard (STRICT) rejected conversion — include guard detected
+  '../../../etc/passwd' at line 3: include escapes allowed root ».
+
+=== US-3 — Option E (assembleBook knob séparé)
+
+*Non déclenchée* : aucun besoin réel remonté (contrat canonique `book.adoc`
+inchangé, aucun consommateur externe ne l'a demandé). Décision : reporté
+jusqu'à besoin réel (économie d'encre).
+
+== Gates
+
+* `compileKotlin` VERT (open + post-purge), `validatePlugins` VERT.
+* Baselines inchangées (aucun code prod modifié) : FT 122/122, UT 3037/0,
+  `cucumberTest` 2320/0 (S-238).
+* Zéro secret (grep standard RAS).
+* Consommation externe réelle prouvée (Central → projet tiers → 4 gardes +
+  knob + collect N3).
+
+== Pièges / apprentissages à retenir
+
+. Les types DSL des gardes (`IncludeGuardMode`, `XrefValidationMode`,
+  `HtmlLinkLintMode`, `SafeMode`) exigent des *imports explicites* dans le
+  `build.gradle.kts` du consommateur — la doc d'utilisation doit les lister
+  (pattern identique aux FT TestKit du borough).
+. Le knob `outputFileName` est un *système property CLI*
+  (`-Pdocument.outputFileName`) — rien à câbler côté consommateur ; le bloc
+  `template { outputFileName }` est un knob séparé (traduction DOC-13).
+. La preuve négative (STRICT reject) est le vrai test de contrat — le positif
+  seul pourrait passer pour de la coïncidence de configuration.
+
+== Décision
+
+*Option E CADUQUE jusqu'à besoin réel*. Mission S-239 terminée : la boucle
+« publication → consommation externe » est fermée par preuve exécutable.
+Le prochain verrou « vision livre FPA SERVER » est levé ; le borough reste
+DORMANT (maintenance + dogfooding FPA).

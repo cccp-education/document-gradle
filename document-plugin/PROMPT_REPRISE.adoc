@@ -1,46 +1,37 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 239
+== Mission session 240
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Mission actée S-238 :
-- Epuration dette technique légère : les `.bak` et `*.backup*` résiduels à la
-  racine `document-plugin/` (build.gradle.kts.backup*, settings.gradle.kts.bak,
-  BACKLOG.adoc.bak, INDEX.adoc.bak, SESSIONS_HISTORY.adoc.bak) — hygiene pure.
-- Consommateur externe : vérifier que la 0.0.14 (Central) consomme bien les
-  4 gardes composite + knob `outputFileName` depuis un projet tiers (test
-  consommation réelle hors borough).
-- *Option E (si besoin réel remonté)* : `assembleBook` knob séparé (défaut
-  `"book"`) — le collect N3 (S-236) ne couvre pas les books custom-named.
-  Extension seulement si besoin réel.
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-239 a fermé la
+boucle « publication → consommation externe ». Options classées :
+- *Dogfooding FPA réel* : re-dérouler `bookPipeline` sur le corpus
+  `office/metiers/FPA` (Rule 7 read-only) si le corpus évolue — l'artefact
+  `livre-navigable/` reste la vérité (économie d'encre : ne pas régénérer).
+- *Doc consommateur* : ajouter au README plugin la liste des imports DSL
+  requis (`document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
+  `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`) —
+  constat S-239 : sans imports, le script consommateur ne compile pas.
+- *Option E (assembleBook knob séparé, défaut `"book"`)* : CADUQUE jusqu'à
+  besoin réel remonté par un consommateur.
 
-== État du code (S-238)
+== État du code (S-239)
 
-- *0.0.14 PUBLIÉE Maven Central* (S-237 : metadata `<latest>0.0.14</latest>`,
-  POM+JAR HTTP 200, gems PDF/EPUB portées).
-- *Gate `cucumberTest` globale VERTE pour la première fois depuis S-221* :
-  2320 tests / 0 failure / 0 error / 2165 skipped (16 runners dédiés
-  co-exécutés, filtrés par tags — normal). Runner global restreint à ses
-  3 features possédées (ownership rule S-238).
-- FT baseline : *122 / 0 failure*. UT baseline : *3037 / 0 failure*.
-- `validatePlugins` VERT (fix régression préexistante S-232/S-233 : 3
-  `@DisableCachingByDefault` + 1 `@PathSensitive(RELATIVE)`).
+- *0.0.14 PUBLIÉE Maven Central* (S-237) — consommation externe PROUVÉE S-239 :
+  projet tiers `/tmp/opencode/doc-consumer-014` (Gradle 9.7, JDK 25) consomme
+  `education.cccp.document:0.0.14` depuis Central.
+- *Preuves S-239 (positif)* : `convertDocumentToHtml` + `validateDocument` →
+  rapport 4 gardes VALID (includeGuard STRICT / xref LENIENT / htmlLint STRICT /
+  safeMode SERVER) ; knob `-Pdocument.outputFileName=gone-custom` vivant de
+  bout en bout (conversion → garde → collect : `gone-custom.html` produit,
+  `composite-context.json` indexe l'artefact custom, `metadata.validationStatus=PASS`).
+- *Preuves S-239 (négatif)* : include `../../../etc/passwd` en STRICT →
+  BUILD FAILED « include escapes allowed root » — les gardes sont réelles
+  depuis l'extérieur.
+- *Hygiene S-239* : 20 fichiers `.bak`/`*.backup*` purgés (tous historisés git).
+- Baselines inchangées : FT 122/122, UT 3037/0, `cucumberTest` 2320/0 (S-238).
+- `validatePlugins` VERT (fixé S-238).
 
-== Ce qui a été fait S-238 (Option D : moteur global Cucumber)
-
-1. *Audit XML* (zéro Python) : 73 failures = 70 glue scoping (16 features
-   étrangères au global) + 3 steps réellement manquants dans la glue
-   `document.scenarios` (scénarios `@template` DOC-13 : `the generated
-   document should contain` + `the build should fail` — vrai bug de
-   couverture BDD).
-2. *US-1* : 2 steps + 1 helper World ajoutés (`DocumentSteps.kt`,
-   `DocumentWorld.templateGeneratedDocuments()` — scan `build/docs/document/*.adoc`
-   car le knob `outputFileName` DOC-13 dérive le nom de sortie).
-3. *US-2* : `CucumberTestRunner` FEATURES_PROPERTY_NAME restreint aux 3
-   features possédées (`document`, `release-notes`, `frontmatter_retranslate`).
-4. *validatePlugins* : 4 problèmes préexistants corrigés (prouvés par
-   `git stash` — pas causés par S-238).
-
-== Pièges Gradle à retenir (S-233..S-238)
+== Pièges Gradle à retenir (S-233..S-239)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -55,13 +46,15 @@ Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Mission actée S-23
    propriétaire, pas par compte global.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
    annotation du runner (`FEATURES_PROPERTY_NAME`), pas par la CLI.
+8. *Imports DSL consommateur* (S-239) : les enums des gardes ne sont pas
+   résolus implicitement — importer explicitement côté `build.gradle.kts` tiers.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` +
 `release-notes.feature` + `frontmatter_retranslate.feature`. Toute
-nouvelle feature doit soit rejoindre un runner dédié (16e pattern :
+nouvelle feature doit soit rejoindre un runner dédié (pattern :
 runner + glue + tag + CucumberTaskSpec dans build.gradle.kts), soit
 explicitement rejoindre le global avec ses steps dans `document.scenarios`.
 
@@ -75,7 +68,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord.
+- Zéro secret, zéro commit/push sans accord (S-239 : accord de commit/push
+  accordé en fin de session — exécuté).
 - `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary
   Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
@@ -85,14 +79,15 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT.
-4. Central : `document-plugin` `<latest>` >= 0.0.14 (publiée S-237).
+4. Central : `document-plugin` `<latest>` = 0.0.14 (publiée S-237, prouvée
+   consommable S-239).
 5. Baseline : `cucumberTest` VERT (2320/0), FT 122/122, UT 3037/0 (S-238).
 
 == Vision « livre FPA SERVER »
 
-Statut N3 verrouillé (validationStatus=PASS prouvé S-233). Knob
-`outputFileName` vivant de bout en bout (S-235/236). Publication 0.0.14
-réalisée S-237. Gate `cucumberTest` globale lisible (S-238 — 0 faux
-échecs, la gate reflète les vraies régressions). Prochain verrou :
-consommation externe prouvée (projet tierce consommant 0.0.14 depuis
-Central) puis, si besoin réel, option E (assembleBook knob).
+Verrous levés S-233..S-239 : statut N3 (`validationStatus=PASS`), knob
+`outputFileName` de bout en bout (convert → gardes → collect), gems PDF/EPUB
+packagées, gate `cucumberTest` lisible, consommation externe prouvée depuis
+Central (4 gardes + knob, preuve négative STRICT). Le produit est servable
+depuis un projet tiers. Reste : maintenance + dogfooding FPA + doc consommateur
+(imports DSL). Option E caduque jusqu'à besoin réel.

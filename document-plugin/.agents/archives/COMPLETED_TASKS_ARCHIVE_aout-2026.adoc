@@ -2,6 +2,33 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 239 (2026-08-31) — Hygiene + consommation externe 0.0.14 PROUVÉE
+
+*Type* : maintenance + preuve consommation externe
+*Score* : 10/10
+
+*Résumé* :
+- US-1 : purge 20 fichiers `.bak`/`*.backup*` racine (historisés git,
+  zéro référence code) — `build.gradle.kts.backup*` ×13, `settings.gradle.kts.bak` ×2,
+  `BACKLOG.adoc.bak`, `.agents/INDEX.adoc.bak`, `.agents/SESSIONS_HISTORY.adoc.bak`.
+- US-2 : projet tiers `/tmp/opencode/doc-consumer-014` (Gradle 9.7, JDK 25)
+  consomme `education.cccp.document:0.0.14` depuis Central :
+  ** 4 gardes composite VALID (includeGuard STRICT / xref LENIENT / htmlLint
+    STRICT / safeMode SERVER) → `document-validation-report.json` ;
+  ** knob `-Pdocument.outputFileName=gone-custom` vivant de bout en bout
+    (conversion → gardes → collect, artefact custom indexé dans
+    `composite-context.json`, `metadata.validationStatus=PASS`) ;
+  ** preuve négative : include traversal `../../../etc/passwd` en STRICT →
+    BUILD FAILED « include escapes allowed root ».
+- Constat doc : les enums DSL des gardes exigent des imports explicites
+  (`document.security.IncludeGuardMode`, `document.xref.XrefValidationMode`,
+  `document.validation.HtmlLinkLintMode`, `org.asciidoctor.SafeMode`).
+- US-3 : Option E (`assembleBook` knob séparé) CADUQUE — aucun besoin réel.
+
+*Aucun code production modifié* — baseline FT 122 / UT 3037 / cucumberTest
+2320 inchangée (S-238). La boucle « publication → consommation externe »
+est fermée par preuve exécutable.
+
 === Session 043 (2026-08-19) — Sync gouvernance post-S207
 
 *Type* : gouvernance (rattrapage)
