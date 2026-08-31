@@ -413,3 +413,28 @@ zéro secret / zéro régression.
 
 *Clôtures* : option A et option C du PROMPT_REPRISE 233 traitées. L'option B
 (chemin HTML statique du 4e garde) reste ouverte — reportée S-234.
+
+== Session 234 (2026-08-31) — Fix Option A : hygiène FT translateDocument
+
+*Type* : fix + TDD/BDD — *Score* : 10/10
+
+*Résumé* : les 5 failures FT préexistantes S-233 (`translateDocument` ×2 +
+`TableValidationFunctionalTest` ×3) sont résolues par l'ajout de la convention
+`ext.translation.outputFileName.convention("document")` (DocumentPlugin.kt).
+Baby-step TDD strict : RED (5 failures reproduites — stack exacte
+« property 'outputFile' doesn't have a configured value » : le provider chaîné
+`cliProp(...).orElse(ext.translation.outputFileName).map { ... }` reste unset
+sans convention ni CLI) → GREEN (fix 1-ligne) → REFACTOR n/a (économie d'encre).
+
+*Gates* : `functionalTest` 68/68 (baseline 5 failures → 0), `test` VERT
+(6m59s), 15/15 runners Cucumber dédiés 144 scénarios PASSED. Preuve BDD
+comparative sur le moteur global : 144/86 (stash, sans fix) → 148/82 (avec
+fix) — +4 scénarios `@doc-translate`. Les 82 failures globales restantes
+préexistent (scoping glue runner global vs runners dédiés, S-221/S-223).
+
+*Piège nouveau documenté S-234* : une Property DSL sans `convention(...)`
+reste *unset même derrière `.orElse(...)`* — remonter la chaîne de providers
+jusqu'à l'extension DSL quand Gradle pointe la tâche.
+
+*Clôtures* : option A traitée. Options B (chemin HTML statique 4e garde) et
+C (publication 0.0.14) reportées S-235.

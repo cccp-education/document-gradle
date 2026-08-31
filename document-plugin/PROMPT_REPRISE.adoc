@@ -1,20 +1,56 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 233
+== Mission session 235
 
 Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
-- *Option A (recommandée)* : dogfooding pipeline N3 complet — `validateDocument` (4 gardes : include
-  guard + xref + security + htmlLint, S-232) + `collectDocumentRetrieve` mode SERVER sur le livre FPA
-  (`office/metiers/FPA/livre-navigable/`), vérifier `metadata.json` porte `validationStatus=PASS`.
-- *Option B* : résoudre la limite S-232 — la 4e garde pointe sur le chemin HTML *statique*
-  (`build/docs/document/document.html`) ; exposer l'output réel si `outputFileName` customisé.
-- *Option C* : maintenance ENV gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3` (blockers historiques
-  des tests `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest`, 11 failures).
+- *Option B (recommandée)* : résoudre la limite S-232/S-233 — le 4e garde lit le chemin HTML
+  *statique* (`build/docs/document/document.html`) ; exposer l'output réel si
+  `outputFileName` customisé.
+- *Option C (achèvement)* : republication 0.0.14 sur Maven Central (les gems
+  PDF/EPUB sont packagées runtimeOnly depuis S-233 — les consommateurs externes
+  du plugin ont besoin de cette version pour convertir PDF/EPUB).
+- *Option D* : diagnostic du moteur Cucumber *global* (`cucumberTest`) — 82
+  failures `UndefinedStepException` préexistantes (scoping glue runner global
+  vs runners dédiés, connu S-221/S-223). La gate reste les 15 runners dédiés.
+
+== État du code (S-234)
+
+- *Fix Option A livré* : `ext.translation.outputFileName.convention("document")`
+  (DocumentPlugin.kt) — les 5 failures FT préexistantes S-233 résolues.
+- Baseline FT : `functionalTest` 68/68 (was 116 tests / 5 failures → 0 failure).
+- `test` VERT (6m59s). 15/15 runners Cucumber dédiés : 144 scénarios PASSED.
+- Preuve BDD comparative : moteur global `cucumberTest` 144/86 (sans fix) →
+  148/82 (avec fix) — +4 = scénarios `@doc-translate` translateDocument.
+- Les 82 failures globales restantes préexistent (glue scoping, hors scope).
+
+== Pièges Gradle à retenir (S-233/234)
+
+1. *Snapshot collect* : `collectDocumentRetrieve` doit re-scanner à chaque
+   exécution (`outputs.upToDateWhen { false }`) — un `@InputFile` du rapport de
+   validation est impossible car `bookPipeline` dependsOn collect pendant que
+   le rapport n'existe pas (piège S-232 #3).
+2. *mustRunAfter inverse la CLI* : `validateDocument.mustRunAfter(collect)`
+   inverse la chaîne CLI `validateDocument collectDocumentRetrieve` (le collect
+   tournerait d'abord → n/a). Le conflit d'inputs (outputDir couvre le
+   book.adoc) n'existe que si les 2 tâches partagent un build.
+3. *Chaîne N3 staged* : produce → validate → collect (3 builds dans le FT
+   dogfooding) — un cycle Gradle interdit l'ordre métier en un seul build.
+4. *Property DSL sans convention reste unset même derrière `.orElse(...)`* :
+   `cliProp(...).orElse(ext.x)` produit un provider unset si aucune branche
+   n'a de valeur → `Value not set` à l'exécution (piège S-234).
+
+== Anti-glue Cucumber
+
+Un texte de step identique dans 2 classes → `DuplicateStepDefinitionException`
+(S-223). Le runner *global* (glue `document.scenarios`) ne voit pas les steps
+des runners dédiés (autres packages) → `UndefinedStepException` pour les
+features `@book-validation`/`@book-tree`/etc. Comparer baseline via `git stash`
+pour isoler l'impact d'un fix (méthode utilisée S-234).
 
 == Méthode
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-Pattern : miroir `document.xref` (XrefValidator/Report/Mode) pour toute nouvatelle garde.
+Pattern : miroir `document.xref` pour toute nouvelle garde.
 
 == Règles absolues (AGENT.adoc)
 
@@ -22,39 +58,19 @@ Pattern : miroir `document.xref` (XrefValidator/Report/Mode) pour toute nouvatel
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
 - Zéro secret, zéro commit/push sans accord.
 - `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
-- Ne jamais lancer `./gradlew test` complet en fin de session sans permission (ENV gems Ruby : 11 failures préexistantes).
-
-== État du code (S-232)
-
-- EPIC DOC-VALIDATE-HTML-LINT ✅ TERMINÉ (3/3 US) : 4e garde htmlLint dans le composite.
-- `DocumentValidator.validate(text, baseDir, includeGuardMode, xrefMode, safeMode, htmlLintMode=OFF, html=null)`.
-- `DocumentValidationReport` : 4e bloc `htmlLint` (VALID/DEAD), `overallStatus()` FAIL si DEAD,
-  `fromJson` backward-compat (rapport sans htmlLint → null).
-- `validateDocument` : mode depuis `converter { htmlLinkLint }` (+ mirror flat + CLI `-Pdocument.htmlLinkLint`),
-  `htmlFilePath` @Input @Optional (chemin statique `build/docs/document/document.html`),
-  `mustRunAfter("convertDocumentToHtml")`, sévérité STRICT/LENIENT/OFF symétrique xref.
-- Baseline : `test` 2671 tests / 11 failures ENV gems Ruby (préexistant) ; 10 runners Cucumber
-  dédiés VERTS ; FT composite + html-lint GREEN.
-
-== Pièges Gradle à retenir (S-232)
-
-1. `task.htmlFile.set(producer.outputFile)` crée une dépendance implicite → le producer s'exécute
-   même quand la tâche est lancée seule. Snapshot de valeur à la configuration ou chemin statique.
-2. `.get()` sur un provider mappé d'une tâche non terminée → `Querying the mapped value ... is not
-   supported` (configuration-time). Résoudre depuis `project.layout` plutôt.
-3. `@InputFile @Optional` non-null valide l'existence du fichier AVANT l'action → `Input file does
-   not exist`. Pour un fichier optionnel produit par une autre tâche : `@Input @Optional String`.
+- Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
 
 == À vérifier en ouverture
 
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
 3. `./gradlew compileKotlin` VERT.
-4. `./gradlew documentValidationCucumberTest htmlLinkLintCucumberTest` VERT (baseline S-232).
-5. Vérifier le livre FPA `livre-navigable/book.html` existe (option A).
+4. `./gradlew tableTranslationCucumberTest ... n3PipelineCucumberTest` VERT (15 runners dédiés, 144 scénarios).
+5. Baseline FT : `functionalTest` 68/68 VERT (0 failure depuis S-234).
 
 == Vision « livre FPA SERVER »
 
-Surveiller l'avancement du toc.adoc racine dans `office/metiers/FPA`. Le livre HTML réel est
-navigable (lint S-226 Valid, TOC présente) — le statut N3 complet (`validateDocument` →
-`metadata.json` → `composite-context.json`) est le prochain verrou (option A).
+Le statut N3 est verrouillé (validationStatus=PASS dans metadata.json prouvé
+par FT dogfooding + BDD sur corpus réel). Prochain verrou : option B (output
+HTML réel du 4e garde) et publication 0.0.14 (gems packagées dont les
+consommateurs externes ont besoin).

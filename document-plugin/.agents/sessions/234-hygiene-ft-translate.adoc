@@ -1,0 +1,88 @@
+= Session 234 — Hygiène FT : fix convention `translation.outputFileName`
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle, N2)
+_Type_ : fix + TDD/BDD (Option A du PROMPT_REPRISE 234)
+
+== Mission
+
+Option A (recommandée) : résoudre les 5 failures FT préexistantes
+(`translateDocument` ×2 + `TableValidationFunctionalTest` ×3), cause racine
+identifiée S-233 — `TranslateDocumentTask.outputFile` sans valeur quand
+`outputFileName` (TranslationDsl) n'a pas de convention.
+
+== Méthode
+
+Baby-step TDD strict (RED → GREEN → REFACTOR).
+
+=== RED — reproduction des 5 failures
+
+- `functionalTest --tests TableValidationFunctionalTest` → 3 FAILED
+- `functionalTest --tests DocumentPluginFunctionalTest` → 65 tests, 2 FAILED
+- Stack exacte : `A problem was found with the configuration of task
+  ':translateDocument' ... property 'outputFile' doesn't have a configured value`
+- Cause racine confirmée : le provider chaîné `registerTranslateDocument`
+  (DocumentPlugin.kt:533-539) produit un provider unset quand
+  `ext.translation.outputFileName` (sans convention) ET sans CLI
+  `-Pdocument.translateOutputFileName`. Le bloc conventions
+  (DocumentPlugin.kt:182-189) posait des conventions pour toutes les
+  autres propriétés de TranslationDsl sauf `outputFileName`.
+
+=== GREEN — fix 1-ligne
+
+[source,kotlin]
+----
+ext.translation.outputFileName.convention("document")
+----
+
+Ajouté dans le bloc conventions translation (DocumentPlugin.kt:188).
+Valeur `"document"` alignée sur les conventions existantes
+(`ext.template.outputFileName.convention("document")`, L178) et sur le
+chemin statique `build/docs/document/document.html` du 4e garde (S-232).
+
+=== Gates après fix
+
+- `TableValidationFunctionalTest` 3/3 PASSED
+- `DocumentPluginFunctionalTest` 65/65 PASSED (0 failure, était 63/2)
+- `functionalTest` complet : 68/68 (baseline 5 failures → 0)
+- `test` : BUILD SUCCESSFUL (6m59s)
+- 15/15 runners Cucumber dédiés : 144 scénarios PASSED (`--rerun-tasks`,
+  9m21s, BUILD SUCCESSFUL)
+- Preuve BDD comparative sur le moteur global `cucumberTest` :
+  * sans fix (stash) : 144 PASSED / 86 FAILED
+  * avec fix : 148 PASSED / 82 FAILED
+  * +4 = les 4 scénarios `@doc-translate` translateDocument du
+    `document.feature` (registered + FR→EN fake + code blocks)
+- Régression : aucun runner dédié régressé ; les 82 failures globales
+  préexistent (scoping glue runner global vs runners dédiés, connu
+  S-221/S-223 — la gate officielle reste les runners dédiés).
+
+=== REFACTOR
+
+Rien à refactorer — fix de 1 ligne, économie d'encre.
+
+== Livrables
+
+- `DocumentPlugin.kt` — +1 ligne convention `ext.translation.outputFileName`
+- Zéro fichier test modifié/créé (les FT existants étaient déjà écrits —
+  ils ont retrouvé leur statut VERT)
+
+== Pièges à retenir
+
+1. Une `Property` DSL sans `convention(...)` reste *unset même après
+   `.orElse(...)` en amont* : `cliProp(...).orElse(ext.x)` produit un
+   provider unset si aucune des deux branches n'a de valeur → erreur
+   configuration `Value not set` à l'exécution de la tâche.
+2. Le message Gradle « Possible solutions: 1. Assign a value to 'X'.
+   2. Mark property 'X' as optional » pointe la tâche, pas la racine —
+   remonter la chaîne de providers jusqu'à l'extension DSL.
+3. Le moteur Cucumber *global* (runner glue `document.scenarios`) n'est
+   pas une gate : les steps des runners dédiés (ex. `document.bookvalidation`)
+   sont invisibles pour lui → `UndefinedStepException`. Comparer les
+   baseline avant/après (stash) pour isoler l'impact d'un fix.
+
+== Statut
+
+Baseline FT S-233 : 116 tests / 5 failures → S-234 : 116 tests / 0 failure.
+Option A livrée. Options B (chemin HTML réel du 4e garde) et C
+(publication 0.0.14) restent ouvertes pour S-235.

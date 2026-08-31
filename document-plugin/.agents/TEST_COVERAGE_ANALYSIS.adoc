@@ -1,6 +1,36 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 232
+:session: 234
+
+== Session 234 — Fix Option A : hygiène FT (convention `translation.outputFileName`)
+
+*Objectif* : résoudre les 5 failures FT préexistantes S-233 (`translateDocument`
+×2 + `TableValidationFunctionalTest` ×3) — cause racine : convention
+`outputFileName` manquante sur TranslationDsl.
+
+*Changement* : +1 ligne production (`ext.translation.outputFileName.convention("document")`,
+DocumentPlugin.kt). *Zéro fichier test modifié/créé* — les FT existants
+(écrits pour ce comportement) retrouvent leur statut VERT.
+
+*Couverture restaurée (pas ajoutée)* :
+- Fonctionnel : `functionalTest` 68/68 PASSED (baseline S-233 : 116 tests /
+  5 failures ; delta -48 tests = les 48 tests translateDocumentBatch déjà
+  skip/up-to-date comptés différemment en S-233, mêmes suites). Détail :
+  `TableValidationFunctionalTest` 3/3 + `DocumentPluginFunctionalTest` 65/65.
+- Unit : `test` VERT (6m59s, UP-TO-DATE au 2e run).
+- Cucumber dédié : 15/15 runners, **144 scénarios PASSED** (`--rerun-tasks`,
+  9m21s) — baseline S-233 (144) préservée exactement.
+- Cucumber global (non-gate, preuve comparative) : 144 PASSED/86 FAILED sans
+  fix (stash) → **148 PASSED/82 FAILED avec fix** — +4 = scénarios
+  `@doc-translate` translateDocument du `document.feature`. Les 82 failures
+  globales restantes préexistent (scoping glue runner global vs runners
+  dédiés, connu S-221/S-223).
+
+*Leçon TDD* : le RED a été prouvé par reproduction des failures existantes
+(lecture du report XML — stack exacte « property 'outputFile' doesn't have a
+configured value ») plutôt que par écriture d'un nouveau test — le test
+d'acceptation existait déjà (les 2 FT translateDocument + 3 FT TableValidation),
+il était juste ROUGE depuis S-231/233.
 
 == Session 232 — DOC-VALIDATE-HTML-LINT : 4e garde composite (lint HTML rendu dans validateDocument)
 

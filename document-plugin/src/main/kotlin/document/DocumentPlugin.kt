@@ -185,6 +185,7 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.batchSourceDir.convention("")
         ext.translation.batchOutputDir.convention("")
         ext.translation.batchExcludePaths.convention("")
+        ext.translation.outputFileName.convention("document")
         ext.translation.tableValidation.mode.convention("LENIENT")
         ext.translation.plantUmlValidation.mode.convention("LENIENT")
         // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
