@@ -814,6 +814,97 @@ class DocumentPluginFunctionalTest {
         assertTrue(content.contains("\"count\" : 0"), "count must be 0 when no artifacts exist")
     }
 
+    // --- DOC-METADATA-VALIDATION — validation status carried into metadata.json (N3) ---
+
+    @Test
+    fun `collectDocumentRetrieve carries validationStatus PASS from the composite validation report`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText(
+            """
+            = Document de Test
+
+            == Introduction
+
+            Contenu pour le test N3 retrieve.
+            """.trimIndent()
+        )
+        // A composite validation report emitted by a previous `validateDocument` run (PASS).
+        val reportFile = File(projectDir, "build/docs/document/document-validation-report.json")
+        reportFile.parentFile.mkdirs()
+        reportFile.writeText(
+            """
+            {
+              "includeGuard" : { "status" : "OFF" },
+              "security" : { "advice" : "VALID" }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataContent = reportFile.parentFile.resolve("metadata.json").readText()
+        assertTrue(
+            metadataContent.contains("\"validationStatus\" : \"PASS\""),
+            "metadata.json must carry validationStatus PASS — actual: $metadataContent",
+        )
+    }
+
+    @Test
+    fun `collectDocumentRetrieve omits validationStatus when no validation report exists`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText("= Empty Pipeline\n\nNo conversions run.")
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataFile = File(projectDir, "build/docs/document/metadata.json")
+        assertTrue(metadataFile.exists(), "metadata.json must be produced")
+        val content = metadataFile.readText()
+        assertTrue(!content.contains("validationStatus"), "validationStatus must be omitted when no report exists")
+    }
+
+    @Test
+    fun `collectDocumentRetrieve carries validationStatus FAIL from a failing validation report`() {
+        val projectDir = newTempDir()
+        setupTestProjectWithDsl(projectDir)
+        projectDir.resolve("mon-livre.adoc").writeText("= Empty Pipeline\n\nNo conversions run.")
+        // A failing composite validation report (include guard INVALID → overall FAIL).
+        val reportFile = File(projectDir, "build/docs/document/document-validation-report.json")
+        reportFile.parentFile.mkdirs()
+        reportFile.writeText(
+            """
+            {
+              "includeGuard" : { "status" : "INVALID", "reason" : "traversal", "offendingTarget" : "/etc/passwd", "line" : 1 },
+              "security" : { "advice" : "VALID" }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("collectDocumentRetrieve")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
+        val metadataContent = reportFile.parentFile.resolve("metadata.json").readText()
+        assertTrue(
+            metadataContent.contains("\"validationStatus\" : \"FAIL\""),
+            "metadata.json must carry validationStatus FAIL — actual: $metadataContent",
+        )
+    }
+
     @Test
     fun `generatePomFileForPluginMavenPublication produces a POM with name description license developers and scm`() {
         val projectDir = newTempDir()

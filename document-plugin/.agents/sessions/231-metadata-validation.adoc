@@ -1,0 +1,85 @@
+= Session 231 — EPIC DOC-METADATA-VALIDATION + Hygiène S-227
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Méthode_ : baby-step DDD/TDD/BDD (RED → GREEN → REFACTOR), gate `check`/`test` non-régression.
+
+== Résumé
+
+Session 231 = *hygiène S-227* + *EPIC DOC-METADATA-VALIDATION (Option C du
+PROMPT_REPRISE 227/230)* : exposer le statut de la validation composite dans
+`metadata.json` pour le consommateur N3 runner-gradle.
+
+== Hygiène (résidus WIP S-227)
+
+. Purge des 2 `println` debug (`APPLYING DOCUMENT PLUGIN`,
+  `REGISTERING lintHtmlDocument TASK`) dans `DocumentPlugin.kt`.
+. Déduplication du bloc conventions **trippliqué** dans `apply()` (copié-collé
+  WIP) — un seul bloc conservé + suppression du doublon mirror `htmlLinkLint`
+  et de la ligne parasite `htmlLinkLint` au milieu du bloc outputs.
+. `compileKotlin` VERT après déduplication.
+
+== EPIC DOC-METADATA-VALIDATION — 3 US, 3/3 TERMINÉ
+
+=== US-1 (TDD) — `DocumentValidationReport.fromJson()` + `overallStatus()`
+
+- `DocumentValidationReportStatusTest` (7 UT, baby-step strict RED → GREEN).
+- `overallStatus()` dérivé : FAIL si includeGuard INVALID OU xref MISSING OU
+  security REJECT ; PASS sinon (WARN = visibilité LENIENT, pas un échec).
+- `fromJson(String)` round-trip (Jackson `jackson-module-kotlin` ajouté en
+  `implementation`, version contrainte par workspace-bom 0.0.26 → 2.21.2).
+
+=== US-2 (FT) — `DocumentMetadata.validationStatus` + câblage CollectDocumentRetrieve
+
+- `DocumentMetadata` : nouveau champ nullable `validationStatus` (NON_NULL —
+  omis quand absent, backward-compat)+ mirror `forNewOrleans`.
+- `CollectDocumentRetrieveTask` : `@Input @Optional validationReportPath`,
+  lecture seule du rapport `document-validation-report.json` s'il existe
+  (Loi de l'Économie d'Encre : pas de re-validation, indexing du rapport déjà
+  produit par `validateDocument`), dégradé silencieux (JSON invalide → null).
+- `DocumentPlugin` : câblage `validationReportPath` sur
+  `build/docs/document/document-validation-report.json`.
+- 5 UT `DocumentMetadataTest` + 3 FT `DocumentPluginFunctionalTest`
+  (PASS porté / FAIL porté / absent omis) — GREEN.
+
+=== US-3 (BDD) — Cucumber `@metadata-validation`
+
+- `metadata_validation.feature` : 3 scénarios (PASS strict, FAIL strict +
+  include traversal, OFF sans rapport → omis).
+- `MetadataValidationCucumberRunner` (runner dédié pattern S-082) +
+  `MetadataValidationSteps` (préfixe « metadata-validation », anti-glue S-223).
+- `CucumberTaskSpec("metadataValidationCucumberTest")` enregistré dans
+  `build.gradle.kts`.
+- 3/3 PASSED après alignement DOC-CR5 (`STRICT` + `safeMode SERVER`, pattern
+  `STRICT_SERVER` S-225).
+
+== Notes
+
+- Le policy DOC-CR5 rejette `includeGuard STRICT` + `safeMode UNSAFE`
+  (illusion de sécurité) — les scénarios STRICT du domaine metadata utilisent
+  `SERVER`, cohérent avec le pattern `STRICT_SERVER` de S-225.
+- Import scripts de build : `document.xref.XrefValidationMode` non résolu en
+  chemin pleinement qualifié (package racine `document` masque le
+  sous-package) — import en tête de script requis.
+
+== Gates
+
+- `compileKotlin` VERT.
+- `test` : 2622 tests, 11 failures = ENV préexistantes uniquement (gems Ruby
+  `asciidoctor-pdf`/`asciidoctor-epub3` absentes — `DocumentConverterTest` ×10,
+  `FpaBookArtifactGenerationTest` ×1, noté S-213/S-215/S-224).
+- Runners Cucumber dédiés `xrefValidation` + `documentValidation` +
+  `htmlLinkLint` + `metadataValidation` — BUILD SUCCESSFUL.
+- Zéro secret (`grep TOKEN/SECRET/PASSWORD/API_KEY/gho_/ghp_` VIDE).
+
+== Livrables
+
+- `document/validation/DocumentValidator.kt` — +`overallStatus()`, +`fromJson()`.
+- `document/DocumentMetadata.kt` — +`validationStatus` (+ JDoc).
+- `document/CollectDocumentRetrieveTask.kt` — +`validationReportPath`, portage
+  statut → metadata.json (lecture seule, dégradé silencieux).
+- `document/DocumentPlugin.kt` — dédup conventions + câblage report path.
+- `build.gradle.kts` — dep `jackson-module-kotlin` + CucumberTaskSpec.
+- Tests : `DocumentValidationReportStatusTest` (7 UT), `DocumentMetadataTest`
+  (+5 UT), `DocumentPluginFunctionalTest` (+3 FT),
+  `metadata_validation.feature` (3 BDD) + runner + steps.

@@ -1,5 +1,6 @@
 package document
 
+import document.validation.DocumentValidationReport
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -46,6 +47,10 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
     @get:Optional
     abstract val releaseNotesDirPath: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val validationReportPath: Property<String>
+
     @TaskAction
     fun execute() {
         val dir = outputDir.asFile.get()
@@ -66,6 +71,19 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
         )
         val compositeFile = result.writeTo(dir)
 
+        // DOC-METADATA-VALIDATION — carry the composite validation status into
+        // metadata.json so runner-gradle N3 can signal it. Read-only snapshot of
+        // the report produced by `validateDocument` (Loi de l'Economie d'Encre :
+        // no re-validation, just indexing what is already on disk).
+        val validationStatus = validationReportPath.orNull
+            ?.let { File(it) }
+            ?.takeIf { it.exists() && it.isFile }
+            ?.let { file ->
+                runCatching { DocumentValidationReport.fromJson(file.readText()) }
+                    .getOrNull()
+                    ?.overallStatus()
+            }
+
         val primaryReleaseNotes = releaseNotesEntries.firstOrNull()
         val metadata = DocumentMetadata.forNewOrleans(
             type = "retrieve",
@@ -73,13 +91,15 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
             dependencies = listOf("brooklyn", "htown"),
             releaseNotesPath = primaryReleaseNotes?.path,
             releaseNotesRenderer = primaryReleaseNotes?.rendererType,
+            validationStatus = validationStatus,
         )
         DocumentMetadata.writeTo(dir, metadata)
 
         logger.lifecycle(
-            "[document] collectDocumentRetrieve — {} artifacts indexed, {} release notes → {}",
+            "[document] collectDocumentRetrieve — {} artifacts indexed, {} release notes, validation={} → {}",
             entries.size,
             releaseNotesEntries.size,
+            validationStatus ?: "n/a",
             compositeFile.absolutePath
         )
     }

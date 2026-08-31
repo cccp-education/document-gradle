@@ -331,3 +331,24 @@ STRICT→Reject (GradleException fail-fast) / LENIENT→Warn (logger.warn) ; sin
 *Gates* : `compileKotlin` VERT ; `test --tests document.security.*` VERT (24 UT : 12 CR4 + 12 CR5) ; `functionalTest` CR5 (3 FT) + CR4 (5 FT) VERT ; `securityPolicyCucumberTest` runner dédié 3/3 PASSED. Exécution globale Cucumber borough bruite par infra (DuplicateStepDefinitionException due à un doublon de step définition dans les tests document-gradle, résolu S-223, non bloquant DOC-CR5).
 
 *Hors périmètre* : correction infra Cucumber borough (conventions duplicate classpath) — résolue S-223 (doublon de step dans tests document-gradle, pas le plugin conventions).
+
+== Session 231 (2026-08-31) — EPIC DOC-METADATA-VALIDATION ✅ TERMINÉ (3/3 US)
+
+*Statut final* : EPIC clôturé. Statut de validation composite exposé dans metadata.json N3.
+
+*US livrées* :
+- DOC-METADATA-1 ✅ (S-231) — `DocumentValidationReport.overallStatus()` (FAIL si
+  includeGuard INVALID / xref MISSING / security REJECT, PASS sinon) + `fromJson()`
+  round-trip (7 UT TDD strict, dep `jackson-module-kotlin` contrainte BOM 0.0.26).
+- DOC-METADATA-2 ✅ (S-231) — `DocumentMetadata.validationStatus` (NON_NULL) +
+  `CollectDocumentRetrieveTask.validationReportPath` (lecture seule du rapport,
+  dégradé silencieux, Loi Économie d'Encre) + câblage DocumentPlugin (5 UT + 3 FT).
+- DOC-METADATA-3 ✅ (S-231) — Cucumber `@metadata-validation` 3/3 PASSED
+  (runner `MetadataValidationCucumberRunner` + `CucumberTaskSpec metadataValidationCucumberTest`),
+  scénarios STRICT en `safeMode SERVER` (cohérence DOC-CR5, pattern STRICT_SERVER S-225).
+
+*Hygiène* : purge 2 `println` debug WIP S-227 + déduplication bloc conventions
+trippliqué `DocumentPlugin.apply()`.
+
+*Gates* : compileKotlin VERT / test 2622 (11 failures ENV gems Ruby préexistantes) /
+10 runners Cucumber dédiés VERTS / zéro secret / zéro régression.

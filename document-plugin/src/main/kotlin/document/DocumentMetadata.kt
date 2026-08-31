@@ -29,6 +29,9 @@ import java.time.Instant
  * @property dependencies list of upstream borough slugs this artifact depends on
  * @property releaseNotesPath absolute path of the release-notes file (DOC-8.3, nullable)
  * @property releaseNotesRenderer renderer type that produced the release-notes file (DOC-8.3, nullable)
+ * @property validationStatus overall composite validation status (DOC-METADATA-VALIDATION,
+ *           nullable — "PASS"/"FAIL" derived from DocumentValidationReport.overallStatus();
+ *           absent when no composite validation ran, backward-compatible NON_NULL)
  */
 data class DocumentMetadata(
     val source: String,
@@ -40,6 +43,7 @@ data class DocumentMetadata(
     val dependencies: List<String>,
     val releaseNotesPath: String? = null,
     val releaseNotesRenderer: String? = null,
+    val validationStatus: String? = null,
 ) {
     companion object {
         private val mapper: ObjectMapper = ObjectMapper()
@@ -71,6 +75,7 @@ data class DocumentMetadata(
          *         plantuml-gradle provides diagrams)
          * @param releaseNotesPath absolute path of the release-notes file (DOC-8.3, default: null)
          * @param releaseNotesRenderer renderer type of the release-notes file (DOC-8.3, default: null)
+         * @param validationStatus overall composite validation status (DOC-METADATA-VALIDATION, default: null)
          * @return a new [DocumentMetadata] with source set to "new-orleans"
          */
         fun forNewOrleans(
@@ -80,6 +85,7 @@ data class DocumentMetadata(
             dependencies: List<String> = listOf("brooklyn", "htown"),
             releaseNotesPath: String? = null,
             releaseNotesRenderer: String? = null,
+            validationStatus: String? = null,
         ): DocumentMetadata = DocumentMetadata(
             source = "new-orleans",
             type = type,
@@ -90,6 +96,7 @@ data class DocumentMetadata(
             dependencies = dependencies,
             releaseNotesPath = releaseNotesPath,
             releaseNotesRenderer = releaseNotesRenderer,
+            validationStatus = validationStatus,
         )
     }
 }

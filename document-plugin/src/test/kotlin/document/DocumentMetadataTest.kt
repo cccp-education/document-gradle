@@ -159,4 +159,49 @@ class DocumentMetadataTest {
         assertTrue(!content.contains("releaseNotesPath"))
         assertTrue(!content.contains("releaseNotesRenderer"))
     }
+
+    // --- DOC-METADATA-VALIDATION — validation status in metadata.json ---
+
+    @Test
+    fun `DocumentMetadata defaults validationStatus to null`() {
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        assertEquals(null, metadata.validationStatus)
+    }
+
+    @Test
+    fun `DocumentMetadata forNewOrleans accepts a validationStatus PASS`() {
+        val metadata = DocumentMetadata.forNewOrleans(validationStatus = "PASS")
+
+        assertEquals("PASS", metadata.validationStatus)
+    }
+
+    @Test
+    fun `DocumentMetadata forNewOrleans accepts a validationStatus FAIL`() {
+        val metadata = DocumentMetadata.forNewOrleans(validationStatus = "FAIL")
+
+        assertEquals("FAIL", metadata.validationStatus)
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo includes validationStatus when set`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans(validationStatus = "PASS")
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(content.contains("\"validationStatus\" : \"PASS\""))
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo omits validationStatus when null`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(!content.contains("validationStatus"))
+    }
 }

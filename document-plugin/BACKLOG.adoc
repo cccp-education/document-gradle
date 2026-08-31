@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-30 (session 226 — EPIC DOC-HTML-LINT ✅ TERMINÉ 3/3 US : lint navigabilité HTML rendu `HtmlLinkLinter` DDD + FT sur le vrai livre FPA `livre-navigable/book.html` (navigable, zéro lien mort) + runner Cucumber dédié `@html-link-lint`, 12 UT + 2 FT + 5 BDD GREEN; session 227 — ✅ câblage de `lintHtmlDocument` dans le `bookPipeline` après `convertDocumentToHtml`; session 230 — ajout de la tâche de vérification optionnelle `verifyHtmlLinks` (DSL `verification { htmlLinks.set(true) }))
+_Date revision_ : 2026-08-31 (session 231 — EPIC DOC-METADATA-VALIDATION ✅ TERMINÉ 3/3 US : statut de validation composite exposé dans metadata.json N3 — `DocumentValidationReport.overallStatus()` + `fromJson()` (7 UT TDD), `DocumentMetadata.validationStatus` porté par `collectDocumentRetrieve` depuis `document-validation-report.json` (lecture seule, dégradé silencieux, 5 UT + 3 FT GREEN), Cucumber `@metadata-validation` 3/3 PASSED (runner dédié) + hygiène S-227 (purge 2 `println` debug, dédup bloc conventions trippliqué de `apply()`)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1531,3 +1531,70 @@ Le livre FPA `book.html` existe déjà (`office/metiers/FPA/Devenir_Formateur_..
 seule (boundary Codex/Doc : Document consomme AsciiDoc/HTML sans modifier la source).
 Aucune dépendance gem Ruby (contrairement à PDF/EPUB) — le lint HTML est 100% Kotlin/Regex,
 donc GREEN en ENV quel qu'il soit.
+
+'''
+== ✅ EPIC DOC-METADATA-VALIDATION — Statut de validation composite dans metadata.json N3 (TERMINÉ, Session 231)
+
+_Suite directe de DOC-VALIDATE-COMPOSITE (S-225) + DOC-HTML-LINT (S-226). Option C du
+PROMPT_REPRISE 227/230 : exposer `validateDocument` dans le pipeline N3._
+_statut_ : ✅ TERMINÉ (S-231 — 3/3 US).
+
+[CAUTION]
+====
+**Motivation** : `validateDocument` produit un rapport consolidé
+(`document-validation-report.json`) mais ce rapport n'était lu par personne : le
+consommateur N3 runner-gradle ingère `metadata.json` sans savoir si le document
+validé proprement. Un livre FAIL (include traversal, xref manquante, sécurité
+REJECT) peut être déployé silencieusement via gh-pages.
+
+**Règle** : `collectDocumentRetrieve` lit le rapport de validation s'il existe
+(lecture seule, Loi de l'Économie d'Encre : pas de re-validation) et porte son
+statut dérivé dans `metadata.json` :
+- `overallStatus()` = FAIL si includeGuard INVALID OU xref MISSING OU security REJECT ; PASS sinon.
+- `metadata.validationStatus` : "PASS" / "FAIL", omis (NON_NULL) quand aucun rapport n'existe.
+- Rapport JSON invalide → dégradé silencieux (champ omis, jamais de crash de collecte).
+
+**Bénéfices** :
+. Signalement du statut en un seul fichier déjà ingéré par runner-gradle (zéro nouveau fichier).
+. Backward-compat totale : sans `validateDocument`, `metadata.json` est inchangé.
+. DDD pur (`overallStatus`/`fromJson` sans I/O) + câblage tâche minimal.
+====
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-METADATA-1
+| `DocumentValidationReport.overallStatus()` (dérivation pure PASS/FAIL) +
+  `fromJson(String)` round-trip (jackson-module-kotlin ; dep ajoutée en
+  `implementation`, version contrainte BOM 0.0.26).
+| 7 UT (`DocumentValidationReportStatusTest`)
+| 3
+| ✅ TERMINÉ (S-231)
+
+| DOC-METADATA-2
+| `DocumentMetadata.validationStatus` (nullable NON_NULL) +
+  `CollectDocumentRetrieveTask.validationReportPath` (`@Input @Optional`,
+  lecture seule du rapport, dégradé silencieux) + câblage `DocumentPlugin`.
+| 5 UT + 3 FT (PASS porté / FAIL porté / absent omis)
+| 5
+| ✅ TERMINÉ (S-231)
+
+| DOC-METADATA-3
+| Cucumber BDD `@metadata-validation` (PASS strict / FAIL strict include
+  traversal / OFF sans rapport → omis) + runner dédié
+  `MetadataValidationCucumberRunner` + `MetadataValidationSteps` +
+  `CucumberTaskSpec("metadataValidationCucumberTest")`.
+| 3 BDD 3/3 PASSED
+| 4
+| ✅ TERMINÉ (S-231)
+|===
+
+_Total_ : ~12 pts, 3 US. *Épic clôturé en 1 session (S-231).*
+
+=== Hygiène S-227 (S-231)
+
+- Purge des 2 `println` debug résiduels du WIP S-227 (`DocumentPlugin.kt`).
+- Déduplication du bloc conventions **trippliqué** dans `DocumentPlugin.apply()`
+  (blocs identiques copiés 3×) + suppression du doublon mirror `htmlLinkLint`
+  + ligne parasite au milieu du bloc outputs. `compileKotlin` VERT.

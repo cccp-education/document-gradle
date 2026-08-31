@@ -101,4 +101,35 @@ data class DocumentValidationReport(
 ) {
     fun toJson(): String =
         ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(this)
+
+    /**
+     * Derived overall status of the composite validation (DOC-METADATA-VALIDATION) :
+     * - FAIL — any guard failed (includeGuard INVALID, xref MISSING, security REJECT) ;
+     * - PASS — otherwise (WARN is visibility, not failure : LENIENT asymmetry is
+     *   reported in metadata but must not block the N3 ingest).
+     *
+     * Pure derivation — no I/O, no Gradle. Consumed by [document.DocumentMetadata]
+     * to carry the validation status into metadata.json (runner-gradle N3).
+     */
+    fun overallStatus(): String =
+        if (includeGuard.status == "INVALID" ||
+            xref?.status == "MISSING" ||
+            security.advice == "REJECT"
+        ) "FAIL" else "PASS"
+
+    companion object {
+        private val mapper: ObjectMapper =
+            ObjectMapper()
+                .registerModule(
+                    com.fasterxml.jackson.module.kotlin.KotlinModule.Builder().build(),
+                )
+                .enable(SerializationFeature.INDENT_OUTPUT)
+
+        /**
+         * Deserializes a consolidated validation report (JSON produced by [toJson]).
+         * Nullability mirrors the data class : `xref` is absent when mode was OFF.
+         */
+        fun fromJson(json: String): DocumentValidationReport =
+            mapper.readValue(json, DocumentValidationReport::class.java)
+    }
 }

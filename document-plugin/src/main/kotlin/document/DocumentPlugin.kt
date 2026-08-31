@@ -56,7 +56,6 @@ import org.gradle.api.provider.Property
 class DocumentPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        println("APPLYING DOCUMENT PLUGIN")
         val ext = project.extensions.create("document", DocumentExtension::class.java)
 
         // Verification DSL - will be initialized in initNested
@@ -155,69 +154,6 @@ class DocumentPlugin : Plugin<Project> {
          ext.enrich.plantuml.convention(false)
          ext.enrich.images.convention(false)
          ext.enrich.passthrough.convention(false)
-         ext.outputs.html.convention(true)
-         ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
-        ext.outputs.pdf.convention(false)
-        ext.outputs.epub.convention(false)
-        ext.outputs.docbook.convention(false)
-        ext.outputs.manpage.convention(false)
-        ext.metadata.title.convention("Untitled Document")
-        ext.metadata.author.convention("Unknown Author")
-        ext.metadata.language.convention("fr")
-        // DOC-8 — releaseNotes DSL conventions
-        ext.releaseNotes.toTag.convention("HEAD")
-        ext.releaseNotes.includeDownloads.convention(true)
-        // DOC-8.2 — rendererType null by default (generator falls back to asciidoc)
-        ext.releaseNotes.rendererType.convention("asciidoc")
-        ext.releaseNotes.categories.convention(emptyMap())
-        // DOC-8.4 — llmMode default ollama (only used when rendererType = ollama-asciidoc)
-        ext.releaseNotes.llmMode.convention("ollama")
-        // DOC-12 extension — book DSL conventions (mirror of legacy flat properties)
-        ext.book.title.convention("Untitled Book")
-        ext.book.author.convention("Unknown Author")
-        // DOC-13 — template DSL conventions
-        ext.template.failOnMissingVariable.convention(true)
-        ext.template.outputFileName.convention("document")
-        ext.template.variables.convention(emptyMap())
-        ext.batch.formats.convention(listOf("html"))
-        ext.batch.recursive.convention(true)
-        ext.translation.sourceLanguage.convention("fr")
-        ext.translation.targetLanguage.convention("en")
-        ext.translation.llmMode.convention("ollama")
-        ext.translation.batchSourceDir.convention("")
-        ext.translation.batchOutputDir.convention("")
-        ext.translation.batchExcludePaths.convention("")
-        ext.translation.tableValidation.mode.convention("LENIENT")
-        ext.translation.plantUmlValidation.mode.convention("LENIENT")
-        // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
-        ext.converter.safeMode.convention(SafeMode.UNSAFE)
-        ext.safeMode.convention(SafeMode.UNSAFE)
-        // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
-        ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
-        ext.includeGuard.convention(ext.converter.includeGuard)
-        // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
-        ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
-        ext.xrefValidation.convention(ext.converter.xrefValidation)
-        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
-        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
-        // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
-        ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
-        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
-        // Verification DSL conventions
-        ext.verification.htmlLinks.convention(false)
-
-        // Conventions (defauts)
-        ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
-        ext.formats.convention(listOf(DocumentFormat.HTML))
-        ext.enrichPlantUml.convention(false)
-        ext.enrichImages.convention(false)
-        ext.enrichPassthrough.convention(false)
-        ext.llmMode.convention("ollama")
-
-        // DOC-12 — Nested DSL block conventions (unified document { }).
-        ext.enrich.plantuml.convention(false)
-        ext.enrich.images.convention(false)
-        ext.enrich.passthrough.convention(false)
         ext.outputs.html.convention(true)
         ext.outputs.pdf.convention(false)
         ext.outputs.epub.convention(false)
@@ -260,8 +196,6 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
         ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
         ext.xrefValidation.convention(ext.converter.xrefValidation)
-        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
-        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
         // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
         ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
         ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
@@ -286,17 +220,6 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookValidationMode.convention(ext.book.validationMode)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
-        // DOC-CR4 — converter includeGuard default OFF (backward-compatible) + mirror flat property
-        ext.converter.includeGuard.convention(IncludeGuardMode.OFF)
-        ext.includeGuard.convention(ext.converter.includeGuard)
-        // DOC-XREF-VALIDATE — converter xrefValidation default OFF (backward-compatible) + mirror flat property
-        ext.converter.xrefValidation.convention(XrefValidationMode.OFF)
-        ext.xrefValidation.convention(ext.converter.xrefValidation)
-        // DOC-HTML-LINT — mirror the converter htmlLinkLint property to the extension
-        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
-        // DOC-HTML-LINT — converter htmlLinkLint default OFF (backward-compatible) + mirror flat property
-        ext.converter.htmlLinkLint.convention(HtmlLinkLintMode.OFF)
-        ext.htmlLinkLint.convention(ext.converter.htmlLinkLint)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
         // existing conversion tasks remain single-source-of-truth.
         ext.formats.convention(
@@ -401,6 +324,9 @@ class DocumentPlugin : Plugin<Project> {
             task.outputDir.set(project.layout.buildDirectory.dir("docs/document"))
             task.sourceAdoc.set(cliProp(project, "source").orElse(ext.source.map { it.asFile.name }).orElse("source.adoc"))
             task.releaseNotesDirPath.set(project.layout.buildDirectory.dir("release-notes").map { it.asFile.absolutePath })
+            // DOC-METADATA-VALIDATION — snapshot the composite validation report if present
+            // (emitted by `validateDocument`); absent → validationStatus omitted from metadata.json.
+            task.validationReportPath.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json").map { it.asFile.absolutePath })
         }
     }
 
@@ -686,7 +612,6 @@ class DocumentPlugin : Plugin<Project> {
     }
 
     private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
-        println("REGISTERING lintHtmlDocument TASK")
         project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
             task.group = "document"
             task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"

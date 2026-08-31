@@ -1,6 +1,6 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 231
-:date: 2026-08-30
+:session: 232
+:date: 2026-08-31
 :max-lines: 70
 
 == Quick Start
@@ -14,37 +14,51 @@ export JAVA_HOME=~/.sdkman/candidates/java/25.0.4-tem   # conventions-plugin:0.0
 
 == Contexte de fin
 
-Session 230: Mise en œuvre des US-1 et US-2 du PROMPT_REPRISE de la session 227 :
-  - US-1 : wire `lintHtmlDocument` into `bookPipeline` après `convertDocumentToHtml`
-  - US-2 : ajouter la tâche de vérification optionnelle `verifyHtmlLinks` (DSL `verification { htmlLinks.set(true) }`)
-- Mise à jour des dépendances (BOM, suppression de l'dependency manquante asciidoctorj-epub3).
-- Création des rapports de session 229-cloture.adoc et 230-verification-html-links.adoc.
-- Mise à jour de .agents/INDEX.adoc et .agents/SESSIONS_HISTORY.adoc.
-- Synchronisation du backlog (BACKLOG.adoc).
+Session 231 (2026-08-31) :
+  - Hygiène S-227 : purge 2 `println` debug + déduplication du bloc
+    conventions trippliqué de `DocumentPlugin.apply()`.
+  - EPIC DOC-METADATA-VALIDATION ✅ TERMINÉ (3/3 US, Option C du 227) :
+    le statut de la validation composite (`validateDocument`) est porté
+    dans `metadata.json` pour le consommateur N3 runner-gradle.
+    * US-1 (TDD) : `DocumentValidationReport.overallStatus()` (PASS/FAIL
+      dérivé) + `fromJson()` round-trip (7 UT, dep `jackson-module-kotlin`).
+    * US-2 (FT) : `DocumentMetadata.validationStatus` (NON_NULL) +
+      `CollectDocumentRetrieveTask.validationReportPath` (lecture seule du
+      rapport, dégradé silencieux / absent → omis) + 3 FT TestKit.
+    * US-3 (BDD) : `@metadata-validation` 3/3 PASSED (runner dédié
+      `MetadataValidationCucumberRunner`, CucumberTaskSpec).
+  - Gates : `test` 2622 tests / 11 failures = ENV préexistantes (gems Ruby
+    PDF/EPUB absentes, hors périmètre). Runners Cucumber dédiés VERTS.
 
 == EPICs — état
 
-- DOC-HTML-LINT ✅ TERMINÉ (S-226, 3/3 US).
-- Tous les EPICs DOC-x livrés (DOC-0..DOC-15, DOC-TRANSLATE, DOC-TABLE/PLANTUML-VALIDATE,
-  DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT).
-- Restent : maintenance infra Cucumber (conventions-gradle) ou nouvel EPIC produit.
+- Tous les EPICs DOC-x livrés (DOC-0..DOC-15, DOC-TRANSLATE, DOC-TABLE/
+  PLANTUML-VALIDATE, DOC-BOOK-*, CROSS-DOC-BOOK, DOC-CR3/CR4/CR5,
+  DOC-XREF-VALIDATE, DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT,
+  DOC-METADATA-VALIDATION).
 
-== Reprendre à (session 231)
+== Reprendre à (session 232)
 
 . `git status` dans document-gradle
 . Choisir la prochaine action :
-    . Option A — dogfooding : publier un livre FPA via `validateDocument`+`bookPipeline`
-      en mode SERVER (rapport consolidé + conversion navigable).
-    . Option B — EPIC produit : câblage `lintHtmlDocument` (tâche Gradle + DSL `converter { htmlLinkLint }` + CLI)
-      réutilisant le DDD livré S-226.
-    . Option C — consolidation : exposer `validateDocument` dans le pipeline N3 runner-gradle
-      (metadata.json signalant le statut de validation).
-. Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches dédiées),
-  DDD/TDD/BDD (unit + functional + cucumber).
-. Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) — `conventions-plugin:0.0.4`
-  exige JVM 25.
+    . Option A — dogfooding : publier un livre FPA via `validateDocument`+
+      `collectDocumentRetrieve` (metadata.json signale désormais le statut
+      PASS/FAIL — pipeline N3 complet en mode SERVER).
+    . Option B — hardening : câbler le lint HTML dans `validateDocument`
+      (4e garde du composite, statut `htmlLint` dans le rapport consolidé)
+      réutilisant le pattern des 3 gardes existantes.
+    . Option C — maintenance : `DocumentPlugin.apply()` garde ~40 lignes
+      de conventions plates refactorables ; ENV gems Ruby PDF/EPUB à
+      provisionner pour débloquer les 11 tests préexistant.
+. Respecter baby-step : RED → GREEN → REFACTOR (`check` VERT sur les tâches
+  dédiées), DDD/TDD/BDD (unit + functional + cucumber).
+. Build : utiliser JDK 25 (Temurin 25.0.4-tem via sdkman) —
+  `conventions-plugin:0.0.4` exige JVM 25.
 
 == Note cross-borough
 
-Le domaine « Book » (`BookTree`, `BookValidator`, `BookLayout`, `BookNumbering`) est consommé
-par `office/metiers/FPA`. Aucun contenu FPA n'entre dans document-gradle (frontière licence).
+Le domaine « Book » (`BookTree`, `BookValidator`, `BookLayout`, `BookNumbering`)
+est consommé par `office/metiers/FPA`. Aucun contenu FPA n'entre dans
+document-gradle (frontière licence). `metadata.json` reste la seule sortie
+N3 (contrat runner-gradle : `{source, type, sessions, ...}` + optionnel
+`releaseNotes*`, `validationStatus`).

@@ -15,6 +15,10 @@ dependencies {
 
     implementation(kotlin("stdlib-jdk8"))
 
+    // DOC-METADATA-VALIDATION — Jackson Kotlin module for data-class deserialization
+    // (DocumentValidationReport.fromJson). Version constrained by workspace-bom.
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
     // AsciidoctorJ — implementation directe (boundary Codex : pas de compileOnly codex)
     implementation("org.asciidoctor:asciidoctorj")
     implementation("org.asciidoctor:asciidoctorj-diagram")
@@ -148,6 +152,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/html_link_lint.feature"),
             tags = listOf("@html-link-lint"),
             runnerClass = "document.htmllint.HtmlLinkLintCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "metadataValidationCucumberTest",
+            features = listOf("src/test/resources/features/metadata_validation.feature"),
+            tags = listOf("@metadata-validation"),
+            runnerClass = "document.metadatavalidation.MetadataValidationCucumberRunner",
         ),
     )
 }

@@ -1,6 +1,39 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-30
-:session: 224
+:date: 2026-08-31
+:session: 231
+
+== Session 231 — DOC-METADATA-VALIDATION : statut de validation composite dans metadata.json N3
+
+*Objectif* : signaler au consommateur N3 runner-gradle le statut de la validation
+composite (`validateDocument`) via `metadata.json` déjà ingéré. DDD pur
+(`overallStatus`/`fromJson` sans I/O), câblage `CollectDocumentRetrieveTask` en
+lecture seule du rapport (Loi Économie d'Encre), Cucumber `@metadata-validation`.
+
+*Tests ajoutés S231* :
+- `DocumentValidationReportStatusTest.kt` — 7 UT TDD strict (overallStatus PASS/FAIL
+  par garde : includeGuard INVALID, xref MISSING, security REJECT, WARN→PASS ;
+  fromJson round-trip ; xref nullable toléré).
+- `DocumentMetadataTest.kt` — +5 UT (validationStatus default null, accept PASS/FAIL,
+  writeTo inclus/omis).
+- `DocumentPluginFunctionalTest.kt` — +3 FT GradleTestKit (collectDocumentRetrieve
+  porte PASS du rapport / FAIL du rapport / omet sans rapport).
+- `metadata_validation.feature` — 3 scénarios Cucumber `@metadata-validation`
+  (PASS strict SERVER / FAIL strict traversal / OFF sans rapport → omis).
+- `MetadataValidationCucumberRunner.kt` / `MetadataValidationSteps.kt` — NOUVEAU
+  (package `document.metadatavalidation`, préfixe « metadata-validation », anti-glue S-223).
+- Enregistrement `metadataValidationCucumberTest` dans `build.gradle.kts`.
+
+*Couverture* :
+- Unit : 12/12 PASSED (7 + 5 nouveaux).
+- Fonctionnel : 3/3 nouveaux FT PASSED (65 au total, 16 ENV gems Ruby préexistantes).
+- Cucumber dédié : 3/3 PASSED (`metadataValidationCucumberTest`).
+- `compileKotlin` VERT. 10 runners Cucumber dédiés VERTS (metadata + xref +
+  documentValidation + htmlLinkLint + includeGuard + securityPolicy +
+  converterSafeMode + bookTree + bookValidation + composite).
+
+*Non-régression* : `test` 2622 tests, 11 failures = ENV préexistantes uniquement
+(gems Ruby `asciidoctor-pdf`/`asciidoctor-epub3` absentes, S-213/S-215/S-224).
+Zéro secret, zéro régression.
 
 == Session 224 — DOC-XREF-VALIDATE : validation références croisées AsciiDoc (`<<id>>` / `xref:id[]`)
 
