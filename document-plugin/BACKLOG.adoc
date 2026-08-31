@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 241 — **Dogfooding EPUB FPA réel + doc consommateur README** — FT `EpubCheckFpaFunctionalTest` 2/2 : le VRAI `livre-navigable/book.epub` FPA passe W3C epubcheck (audit read-only via `LibEpubCheckAdapter`, zéro régénération) + preuve négative structurelle (zip sans `mimetype` OCF → Invalid ; piège : flip d'octet naïf TOLÉRÉ par epubcheck). README.md consommateur créé — les 5 imports DSL requis documentés (constat S-239). Zéro code prod modifié — UT 3039/0, FT 126/126. Publication 0.0.15 restée en attente d'accord pilote)
+_Date revision_ : 2026-08-31 (session 241 bis — **Publication 0.0.15 Maven Central ✅ + propagation consommateur bakery** — bump 1 ligne, nmcp AUTOMATIC accepté, propagation repo1 vérifiée polling (pom HTTP 200 + `<latest>0.0.15</latest>` ; piège : metadata périmée ~27 min). POM porte `epubcheck:5.2.1` runtime — 5e garde distribuée. bakery-gradle (unique consommateur dur) bumpé 0.0.12 → 0.0.15 : compileKotlin VERT, test 1668 avec 4 failures préexistantes prouvées par stash. Session 241 : dogfooding EPUB FPA réel (epubcheck Valid + preuve négative structurelle) + README consommateur 5 imports DSL. UT 3039/0, FT 126/126)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1850,7 +1850,7 @@ _Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`)._
   `DocumentPluginFunctionalTest` VERT, secrets RAS. Zéro bump BOM.
 - Suite : publication 0.0.15 (accord pilote) pour distribuer la garde.
 
-*Suivi S-241 (dogfooding + doc)* :
+*Suivi S-241 (dogfooding + doc + publication)* :
 - FT dogfooding `EpubCheckFpaFunctionalTest` 2/2 — le VRAI
   `livre-navigable/book.epub` FPA (464 KB) passe W3C epubcheck via
   `LibEpubCheckAdapter` (audit read-only Rule 7, zéro régénération JRuby) ;
@@ -1861,5 +1861,10 @@ _Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`)._
   les 5 imports DSL requis (constat S-239 : sans imports le script
   consommateur ne compile pas), exemple 5 gardes, table des tâches,
   précédence CLI > DSL > convention.
-- Publication 0.0.15 : contenu cumulé = 5e garde + FT dogfooding + README.
+- **Publication 0.0.15 ✅** (accord pilote) : nmcp AUTOMATIC accepté,
+  propagation repo1 vérifiée, POM porte `epubcheck:5.2.1` runtime —
+  la 5e garde est distribuée. Commit document `f296263`.
+- **Propagation bakery ✅** : `bakery-plugin/build.gradle.kts:43`
+  0.0.12 → 0.0.15 (commit `1b937eb`). Non-régression : 4 failures test
+  préexistantes prouvées identiques par stash (hors périmètre document).
 ====

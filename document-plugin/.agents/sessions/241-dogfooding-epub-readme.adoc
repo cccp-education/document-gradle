@@ -1,4 +1,4 @@
-= Session 241 — Dogfooding EPUB FPA + doc consommateur README
+= Session 241 — Dogfooding EPUB FPA + doc consommateur README + publication 0.0.15
 
 _Date_ : 2026-08-31
 _Borough_ : New Orleans (document-gradle) — DORMANT (maintenance + dogfooding)
@@ -79,3 +79,30 @@ sous `functionalTest` (122 → 126 avec les FT epub S-240).
   absent) — pas de couplage CI.
 - La preuve négative reconstruit un zip invalide en mémoire (tmp file
   supprimé) — zéro écriture hors workspace, Rule 7 respectée.
+
+== Publication 0.0.15 (accord pilote explicite reçu en session)
+
+- Bump 1 ligne : `version = "0.0.14"` → `"0.0.15"` (build.gradle.kts).
+- `publishToMavenLocal` VERT — jar/pom/module/sources/javadoc + signatures
+  `.asc` vérifiées dans `~/.m2`.
+- `publishAggregationToCentralPortal --no-daemon` BUILD SUCCESSFUL 42s
+  (AUTOMATIC accepté).
+- Propagation repo1 vérifiée par polling : `maven-metadata.xml` `<latest>`
+  resté périmé ~27 min, POM versionné HTTP 200 au poll 5. Piège retenu :
+  ne pas déclarer l'échec de propagation sur `<latest>` seul.
+- POM Central porte `epubcheck:5.2.1` runtime — la 5e garde est
+  consommable par tout projet tiers.
+- Commit document-gradle `f296263` (bump) poussé.
+
+== Propagation consommateur (bakery-gradle)
+
+- Constat : bakery est l'unique consommateur dur du plugin (grep cross-borough
+  `foundry/public` + `foundry/private`) — `bakery-plugin/build.gradle.kts:43`
+  hardcoded `education.cccp:document-plugin:0.0.12` (S-226).
+- Bump 0.0.12 → 0.0.15, commit `1b937eb` poussé.
+- Gate `compileKotlin` VERT (1m29s). Gate `test` : 1668 tests, 4 failures —
+  **preuve par stash** (`git stash` → même 4 failures avec 0.0.12) :
+  préexistantes sur main, non causées par le bump (version plugin bakery
+  0.0.9 vs catalogue racine 0.0.8 ; fixture cheroliv.com décalée ; sitemap
+  golden master divergent ; feature 57). document 0.0.15 est neutre pour
+  bakery (le code consommé `document.translation.*` est inchangé).

@@ -27,6 +27,12 @@ epub S-240), 17 runners Cucumber dédiés VERTS, `validatePlugins` VERT.
 
 _Zéro code prod modifié — pure test + documentation (README.md)._
 
+*Publication 0.0.15 (suivi session)* : gates publication —
+`publishToMavenLocal` VERT (signatures .asc), `publishAggregationToCentralPortal`
+AUTOMATIC accepté, propagation repo1 vérifiée (POM HTTP 200 + `<latest>`).
+Propagation bakery : compileKotlin VERT, test 1668 — 4 failures préexistantes
+prouvées par stash (identiques 0.0.12/0.0.15, hors périmètre document).
+
 == Session 240 — DOC-EPUBCHECK : 5e garde (validation epubcheck de l'EPUB)
 
 *Objectif* : fermer le dernier gap fonctionnel du BACKLOG (critère US-DOC-04

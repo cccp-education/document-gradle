@@ -2,9 +2,9 @@
 
 == Document-gradle (New Orleans 🟢)
 
-=== Session 241 (2026-08-31) — Dogfooding EPUB FPA réel + doc consommateur README
+=== Session 241 (2026-08-31) — Dogfooding EPUB FPA réel + doc consommateur README + publication 0.0.15
 
-*Type* : dogfooding + docs (baby-step TDD, zéro code prod)
+*Type* : dogfooding + docs + PUB (accord pilote)
 *Score* : 10/10
 
 *Résumé* :
@@ -14,10 +14,17 @@
   OCF → Invalid). Piège : flip d'octet naïf TOLÉRÉ par epubcheck.
 - README.md consommateur créé : quick start + les 5 imports DSL requis +
   exemple 5 gardes + table des tâches + précédence.
-- Gates : compileKotlin VERT, FT 126/126, validatePlugins VERT,
-  epubCheckCucumberTest VERT, secrets RAS. UT 3037 → 3039/0.
-- Publication 0.0.15 (5e garde + README) : restée en attente d'accord
-  pilote (Règle 2).
+- **Publication 0.0.15 Central ✅** : bump 1 ligne, publishToMavenLocal VERT
+  (signatures .asc), publishAggregationToCentralPortal AUTOMATIC accepté,
+  propagation repo1 vérifiée polling (~27 min, piège metadata périmée —
+  vérifier aussi le HTTP 200 du POM). POM porte `epubcheck:5.2.1` runtime.
+- **Propagation bakery-gradle ✅** : unique consommateur dur bumpé
+  0.0.12 → 0.0.15 (commit `1b937eb`) ; compileKotlin VERT, test 1668 avec
+  4 failures préexistantes prouvées identiques par stash 0.0.12.
+- Gates document : compileKotlin VERT, UT 3039/0, FT 126/126,
+  validatePlugins VERT, epubCheckCucumberTest VERT, secrets RAS.
+- Commits : document `26a05b1` (test/docs) + `f296263` (bump), bakery
+  `1b937eb` (bump consommateur). Tous poussés.
 
 === Session 240 (2026-08-31) — EPIC DOC-EPUBCHECK ✅ TERMINÉ (5e garde : validation epubcheck)
 

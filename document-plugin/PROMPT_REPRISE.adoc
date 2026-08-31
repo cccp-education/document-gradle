@@ -2,46 +2,43 @@
 
 == Mission session 242
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-241 a exécuté
-l'Option 2 (doc consommateur README) + le dogfooding EPUB :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-241 (2 commits)
+a exécuté l'Option 2 (README consommateur) + dogfooding EPUB FPA, PUIS la
+publication 0.0.15 avec accord pilote explicite :
 
 - *Dogfooding 5e garde ✅* : le VRAI `livre-navigable/book.epub` FPA (464 KB)
   passe W3C epubcheck via `LibEpubCheckAdapter` — prouvé par
   `EpubCheckFpaFunctionalTest` 2/2 (audit read-only + preuve négative zip sans
-  `mimetype` → Invalid). Le produit « livre FPA SERVER » estEPUB-valide.
-- *README.md créé* : doc consommateur avec les 5 imports DSL requis
-  (constat S-239 : sans imports, le script consommateur ne compile pas) +
-  quick start + table des tâches + précédence CLI > DSL > convention.
+  `mimetype` → Invalid). Le produit « livre FPA SERVER » est EPUB-valide.
+- *README.md créé* : doc consommateur avec les 5 imports DSL requis.
+- *Publication 0.0.15 ✅* : bump 1 ligne, `publishToMavenLocal` VERT
+  (signatures .asc), `publishAggregationToCentralPortal` AUTOMATIC accepté,
+  propagation repo1 vérifiée par polling (~27 min) — `<latest>0.0.15</latest>`,
+  POM porte `epubcheck:5.2.1` runtime. Consommateur bakery-gradle bumpé
+  0.0.12 → 0.0.15 (commit `1b937eb`) : compileKotlin VERT, `test` 1668 tests
+  avec les 4 failures PRÉEXISTANTES identiques au stash 0.0.12 (version
+  bakery 0.0.9 vs catalogue racine 0.0.8, fixture cheroliv.com, sitemap
+  golden master, feature 57 — non causées par le bump).
 
 Prochaines options classées :
 
-- *Option 1 (recommandée si publication) — Publication 0.0.15 Maven Central* :
-  contenu cumulé = 5e garde EPUB (`validateDocumentEpub`, domaine
-  `document.epub`, knob `converter { epubCheck }` + CLI
-  `-Pdocument.epubCheck`, rapport `epub-validation-report.json`, dep tierce
-  `org.w3c:epubcheck:5.2.1`) + FT dogfooding epub + README consommateur.
-  Accord pilote requis (Règle 2). Version hardcodée 0.0.14 actuelle — bump
-  1 ligne. Audit nmcp déjà vert S-237.
-- *Dogfooding PDF FPA* : la garde couvre l'EPUB ; le PDF du livre n'a pas
-  d'équivalent epubcheck (pas de garde PDF — extension possible mais pas de
-  besoin réel remonté).
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
-  jusqu'à besoin N3 réel (décision 4 cadrage S-240 — le composite audite du
-  texte, l'epubcheck coûte des secondes sur un binaire).
+  jusqu'à besoin N3 réel (décision 4 cadrage S-240).
+- *Dogfooding PDF FPA* : pas de garde équivalente epubcheck pour le PDF —
+  extension seulement si besoin réel remonté.
+- *Maintenance* : 4 failures test bakery préexistantes (0.0.9 vs 0.0.8
+  catalogue) — à corriger côté bakery si le pilote le souhaite.
 
-== État du code (S-241)
+== État du code (S-242)
 
-- *0.0.14 PUBLIÉE* Maven Central ET Plugin Portal (S-237/239). 0.0.15 NON
-  publiée (contenu DOC-EPUBCHECK + README en attente d'accord).
+- *0.0.15 PUBLIÉE* Maven Central (repo1, propagation vérifiée). mavenLocal
+  à jour. Contenu 0.0.15 = 0.0.14 + 5e garde EPUB + FT dogfooding epub +
+  README consommateur.
+- *Consommateur* : bakery-gradle consomme `document-plugin:0.0.15`
+  (hardcoded `bakery-plugin/build.gradle.kts:43`), commit/push `1b937eb`.
 - *EPIC DOC-EPUBCHECK ✅ 3/3 US* + dogfooding : FT `EpubCheckFpaFunctionalTest`
-  2/2 (audit `book.epub` réel + preuve négative structurelle — corruption zip
-  sans `mimetype` détectée ; le flip d'octet naïf est TOLÉRÉ par epubcheck,
-  ne pas s'en servir comme preuve négative).
-- *README.md* : quick start + 5 imports DSL + exemple 5 gardes + table
-  tâches.
-- Baselines : UT 3039/0 (3037 + 2 dogfooding epub), FT 126/126, 17 runners
-  Cucumber dédiés VERTS (`epubCheckCucumberTest` 4/4), `validatePlugins`
-  VERT, `cucumberTest` global 2320/0 (S-238).
+  2/2. Baselines : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés VERTS,
+  `validatePlugins` VERT.
 
 == Pièges Gradle à retenir (S-232..S-241)
 
@@ -64,9 +61,12 @@ Prochaines options classées :
 9. *epubcheck callback Java → null* : `info(feature, ...)` reçoit null —
    signature nullable obligatoire côté Kotlin (NPE sinon).
 10. *Preuve négative epubcheck* (S-241) : le flip d'octet naïf est TOLÉRÉ
-   (zip toujours lisible) — corrompre la STRUCTURE (supprimer lentrée
+   (zip toujours lisible) — corrompre la STRUCTURE (supprimer l'entrée
    `mimetype` non compressée, première entrée OCF obligatoire) pour
    déclencher `Invalid`.
+11. *Polling Central* (S-241) : `maven-metadata.xml` `<latest>` peut rester
+   périmé ~27 min après l'acceptation AUTOMATIC — tester aussi le HTTP 200
+   du POM versionné avant de déclarer la propagation.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -88,24 +88,25 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
 - Zéro secret, zéro commit/push sans accord (S-241 : accord de commit/push
-  accordé en fin de session — exécuté).
+  ET publish accordé — exécuté).
 - `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary
   Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
 
 == À vérifier en ouverture
 
-1. `git status` (document-gradle + office/metiers/FPA).
+1. `git status` (document-gradle + bakery-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT.
-4. Central + Plugin Portal : `document-plugin` `<latest>` = 0.0.14.
+4. Central : `document-plugin` `<latest>` = 0.0.15.
 5. Baseline : UT 3039/0, `epubCheckCucumberTest` 4/4, FT 126/126.
 
 == Vision « livre FPA SERVER »
 
 Verrous levés S-233..S-241 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central, 5 gardes documentaires, et désormais *EPUB
-FPA prouvé valide* (epubcheck W3C sur l'artefact réel) + *README
-consommateur* (5 imports DSL documentés). Le produit est servable, auditable
-et documenté de bout en bout. Reste : publication 0.0.15 (accord pilote).
+externe prouvée depuis Central, 5 gardes documentaires, EPUB FPA prouvé
+valide (epubcheck W3C sur l'artefact réel), README consommateur, et désormais
+*0.0.15 publiée* (5e garde + dogfooding + README) avec propagation
+consommateur bakery. Le produit est servable, auditable, documenté et
+distribué de bout en bout.
