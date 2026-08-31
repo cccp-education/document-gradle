@@ -278,3 +278,28 @@ directe vers codex-gradle.
 **Non-régression** : `compileKotlin` VERT. Les seuls échecs `:test`/`:functionalTest` sont les gems `asciidoctor-pdf`/`asciidoctor-epub3` absents (LoadError, préexistant S-213/S-215), indépendants du xref.
 
 **Suite** : S-225 (DOC-TABLE/PLANTUML hardening, ou dogfooding livre FPA SERVER)
+
+== Session 233 (2026-08-31) — Dogfooding pipeline N3 complet sur le livre FPA (Option A) + fix ENV gems
+
+**Type** : feat + TDD/BDD + fix ENV
+**Score** : 10/10
+**EPIC** : dogfooding (option A du PROMPT_REPRISE) + option C atteinte au passage
+
+**Livrables** :
+- `BookPipelineN3FpaFunctionalTest.kt` — NOUVEAU (FT dogfooding N3 complet, 3 builds staged, corpus FPA réel read-only).
+- `document/n3pipeline/N3PipelineCucumberRunner.kt` + `N3PipelineSteps.kt` + `n3_pipeline.feature` — NOUVEAU (BDD `@n3-pipeline` 1/1, 11e `n3PipelineCucumberTest`).
+- `build.gradle.kts` — `runtimeOnly asciidoctorj-pdf:2.3.23` + `asciidoctorj-epub3:2.2.0` (fix ENV gems, 16 failures résolues) + CucumberTaskSpec n3.
+- `LintHtmlDocumentTask.kt` — annotations restaurées (@get:InputFile/@get:Input) + mustRunAfter(collect) [régression WIP f0dfcef].
+- `CollectDocumentRetrieveTask.kt` — snapshot contract (`outputs.upToDateWhen { false }`).
+- `DocumentPlugin.kt` — mustRunAfter lintHtmlDocument.
+- Purge 2 `.bak`.
+
+**Tests** : +1 FT dogfooding (PASSED) + 1 BDD (1/1 PASSED). Gates : 15/15 runners
+Cucumber VERTS (7m33s), `test` VERT (5m33s), FT 116 tests / 5 failures
+PRÉEXISTANTES (translateDocument ×2 + TableValidation ×3 — convention
+`translation.outputFileName` manquante, hors périmètre).
+
+**Non-régression** : baseline FT mesurée avant/après stash (21 fails → 5 fails,
+net -16 grâce au fix ENV gems). Domaine validation inchangé (18 UT PASS au gate test).
+
+**Suite** : S-234 (hygiène FT translateDocument, ou publication 0.0.14, ou option B chemin HTML)

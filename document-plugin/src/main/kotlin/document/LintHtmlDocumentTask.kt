@@ -1,10 +1,12 @@
 package document
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import document.validation.HtmlLinkLinter
 import document.validation.HtmlLinkLintMode
@@ -15,18 +17,22 @@ import org.gradle.api.logging.Logging
 /**
  * Lints the HTML document produced by [convertDocumentToHtml] for navigability.
  */
-open class LintHtmlDocumentTask : DefaultTask() {
+abstract class LintHtmlDocumentTask : DefaultTask() {
 
     private val logger: Logger = Logging.getLogger(this::class.java)
 
-    val htmlFile: RegularFileProperty
-    val htmlLinkLint: Property<HtmlLinkLintMode>
+    /**
+     * The HTML file to lint. This is set by the plugin to the output of [convertDocumentToHtml].
+     */
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val htmlFile: RegularFileProperty
 
-    init {
-        val project = project
-        htmlFile = project.objects.fileProperty()
-        htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java)
-    }
+    /**
+     * The mode of linting (OFF, LENIENT, STRICT). This is set by the plugin from the converter block.
+     */
+    @get:Input
+    abstract val htmlLinkLint: Property<HtmlLinkLintMode>
 
     @TaskAction
     fun lintHtmlDocument() {

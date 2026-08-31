@@ -1,37 +1,74 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 227
+== Mission session 234
 
-Câblage de la tâche Gradle `lintHtmlDocument` dans le pipeline de vérification :
-- Faire exécuter `lintHtmlDocument` après `convertDocumentToHtml` dans le `bookPipeline` ou comme tâche de vérification autonome.
-- Optionnel : ajouter une vérification PUB (Maven Central) si nécessaire.
-- Suivre les éventuels blocages ENV (gems asciidoctor-pdf/asciidoctor-epub3) hors périmètre code.
-- Vision « livre FPA SERVER » : surveiller l'avancement du toc.adoc racine dans office/metiers/FPA.
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
+- *Option A (recommandée)* : hygiene FT — les 5 failures préexistantes
+  (`translateDocument` ×2 + TableValidationFunctionalTest ×3) : cause racine
+  identifiée S-233 — `TranslateDocumentTask.outputFile` sans valeur quand
+  `outputFileName` (TranslationDsl) n'a pas de convention. Suggestion 1-ligne :
+  `ext.translation.outputFileName.convention("document")` + FT/BDD de vérif.
+- *Option B* : résoudre la limite S-232/S-233 — le 4e garde lit le chemin HTML
+  *statique* (`build/docs/document/document.html`) ; exposer l'output réel si
+  `outputFileName` customisé.
+- *Option C (achèvement)* : republication 0.0.14 sur Maven Central (les gems
+  PDF/EPUB sont maintenant packagées runtimeOnly — les consommateurs externes
+  du plugin ont besoin de cette version pour convertir PDF/EPUB).
 
-*Objectif* : 1-2 US baby-step DDD/TDD/BDD.
-- US-1 : Câblage de `lintHtmlDocument` dans le `bookPipeline` (dépend de `convertDocumentToHtml`).
-- US-2 : Ajout d'une tâche de vérification `verifyHtmlLinks` optionnelle (DSL `verification { htmlLinks.set(true) }`).
+== État du code (S-233)
 
-*Méthode* : baby-step DDD/TBD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-*Pattern* : réutiliser le pattern des tâches de validation existantes (ex. `validateDocumentXref`).
+- Dogfooding N3 complet PROUVÉ sur le vrai livre FPA :
+  `BookPipelineN3FpaFunctionalTest` (3 builds staged : bookPipeline →
+  validateDocument → collect) — `metadata.json` porte `validationStatus=PASS`,
+  4 gardes audit VALID/WARN cohérents DOC-CR5, zéro INVALID/MISSING/DEAD/REJECT.
+- BDD anti-régression : `@n3-pipeline` 1/1 PASSED (11e runner dédié
+  `n3PipelineCucumberTest`).
+- ENV gems PDF/EPUB FIXÉ (option C) : `runtimeOnly asciidoctorj-pdf:2.3.23` +
+  `asciidoctorj-epub3:2.2.0` — 16 failures ENV résolues (baseline 21 → 5).
+- `LintHtmlDocumentTask` annotations restaurées + `mustRunAfter(collect...).
+- `CollectDocumentRetrieveTask` = snapshot contract : `outputs.upToDateWhen { false }`.
+- Baseline : `test` VERT, FT 116 tests / 5 failures préexistantes,
+  15 runners Cucumber dédiés VERTS.
+
+== Pièges Gradle à retenir (S-233)
+
+1. *Snapshot collect* : `collectDocumentRetrieve` doit re-scanner à chaque
+   exécution (`outputs.upToDateWhen { false }`) — un `@InputFile` du rapport de
+   validation est impossible car `bookPipeline` dependsOn collect pendant que
+   le rapport n'existe pas (piège S-232 #3).
+2. *mustRunAfter inverse la CLI* : `validateDocument.mustRunAfter(collect)`
+   inverse la chaîne CLI `validateDocument collectDocumentRetrieve` (le collect
+   tournerait d'abord → n/a). Le conflit d'inputs (outputDir couvre le
+   book.adoc) n'existe que si les 2 tâches partagent un build.
+3. *Chaîne N3 staged* : produce → validate → collect (3 builds dans le FT
+   dogfooding) — un cycle Gradle interdit l'ordre métier en un seul build.
+4. Anti-glue Cucumber : `DuplicateStepDefinitionException` si un texte de step
+   est identique dans 2 classes (S-223) — préfixer systématiquement
+   (ex. « n3-pipeline metadata.json ... »).
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+Pattern : miroir `document.xref` pour toute nouvelle garde.
 
 == Règles absolues (AGENT.adoc)
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
-- Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-- Zéro secret, zéro commit/push sans accord (accord pilote donné en ouverture S-227).
-- `bookPipeline` / FT lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
-
-== État du code (S-226)
-
-- DOC-CR3 ✅ / DOC-CR4 ✅ / DOC-CR5 ✅ / DOC-XREF-VALIDATE ✅ / DOC-VALIDATE-COMPOSITE ✅ TERMINÉS.
-- DOC-HTML-LINT ✅ TERMINÉ (3/3 US) : `HtmlLinkLinter` DDD + FT sur le vrai livre FPA + runner Cucumber dédié.
-- Infra Cucumber borough ✅ résolue (S-223) — 7 runners dédiés GREEN.
-- Baseline ouverture : `compileKotlin` VERT + 7 runners Cucumber dédiés VERT.
+- Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
+- Zéro secret, zéro commit/push sans accord.
+- `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
+- Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
 
 == À vérifier en ouverture
 
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
-3. `./gradlew documentValidationCucumberTest includeGuardCucumberTest securityPolicyCucumberTest converterSafeModeCucumberTest xrefValidationCucumberTest bookTreeCucumberTest bookValidationCucumberTest` VERT (fait en ouverture S-226).
-4. `./gradlew lintHtmlDocument` VERT (nouvelle tâche).
+3. `./gradlew compileKotlin` VERT.
+4. `./gradlew n3PipelineCucumberTest metadataValidationCucumberTest` VERT (baseline S-233).
+5. Le livre FPA `livre-navigable/book.html` existe (lint S-226 Valid).
+
+== Vision « livre FPA SERVER »
+
+Le statut N3 est verrouillé (validationStatus=PASS dans metadata.json prouvé
+par FT dogfooding + BDD sur corpus réel). Prochain verrou : publication
+0.0.14 (gems PDF/EPUB packagées) et l'option B (output HTML réel du 4e garde).

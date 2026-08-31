@@ -633,6 +633,15 @@ class DocumentPlugin : Plugin<Project> {
             task.htmlFile.set(htmlTask.get().outputFile)
             // The linting mode is taken from the converter block (htmlLinkLint)
             task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
+            // Session 233 — collectDocumentRetrieve declares `build/docs/document` as its
+            // @OutputDirectory, which *covers* the document.html this task consumes
+            // (@InputFile). When both run in the same build (bookPipeline / N3 chain),
+            // Gradle requires an explicit ordering so the lint's input is not clobbered
+            // by the collect snapshot. Semantics: the lint audits the fresh HTML, the
+            // collect merely indexes artifacts — mustRunAfter (not dependsOn) keeps the
+            // lint usable standalone (wired here because this registration runs after
+            // registerBookPipeline).
+            task.mustRunAfter("collectDocumentRetrieve", "convertDocumentToHtml")
         }
     }
 

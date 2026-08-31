@@ -867,3 +867,26 @@ Gates :
 *Couverture* : `DocumentConverter` passe d'un `Factory.create()` par conversion à une instance partagée (singleton lazy). Couvert par `AsciidoctorHolderTest` + `DocumentConverterTest`. `DocumentGenerationGraph` : suppression de ~57 lignes mortes sans perte de comportement (validé par `DocumentGenerationGraphTest`).
 
 *Hors périmètre* : DOC-CR3-2 (safeMode DSL) non traité.
+
+== Session 233 (2026-08-31) — Dogfooding N3 complet + fix ENV gems
+
+*Tests ajoutés S233* :
+- `BookPipelineN3FpaFunctionalTest.kt` — 1 FT dogfooding (corpus FPA réel, 3 builds staged, asserts 4 gardes + metadata validationStatus=PASS).
+- `N3PipelineSteps.kt` + `n3_pipeline.feature` + `N3PipelineCucumberRunner.kt` — 1 BDD `@n3-pipeline` (11e `CucumberTaskSpec n3PipelineCucumberTest`).
+
+*Impact majeur sur la baseline ENV (option C)* :
+- `runtimeOnly asciidoctorj-pdf:2.3.23` + `asciidoctorj-epub3:2.2.0` — les gems
+  `asciidoctor-pdf`/`asciidoctor-epub3` se chargent désormais du classpath :
+  16 failures ENV résolues (baseline FT 21 → 5 fails, toutes préexistantes et
+  hors périmètre : translateDocument ×2 + TableValidation ×3, cause convention
+  `translation.outputFileName` manquante). Les tests
+  `DocumentConverterTest` PDF/EPUB + `FpaBookArtifactGenerationTest` +
+  `BookPipelineFpaFunctionalTest` PDF/EPUB passent maintenant.
+
+*Infra test* :
+- `CollectDocumentRetrieveTask` : snapshot contract (`upToDateWhen { false }`) —
+  le FT/BDD N3 exige la ré-indexation après écriture du rapport de validation.
+- `LintHtmlDocumentTask` : annotations restaurées (régression WIP f0dfcef) ;
+  le moteur Cucumber global scanne `lintHtmlDocument` sans faux conflit.
+
+Gates : 15/15 runners Cucumber VERTS, `test` VERT, FT 116/5 fails préexistantes.

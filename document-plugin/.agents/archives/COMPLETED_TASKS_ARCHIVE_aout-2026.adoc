@@ -389,3 +389,27 @@ security CR5 + htmlLint DOC-HTML-LINT).
 FT composite 4/4 + html-lint 4/4 / test 2671 / 11 failures ENV gems Ruby
 préexistantes (S-213/215/224/231) / domaine validation 37 UT / 0 fail /
 zéro secret / zéro régression.
+
+=== Session 233 (2026-08-31) — Dogfooding pipeline N3 complet sur le livre FPA (Option A) + fix ENV gems (Option C)
+
+*Type* : feat + TDD/BDD + fix ENV
+*Score* : 10/10
+
+*Résumé* : Le statut N3 du « livre FPA SERVER » est verrouillé :
+- FT dogfooding `BookPipelineN3FpaFunctionalTest` (corpus FPA réel, read-only
+  Rule 7, 3 builds staged bookPipeline → validateDocument → collectDocumentRetrieve)
+  — `metadata.json` porte `validationStatus=PASS`, 4 gardes auditées (xref
+  STRICT VALID, htmlLint STRICT VALID, includeGuard LENIENT×UNSAFE → advice WARN
+  cohérent DOC-CR5), zéro INVALID/MISSING/DEAD/REJECT.
+- BDD anti-régression `@n3-pipeline` 1/1 PASSED (11e runner dédié
+  `n3PipelineCucumberTest`).
+- Fix ENV gems PDF/EPUB : `runtimeOnly asciidoctorj-pdf:2.3.23` +
+  `asciidoctorj-epub3:2.2.0` — 16 failures ENV résolues (baseline FT 21 → 5).
+- Infra : `LintHtmlDocumentTask` annotations restaurées (régression WIP) +
+  `mustRunAfter(collect)` ; `CollectDocumentRetrieveTask` snapshot contract
+  (`upToDateWhen { false }`).
+- 3 nouveaux pièges Gradle documentés (snapshot collect / mustRunAfter inverse
+  la CLI / chaîne N3 staged — cycle interdit en 1 build).
+
+*Clôtures* : option A et option C du PROMPT_REPRISE 233 traitées. L'option B
+(chemin HTML statique du 4e garde) reste ouverte — reportée S-234.

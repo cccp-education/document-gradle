@@ -1,0 +1,107 @@
+= Session 233 — Dogfooding pipeline N3 complet sur le livre FPA (Option A)
+
+_Date_ : 2026-08-31 | _Borough_ : New Orleans 🟢 (document-gradle) | _Type_ : feat + TDD/BDD + fix ENV
+
+== Mission (PROMPT_REPRISE 233)
+
+Option A (recommandée) : dogfooding pipeline N3 complet — `validateDocument`
+(4 gardes) + `collectDocumentRetrieve` sur le livre FPA, vérifier que
+`metadata.json` porte `validationStatus=PASS`. Bonus : option B (limite chemin
+HTML statique évaluée) et option C (ENV gems Ruby — fixée au passage).
+
+== Constats d'ouverture (audit)
+
+1. `bookPipeline` (S-217) enchaîne assemble→convert→lint→collect mais *jamais*
+   `validateDocument` — le rapport consolidé n'est pas produit dans le flux livre.
+2. Aucun test ne déroule la chaîne N3 *complète* (bookPipeline + validateDocument
+   + collect) sur le *vrai* corpus FPA.
+3. Bloc commenté `build.gradle.kts:26` : « EPUB3 dependency missing in
+   repositories » — FAUX diagnostic : les JARs gems existent (cache Gradle,
+   catalogue versionné `2.3.23`/`2.2.0`), seules les dépendances n'étaient pas
+   déclarées (le core `asciidoctorj` n'embarque que la gem `asciidoctor`).
+4. WIP f0d fcef : `LintHtmlDocumentTask.htmlFile` a perdu son `@get:InputFile`
+   (propriété dynamique) → `Missing annotation` + implicit dependency contre
+   `collectDocumentRetrieve.outputDir` (même répertoire partagé).
+
+== Realisations
+
+=== Fix ENV (option C atteinte au passage) — 16 failures résolues
+- `build.gradle.kts` : `runtimeOnly asciidoctorj-pdf:2.3.23` +
+  `asciidoctorj-epub3:2.2.0` (versions explicites — le catalogue du plugin
+  n'est pas importé par settings.gradle.kts, la résolution passe par mavenCentral).
+- Baseline FT mesurée avant/après : 116 tests / **21 fails → 5 fails**.
+- Les gems PDF/EPUB se chargent depuis le classpath — zéro code.
+
+=== Fix infra (régression WIP f0dfcef)
+- `LintHtmlDocumentTask` restauré : `abstract val` annotés `@get:InputFile
+  @get:PathSensitive(NONE)` + `@get:Input` sur `htmlLinkLint`.
+- `lintHtmlDocument.mustRunAfter("collectDocumentRetrieve",
+  "convertDocumentToHtml")` — le `@OutputDirectory` du collect couvre le
+  `document.html` (@InputFile) du lint ; ordre métier satisfait.
+- Purge des 2 fichiers `.bak` résiduels du WIP (backupés dans /tmp).
+
+=== US-1 (FT/TDD) — dogfooding N3 complet sur le livre FPA réel
+`BookPipelineN3FpaFunctionalTest` (TestKit, corpus copié read-only Rule 7) :
+- Build 1 `bookPipeline` (livre assemblé + converti) ;
+- Build 2 `validateDocument` (4 gardes : includeGuard LENIENT × safeMode UNSAFE
+  → advice WARN [DOC-CR5], xref STRICT, htmlLint STRICT) ;
+- Build 3 `collectDocumentRetrieve` (snapshot re-scan) ;
+- Asserts : les 4 gardes auditées, aucun INVALID/MISSING/DEAD/REJECT sur le
+  vrai livre, `metadata.json` porte `validationStatus=PASS`.
+- **PITFALLS GRADLE (3 nouveaux documentés)** :
+  1. `collectDocumentRetrieve` = snapshot → `outputs.upToDateWhen { false }`
+     (un input `@InputFile` du rapport est impossible : `bookPipeline`
+     dependsOn collect pendant que le rapport n'existe pas — le piège S-232
+     #3 en personne) ;
+  2. `validateDocument.mustRunAfter(collect)` INVERSE la chaîne CLI S-231
+     (`validateDocument collectDocumentRetrieve` → collect d'abord → n/a) ;
+     retiré — le conflit d'inputs n'existe que si les deux tournent ensemble ;
+  3. La chaîne N3 est *staged* par contrats : producere → validate → collect
+     (un cycle Gradle interdit l'ordre métier dans un build unique).
+
+=== US-2 (BDD) — scénario anti-régression du contrat N3
+- `n3_pipeline.feature` `@n3-pipeline` (1 scénario : staged 3-builds →
+  validationStatus PASS) ;
+- `N3PipelineCucumberRunner` (pattern S-082, 11e `CucumberTaskSpec
+  n3PipelineCucumberTest`) + `N3PipelineSteps` (steps préfixés « n3-pipeline »
+  anti-glue S-223).
+- RED initial : `DuplicateStepDefinitionException` (texte de step identique à
+  `MetadataValidationSteps`) — corrigé par préfixe dédié.
+
+== Gates
+
+|===
+| Gate | Résultat
+| `compileKotlin` | ✅ VERT
+| 15 runners Cucumber dédiés | ✅ 15/15 VERTS (7m33s) dont nouveau `n3PipelineCucumberTest`
+| `functionalTest` | ✅ 116 tests / 5 failures PRÉEXISTANTES (translateDocument
+  outputFileName value_not_set ×2, TableValidationFunctionalTest ×3 — baseline
+  21 fails → net -16 grâce au fix ENV gems)
+| `test` (unit + BDD) | ✅ VERT (5m33s — les « BUILD FAILED » visibles sont les
+  builds TestKit STRICT attendus des scénarios de rejet)
+| Secrets | ✅ zéro token/password/api-key
+|===
+
+== Limites et découvertes (pour les prochaines sessions)
+
+1. *5 failures FT préexistantes* : `translateDocument` (2) + TableValidation ×3
+   — `TranslateDocumentTask.outputFile` sans valeur quand `outputFileName`
+   (TranslationDsl) n'a pas de convention (« document » manquant). Hors
+   périmètre S-233, candidat hygiene session suivante (suggestion : ajouter
+   `ext.translation.outputFileName.convention("document")`).
+2. *Option B (chemin HTML statique)* : NON traitée — le 4e garde lit toujours
+   `build/docs/document/document.html` ; l'output réel diffère si
+   `outputFileName` est customisé.
+3. Les gems PDF/EPUB sont maintenant chargées : la tâche `convertDocumentToEpub`
+   *fonctionne* (SecurityError SERVER jail résolue par UNSAFE en TestKit).
+
+== Fichiers modifiés / créés
+
+- `document-plugin/build.gradle.kts` — runtimeOnly gems + CucumberTaskSpec n3.
+- `document-plugin/src/main/.../LintHtmlDocumentTask.kt` — annotations restaurées + mustRunAfter.
+- `document-plugin/src/main/.../CollectDocumentRetrieveTask.kt` — snapshot contract (upToDateWhen false) + doc.
+- `document-plugin/src/main/.../DocumentPlugin.kt` — mustRunAfter lintHtmlDocument.
+- `document-plugin/src/functionalTest/.../BookPipelineN3FpaFunctionalTest.kt` — NOUVEAU (US-1).
+- `document-plugin/src/test/kotlin/document/n3pipeline/` — NOUVEAU (US-2 : runner + steps).
+- `document-plugin/src/test/resources/features/n3_pipeline.feature` — NOUVEAU (US-2).
+- `.bak` purgés : `LintHtmlDocumentTask.kt.bak`, `VerificationDsl.kt.bak`.

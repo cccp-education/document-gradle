@@ -23,7 +23,12 @@ dependencies {
     implementation("org.asciidoctor:asciidoctorj")
     implementation("org.asciidoctor:asciidoctorj-diagram")
     implementation("org.asciidoctor:asciidoctorj-diagram-plantuml")
-    // implementation("org.asciidoctor:asciidoctorj-epub3") // EPUB3 dependency missing in repositories
+    // Session 233 (option C) — PDF/EPUB backend gems. The core asciidoctorj jar only
+    // bundles the `asciidoctor` gem; the `pdf`/`epub3` backends live in their own
+    // gem jars (versioned by the catalogue, present in repositories). runtimeOnly:
+    // the converter gems are discovered from the classpath, no compile-time API used.
+    runtimeOnly("org.asciidoctor:asciidoctorj-pdf:2.3.23")
+    runtimeOnly("org.asciidoctor:asciidoctorj-epub3:2.2.0")
 
     // koog — orchestrateur de graphe agentique (EPIC L : koog orchestre, langchain4j execute)
     implementation("ai.koog:koog-agents")
@@ -158,6 +163,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/metadata_validation.feature"),
             tags = listOf("@metadata-validation"),
             runnerClass = "document.metadatavalidation.MetadataValidationCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "n3PipelineCucumberTest",
+            features = listOf("src/test/resources/features/n3_pipeline.feature"),
+            tags = listOf("@n3-pipeline"),
+            runnerClass = "document.n3pipeline.N3PipelineCucumberRunner",
         ),
     )
 }
