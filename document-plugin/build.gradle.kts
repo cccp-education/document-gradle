@@ -10,8 +10,8 @@ plugins {
 group = "education.cccp"
 version = "0.0.13"
 
-    dependencies {
-        implementation(platform("education.cccp:workspace-bom:0.0.26"))
+dependencies {
+    implementation(platform("education.cccp:workspace-bom:0.0.26"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -50,7 +50,6 @@ version = "0.0.13"
     // Tests unitaires
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.slf4j:slf4j-api")
     testRuntimeOnly("ch.qos.logback:logback-classic")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
@@ -62,7 +61,6 @@ version = "0.0.13"
     testImplementation("io.cucumber:cucumber-picocontainer")
     testImplementation("org.junit.platform:junit-platform-suite")
 }
-
 
 
 // Forward the dogfooding publish flag to the test JVM so the FPA-BOOK-4
@@ -183,7 +181,5 @@ publishing {
             description.set("Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ.")
         }
     }
-    repositories {
-        mavenCentral()
-    }
+    repositories.mavenCentral()
 }
