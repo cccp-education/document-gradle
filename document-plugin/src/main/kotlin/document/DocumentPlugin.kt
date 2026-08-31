@@ -309,7 +309,14 @@ class DocumentPlugin : Plugin<Project> {
                 task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
                 task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
                 task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
-                task.outputFile.set(project.layout.buildDirectory.file("docs/document/document.${format.extension}"))
+                // S-235 (Option B) — the knob becomes live: the output file derives from
+                // `outputFileName` (default "document" → canonical paths, backward compatible).
+                // Downstream consumers (validateDocument htmlFilePath, lintHtmlDocument) derive
+                // the *same* path from the same knob — never from this task's outputFile (no
+                // implicit dependence, S-232 pitfall).
+                task.outputFile.set(
+                    task.outputFileName.flatMap { name -> project.layout.buildDirectory.file("docs/document/$name.${format.extension}") },
+                )
                 task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
                 task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))
                 task.epubStylesheetFile.set(cliFile(project, "epubStylesheet").orElse(ext.epubStylesheet))
@@ -612,13 +619,19 @@ class DocumentPlugin : Plugin<Project> {
             // converter { htmlLinkLint } + flat mirror + CLI `-Pdocument.htmlLinkLint`.
             task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.htmlLinkLint))
             // The rendered HTML audited by the fourth guard is the output of
-            // convertDocumentToHtml (same file `lintHtmlDocument` consumes). The path is
-            // resolved from the *static* output convention (build/docs/document/document.html)
-            // — parity with the metadata-validation read-only pattern — so `validateDocument`
-            // never implicitly depends on the conversion. Ordering with the conversion is
+            // convertDocumentToHtml. S-235 (Option B) : the path is derived from the
+            // *same* `outputFileName` knob as the conversion (live since US-1), so a
+            // customised output name is audited where it really lands (no more false
+            // `<html-file-missing>` on the static convention). Still resolved from the
+            // layout + knob — *never* from the producer's outputFile provider (no
+            // implicit dependence, S-232 pitfall) — so `validateDocument` never
+            // implicitly depends on the conversion. Ordering with the conversion is
             // expressed via mustRunAfter; an absent file yields a `<html-file-missing>` finding.
             task.htmlFilePath.set(
-                project.layout.buildDirectory.file("docs/document/document.html").map { it.asFile.absolutePath },
+                cliProp(project, "outputFileName")
+                    .orElse("document")
+                    .flatMap { name -> project.layout.buildDirectory.file("docs/document/$name.html") }
+                    .map { it.asFile.absolutePath },
             )
             task.mustRunAfter("convertDocumentToHtml")
             task.reportFile.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json"))
@@ -630,8 +643,15 @@ class DocumentPlugin : Plugin<Project> {
             task.group = "document"
             task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
             task.dependsOn("convertDocumentToHtml")
-            val htmlTask = project.tasks.named("convertDocumentToHtml", ConvertDocumentTask::class.java)
-            task.htmlFile.set(htmlTask.get().outputFile)
+            // S-235 (Option B) — derive the audited HTML from the same `outputFileName`
+            // knob as the conversion (replaces the producer-provider read, which would
+            // resolve the *stale* static name at configuration time and is exactly the
+            // implicit-dependence shape rejected in S-232).
+            task.htmlFile.set(
+                cliProp(project, "outputFileName")
+                    .orElse("document")
+                    .flatMap { name -> project.layout.buildDirectory.file("docs/document/$name.html") },
+            )
             // The linting mode is taken from the converter block (htmlLinkLint)
             task.htmlLinkLint.set(cliProp(project, "htmlLinkLint").map { HtmlLinkLintMode.valueOf(it.uppercase()) }.orElse(ext.converter.htmlLinkLint))
             // Session 233 — collectDocumentRetrieve declares `build/docs/document` as its

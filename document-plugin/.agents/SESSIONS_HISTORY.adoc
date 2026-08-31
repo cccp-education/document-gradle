@@ -340,3 +340,37 @@ modifié/créé — les FT existants retrouvent leur statut VERT.
 
 **Suite** : S-235 (option B — chemin HTML réel du 4e garde, recommandée /
 option C — publication 0.0.14 / option D — diagnostic moteur Cucumber global)
+
+== Session 235 — 2026-08-31 — Option B : output HTML réel audité par la 4e garde
+
+**Type** : feat + TDD/BDD — baby-step DDD/TDD/BDD strict.
+**Cadrage** : `.agents/CADRAGE_S235_OUTPUT_HTML_REEL.adoc` (6 constats, 7 décisions,
+3 US ~8 pts). Knob `outputFileName` MORT confirmé (déclaré+câblé, jamais lu par
+`ConvertDocumentTask` ; outputFile hardcodé `document.<ext>`).
+
+**US-1 (TDD)** : `outputFile` conversion dérivé du knob
+(`outputFileName.flatMap { buildDir/docs/document/$it.<ext> }`) — défaut
+`"document"` → chemins canoniques backward-compat. RED (custom.html absent)
+→ GREEN 2/2 FT.
+
+**US-2 (FT)** : `validateDocument.htmlFilePath` + `lintHtmlDocument.htmlFile`
+dérivés du MÊME knob (jamais provider outputFile — dépendance implicite S-232 ;
+le `htmlTask.get().outputFile` du lint était la même forme illégale).
+RED discriminant (`<html-file-missing>` vs fragment `gone-custom`) → GREEN 2/2
++ non-régression HtmlLint 4/4 + DocumentPluginFunctionalTest VERT.
+Faux positif d'assertion documenté : choisir des fragments discriminants
+(2 findings partagent le mot `missing`).
+
+**US-3 (BDD)** : +2 scénarios `@document-validation-custom-output`
+(STRICT audite le vrai custom.html → DEAD liste gone-custom, pas
+html-file-missing ; VALID symétrique). Steps anti-glue S-223. **10/10 PASSED**.
+
+**Gates** : 15/15 runners Cucumber dédiés SUCCESSFUL (11m39s, 0 failure XML),
+compileKotlin VERT, secrets RAS, dogfooding FPA (chemins défaut) inchangé.
+
+**Gouvernance** : CONTRAINTE GLOBALE *Zéro Python — Écosystème JVM Exclusif*
+ajoutée `AGENTS.adoc` racine (Règles Transverses, EAGER) — outputs analyse
+exclusivement Read/Grep/xmllint/rapports Gradle natifs.
+
+**Suite** : S-236 — option C (publication 0.0.14, accord pilote requis),
+option D (moteur global), suivi collector N3 noms custom.

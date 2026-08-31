@@ -55,3 +55,17 @@ Feature: Composite document validation (include guard + xref + security policy)
     Given a document gradle project with document-validationHtml config "LENIENT_HTML" and source "= Title\n\n++++\n<p><a href=\"#missing\">gone</a></p>\n++++\n"
     When the validateDocument task runs with the HTML conversion
     Then the document-validation-report.json marks htmlLint DEAD listing "missing"
+
+  @document-validation @document-validation-html-lint @document-validation-custom-output
+  Scenario: HTML lint STRICT audits the real custom-named output (outputFileName knob)
+    Given a document gradle project with document-validationHtml config "CUSTOM_NAME" and source "= Title\n\n++++\n<p><a href=\"#gone-custom\">gone</a></p>\n++++\n"
+    When the validateDocument task runs with the custom output name and fails
+    Then the document-validation-report.json marks htmlLint DEAD listing "gone-custom"
+    And the document-validation-report.json does not report html-file-missing
+    And the build fails with document-validation message "HTML link lint"
+
+  @document-validation @document-validation-html-lint @document-validation-custom-output
+  Scenario: HTML lint VALID on a navigable custom-named output (outputFileName knob)
+    Given a document gradle project with document-validationHtml config "CUSTOM_NAME" and source "= Title\n\n[[intro]]\n== Intro\n\nSee <<intro>> here.\n"
+    When the validateDocument task runs with the custom output name
+    Then the document-validation-report.json marks htmlLint VALID

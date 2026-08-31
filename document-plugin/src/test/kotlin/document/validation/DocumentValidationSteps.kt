@@ -62,6 +62,10 @@ class DocumentValidationSteps {
                 "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
             "LENIENT_HTML" ->
                 "converter { htmlLinkLint = HtmlLinkLintMode.LENIENT; safeMode = SafeMode.SERVER }"
+            // S-235 (Option B) — custom output name : same STRICT knob, the audited
+            // HTML is the *real* custom-named output build/docs/document/custom.html.
+            "CUSTOM_NAME" ->
+                "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
             else -> "converter { }"
         }
         return """
@@ -97,6 +101,31 @@ class DocumentValidationSteps {
         buildOutput = GradleRunner.create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml", "validateDocument")
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
+            .output
+    }
+
+    /** S-235 (Option B, anti-glue S-223 distinct step texts) — same two-task chain as
+     *  the plain HTML-lint scenarios, but the `outputFileName` knob renames the real
+     *  conversion output (`custom.html`), which the fourth guard must audit. */
+    @When("the validateDocument task runs with the custom output name")
+    fun `validateDocument runs with the custom output name`() {
+        buildOutput = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
+            .output
+    }
+
+    @When("the validateDocument task runs with the custom output name and fails")
+    fun `validateDocument runs with the custom output name and fails`() {
+        buildOutput = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
             .withPluginClasspath()
             .forwardOutput()
             .buildAndFail()
@@ -193,5 +222,16 @@ class DocumentValidationSteps {
         assertTrue(json.contains("htmlLint"), "le rapport doit porter le bloc 4e garde htmlLint")
         assertTrue(json.contains("\"status\" : \"VALID\""), "le lint HTML doit être VALID (json: $json)")
         assertFalse(json.contains("DEAD"), "aucun lien mort attendu (json: $json)")
+    }
+
+    /** S-235 (Option B) — the audited HTML is the *real* custom-named output: the
+     *  static-path failure finding `<html-file-missing>` must never appear. */
+    @Then("the document-validation-report.json does not report html-file-missing")
+    fun `report does not report html file missing`() {
+        val json = reportFile.readText()
+        assertFalse(
+            json.contains("html-file-missing"),
+            "la 4e garde doit auditer le vrai HTML custom, pas le chemin statique (json: $json)",
+        )
     }
 }

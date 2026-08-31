@@ -920,3 +920,26 @@ Gates :
   le moteur Cucumber global scanne `lintHtmlDocument` sans faux conflit.
 
 Gates : 15/15 runners Cucumber VERTS, `test` VERT, FT 116/5 fails préexistantes.
+
+=== Session 235 (2026-08-31) — Option B : knob outputFileName vivant
+
+*Nouveaux tests* :
+- `ConvertDocumentTaskOutputFileNameFunctionalTest` (2 FT TestKit) — custom
+  `custom.html` produit + `document.html` absent ; défaut canonique préservé.
+- `ValidateDocumentHtmlLintCustomOutputFunctionalTest` (2 FT TestKit) — 4e
+  garde audite le vrai `custom.html` (DEAD + fragment `gone-custom`, pas de
+  `html-file-missing`) ; `lintHtmlDocument` même contrat.
+- `document_validation.feature` : +2 scénarios `@document-validation-custom-output`
+  (runner existant `documentValidationCucumberTest` — pas de nouveau runner).
+
+*Faux positif corrigé en cours de TDD* : le RED initial utilisait le fragment
+`missing`, partagé par le finding attendu (lien mort) ET le finding d'échec
+statique (`<html-file-missing>`) — le test passait pour la mauvaise raison.
+Fragment discriminant `gone-custom` + assertion négative `html-file-missing`.
+Leçon : un fragment d'assertion doit distinguer les findings.
+
+*Backward-compat prouvée* : défaut `"document"` → mêmes chemins (tous les
+tests existants verts sans modification).
+
+Gates : 15/15 runners Cucumber dédiés VERTS (0 failure XML après --rerun-tasks),
+compileKotlin VERT, secrets RAS.

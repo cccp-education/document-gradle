@@ -1,29 +1,32 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 235
+== Mission session 236
 
 Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
-- *Option B (recommandée)* : résoudre la limite S-232/S-233 — le 4e garde lit le chemin HTML
-  *statique* (`build/docs/document/document.html`) ; exposer l'output réel si
-  `outputFileName` customisé.
-- *Option C (achèvement)* : republication 0.0.14 sur Maven Central (les gems
+- *Option C (recommandée)* : republication 0.0.14 sur Maven Central (les gems
   PDF/EPUB sont packagées runtimeOnly depuis S-233 — les consommateurs externes
-  du plugin ont besoin de cette version pour convertir PDF/EPUB).
+  du plugin ont besoin de cette version pour convertir PDF/EPUB). Publication
+  sans accord pilote interdite (Règle 2).
 - *Option D* : diagnostic du moteur Cucumber *global* (`cucumberTest`) — 82
   failures `UndefinedStepException` préexistantes (scoping glue runner global
   vs runners dédiés, connu S-221/S-223). La gate reste les 15 runners dédiés.
+- *Suivi S-235* (optionnel) : `DocumentArtifactCollector.collect` scanne les noms
+  canoniques `document.${ext}` ; avec `outputFileName` custom les artifacts
+  custom ne sont pas indexés N3 — extension possible du collector (knob → scan).
 
-== État du code (S-234)
+== État du code (S-235)
 
-- *Fix Option A livré* : `ext.translation.outputFileName.convention("document")`
-  (DocumentPlugin.kt) — les 5 failures FT préexistantes S-233 résolues.
-- Baseline FT : `functionalTest` 68/68 (was 116 tests / 5 failures → 0 failure).
-- `test` VERT (6m59s). 15/15 runners Cucumber dédiés : 144 scénarios PASSED.
-- Preuve BDD comparative : moteur global `cucumberTest` 144/86 (sans fix) →
-  148/82 (avec fix) — +4 = scénarios `@doc-translate` translateDocument.
-- Les 82 failures globales restantes préexistent (glue scoping, hors scope).
+- *Option B livrée* : le knob `outputFileName` est vivant —
+  `outputFile = build/docs/document/${outputFileName}.${format.extension}` ;
+  la 4e garde (`validateDocument` htmlLint) et `lintHtmlDocument` auditent
+  l'output réel (même dérivation knob, zéro dépendance de tâche, piège S-232
+  respecté). Défaut `"document"` → chemins canoniques (backward-compat total).
+- 15/15 runners Cucumber dédiés VERTS (0 failure, 0 error, rapports XML).
+- FT : OutputFileName 2/2 + CustomOutput 2/2 + HtmlLint 4/4 + suite complète VERT.
+- Moteur global `cucumberTest` : 15 fichiers failures préexistantes (glue
+  scoping, hors périmètre).
 
-== Pièges Gradle à retenir (S-233/234)
+== Pièges Gradle à retenir (S-233/234/235)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` doit re-scanner à chaque
    exécution (`outputs.upToDateWhen { false }`) — un `@InputFile` du rapport de
@@ -38,6 +41,10 @@ Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
 4. *Property DSL sans convention reste unset même derrière `.orElse(...)`* :
    `cliProp(...).orElse(ext.x)` produit un provider unset si aucune branche
    n'a de valeur → `Value not set` à l'exécution (piège S-234).
+5. *Dérivation knob sans dépendance de tâche* (S-235) : pour pointer l'output
+   d'une tâche, dériver le chemin du MÊME knob (layout + knob flatMap),
+   jamais un provider vers `outputFile` du producteur (dépendance implicite) ;
+   jamais `.get()` configuration-time (`Querying the mapped value...`).
 
 == Anti-glue Cucumber
 
@@ -45,12 +52,16 @@ Un texte de step identique dans 2 classes → `DuplicateStepDefinitionException`
 (S-223). Le runner *global* (glue `document.scenarios`) ne voit pas les steps
 des runners dédiés (autres packages) → `UndefinedStepException` pour les
 features `@book-validation`/`@book-tree`/etc. Comparer baseline via `git stash`
-pour isoler l'impact d'un fix (méthode utilisée S-234).
+pour isoler l'impact d'un fix (méthode utilisée S-234). Attention aux
+*faux positifs d'assertion* : un fragment de message partagé par 2 findings
+distingués (`missing` du fragment mort vs `<html-file-missing>`) fait passer
+un test pour la mauvaise raison — choisir des fragments discriminants (S-235).
 
 == Méthode
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-Pattern : miroir `document.xref` pour toute nouvelle garde.
+CONTRAINTE GLOBALE : *Zéro Python* — les outputs (XML JUnit, rapports, logs)
+s'analysent avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 == Règles absolues (AGENT.adoc)
 
@@ -65,12 +76,12 @@ Pattern : miroir `document.xref` pour toute nouvelle garde.
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
 3. `./gradlew compileKotlin` VERT.
-4. `./gradlew tableTranslationCucumberTest ... n3PipelineCucumberTest` VERT (15 runners dédiés, 144 scénarios).
-5. Baseline FT : `functionalTest` 68/68 VERT (0 failure depuis S-234).
+4. `./gradlew tableTranslationCucumberTest ... n3PipelineCucumberTest` VERT (15 runners dédiés).
+5. FT ciblées outputFileName GREEN (S-235 livré).
 
 == Vision « livre FPA SERVER »
 
 Le statut N3 est verrouillé (validationStatus=PASS dans metadata.json prouvé
-par FT dogfooding + BDD sur corpus réel). Prochain verrou : option B (output
-HTML réel du 4e garde) et publication 0.0.14 (gems packagées dont les
-consommateurs externes ont besoin).
+par FT dogfooding + BDD sur corpus réel, S-233). S-235 a rendu le knob
+`outputFileName` vivant (conversion + 4e garde + lint suivent l'output réel).
+Prochain verrou : publication 0.0.14 (option C, gems packagées) dès accord pilote.

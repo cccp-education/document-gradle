@@ -1,0 +1,94 @@
+= Session 235 — Option B : le 4e garde audite l'output HTML *réel* (knob `outputFileName` vivant)
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : feat + TDD/BDD
+_Mission_ : Option B du PROMPT_REPRISE — résoudre la limite S-232/S-233 : la 4e garde
+composite (htmlLint) lisait le chemin HTML *statique* `document.html` ; elle audite
+désormais l'output *réel* dérivé du knob `outputFileName`.
+_Méthode_ : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+
+== Constats (audit ouverture)
+
+. *Knob `outputFileName` mort* — `ConvertDocumentTask` déclare
+  `@get:Input @get:Optional outputFileName` (câblé DocumentPlugin.kt:308) mais
+  aucune ligne de production ne le lit ; `outputFile` reste hardcodé
+  `docs/document/document.${format.extension}` (DocumentPlugin.kt:312).
+. *4e garde statique* — `registerValidateDocument` résout `htmlFilePath` depuis la
+  convention statique `document.html` ; un nom customisé pointe dans le vide →
+  faux `<html-file-missing>` + HTML réel non audité.
+. *Cadrage* : `.agents/CADRAGE_S235_OUTPUT_HTML_REEL.adoc` (6 constats, 7 décisions,
+  3 US ~8 pts, zéro nouveau knob — le CLI `-Pdocument.outputFileName` devient
+  réellement fonctionnel).
+
+== Résumé livré
+
+=== US-1 (TDD, FT TestKit) — le knob devient vivant côté conversion
+
+- `registerConvertTasks` : `outputFile` dérivé du knob —
+  `outputFileName.flatMap { buildDir/docs/document/$it.${format.extension} }`
+  (défaut `"document"` → chemins canoniques, backward-compat total).
+- RED : `ConvertDocumentTaskOutputFileNameFunctionalTest` — FT
+  `-Pdocument.outputFileName=custom` → `custom.html` absent (knob mort).
+- GREEN : 2/2 FT (custom + défaut canonique).
+
+=== US-2 (FT TestKit) — les 2 consommateurs du HTML suivent le knob
+
+- `registerValidateDocument` : `htmlFilePath` dérivé du *même* knob
+  (jamais du provider `outputFile` du producer — pas de dépendance implicite,
+  piège S-232 respecté).
+- `registerLintHtmlDocument` : `htmlFile` dérivé du même knob (remplace le
+  `htmlTask.get().outputFile` — lecture configuration-time du nom stale, forme
+  exacte de la dépendance implicite rejetée en S-232).
+- RED discriminant : la 4e garde rapportait `<html-file-missing>` avec le
+  fragment mort `gone-custom` absent — `custom.html` pas lu.
+- GREEN : 2/2 FT `ValidateDocumentHtmlLintCustomOutputFunctionalTest`
+  + non-régression `ValidateDocumentTaskHtmlLintFunctionalTest` 4/4.
+
+=== US-3 (BDD) — scénarios Cucumber
+
+- `document_validation.feature` : +2 scénarios `@document-validation-custom-output`
+  (STRICT audite le vrai custom HTML avec lien mort → DEAD liste `gone-custom`,
+  pas de `html-file-missing` ; VALID symétrique).
+- Steps `DocumentValidationSteps` : configs `CUSTOM_NAME` + Whens
+  `runs with the custom output name (and fails)` + Then
+  `does not report html-file-missing` (textes distincts — anti-glue S-223).
+- Rapport XML : 10/10 scénarios PASSED, 0 failure.
+
+== Règle gouvernance (hors code)
+
+Ajout de la contrainte globale *« Zéro Python — Écosystème JVM Exclusif »*
+dans `AGENTS.adoc` racine (Règles Transverses, EAGER) — interdiction formelle
+de parser les outputs (XML JUnit, logs, artefacts) avec Python ; lecture
+exclusivement via Read/Grep/xmllint/rapports Gradle natifs.
+
+== Gates de non-régression
+
+- `compileKotlin` VERT.
+- FT ciblées GREEN : OutputFileName 2/2 + CustomOutput 2/2 + HtmlLint 4/4
+  + `DocumentPluginFunctionalTest` (suite complète) VERT.
+- 15/15 runners Cucumber dédiés : BUILD SUCCESSFUL (11m39s) — 0 failure,
+  0 error dans les rapports XML des 15 suites.
+- Moteur global `cucumberTest` : 15 fichiers avec failures — préexistantes
+  (glue scoping, connu S-221/S-223, hors périmètre, la gate reste les
+  runners dédiés — option D).
+- Scan secrets : RAS. Dogfooding FPA (chemins par défaut) inchangé.
+
+== Livrables
+
+- `document/DocumentPlugin.kt` — 3 dérivations knob (convert ×5, validate, lint).
+- Tests : `ConvertDocumentTaskOutputFileNameFunctionalTest.kt` (2 FT),
+  `ValidateDocumentHtmlLintCustomOutputFunctionalTest.kt` (2 FT),
+  `document_validation.feature` (+2 scénarios), `DocumentValidationSteps.kt`
+  (+1 config, +2 Whens, +1 Then).
+- Cadrage : `.agents/CADRAGE_S235_OUTPUT_HTML_REEL.adoc`.
+- Gouvernance : CONTRAINTE GLOBALE Zéro Python dans AGENTS.adoc racine.
+
+== Limites & suivis
+
+- `DocumentArtifactCollector.collect` scanne toujours les noms canoniques
+  `document.${ext}` — les artifacts custom ne sont pas indexés N3
+  (extension future possible, hors périmètre S-235).
+- Option C (republication 0.0.14) reste ouverte — publication sans accord
+  pilote interdite.
+- Option D (moteur Cucumber global) reste ouverte — 82 failures préexistantes.

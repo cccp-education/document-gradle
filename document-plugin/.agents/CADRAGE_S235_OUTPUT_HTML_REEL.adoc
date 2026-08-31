@@ -1,0 +1,118 @@
+= Cadrage S-235 — Option B : le 4e garde lit l'output HTML *réel* (knob `outputFileName` vivant)
+
+:borough: document-gradle (New Orleans 🟢)
+:session: 235
+:date: 2026-08-31
+:status: Cadrage + implémentation (baby-step DDD/TDD/BDD)
+:option: B (recommandée PROMPT_REPRISE S-235)
+:method: baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre
+
+== Contexte
+
+La S-232 a ajouté la 4e garde composite (htmlLint) dans `validateDocument`.
+Le chemin du HTML audité est résolu depuis la convention *statique*
+`build/docs/document/document.html` (piège Gradle documenté S-232 : un
+provider vers `outputFile` du producer créerait une dépendance implicite ;
+`.get()` à la configuration est interdit). La S-232 a acté la limite et
+reporté l'extension : « exposer l'output réel via une convention dérivée sans
+dépendance de tâche » — c'est la mission S-235 (Option B du PROMPT_REPRISE).
+
+== Constats (audit)
+
+. *Knob `outputFileName` mort côté conversions* — `ConvertDocumentTask`
+  déclare `@get:Input @get:Optional abstract val outputFileName` mais
+  **aucune ligne de production ne le lit** (`grep outputFileName.get()` sur
+  src/main : zéro hit). Son câblage plugin existe (`DocumentPlugin.kt:308`
+  `task.outputFileName.set(cliProp(...).orElse("document"))`) mais
+  `outputFile` reste hardcodé `docs/document/document.${format.extension}`
+  (`DocumentPlugin.kt:312`).
+. *Preuve FT existante* — `DocumentPluginFunctionalTest` ligne 1845 set
+  `outputFileName.set("my-doc")` sur le bloc `template { }` (tâche
+  `applyDocumentTemplate`, qui consomme SA propriété : path
+  `my-doc.adoc` correct). Le knob conversion n'est testé nulle part.
+. *4e garde statique* — `registerValidateDocument` résout `htmlFilePath`
+  depuis `layout.buildDirectory.file("docs/document/document.html")`
+  (statique). Si un consommateur customise le nom (outputFileName=« mon-livre »),
+  le HTML réel serait `mon-livre.html` et la 4e garde lirait un fichier
+  absent → finding `<html-file-missing>` faux positif + HTML réel non audité.
+. *`lintHtmlDocument` a le même défaut* — il pointe le provider
+  `convertDocumentToHtml.outputFile` (correct aujourd'hui), donc il suivra
+  automatiquement l'output réel dès que l'US-1 le dérive du knob.
+. *Backward-compat `bookPipeline`* — les tâches conversion écrivent
+  aujourd'hui `document.html`; un override `taskGraph.whenReady` (S-217)
+  force les sources sur le livre assemblé mais ne touche PAS `outputFile`.
+  Le FPA dogfooding FT (`BookPipelineN3FpaFunctionalTest`) attend les
+  artifacts sous `docs/document/` — les noms sont conservés par défaut.
+. *Collecte N3* — `DocumentArtifactCollector.collect` scanne les noms
+  canoniques `document.${ext}` (hardcodés). Avec un `outputFileName`
+  custom, les artifacts custom ne seraient pas indexés — hors périmètre
+  S-235 (le collector contracte sur le chemin canonique ; extension
+  future possible).
+
+== Décisions architecturales
+
+. *Single source of truth* : `ConvertDocumentTask.outputFile` dérive du
+  knob `outputFileName` — la property `outputFileName` devient vivante :
+  `outputFile = buildDir/docs/document/${outputFileName}.${format.extension}`.
+. *Sans dépendance de tâche* (piège S-232 respecté) : le chemin audité par
+  la 4e garde est un **provider calculé depuis le même knob** (layout +
+  `docs/document/${outputFileName}.${format.extension}`), jamais un
+  provider vers `outputFile` du producer (dépendance implicite) ni un
+  `.get()` à la configuration.
+. *`outputFileName` reste `@Input @Optional`* : le FT existant
+  (`DocumentPluginFunctionalTest` standalone conversion path) attend
+  `document.html` par défaut — le plugin câble la convention `"document"`.
+. *Dérivation symétrique pour les 3 consommateurs du HTML* :
+  `validateDocument.htmlFilePath`, `lintHtmlDocument.htmlFile` (via
+  convention dérivée, plus de `htmlTask.get().outputFile`), et le future
+  `verifyHtmlLinks` (doLast, `.get()` runtime OK — inchangé).
+. *Runner N3 : le collect reste inchangé* — `CollectDocumentRetrieveTask`
+  scanne le dossier; le contrat N3 `validationStatus` ne dépend pas du nom.
+. *Économie d'encre* : un seul mécanisme (dérivation knob → chemin) sert
+  les deux tâches; zéro nouveau knob DSL/CLI — le `-Pdocument.outputFileName`
+  existant devient réellement fonctionnel.
+. *Backward-compat totale* : défaut `"document"` → mêmes chemins qu'avant
+  (tous les tests existants passent sans modification).
+
+== Découpage US (baby-step DDD/TDD/BDD)
+
+[cols="1,4,2,1"]
+|===
+| US | Contenu | Gate | Pts
+
+| US-1 (TDD, FT TestKit)
+| `ConvertDocumentTask` : `convert()` écrit dans
+  `docs/document/${outputFileName}.${ext}` — l'output réel suit le knob.
+  RED : FT qui passe `-Pdocument.outputFileName=custom` et asserted
+  `custom.html` produit + `document.html` absent → compile fail/absence de
+  comportement → GREEN : câblage plugin `outputFile` dérivé.
+| FT GREEN
+| 3
+
+| US-2 (FT TestKit)
+| La 4e garde audite l'output réel : avec knob custom, `validateDocument`
+  (STRICT htmlLint) audite `custom.html` (pas de faux `<html-file-missing>`),
+  et `lintHtmlDocument` aussi (convention dérivée).
+| FT GREEN
+| 3
+
+| US-3 (BDD)
+| Scénario `@document-validation-html-lint @custom-output-name` : config
+  custom + HTML avec lien mort → DEAD listé depuis le fichier custom ;
+  scénario VALID symétrique.
+| BDD PASSED
+| 2
+|===
+
+_Total : ~8 pts, 3 US. Règle pilote : l'économie d'encre prime — US-1 et
+US-2 partagent le même FT file (2 tests distincts), zéro duplication._
+
+== Gates de non-régression
+
+- `compileKotlin` VERT.
+- FT : `ValidateDocumentTaskHtmlLintFunctionalTest` (4) + nouveaux tests
+  custom-name GREEN.
+- Runners Cucumber dédiés : `documentValidationCucumberTest` (8 + 2 news)
+  + les 14 autres VERTS.
+- Dogfooding FPA : `BookPipelineN3FpaFunctionalTest` (chemins par défaut)
+  inchangé.

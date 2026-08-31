@@ -438,3 +438,18 @@ jusqu'à l'extension DSL quand Gradle pointe la tâche.
 
 *Clôtures* : option A traitée. Options B (chemin HTML statique 4e garde) et
 C (publication 0.0.14) reportées S-235.
+
+== S-235 (2026-08-31) — Option B : output HTML réel audité par la 4e garde ✅
+
+*Knob `outputFileName` rendu vivant* (3 US ~8 pts, baby-step DDD/TDD/BDD) :
+- US-1 TDD : `outputFile` conversion dérivé du knob (défaut `document` → chemins
+  canoniques backward-compat). FT 2/2.
+- US-2 FT : `validateDocument.htmlFilePath` + `lintHtmlDocument.htmlFile` dérivés
+  du même knob (zéro dépendance de tâche, pièges S-232 respectés). FT 2/2.
+- US-3 BDD : +2 scénarios `@document-validation-custom-output` — 10/10 PASSED.
+
+Faux positif corrigé : fragment discriminant (2 findings partageaient `missing`).
+
+Gates : 15/15 runners dédiés VERTS, compileKotlin VERT, secrets RAS.
+
+Gouvernance : CONTRAINTE GLOBALE Zéro Python (AGENTS.adoc racine).

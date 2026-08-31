@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 234 — **fix hygiène FT** : convention `ext.translation.outputFileName.convention("document")` — les 5 failures FT préexistantes S-233 (`translateDocument` ×2 + `TableValidation` ×3) résolues ; cause racine : Property DSL sans convention reste unset même derrière `.orElse(...)` ; baseline FT 68/68 VERT ; 15/15 runners dédiés 144 scénarios PASSED ; preuve BDD comparative moteur global 144/86 → 148/82 (+4 `@doc-translate`))
+_Date revision_ : 2026-08-31 (session 235 — **Option B : output HTML réel audité par la 4e garde** — knob `outputFileName` rendu vivant : `outputFile` conversion dérivé du knob, `validateDocument.htmlFilePath` + `lintHtmlDocument.htmlFile` dérivés du même knob (zéro dépendance de tâche, pièges S-232 respectés) ; faux `<html-file-missing>` éliminé ; 15/15 runners dédiés VERTS 0 failure ; limite S-232 levée dans BACKLOG)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1664,13 +1664,17 @@ rapport consolidé ne disait donc rien de la navigabilité du HTML publié — u
 
 _Total_ : ~12 pts, 3 US. *EPIC clôturé en 1 session (S-232).*
 
-=== Limites documentées (S-232)
+=== Limites documentées (S-232) — ✅ LEVÉE (S-235)
 
-- Le 4e garde lit le chemin HTML *statique* `build/docs/document/document.html` — si
-  `outputFileName` est customisé, l'output réel diffère ; les 3 pièges Gradle (dépendance
-  implicite via provider `outputFile`, `.get()` configuration-time interdit, `@InputFile
-  @Optional` valide l'existence avant l'action) documentés dans le rapport S-232.
-  Extension future possible (session 233 option B).
+- ~~Le 4e garde lit le chemin HTML *statique* `build/docs/document/document.html` — si
+  `outputFileName` est customisé, l'output réel diffère~~ → **Résolu S-235** : le knob
+  `outputFileName` est vivant — `outputFile` conversion dérivé du knob (défaut
+  `document` → chemins canoniques backward-compat) et les 2 consommateurs du HTML
+  (`validateDocument.htmlFilePath`, `lintHtmlDocument.htmlFile`) dérivent le MÊME
+  chemin du même knob (zéro dépendance de tâche, 3 pièges Gradle toujours respectés).
+  BDD : scénarios `@document-validation-custom-output` 2/2 PASSED (S-235). Suivi
+  résiduel : `DocumentArtifactCollector.collect` scanne les noms canoniques
+  `document.${ext}` (artifacts custom non indexés N3 — extension future).
 - La tâche dédiée `lintHtmlDocument` (S-227) reste utile hors composite (bookPipeline, usage autonome).
 
 '''
