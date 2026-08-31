@@ -170,6 +170,12 @@ cucumberConventions {
             tags = listOf("@n3-pipeline"),
             runnerClass = "document.n3pipeline.N3PipelineCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "n3CollectCustomCucumberTest",
+            features = listOf("src/test/resources/features/n3_collect_custom.feature"),
+            tags = listOf("@n3-collect-custom"),
+            runnerClass = "document.n3collect.N3CollectCustomCucumberRunner",
+        ),
     )
 }
 

@@ -110,6 +110,56 @@ class DocumentArtifactCollectorTest {
         assertTrue(enrichedEntry!!.exists)
     }
 
+    // --- S-236 — outputFileName knob-aware collection ---
+
+    @Test
+    fun `collect with custom output file name detects the custom html artifact but not the canonical one`() {
+        val dir = tempDir()
+        File(dir, "custom.html").writeText("<html></html>")
+
+        val collector = DocumentArtifactCollector(outputDir = dir)
+        val entries = collector.collect(sourceAdoc = "source.adoc", outputFileName = "custom")
+
+        assertEquals(1, entries.size)
+        assertEquals(DocumentFormat.HTML, entries[0].format)
+        assertTrue(entries[0].path.endsWith("custom.html"))
+    }
+
+    @Test
+    fun `collect with default output file name keeps the canonical artifacts`() {
+        val dir = tempDir()
+        File(dir, "document.html").writeText("<html></html>")
+
+        val collector = DocumentArtifactCollector(outputDir = dir)
+        val entries = collector.collect(sourceAdoc = "source.adoc", outputFileName = "document")
+
+        assertEquals(1, entries.size)
+        assertTrue(entries[0].path.endsWith("document.html"))
+    }
+
+    @Test
+    fun `collect with all five formats and custom name detects every format artifact`() {
+        val dir = tempDir()
+        File(dir, "mon-livre.html").writeText("<html></html>")
+        File(dir, "mon-livre.pdf").writeBytes(byteArrayOf(0x25, 0x50, 0x44, 0x46))
+        File(dir, "mon-livre.epub").writeBytes(byteArrayOf(0x50, 0x4B, 0x03, 0x04))
+        File(dir, "mon-livre.xml").writeText("<book/>")
+        File(dir, "mon-livre.man").writeText(".TH doc")
+        File(dir, "mon-livre.adoc").writeText("= Generated")
+        File(dir, "mon-livre-enriched.adoc").writeText("= Enriched")
+
+        val collector = DocumentArtifactCollector(outputDir = dir)
+        val entries = collector.collect(sourceAdoc = "source.adoc", outputFileName = "mon-livre")
+
+        assertEquals(7, entries.size)
+        val formats = entries.map { it.format }.toSet()
+        assertTrue(formats.contains(DocumentFormat.HTML))
+        assertTrue(formats.contains(DocumentFormat.PDF))
+        assertTrue(formats.contains(DocumentFormat.EPUB))
+        assertTrue(formats.contains(DocumentFormat.DOCBOOK))
+        assertTrue(formats.contains(DocumentFormat.MANPAGE))
+    }
+
     // --- DOC-8.3 — release notes scanning ---
 
     @Test

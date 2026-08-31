@@ -1,36 +1,36 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 234
+== Mission session 237
 
 Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
-- *Option A (recommandée)* : hygiene FT — les 5 failures préexistantes
-  (`translateDocument` ×2 + TableValidationFunctionalTest ×3) : cause racine
-  identifiée S-233 — `TranslateDocumentTask.outputFile` sans valeur quand
-  `outputFileName` (TranslationDsl) n'a pas de convention. Suggestion 1-ligne :
-  `ext.translation.outputFileName.convention("document")` + FT/BDD de vérif.
-- *Option B* : résoudre la limite S-232/S-233 — le 4e garde lit le chemin HTML
-  *statique* (`build/docs/document/document.html`) ; exposer l'output réel si
-  `outputFileName` customisé.
-- *Option C (achèvement)* : republication 0.0.14 sur Maven Central (les gems
-  PDF/EPUB sont maintenant packagées runtimeOnly — les consommateurs externes
-  du plugin ont besoin de cette version pour convertir PDF/EPUB).
+- *Option C (recommandée)* : republication 0.0.14 sur Maven Central (les gems
+  PDF/EPUB sont packagées runtimeOnly depuis S-233 — les consommateurs externes
+  du plugin ont besoin de cette version pour convertir PDF/EPUB). Publication
+  sans accord pilote interdite (Règle 2).
+- *Option D* : diagnostic du moteur Cucumber *global* (`cucumberTest`) — 82
+  failures `UndefinedStepException` préexistantes (scoping glue runner global
+  vs runners dédiés, connu S-221/S-223). La gate reste les 16 runners dédiés.
+- *Option E* : `assembleBook` garde son knob séparé (défaut `"book"`) — le
+  collect N3 (S-236) ne couvre pas les books custom-named (contrat canonique
+  `book.adoc` inchangé). Extension possible si le besoin réel apparaît.
 
-== État du code (S-233)
+== État du code (S-236)
 
-- Dogfooding N3 complet PROUVÉ sur le vrai livre FPA :
-  `BookPipelineN3FpaFunctionalTest` (3 builds staged : bookPipeline →
-  validateDocument → collect) — `metadata.json` porte `validationStatus=PASS`,
-  4 gardes audit VALID/WARN cohérents DOC-CR5, zéro INVALID/MISSING/DEAD/REJECT.
-- BDD anti-régression : `@n3-pipeline` 1/1 PASSED (11e runner dédié
-  `n3PipelineCucumberTest`).
-- ENV gems PDF/EPUB FIXÉ (option C) : `runtimeOnly asciidoctorj-pdf:2.3.23` +
-  `asciidoctorj-epub3:2.2.0` — 16 failures ENV résolues (baseline 21 → 5).
-- `LintHtmlDocumentTask` annotations restaurées + `mustRunAfter(collect...).
-- `CollectDocumentRetrieveTask` = snapshot contract : `outputs.upToDateWhen { false }`.
-- Baseline : `test` VERT, FT 116 tests / 5 failures préexistantes,
-  15 runners Cucumber dédiés VERTS.
+- *Suivi S-235 levé* : le collect N3 suit le knob `outputFileName` —
+  `DocumentArtifactCollector.collect(sourceAdoc, outputFileName = "document")`
+  + `CollectDocumentRetrieveTask.outputFileName` (@Input @Optional) câblé
+  même-knob que les conversions (DocumentPlugin). Les artifacts custom sont
+  désormais indexés dans `composite-context.json` N3. Défaut `"document"` →
+  backward-compat totale (les 17 UT collector inchangées à l'exception des 3
+  nouvelles knob-aware, les 65 FT plugin inchangées).
+- `-Pdocument.outputFileName` S-235 suit désormais TOUT le pipeline :
+  conversion → 4e garde (validateDocument/lintHtmlDocument) → collect N3.
+- 16/16 runners Cucumber dédiés VERTS (0 failure, 0 error, rapports XML) —
+  16e runner ajouté : `n3CollectCustomCucumberTest` (`@n3-collect-custom`).
+- Moteur global `cucumberTest` : failures préexistantes (glue scoping,
+  hors périmètre).
 
-== Pièges Gradle à retenir (S-233)
+== Pièges Gradle à retenir (S-233/234/235/236)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` doit re-scanner à chaque
    exécution (`outputs.upToDateWhen { false }`) — un `@InputFile` du rapport de
@@ -42,14 +42,29 @@ Borough DORMANT (maintenance + dogfooding livre FPA SERVER). Options classées :
    book.adoc) n'existe que si les 2 tâches partagent un build.
 3. *Chaîne N3 staged* : produce → validate → collect (3 builds dans le FT
    dogfooding) — un cycle Gradle interdit l'ordre métier en un seul build.
-4. Anti-glue Cucumber : `DuplicateStepDefinitionException` si un texte de step
-   est identique dans 2 classes (S-223) — préfixer systématiquement
-   (ex. « n3-pipeline metadata.json ... »).
+4. *Property DSL sans convention reste unset même derrière `.orElse(...)`* :
+   `cliProp(...).orElse(ext.x)` produit un provider unset si aucune branche
+   n'a de valeur → `Value not set` à l'exécution (piège S-234).
+5. *Dérivation knob sans dépendance de tâche* (S-235) : pour pointer l'output
+   d'une tâche, dériver le chemin du MÊME knob (layout + knob flatMap),
+   jamais un provider vers `outputFile` du producteur (dépendance implicite) ;
+   jamais `.get()` configuration-time (`Querying the mapped value...`).
+
+== Anti-glue Cucumber
+
+Un texte de step identique dans 2 classes → `DuplicateStepDefinitionException`
+(S-223). Le runner *global* (glue `document.scenarios`) ne voit pas les steps
+des runners dédiés (autres packages) → `UndefinedStepException` pour les
+features hors glue. Comparer baseline via `git stash` pour isoler l'impact
+d'un fix (méthode S-234). Attention aux *faux positifs d'assertion* : un
+fragment de message partagé par 2 findings distincts fait passer un test pour
+la mauvaise raison — choisir des fragments discriminants (S-235).
 
 == Méthode
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-Pattern : miroir `document.xref` pour toute nouvelle garde.
+CONTRAINTE GLOBALE : *Zéro Python* — les outputs (XML JUnit, rapports, logs)
+s'analysent avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 == Règles absolues (AGENT.adoc)
 
@@ -64,11 +79,12 @@ Pattern : miroir `document.xref` pour toute nouvelle garde.
 1. `git status` (document-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25 obligatoire).
 3. `./gradlew compileKotlin` VERT.
-4. `./gradlew n3PipelineCucumberTest metadataValidationCucumberTest` VERT (baseline S-233).
-5. Le livre FPA `livre-navigable/book.html` existe (lint S-226 Valid).
+4. `./gradlew tableTranslationCucumberTest ... n3CollectCustomCucumberTest` VERT (16 runners dédiés).
+5. FT ciblées outputFileName + CollectOutputFileName GREEN (S-235/S-236 livrés).
 
 == Vision « livre FPA SERVER »
 
 Le statut N3 est verrouillé (validationStatus=PASS dans metadata.json prouvé
-par FT dogfooding + BDD sur corpus réel). Prochain verrou : publication
-0.0.14 (gems PDF/EPUB packagées) et l'option B (output HTML réel du 4e garde).
+par FT dogfooding + BDD sur corpus réel, S-233). Le knob `outputFileName` est
+vivant de bout en bout (S-235 conversions + gardes, S-236 collect N3).
+Prochain verrou : publication 0.0.14 (option C, gems packagées) dès accord pilote.

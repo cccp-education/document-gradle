@@ -1,0 +1,85 @@
+= Session 236 — Follow-up S-235 : le collect N3 suit le knob `outputFileName` (artifacts custom indexés)
+
+_Date_ : 2026-08-31
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : feat + TDD/BDD
+_Mission_ : Suivi S-235 du PROMPT_REPRISE 236 — `DocumentArtifactCollector.collect`
+scannait les noms canoniques `document.${ext}` (hardcodés) ; depuis S-235 le knob
+`outputFileName` est vivant côté conversions, donc les artifacts custom
+(`custom.html`…) n'étaient pas indexés N3 dans `composite-context.json`.
+Le collect suit désormais le même knob.
+_Méthode_ : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+
+== Constats (audit ouverture)
+
+. *Collector canonique* — `DocumentArtifactCollector.collect(sourceAdoc)` scanne
+  `document.adoc` / `document-enriched.adoc` / `document.${ext}` (constantes +
+  format literal hardcodés).
+. *Knob vivant depuis S-235* — les conversions écrivent
+  `build/docs/document/${outputFileName}.${ext}` ; un collect knob-aveugle
+  indexe un artifact fantôme (`document.html` présent en entries via `exists=true`
+  seulement si le défaut est utilisés; custom → artifact réel absent du snapshot N3).
+. *FT preuve* — `CollectDocumentRetrieveOutputFileNameFunctionalTest` :
+  avec `-Pdocument.outputFileName=custom`, `composite-context.json` ne référencait
+  pas `custom.html` (RED), la suite canonique restait verte (backward compat).
+
+== Résumé livré
+
+=== US-1 (TDD, UT) — collector domaine pur knob-aware
+
+- `DocumentArtifactCollector.collect(sourceAdoc, outputFileName = "document")` :
+  paramètre défo back-compat, scan `$name.adoc` / `$name-enriched.adoc` /
+  `$name.${format.extension}`.
+- RED : 3 UT knob-aware → `No parameter with name 'outputFileName' found`.
+- GREEN : 17/17 UT (`DocumentArtifactCollectorTest`), 0 failure — les 14
+  préexistantes (canoniques) passent sans modification (défaut).
+
+=== US-2 (TDD, FT TestKit) — le collect réel suit le knob
+
+- `CollectDocumentRetrieveTask` : `@get:Input @get:Optional outputFileName`
+  consumed via `outputFileName.getOrElse("document")`.
+- `DocumentPlugin.registerCollectDocumentRetrieve` : même dérivation knob que
+  les conversions — `cliProp(project, "outputFileName").orElse("document")`
+  (même-knob, zéro dépendance de tâche, piège S-232 respecté).
+- RED : FT custom FAILED (composite sans `custom.html`) / canonique PASSED.
+- GREEN : 2/2 FT `CollectDocumentRetrieveOutputFileNameFunctionalTest`
+  + non-régression `DocumentPluginFunctionalTest` 65/65 PASSED.
+
+=== US-3 (BDD) — scénarios Cucumber
+
+- `n3_collect_custom.feature` : 2 scénarios `@n3-collect-custom`
+  (custom indexé, canonique conservé sans knob).
+- Runner dédié 16e : `N3CollectCustomCucumberRunner` (glue
+  `document.n3collect`) + `N3CollectCustomSteps` (préfixe `n3-collect`
+  anti-glue S-223) + `CucumberTaskSpec("n3CollectCustomCucumberTest")`.
+- 2/2 scénarios PASSED (1m34s).
+
+== Gates de non-régression
+
+- `compileKotlin` VERT.
+- 16/16 runners Cucumber dédiés : BUILD SUCCESSFUL (8m47s) — 0 failure,
+  0 error dans les rapports XML des 16 suites (le runner global `cucumberTest`
+  n'est pas la gate — glue scoping connu S-221/S-223, option D).
+- FT : `DocumentPluginFunctionalTest` 65/65 (dont 4 collect canoniques).
+- UT : `DocumentArtifactCollectorTest` 17/17.
+- Scan secrets : RAS. Dogfooding FPA (chemins par défaut) inchangé.
+
+== Livrables
+
+- `document/DocumentArtifactCollector.kt` — signature knob-aware
+  (`outputFileName: String = "document"`), constantes mortes purgées.
+- `document/CollectDocumentRetrieveTask.kt` — property `outputFileName`
+  (@Input @Optional) consommée dans l'action.
+- `document/DocumentPlugin.kt` — câblage même-knob du collect.
+- Tests : `DocumentArtifactCollectorTest.kt` (+3 UT),
+  `CollectDocumentRetrieveOutputFileNameFunctionalTest.kt` (2 FT),
+  `n3_collect_custom.feature` (+2 scénarios), `N3CollectCustomSteps.kt`,
+  `N3CollectCustomCucumberRunner.kt`, `build.gradle.kts` (+1 CucumberTaskSpec).
+
+== Limites & suivis
+
+- Option C (republication 0.0.14) reste ouverte — publication sans accord
+  pilote interdite.
+- Option D (moteur Cucumber global) reste ouverte — 82 failures préexistantes.
+- `assembleBook` garde son knob séparé (défaut `"book"`) : le collect N3 ne
+  couvre pas cette variante (contrat canonique inchangé, hors périmètre).

@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 235 — **Option B : output HTML réel audité par la 4e garde** — knob `outputFileName` rendu vivant : `outputFile` conversion dérivé du knob, `validateDocument.htmlFilePath` + `lintHtmlDocument.htmlFile` dérivés du même knob (zéro dépendance de tâche, pièges S-232 respectés) ; faux `<html-file-missing>` éliminé ; 15/15 runners dédiés VERTS 0 failure ; limite S-232 levée dans BACKLOG)
+_Date revision_ : 2026-08-31 (session 236 — **Follow-up S-235 : collect N3 knob-aware** — `DocumentArtifactCollector.collect(sourceAdoc, outputFileName = "document")` + `CollectDocumentRetrieveTask.outputFileName` câblé même-knob que les conversions : les artifacts custom suivent le knob S-235 jusqu'au snapshot N3 composite-context.json ; 3 UT + 2 FT + 2 BDD (16e runner dédié `n3CollectCustomCucumberTest`) ; 16/16 runners dédiés VERTS 0 failure)
 _Version_ : 0.0.1 (publié Maven Central)
 
 '''
@@ -1673,8 +1673,13 @@ _Total_ : ~12 pts, 3 US. *EPIC clôturé en 1 session (S-232).*
   (`validateDocument.htmlFilePath`, `lintHtmlDocument.htmlFile`) dérivent le MÊME
   chemin du même knob (zéro dépendance de tâche, 3 pièges Gradle toujours respectés).
   BDD : scénarios `@document-validation-custom-output` 2/2 PASSED (S-235). Suivi
-  résiduel : `DocumentArtifactCollector.collect` scanne les noms canoniques
-  `document.${ext}` (artifacts custom non indexés N3 — extension future).
+  résiduel : ~~`DocumentArtifactCollector.collect` scanne les noms canoniques
+  `document.${ext}` (artifacts custom non indexés N3 — extension future)~~ →
+  **Résolu S-236** : le collect suit le même knob —
+  `collect(sourceAdoc, outputFileName = "document")` (UT 17/17) +
+  `CollectDocumentRetrieveTask.outputFileName` (@Input @Optional) câblé même-knob
+  (FT 2/2 + BDD `@n3-collect-custom` 2/2, 16e runner dédié). Backward-compat
+  totale (défaut `document` → noms canoniques).
 - La tâche dédiée `lintHtmlDocument` (S-227) reste utile hors composite (bookPipeline, usage autonome).
 
 '''
@@ -1739,7 +1744,9 @@ Un build unique est impossible : `collect.outputDir` (@OutputDirectory) couvre l
 
 === Limites reportées (S-233 → résolu S-234 / restant S-235)
 
-- Option B : le 4e garde lit le chemin HTML *statique* — extension future (S-235, recommandé).
+- ~~Option B : le 4e garde lit le chemin HTML *statique* — extension future (S-235, recommandé)~~ →
+  **✅ RÉSOLU S-235** (knob `outputFileName` vivant + garde audite l'output réel)
+  et **✅ RÉSOLU S-236** (collect N3 knob-aware — artifacts custom indexés N3).
 - ~~5 failures FT préexistantes (`translateDocument` ×2 + `TableValidation` ×3) :
   cause racine = convention `translation.outputFileName` manquante~~ →
   **✅ RÉSOLU S-234** : `ext.translation.outputFileName.convention("document")`

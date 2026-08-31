@@ -335,6 +335,10 @@ class DocumentPlugin : Plugin<Project> {
             // DOC-METADATA-VALIDATION — snapshot the composite validation report if present
             // (emitted by `validateDocument`); absent → validationStatus omitted from metadata.json.
             task.validationReportPath.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json").map { it.asFile.absolutePath })
+            // S-236 — the collect follows the same `outputFileName` knob as the conversion
+            // (live since S-235), so composite-context.json indexes the real artifacts.
+            // Same-knob derivation, zero task dependence (S-232 pitfall respected).
+            task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
         }
     }
 

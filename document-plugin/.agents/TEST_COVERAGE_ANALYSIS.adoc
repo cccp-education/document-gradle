@@ -1,6 +1,6 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-08-31
-:session: 234
+:session: 236
 
 == Session 234 — Fix Option A : hygiène FT (convention `translation.outputFileName`)
 
@@ -943,3 +943,25 @@ tests existants verts sans modification).
 
 Gates : 15/15 runners Cucumber dédiés VERTS (0 failure XML après --rerun-tasks),
 compileKotlin VERT, secrets RAS.
+
+=== Session 236 (2026-08-31) — Follow-up S-235 : collect N3 knob-aware
+
+*Nouveaux tests* :
+- `DocumentArtifactCollectorTest` (UT) : +3 tests knob-aware (`custom` détecté /
+  `document` canonique conservé / 5 formats + adoc + enriched sous `mon-livre.*`).
+  RED initial : compilation `No parameter with name 'outputFileName' found` ×3.
+- `CollectDocumentRetrieveOutputFileNameFunctionalTest` (2 FT TestKit) — composite
+  référence `custom.html` (et pas `document.html`) sous knob custom ; canonique
+  conservé sans knob. RED : custom FAILED / canonique PASSED (knob ignoré).
+- `n3_collect_custom.feature` : 2 scénarios `@n3-collect-custom` + 16e runner
+  dédié `N3CollectCustomCucumberRunner` (glue `document.n3collect`) +
+  `N3CollectCustomSteps` (préfixe `n3-collect` anti-glue S-223) +
+  `CucumberTaskSpec("n3CollectCustomCucumberTest")`.
+
+*Backward-compat prouvée* : défaut `"document"` (paramètre Kotlin optionnel +
+`getOrElse("document")` + `.orElse("document")` plugin) → les 14 UT collector
+canoniques préexistantes et les 65 FT `DocumentPluginFunctionalTest` passent
+sans modification.
+
+Gates : `compileKotlin` VERT, 16/16 runners Cucumber dédiés SUCCESS (8m47s,
+0 failure / 0 error dans les XML), UT collector 17/17, secrets RAS.

@@ -20,29 +20,34 @@ import java.io.File
 class DocumentArtifactCollector(private val outputDir: File) {
 
     companion object {
-        private const val GENERATED_ADOC = "document.adoc"
-        private const val ENRICHED_ADOC = "document-enriched.adoc"
         private val RELEASE_NOTES_EXTENSIONS = setOf("adoc", "md", "json")
     }
 
     /**
      * Collects all artifacts present in the output directory.
      *
+     * S-236 — the collection follows the live `outputFileName` knob (S-235):
+     * conversion tasks write `build/docs/document/${outputFileName}.${ext}`, so
+     * the scan uses the same (base)name for the generated/enriched AsciiDoc and
+     * the 5 format artifacts. Default `"document"` keeps the canonical names —
+     * fully backward compatible.
+     *
      * @param sourceAdoc the AsciiDoc source filename (for provenance tracking)
+     * @param outputFileName the base name of the pipeline outputs (knob `outputFileName`)
      * @return a list of [DocumentArtifactEntry], one per expected artifact,
      *   with [DocumentArtifactEntry.exists] reflecting whether the file
      *   is present on disk
      */
-    fun collect(sourceAdoc: String): List<DocumentArtifactEntry> {
+    fun collect(sourceAdoc: String, outputFileName: String = "document"): List<DocumentArtifactEntry> {
         if (!outputDir.exists()) return emptyList()
 
         val entries = mutableListOf<DocumentArtifactEntry>()
 
-        addIfExists(GENERATED_ADOC, sourceAdoc, entries)
-        addIfExists(ENRICHED_ADOC, sourceAdoc, entries)
+        addIfExists("$outputFileName.adoc", sourceAdoc, entries)
+        addIfExists("$outputFileName-enriched.adoc", sourceAdoc, entries)
 
         DocumentFormat.ALL.forEach { format ->
-            val fileName = "document.${format.extension}"
+            val fileName = "$outputFileName.${format.extension}"
             val file = File(outputDir, fileName)
             if (file.exists()) {
                 entries.add(DocumentArtifactEntry(

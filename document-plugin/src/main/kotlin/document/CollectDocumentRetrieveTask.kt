@@ -51,6 +51,16 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
     @get:Optional
     abstract val validationReportPath: Property<String>
 
+    /**
+     * S-236 — the collect follows the live `outputFileName` knob (S-235):
+     * conversion tasks write `docs/document/${outputFileName}.${ext}`, so the
+     * scan must use the same name to index the real artifacts in
+     * composite-context.json. Default `"document"` (canonical, backward compat).
+     */
+    @get:Input
+    @get:Optional
+    abstract val outputFileName: Property<String>
+
     init {
         // The collect is a *snapshot* of the output directory (DOC-6 contract): its
         // only inputs are constant strings, so the up-to-date checking would skip it
@@ -70,7 +80,7 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
         val source = sourceAdoc.get()
 
         val collector = DocumentArtifactCollector(dir)
-        val entries = collector.collect(sourceAdoc = source)
+        val entries = collector.collect(sourceAdoc = source, outputFileName = outputFileName.getOrElse("document"))
 
         val releaseNotesEntries = releaseNotesDirPath.orNull
             ?.let { File(it) }

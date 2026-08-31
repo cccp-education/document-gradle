@@ -453,3 +453,24 @@ Faux positif corrigé : fragment discriminant (2 findings partageaient `missing`
 Gates : 15/15 runners dédiés VERTS, compileKotlin VERT, secrets RAS.
 
 Gouvernance : CONTRAINTE GLOBALE Zéro Python (AGENTS.adoc racine).
+
+== S-236 (2026-08-31) — Follow-up S-235 : collect N3 knob-aware ✅
+
+*Artifacts custom indexés N3* (3 US ~6 pts, baby-step DDD/TDD/BDD) :
+- US-1 TDD : `DocumentArtifactCollector.collect(sourceAdoc, outputFileName = "document")`
+  — scan `$name.adoc` / `$name-enriched.adoc` / `$name.${ext}` (défaut canonique
+  backward-compat, constantes mortes purgées). UT 17/17 (RED : 3 ×
+  `No parameter with name 'outputFileName'`).
+- US-2 FT : `CollectDocumentRetrieveTask.outputFileName` (@Input @Optional,
+  `getOrElse("document")`) + câblage plugin même-knob que les conversions
+  (zéro dépendance de tâche, piège S-232 respecté). FT 2/2 (RED : composite
+  sans `custom.html`) + `DocumentPluginFunctionalTest` 65/65.
+- US-3 BDD : `n3_collect_custom.feature` 2 scénarios + 16e runner dédié
+  `n3CollectCustomCucumberTest` (steps préfixe `n3-collect`). 2/2 PASSED.
+
+Gates : 16/16 runners Cucumber dédiés VERTS (0 failure / 0 error XML,
+8m47s), compileKotlin VERT, secrets RAS.
+
+`-Pdocument.outputFileName` suit désormais conversion → garde → collect.
+Options restantes : C (publication 0.0.14, accord pilote requis), D (moteur
+global), E (assembleBook knob séparé `book`).
