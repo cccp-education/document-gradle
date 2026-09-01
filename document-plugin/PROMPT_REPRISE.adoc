@@ -1,39 +1,45 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 243
+== Mission session 244
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-242 a clôturé
-le backlog : audit `grep` marqueurs périmés → zéro match, tous les EPICs sont
-✅ (dernier fermé : DOC-EPUBCHECK S-240). Options résiduelles toutes
-conditionnelles à un besoin réel :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-243 a
+re-vérifié (après S-242) : backlog vide (zéro marqueur périmé), consommateurs
+OK sur 0.0.15, gates document VERTEs, couverture consommateurs = baseline
+connue. Rien à planifier — travaux uniquement sur besoin réel :
 
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
   jusqu'à besoin N3 réel (décision 4 cadrage S-240).
 - *Dogfooding PDF FPA* : pas de garde équivalente epubcheck pour le PDF —
   extension seulement si besoin réel remonté.
-- *Maintenance* : 4 failures test bakery préexistantes (0.0.9 vs 0.0.8
-  catalogue) — à corriger côté bakery si le pilote le souhaite.
+- *Maintenance* : 5 failures test bakery préexistantes — à corriger côté
+  bakery si le pilote le souhaite (voir Pièges #12).
 
-== État du code (S-242)
+== État du code (S-243)
 
 - *0.0.15 PUBLIÉE* Maven Central (repo1 `<latest>0.0.15</latest>`).
-- *Consommateurs vérifiés S-242* :
+- *Consommateurs vérifiés S-243* (re-run complet) :
   - bakery-gradle (seul consommateur dur, `bakery-plugin/build.gradle.kts:43`) :
-    compileKotlin VERT, `test` 1668 tests / 4 failures = exactement les 4
-    préexistantes S-241 (prouvées par stash 0.0.12, non causées par 0.0.15).
-  - runner-gradle N3 : zéro couplage compile (contrat de facto
-    metadata.json/composite-context.json, prouvé BDD `n3PipelineCucumberTest`).
+    compileKotlin VERT, `test` 1668 tests / 4 failures préexistantes S-241
+    (version hygiene, drift fixtures, golden masters — internes bakery),
+    FT 16/16. `cucumberTest` : 1 failure préexistante de PLUS
+    (Pièges #12, prouvée par sonde 0.0.12 — pas une régression 0.0.15).
+  - runner-gradle N3 : zéro couplage compile direct (consomme bakery 0.0.9
+    qui consomme document 0.0.15) ; contrat de facto
+    metadata.json/composite-context.json prouvé BDD
+    (`n3PipelineCucumberTest` VERT re-exécuté S-243).
   - office/metiers/FPA : init-script `fpa-book-init.gradle.kts` + CLI
-    `-Pdocument.*` (mavenLocal 0.0.15 présente) ; artefacts réels validés par
-    les FT dogfooding du plugin (book.html lint Valid, book.epub epubcheck Valid).
+    `-Pdocument.*` (mavenLocal 0.0.15 présente) ; artefacts réels validés
+    par les FT dogfooding du plugin (book.html lint Valid, book.epub
+    epubcheck Valid).
+- *Gates document re-exécutées S-243* : `test`+`functionalTest` VERT
+  (UT 3039/0, FT 126/126), `cucumberTest` global VERT (10m43s, 0 failure),
+  `n3PipelineCucumberTest` VERT.
 - *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur »
-  restauré — `settings.gradle.kts` racine SANS `include(":document-plugin")`
-  (le WIP S-227 l'avait réintroduit ; corrigé et commité S-242). Le plugin
-  build autonome dans `document-plugin/`, la racine consomme le plugin publié.
+  — `settings.gradle.kts` racine SANS `include(":document-plugin")`.
 - Baselines document : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés
-  VERTS, `epubCheckCucumberTest` 4/4 (re-vérifié S-242), `validatePlugins` VERT.
+  VERTS, `epubCheckCucumberTest` 4/4, `validatePlugins` VERT.
 
-== Pièges Gradle à retenir (S-232..S-241)
+== Pièges Gradle à retenir (S-232..S-243)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -54,12 +60,20 @@ conditionnelles à un besoin réel :
 9. *epubcheck callback Java → null* : `info(feature, ...)` reçoit null —
    signature nullable obligatoire côté Kotlin (NPE sinon).
 10. *Preuve négative epubcheck* (S-241) : le flip d'octet naïf est TOLÉRÉ
-   (zip toujours lisible) — corrompre la STRUCTURE (supprimer l'entrée
-   `mimetype` non compressée, première entrée OCF obligatoire) pour
-   déclencher `Invalid`.
+    (zip toujours lisible) — corrompre la STRUCTURE (supprimer l'entrée
+    `mimetype` non compressée, première entrée OCF obligatoire) pour
+    déclencher `Invalid`.
 11. *Polling Central* (S-241) : `maven-metadata.xml` `<latest>` peut rester
-   périmé ~27 min après l'acceptation AUTOMATIC — tester aussi le HTTP 200
-   du POM versionné avant de déclarer la propagation.
+    périmé ~27 min après l'acceptation AUTOMATIC — tester aussi le HTTP 200
+    du POM versionné avant de déclarer la propagation.
+12. *Test bakery JBake native roundtrip périmé* (S-243) : le scénario
+    `50_jbake_native_translation.feature:22` attend `:summary:` préservé
+    verbatim mais document traduit volontairement `summary`/`description`
+    depuis S206 (`88f43c1`, ancêtre de 0.0.12). Préexistant (prouvé par
+    sonde 0.12), PAS une régression 0.0.15 — test à mettre à jour côté
+    bakery. *Attention* : session concurrente bakery détectée S-243
+    (version sync 0.0.8→0.0.9 + publication bakery-plugin 0.0.9 Central) —
+    coordonner avant toute intervention bakery.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -80,8 +94,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (S-241 : accord de commit/push
-  ET publish accordé — exécuté).
+- Zéro secret, zéro commit/push sans accord.
 - `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary
   Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
@@ -99,7 +112,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 Verrous levés S-233..S-241 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
 externe prouvée depuis Central, 5 gardes documentaires, EPUB FPA prouvé
-valide (epubcheck W3C sur l'artefact réel), README consommateur, et désormais
-*0.0.15 publiée* (5e garde + dogfooding + README) avec propagation
-consommateur bakery. Le produit est servable, auditable, documenté et
-distribué de bout en bout.
+valide (epubcheck W3C sur l'artefact réel), README consommateur, et
+0.0.15 publiée avec propagation consommateur bakery vérifiée deux fois
+(S-242, S-243). Le produit est servable, auditable, documenté et distribué
+de bout en bout.

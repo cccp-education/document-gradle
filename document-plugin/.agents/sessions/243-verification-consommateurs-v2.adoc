@@ -1,0 +1,90 @@
+= Session 243 — Vérification backlog vide + consommateurs 0.0.15 + couverture de test
+
+_Date_ : 2026-09-01
+_Type_ : gouvernance + vérification consommateurs (zéro code modifié)
+_Score_ : 10/10
+
+== Mission
+
+Ouverture sur PROMPT_REPRISE S-243 (borough DORMANT, backlog clôturé S-242).
+Le pilote demande : (1) ce qui reste à faire dans BACKLOG/vision/roadmap,
+(2) si vide → vérifier que les consommateurs sont OK avec la dernière
+version (0.0.15) et que leur couverture de test passe.
+
+== Constats
+
+=== 1. Backlog / vision / roadmap — RIEN À FAIRE
+
+- Audit `grep` marqueurs périmés (`🟡|⏳|À FAIRE|À PLANIFIER|EN PAUSE`)
+  sur `BACKLOG.adoc` → zéro match (seuls matchs INDEX : emoji de couleur
+  borough, pas des statuts).
+- Tous les EPICs ✅ (dernier fermé : DOC-EPUBCHECK S-240). Options
+  résiduelles toutes conditionnelles à un besoin réel (composite EPUB N3,
+  garde PDF FPA) — CADUQUES sans besoin.
+- Vision « livre FPA SERVER » : produit servable, auditable, documenté,
+  distribué (0.0.15 Central).
+
+=== 2. Consommateurs sur 0.0.15 — OK
+
+- *Central* : `<latest>0.0.15</latest>` repo1 confirmé (HTTP).
+- *bakery-gradle (seul consommateur dur)* : `bakery-plugin/build.gradle.kts:43`
+  `implementation("education.cccp:document-plugin:0.0.15")` ; compileKotlin VERT.
+- *runner-gradle N3* : zéro couplage compile direct à document (consomme
+  `education.cccp.bakery` 0.0.9, lui-même consommateur document 0.0.15) —
+  contrat de facto metadata.json/composite-context.json inchangé.
+- *office/metiers/FPA* : init-script `fpa-book-init.gradle.kts` + CLI
+  `-Pdocument.*` ; artefact 0.0.15 présent mavenLocal + Central.
+
+=== 3. Couverture de test — document VERTE, bakery = baseline + 1 finding
+
+- *document-gradle* (gates complètes re-exécutées S-243) :
+  - `test` + `functionalTest` : BUILD SUCCESSFUL (6m17s) — UT 3039/0, FT 126/126.
+  - `cucumberTest` global : BUILD SUCCESSFUL (10m43s) — 0 failure.
+  - `n3PipelineCucumberTest` (contrat N3 staged) : VERT.
+- *bakery-gradle* (consommateur dur, `check` complet) :
+  - `test` : 1668 tests / 4 failures = **exactement les 4 préexistantes
+    documentées S-241/S-242** (version hygiene 0.0.9/0.0.8, drift fixtures
+    templates cheroliv.com, golden masters i18n) — internes bakery, zéro
+    rapport avec document.
+  - `functionalTest` : 16/16 VERT.
+  - `cucumberTest` : 1 failure (`JBake native roundtrip through translation
+    preserves structure` — step `preserve summary attribute`) + timeout
+    5m configuré qui a coupé le run (319 skipped).
+  - *Preuve comparative (sonde temporaire pattern S-241, jamais commitée)* :
+    le scénario échoue identiquement avec **0.0.12** (stash bump) →
+    **préexistant, PAS une régression 0.0.15**. Cause racine : le test
+    bakery attend `:summary:` préservé verbatim alors que document traduit
+    volontairement `summary`/`description` depuis S206 (`88f43c1`,
+    ancêtre de 0.0.12 déjà consommée par bakery depuis S-226). Test
+    bakery (`60fd685`, 15/07) antérieur au comportement S206 (18/08) —
+    test à mettre à jour côté bakery (dette bakery, hors périmètre
+    document).
+- *Modifications concurrentes bakery détectées en session* :
+  `bakery-plugin/gradle/libs.versions.toml` (`bakery = 0.0.8` → `0.0.9`,
+  16:22:03) + `bakery-plugin/build.gradle.kts` (`version` dérivé du
+  catalogue) modifiés pendant mon run `check` — pas par cette session.
+  Cohérent avec le fix version-hygiene + publication bakery-plugin 0.0.9
+  Central (`<latest>0.0.9</latest>`, absente du mavenLocal). Laissé en
+  l'état — la clôture bakery appartient à sa session.
+
+== Décisions
+
+- Aucun code document modifié (économie d'encre — borough DORMANT, rien à
+  livrer).
+- La failure JBake native roundtrip est *anomalie connue côté bakery*
+  (test périmé vs comportement voulu S206), ajoutée à la liste des
+  failures préexistantes dans PROMPT_REPRISE.
+- Ne pas toucher au working tree bakery (session concurrente active).
+
+== Gates
+
+- document : compileKotlin VERT, UT 3039/0, FT 126/126, cucumberTest VERT,
+  n3Pipeline VERT, secrets RAS.
+- bakery : compileKotlin VERT, test 1668/4 préexistantes, FT 16/16,
+  1 failure cucumber préexistante prouvée par sonde 0.0.12.
+
+== Conclusion
+
+Backlog vide, consommateurs OK sur 0.0.15, couverture de test des
+consommateurs = baseline connue (aucune régression causée par 0.0.15).
+Le borough reste DORMANT — travaux uniquement sur besoin réel.

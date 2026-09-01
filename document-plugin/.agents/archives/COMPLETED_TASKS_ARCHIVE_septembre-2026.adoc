@@ -1,0 +1,37 @@
+= COMPLETED_TASKS_ARCHIVE — Septembre 2026
+
+== Document-gradle (New Orleans 🟢)
+
+=== Session 243 (2026-09-01) — Re-vérification backlog vide + consommateurs 0.0.15 + couverture de test
+
+*Type* : gouvernance + vérification consommateurs (zéro code modifié)
+*Score* : 10/10
+
+*Résumé* :
+- Mission pilote S-243 : (1) ce qui reste dans BACKLOG/vision/roadmap,
+  (2) si vide → consommateurs OK sur la dernière version + couverture
+  de test passe.
+- *Backlog VIDE* : audit `grep` marqueurs périmés → zéro match (2e fois
+  après S-242). Options résiduelles CADUQUES sans besoin réel (composite
+  EPUB N3, garde PDF FPA).
+- *Gates document re-exécutées VERTES* : UT 3039/0, FT 126/126,
+  `cucumberTest` global 0 failure (10m43s), `n3PipelineCucumberTest` VERT.
+- *bakery consommateur* : compileKotlin VERT, `test` 1668/4 préexistantes
+  S-241, FT 16/16, `cucumberTest` 1 failure préexistante de plus
+  (`JBake native roundtrip` — test périmé vs comportement S206
+  summary/description traduits depuis `88f43c1`, **prouvée par sonde
+  temporaire 0.0.12 : échoue identiquement**, jamais commitée) + timeout
+  5m qui a coupé le run (319 skipped). Pas une régression 0.0.15.
+- *Session concurrente bakery détectée* : `libs.versions.toml`
+  (0.0.8→0.0.9) + `build.gradle.kts` (version dérivée du catalogue)
+  modifiés pendant le run — pas cette session ; bakery-plugin 0.0.9 déjà
+  publiée Central. Laissé en l'état (clôture bakery = sa session).
+- runner-gradle : zéro couplage direct document (consomme bakery 0.0.9).
+- FPA : init-script + CLI `-Pdocument.*`, 0.0.15 mavenLocal + Central
+  (`<latest>0.0.15</latest>`).
+
+=== Session 242 (2026-09-01) — Clôture backlog + consommateurs 0.0.15
+
+_Voir `.agents/sessions/242-verification-consommateurs.adoc` (détail
+complet) — audit backlog zéro match, restauration pattern S-006,
+consommateurs 0.0.15 vérifiés, 4 failures bakery prouvées préexistantes._

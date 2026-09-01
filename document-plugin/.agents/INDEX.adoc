@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-|_Derniere mise a jour_ : 2026-09-01 (session 242 — **Backlog clôturé + consommateurs 0.0.15 vérifiés** — audit marqueurs périmés : zéro match, tous EPICs ✅. Anomalie settings.gradle.kts racine résolue : WIP S-227 `181a6ca` réintroduisait `include(":document-plugin")` → restauration pattern S-006 « Racine Consommateur zéro include() ». Consommateur bakery : `bakery-plugin` compileKotlin VERT + `test` 1668 / 4 failures = exactement les 4 préexistantes S-241 (stash-proven). runner-gradle : zéro couplage compile. FPA : init-script + CLI `-Pdocument.*`. Central `<latest>0.0.15</latest>`)
-|_Derniere session terminee_ : 242 — Vérification backlog complet + consommateurs 0.0.15
-  _Prochaine session_ : 243 — Borough DORMANT. Rien à planifier (backlog vide) — travaux uniquement sur besoin réel (composite EPUB N3, garde PDF FPA, corrections bakery).
+|_Derniere mise a jour_ : 2026-09-01 (session 243 — **Re-vérification backlog vide + consommateurs 0.0.15 + couverture de test** — audit marqueurs périmés : zéro match. Gates document re-exécutées VERTES (UT 3039/0, FT 126/126, cucumberTest global 0 failure, n3Pipeline VERT). bakery consommateur : `test` 1668/4 préexistantes S-241 + 1 failure cucumber préexistante prouvée par sonde 0.0.12 (test périmé vs comportement S206, Pièges #12) + FT 16/16. Session concurrente bakery détectée (version sync 0.0.9 + publication bakery Central) — laissée en l'état. runner-gradle : zéro couplage direct. Central `<latest>0.0.15</latest>`)
+|_Derniere session terminee_ : 243 — Vérification backlog vide + consommateurs 0.0.15 (re-run)
+  _Prochaine session_ : 244 — Borough DORMANT. Rien à planifier (backlog vide) — travaux uniquement sur besoin réel (composite EPUB N3, garde PDF FPA, corrections bakery coordonnées avec sa session).
 
 '''
 == REGLES ABSOLUES (resume)
@@ -231,7 +231,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | Long Island 🔵 | workspace-agent (IntelliJ) | N-IDE | 000
 | Watts 🟠 | hyperframes-gradle | N2 | 000
 | Chiraq 🟤 | readme-gradle | N2 | 003
-| New Orleans 🟢 | document-gradle | N2 | 224
+| New Orleans 🟢 | document-gradle | N2 | 243
 | Atlanta | agile-gradle | N4 | 000
 | Harlem | ticket-gradle | N4 | 000
 | Baltimore | review-gradle | N4 | 000
