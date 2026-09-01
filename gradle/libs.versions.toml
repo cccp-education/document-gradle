@@ -1,5 +1,9 @@
 [versions]
-document = "0.0.1"
+document = "0.0.15"
+epubcheck = "5.2.1"
+
+[libraries]
+epubcheck = { module = "org.w3c:epubcheck", version.ref = "epubcheck" }
 
 [plugins]
 document = { id = "education.cccp.document", version.ref = "document" }
