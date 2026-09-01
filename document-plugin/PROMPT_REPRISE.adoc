@@ -1,26 +1,11 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 242
+== Mission session 243
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-241 (2 commits)
-a exécuté l'Option 2 (README consommateur) + dogfooding EPUB FPA, PUIS la
-publication 0.0.15 avec accord pilote explicite :
-
-- *Dogfooding 5e garde ✅* : le VRAI `livre-navigable/book.epub` FPA (464 KB)
-  passe W3C epubcheck via `LibEpubCheckAdapter` — prouvé par
-  `EpubCheckFpaFunctionalTest` 2/2 (audit read-only + preuve négative zip sans
-  `mimetype` → Invalid). Le produit « livre FPA SERVER » est EPUB-valide.
-- *README.md créé* : doc consommateur avec les 5 imports DSL requis.
-- *Publication 0.0.15 ✅* : bump 1 ligne, `publishToMavenLocal` VERT
-  (signatures .asc), `publishAggregationToCentralPortal` AUTOMATIC accepté,
-  propagation repo1 vérifiée par polling (~27 min) — `<latest>0.0.15</latest>`,
-  POM porte `epubcheck:5.2.1` runtime. Consommateur bakery-gradle bumpé
-  0.0.12 → 0.0.15 (commit `1b937eb`) : compileKotlin VERT, `test` 1668 tests
-  avec les 4 failures PRÉEXISTANTES identiques au stash 0.0.12 (version
-  bakery 0.0.9 vs catalogue racine 0.0.8, fixture cheroliv.com, sitemap
-  golden master, feature 57 — non causées par le bump).
-
-Prochaines options classées :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-242 a clôturé
+le backlog : audit `grep` marqueurs périmés → zéro match, tous les EPICs sont
+✅ (dernier fermé : DOC-EPUBCHECK S-240). Options résiduelles toutes
+conditionnelles à un besoin réel :
 
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
   jusqu'à besoin N3 réel (décision 4 cadrage S-240).
@@ -31,14 +16,22 @@ Prochaines options classées :
 
 == État du code (S-242)
 
-- *0.0.15 PUBLIÉE* Maven Central (repo1, propagation vérifiée). mavenLocal
-  à jour. Contenu 0.0.15 = 0.0.14 + 5e garde EPUB + FT dogfooding epub +
-  README consommateur.
-- *Consommateur* : bakery-gradle consomme `document-plugin:0.0.15`
-  (hardcoded `bakery-plugin/build.gradle.kts:43`), commit/push `1b937eb`.
-- *EPIC DOC-EPUBCHECK ✅ 3/3 US* + dogfooding : FT `EpubCheckFpaFunctionalTest`
-  2/2. Baselines : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés VERTS,
-  `validatePlugins` VERT.
+- *0.0.15 PUBLIÉE* Maven Central (repo1 `<latest>0.0.15</latest>`).
+- *Consommateurs vérifiés S-242* :
+  - bakery-gradle (seul consommateur dur, `bakery-plugin/build.gradle.kts:43`) :
+    compileKotlin VERT, `test` 1668 tests / 4 failures = exactement les 4
+    préexistantes S-241 (prouvées par stash 0.0.12, non causées par 0.0.15).
+  - runner-gradle N3 : zéro couplage compile (contrat de facto
+    metadata.json/composite-context.json, prouvé BDD `n3PipelineCucumberTest`).
+  - office/metiers/FPA : init-script `fpa-book-init.gradle.kts` + CLI
+    `-Pdocument.*` (mavenLocal 0.0.15 présente) ; artefacts réels validés par
+    les FT dogfooding du plugin (book.html lint Valid, book.epub epubcheck Valid).
+- *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur »
+  restauré — `settings.gradle.kts` racine SANS `include(":document-plugin")`
+  (le WIP S-227 l'avait réintroduit ; corrigé et commité S-242). Le plugin
+  build autonome dans `document-plugin/`, la racine consomme le plugin publié.
+- Baselines document : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés
+  VERTS, `epubCheckCucumberTest` 4/4 (re-vérifié S-242), `validatePlugins` VERT.
 
 == Pièges Gradle à retenir (S-232..S-241)
 
@@ -97,7 +90,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 1. `git status` (document-gradle + bakery-gradle + office/metiers/FPA).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
-3. `./gradlew compileKotlin` VERT.
+3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.15.
 5. Baseline : UT 3039/0, `epubCheckCucumberTest` 4/4, FT 126/126.
 

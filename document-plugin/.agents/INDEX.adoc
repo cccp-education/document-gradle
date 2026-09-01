@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-|_Derniere mise a jour_ : 2026-08-31 (session 241 bis — **Publication 0.0.15 Maven Central ✅** (accord pilote explicite) — bump 1 ligne 0.0.14 → 0.0.15, `publishToMavenLocal` VERT (signatures .asc vérifiées), `publishAggregationToCentralPortal` AUTOMATIC accepté, propagation repo1 vérifiée par polling (pom HTTP 200, `<latest>0.0.15</latest>`, piège : metadata périmée ~27 min — tester aussi le HTTP 200 du POM versionné). POM Central porte `epubcheck:5.2.1` runtime (la 5e garde est consommable). Consommateur bakery-gradle bumpé 0.0.12 → 0.0.15 (commit `1b937eb`) : compileKotlin VERT, `test` 1668 tests — 4 failures PRÉEXISTANTES identiques au stash 0.0.12 (version bakery 0.0.9 vs catalogue racine 0.0.8, fixture cheroliv.com, sitemap golden master, feature 57), non causées par le bump)
-|_Derniere session terminee_ : 241 — Dogfooding EPUB FPA réel + README consommateur + publication 0.0.15 Central + propagation bakery
-  _Prochaine session_ : 242 — Borough DORMANT. Composite EPUB fusion : CADUQUE jusqu'à besoin N3. Dogfooding PDF : extension seulement si besoin réel. Maintenance bakery : 4 failures test préexistantes (bakery 0.0.9 vs catalogue 0.0.8) — hors périmètre document.
+|_Derniere mise a jour_ : 2026-09-01 (session 242 — **Backlog clôturé + consommateurs 0.0.15 vérifiés** — audit marqueurs périmés : zéro match, tous EPICs ✅. Anomalie settings.gradle.kts racine résolue : WIP S-227 `181a6ca` réintroduisait `include(":document-plugin")` → restauration pattern S-006 « Racine Consommateur zéro include() ». Consommateur bakery : `bakery-plugin` compileKotlin VERT + `test` 1668 / 4 failures = exactement les 4 préexistantes S-241 (stash-proven). runner-gradle : zéro couplage compile. FPA : init-script + CLI `-Pdocument.*`. Central `<latest>0.0.15</latest>`)
+|_Derniere session terminee_ : 242 — Vérification backlog complet + consommateurs 0.0.15
+  _Prochaine session_ : 243 — Borough DORMANT. Rien à planifier (backlog vide) — travaux uniquement sur besoin réel (composite EPUB N3, garde PDF FPA, corrections bakery).
 
 '''
 == REGLES ABSOLUES (resume)

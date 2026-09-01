@@ -648,3 +648,38 @@ UT 3037/0, secrets RAS. Rapport : `.agents/sessions/238-cucumber-global-verte.ad
 
 *Prochaine session 239* : hygiène .bak/backup résiduels, consommation
 externe 0.0.14 (projet tiers), option E `assembleBook` knob si besoin réel.
+
+== S-242 (2026-09-01) — Backlog clôturé + consommateurs 0.0.15 vérifiés ✅
+
+*Type* : gouvernance + vérification (zéro code production).
+
+*Audit backlog* : `grep` marqueurs périmés (🟡/⏳/À FAIRE/À PLANIFIER/
+EN PAUSE) sur BACKLOG.adoc → **zéro match**. Tous les EPICs ✅ — le
+backlog fonctionnel est vide. Seul item traité : hygiène `_Version_`
+0.0.1 → 0.0.15.
+
+*Anomalie settings.gradle.kts résolue* : le WIP S-227 (`181a6ca`)
+réintroduisait `include(":document-plugin")` à la racine contrairement au
+pattern S-006 « Plugin Indépendant + Racine Consommateur / zéro include()
+» (article #0124). Mod. pending vérifiée correcte (plugin autonome
+compileKotlin VERT, racine `tasks` VERT) → conservée + commitée.
+
+*Consommateurs 0.0.15 (demande pilote)* :
+- bakery-gradle (seul dur, `bakery-plugin/build.gradle.kts:43`) :
+  `bakery-plugin` compileKotlin VERT + `test` 1668 / 4 failures =
+  exactement les 4 préexistantes S-241 (XML identifiées :
+  BakeryPluginPublicationTest version test, FixtureAlignmentAuditorTest,
+  RealSiteI18nMigrationIntegrationTest golden master,
+  I18nDeltaWireCucumberTest feature 57 — prouvées non-causées par stash
+  0.0.12). *OK.*
+- runner-gradle N3 : zéro couplage compile (contrat de facto
+  metadata.json/composite-context.json). *OK (rien à faire).*
+- office/metiers/FPA : init-script + CLI `-Pdocument.*` (mavenLocal
+  0.0.15), artefacts réels validés FT dogfooding (book.html lint Valid,
+  book.epub epubcheck Valid). *OK.*
+
+*Baseline* : `epubCheckCucumberTest` 4/4 PASSED. Central
+`<latest>0.0.15</latest>`. Secrets RAS.
+
+*Prochaine session 243* : borough DORMANT — rien à planifier (besoin
+réel uniquement).

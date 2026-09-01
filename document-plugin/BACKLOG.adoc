@@ -1,8 +1,8 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-08-31 (session 241 bis — **Publication 0.0.15 Maven Central ✅ + propagation consommateur bakery** — bump 1 ligne, nmcp AUTOMATIC accepté, propagation repo1 vérifiée polling (pom HTTP 200 + `<latest>0.0.15</latest>` ; piège : metadata périmée ~27 min). POM porte `epubcheck:5.2.1` runtime — 5e garde distribuée. bakery-gradle (unique consommateur dur) bumpé 0.0.12 → 0.0.15 : compileKotlin VERT, test 1668 avec 4 failures préexistantes prouvées par stash. Session 241 : dogfooding EPUB FPA réel (epubcheck Valid + preuve négative structurelle) + README consommateur 5 imports DSL. UT 3039/0, FT 126/126)
-_Version_ : 0.0.1 (publié Maven Central)
+_Date revision_ : 2026-09-01 (session 242 — **Backlog clôturé + consommateurs 0.0.15 vérifiés** — audit `grep` marqueurs périmés : zéro match, tous EPICs ✅. Consommateur dur bakery-gradle : `bakery-plugin` compileKotlin VERT + `test` 1668 tests, 4 failures = exactement les 4 préexistantes documentées S-241 (prouvées par stash 0.0.12, non causées par 0.0.15). runner-gradle N3 : zéro couplage compile (contrat de facto metadata.json). FPA : consommation init-script + CLI `-Pdocument.*`, artefacts réels validés par FT dogfooding (book.html lint, book.epub epubcheck Valid). Anomalie settings.gradle.kts racine résolue : le WIP S-227 reintroduisait `include(":document-plugin")` — restauration du pattern S-006 « Racine Consommateur zéro include() » (commit de session). Hygiène : `_Version_` BACKLOG 0.0.1 → 0.0.15)
+_Version_ : 0.0.15 (publié Maven Central — `<latest>0.0.15</latest>` repo1)
 
 '''
 == Vision Produit

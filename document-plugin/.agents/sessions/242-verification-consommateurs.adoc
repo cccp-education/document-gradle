@@ -1,0 +1,110 @@
+= Session 242 — Vérification backlog + consommateurs 0.0.15 (clôture backlog complet)
+
+_Date_ : 2026-09-01
+_Type_ : gouvernance + vérification consommateurs (zéro code production modifié)
+_Commande pilote_ : commit + push autorisés en fin de session.
+
+== Contexte
+
+Reprise S-242 sur mission : (1) audit backlog/vision/roadmap — quels items
+restent non traités ; (2) si rien ne reste, vérifier que les consommateurs
+du borough sont OK avec la dernière version publiée (0.0.15) et que leur
+couverture de test passe.
+
+Méthode : baby-step DDD/TDD/BDD (unit/functional/cucumber) — applicable.
+Ici aucun code nouveau : la session est une session de preuve (Économie
+d'Encre — pas de re-codage, on audite l'existant et les consommateurs).
+
+== 1. Ouverture — anomalie settings.gradle.kts résolue
+
+`git status` montrait une modification non commitée :
+`settings.gradle.kts` racine (suppression `include(":document-plugin")`).
+
+*Diagnostic* : le pattern « Plugin Indépendant + Racine Consommateur »
+(S-006, article #0124) impose `zéro include()` — la racine consomme le
+plugin *publié* (mavenLocal/mavenCentral). Le WIP S-227 (commit
+`181a6ca` « Add debug prints… adjust BACKLOG ») avait réintroduit le
+`include()` accidentellement. La modification pending restaure le
+pattern documenté.
+
+*Vérifications* :
+- plugin autonome : `./gradlew compileKotlin` VERT (document-plugin/)
+- racine consommateur : `./gradlew tasks` VERT (tasks Document listées),
+  `compileKotlin` n'existe pas à la racine (pas de sources — attendu)
+- décision : la modification est CORRECTE, conservée et commitée.
+
+== 2. Baseline borough
+
+- `compileKotlin` VERT (document-plugin).
+- `epubCheckCucumberTest` 4/4 PASSED (17e runner dédié — GREEN 59s).
+- Secrets RAS (grep final).
+- Central : `<latest>0.0.15</latest>` confirmé repo1.
+
+== 3. Audit BACKLOG/VISION/ROADMAP
+
+`grep -n "🟡|⏳|À FAIRE|À PLANIFIER|EN PAUSE|à planifier|à faire"
+BACKLOG.adoc` → zéro match. Tous les EPICs sont ✅ :
+DOC-0..15, DOC-TRANSLATE(+CABLE), DOC-TABLE-VALIDATE,
+DOC-PLANTUML-VALIDATE, DOC-BOOK-VALIDATE, CROSS-DOC-BOOK,
+DOC-BOOK-DOMAIN, DOC-CR3/CR4/CR5, DOC-XREF-VALIDATE,
+DOC-VALIDATE-COMPOSITE, DOC-HTML-LINT, DOC-METADATA-VALIDATION,
+DOC-VALIDATE-HTML-LINT, DOC-EPUBCHECK, PUB.
+
+*Conclusion* : plus aucun item fonctionnel à traiter. Options résiduelles
+(documentées PROMPT_REPRISE) restent conditionnelles :
+- Composite EPUB (fusion 5e garde dans `validateDocument`) : CADUQUE
+  jusqu'à besoin N3 réel (décision 4 cadrage S-240).
+- Dogfooding PDF FPA : pas de garde équivalente epubcheck — extension
+  seulement si besoin réel remonté.
+- Maintenance bakery : 4 failures test préexistantes (bakery 0.0.9 vs
+  catalogue racine 0.0.8) — hors périmètre document.
+- Hygiène traitée cette session : en-tête `_Version_` du BACKLOG corrigé
+  0.0.1 → 0.0.15.
+
+== 4. Consommateurs avec 0.0.15 (demande pilote — rien ne reste à faire)
+
+*Cartographie* : seul `bakery-gradle` dépend en dur
+(`education.cccp:document-plugin:0.0.15`, `bakery-plugin/build.gradle.kts:43`).
+
+=== bakery-gradle (consommateur dur)
+- `bakery-plugin` `compileKotlin` VERT avec 0.0.15.
+- `test` : 1668 tests / **4 failures = exactement les 4 préexistantes
+  documentées S-241** (prouvées identiques au stash 0.0.12 par
+  binaire XML) :
+  1. `BakeryPluginPublicationTest » plugin version matches root consumer
+     catalog version` (version bakery 0.0.9 vs catalogue racine 0.0.8)
+  2. `FixtureAlignmentAuditorTest » cheroliv-com fixture is aligned`
+  3. `RealSiteI18nMigrationIntegrationTest » golden master sitemap`
+  4. `I18nDeltaWireCucumberTest » feature 57`
+  Non causées par 0.0.15 (preuve stash S-241 déjà établie — Économie
+  d'Encre : re-prouve pas). *Verdict : consommateur OK.*
+- (Note build : le projet *racine* bakery `compileKotlin` échoue au
+  `buildscript` classpath — conflit kotlin-stdlib via les marqueurs du
+  plugin publié 0.0.8, indépendant de document, préexistant.)
+
+=== runner-gradle (N3)
+- Zéro dépendance compile à document (contrat de facto :
+  metadata.json/composite-context.json ingéré par assembleCompositeContext).
+- Rien à vérifier côté compile ; le contrat N3 est prouvé BDD/FT dans
+  document (`n3PipelineCucumberTest`, `BookPipelineN3FpaFunctionalTest`).
+
+=== office/metiers/FPA (consommateur métier)
+- Consomme via init-script `fpa-book-init.gradle.kts` + propriétés CLI
+  `-Pdocument.*` (résolution mavenLocal — 0.0.15 présente).
+- Artefacts réels déjà validés par les FT dogfooding du plugin
+  (`HtmlLinkLintFunctionalTest` book.html, `EpubCheckFpaFunctionalTest`
+  book.epub → Valid) — read-only Rule 7.
+
+== 5. Gates de clôture
+
+- compileKotlin (plugin + bakery-plugin consommateur) VERT.
+- epubCheckCucumberTest 4/4 VERT.
+- BACKLOG sync : grep marqueurs périmés → vide.
+- Secrets : grep TOKEN/SECRET/PASSWORD/API_KEY/gho_/ghp_ → RAS.
+- Commits + push document-gradle (settings pattern restore + gouvernance S-242).
+
+== Prochaine session (S-243)
+
+Borough DORMANT — maintenance. Travaux éligibles uniquement sur besoin
+réel remonté (composite EPUB N3, garde PDF, corrections bakery). Sinon :
+rien à planifier.
