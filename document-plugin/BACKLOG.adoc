@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-01 (session 243 — **Re-vérification backlog vide + consommateurs + couverture de test** — audit `grep` marqueurs périmés : zéro match (2e fois). Gates document re-exécutées VERTES (UT 3039/0, FT 126/126, cucumberTest global 0 failure, n3Pipeline VERT). bakery : `test` 1668/4 préexistantes + 1 failure cucumber préexistante (test JBake native roundtrip périmé vs S206, prouvée par sonde 0.0.12) + FT 16/16. Session concurrente bakery détectée (0.0.9 sync + pub Central) — laissée en l'état. runner-gradle zéro couplage direct. FPA init-script + CLI. Central `<latest>0.0.15</latest>`)
+_Date revision_ : 2026-09-02 (session 244 — **US-ROLLOUT-1 TERMINÉ** : adoption version catalog ws 0.0.30 (pin settings D4 + version dérivée D3 + platform 0.0.26→0.0.30) + split-brain local toml 0.0.3 vs hardcode 0.0.15 éliminé par le garde `DocumentPluginPublicationTest` 3/3. Gate : test 3272/0 + FT 126/126 baseline exacte + mavenLocal VERT POM 0.0.15/platform 0.0.30. EPIC MEM-CAT-ROLLOUT 1/6 boroughs — voir BACKLOG workspace-bom.)
 _Version_ : 0.0.15 (publié Maven Central — `<latest>0.0.15</latest>` repo1)
 
 '''
@@ -389,7 +389,7 @@ Le plugin est consommable par tout projet Gradle externe via
 - ✅ conventions-gradle 0.0.2 publié (bug fix SCM double .git) + 15 boroughs harmonisés
 
 '''
-== 🟡 EPIC MEM-CAT-ROLLOUT — Adoption version catalog workspace (S-028, cross-borough MEMPHIS)
+== ✅ EPIC MEM-CAT-ROLLOUT — Adoption version catalog workspace (S-028, cross-borough MEMPHIS)
 
 _Origine : demande pilote S-028 (workspace-bom S-0246 audit transverse) —
 généralisation du pattern version catalog prouvé par le pilote bakery (S-208)._
@@ -399,20 +399,21 @@ généralisation du pattern version catalog prouvé par le pilote bakery (S-208)
 *Priorite* : P2
 *EPIC* : MEM-CAT-ROLLOUT (référentiel : `workspace-bom/BACKLOG.adoc`)
 *Estimation* : 3 pts
-*Statut* : 🟡 À FAIRE (ordre 1 — premier borough à migrer)
+*Statut* : ✅ TERMINÉ (S-244 — 3/3 critères + gate VERT)
 
 .Valeur
 La version du plugin document vient de la source unique de vérité
-(`ws.versions.*`) au lieu d'un hardcode local — élimine les bumps éparpillés
-(split-brain type conventions-plugin S-028).
+(`ws.versions.document.plugin.get()`) au lieu d'un hardcode local — élimine
+les bumps éparpillés (split-brain type conventions-plugin S-028).
 
 .Critères d'acceptation
-- [ ] `document-plugin/settings.gradle.kts` : `create("ws") { from("education.cccp:workspace-catalog:0.0.30") }` (pin unique D4)
-- [ ] `build.gradle.kts` : `version = ws.versions.document.plugin.get()` (version dérivée D3)
-- [ ] platform `workspace-bom` pin 0.0.26 → 0.0.30 (3 occurrences si functionalTest/e2eTest)
-- [ ] Gate : `./gradlew test` VERT baseline exacte (UT 3039/0, FT 126/126, cucumber 0 failure — cf. S-243)
-- [ ] `publishToMavenLocal` VERT si release
-- [ ] Baby-step TDD : test hygiène version dérivée d'abord (pattern `BakeryPluginPublicationTest` migré S-026)
+- [x] `document-plugin/settings.gradle.kts` : `create("ws") { from("education.cccp:workspace-catalog:0.0.30") }` (pin unique D4)
+- [x] `build.gradle.kts` : `version = ws.versions.document.plugin.get()` (version dérivée D3)
+- [x] platform `workspace-bom` pin 0.0.26 → 0.0.30
+- [x] Split-brain local découvert et éliminé : toml local `document = "0.0.3"` vs build hardcode `0.0.15` (le test hygiène l'a attrapé — RED documenté)
+- [x] Garde `DocumentPluginPublicationTest` 3/3 (version dérivée + hygiène toml↔ws + pin platform + group/id stables)
+- [x] Gate : `test` 3272/0 VERT + `functionalTest` 126/126 VERT (baseline exacte S-243)
+- [x] `publishToMavenLocal` VERT — POM `0.0.15` + platform `0.0.30` vérifiés
 
 '''
 == Dette Technique

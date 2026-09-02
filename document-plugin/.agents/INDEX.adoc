@@ -6,9 +6,9 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-|_Derniere mise a jour_ : 2026-09-01 (session 243 — **Re-vérification backlog vide + consommateurs 0.0.15 + couverture de test** — audit marqueurs périmés : zéro match. Gates document re-exécutées VERTES (UT 3039/0, FT 126/126, cucumberTest global 0 failure, n3Pipeline VERT). bakery consommateur : `test` 1668/4 préexistantes S-241 + 1 failure cucumber préexistante prouvée par sonde 0.0.12 (test périmé vs comportement S206, Pièges #12) + FT 16/16. Session concurrente bakery détectée (version sync 0.0.9 + publication bakery Central) — laissée en l'état. runner-gradle : zéro couplage direct. Central `<latest>0.0.15</latest>`)
-|_Derniere session terminee_ : 243 — Vérification backlog vide + consommateurs 0.0.15 (re-run)
-  _Prochaine session_ : 244 — Borough DORMANT. Rien à planifier (backlog vide) — travaux uniquement sur besoin réel (composite EPUB N3, garde PDF FPA, corrections bakery coordonnées avec sa session).
+|_Derniere mise a jour_ : 2026-09-02 (session 244 — **US-ROLLOUT-1 TERMINÉ (EPIC MEM-CAT-ROLLOUT 1/6, cross-borough MEMPHIS S-028)** — adoption version catalog ws 0.0.30 : pin settings `create("ws") from(...0.0.30)` (D4) + `version = ws.versions.document.plugin.get()` (D3) + platform BOM 0.0.26→0.0.30. Split-brain local éliminé : toml local `document = "0.0.3"` vs build hardcode `0.0.15` — attrapé par le garde RED, toml aligné 0.0.15. Garde `DocumentPluginPublicationTest` 3/3 créée (pattern BakeryPluginPublicationTest S-026). Gate : test 3272/0 + FT 126/126 (baseline exacte S-243) + mavenLocal VERT — POM version 0.0.15 + platform 0.0.30 vérifiés. Zéro régression.)
+|_Derniere session terminee_ : 244 — US-ROLLOUT-1 adoption version catalog (gate VERT)
+  _Prochaine session_ : 245 — ROLLOUT-2 codex-gradle (ordre 2, référentiel workspace-bom/BACKLOG.adoc) OU maintenance DORMANT sur besoin réel.
 
 '''
 == REGLES ABSOLUES (resume)

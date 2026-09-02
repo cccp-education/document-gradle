@@ -1,0 +1,62 @@
+= Session 244 — US-ROLLOUT-1 : adoption version catalog ws 0.0.30 (EPIC MEM-CAT-ROLLOUT 1/6)
+
+_Date_ : 2026-09-02
+_Type_ : cross-borough MEMPHIS (S-028 — mission pilote transverse)
+_Mission_ : document-gradle = ordre 1 du référentiel MEM-CAT-ROLLOUT (BACKLOG
+workspace-bom). 1 pin settings + version dérivée + platform 0.0.30.
+
+== Baby-step TDD strict (RED → GREEN → REFACTOR)
+
+*RED* — Garde `DocumentPluginPublicationTest` créée (pattern
+`BakeryPluginPublicationTest` bakery S-026), 3 tests :
+1. `plugin version matches root consumer catalog version` — FAILED
+   (version hardcodée, pas de dérivation ws)
+2. `workspace bom platform pin matches ws catalog bom version` — FAILED
+   (pin 0.0.26 ≠ 0.0.30)
+3. `plugin group and id are stable for publication` — PASSED
+
+*GREEN* — 3 baby-steps :
+. settings : `create("ws") { from("education.cccp:workspace-catalog:0.0.30") }` (D4)
+. build : `version = ws.versions.document.plugin.get()` (D3) + platform 0.0.30
+. toml local : `document = "0.0.3"` → `"0.0.15"` (voir split-brain ci-dessous)
+
+Résultat : 3/3 PASSED.
+
+== Split-brain local découvert (valeur ajoutée de la garde)
+
+Le toml local disait `document = "0.0.3"` alors que le build hardcodait
+`0.0.15` (= Central, correct). Trois sources de version divergentes :
+toml 0.0.3 / build 0.0.15 / Central 0.0.15 — exactement le tri-split C2 que
+l'EPIC MEM-CATALOG bannît. La garde l'a attrapé au RED (message :
+`plugin catalog document version (0.0.3) must match ws catalog document
+version (0.0.15)`). Après fix : toml = ws = Central = 0.0.15, et la version
+self n'est plus écrite qu'une fois (toml local, consommé via ws).
+
+*Piège parsing toml* : le toml local utilise la clé `document =` (alias
+plugin) alors que le toml ws utilise `document-plugin =` — le garde parse
+les deux (`local: Boolean`).
+
+== Gates (baseline exacte S-243 préservée)
+
+- `test` : 3272 tests, 0 failure (400 classes XML comptées)
+- `functionalTest` : 126/126, 0 failure
+- `publishToMavenLocal` : VERT — POM `document-plugin-0.0.15.pom` vérifié :
+  version `0.0.15` (dérivée ws) + platform `workspace-bom:0.0.30`
+- `compileKotlin` : VERT (JDK 25, JAVA_HOME sdkman 25.0.4-tem)
+
+== Diff
+
+- `settings.gradle.kts` : +6 lignes (catalog ws pin)
+- `build.gradle.kts` : version dérivée + platform 0.0.30 (+2/-2)
+- `gradle/libs.versions.toml` : document 0.0.3 → 0.0.15 (alignement)
+- `src/test/kotlin/document/DocumentPluginPublicationTest.kt` : +104 lignes (garde)
+
+== Économie d'encre
+
+Pas de publication Central : la version publiée (0.0.15) est inchangée — le
+POM diff est limité à la platform import (0.0.26 → 0.0.30). Publication
+Central seulement si une release réelle suit (décision pilote).
+
+== Prochaine étape
+
+ROLLOUT-2 codex-gradle (ordre 2, même pattern — US inscrite BACKLOG codex).

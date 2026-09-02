@@ -8,10 +8,11 @@ plugins {
 }
 
 group = "education.cccp"
-version = "0.0.15"
+// MEM-CAT-ROLLOUT-1 (D3) — self version derived from the published workspace catalog.
+version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.26"))
+    implementation(platform("education.cccp:workspace-bom:0.0.30"))
 
     implementation(kotlin("stdlib-jdk8"))
 
