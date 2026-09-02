@@ -389,6 +389,32 @@ Le plugin est consommable par tout projet Gradle externe via
 - ✅ conventions-gradle 0.0.2 publié (bug fix SCM double .git) + 15 boroughs harmonisés
 
 '''
+== 🟡 EPIC MEM-CAT-ROLLOUT — Adoption version catalog workspace (S-028, cross-borough MEMPHIS)
+
+_Origine : demande pilote S-028 (workspace-bom S-0246 audit transverse) —
+généralisation du pattern version catalog prouvé par le pilote bakery (S-208)._
+
+=== US-ROLLOUT-1 — Pin workspace-catalog + version dérivée + platform 0.0.30
+
+*Priorite* : P2
+*EPIC* : MEM-CAT-ROLLOUT (référentiel : `workspace-bom/BACKLOG.adoc`)
+*Estimation* : 3 pts
+*Statut* : 🟡 À FAIRE (ordre 1 — premier borough à migrer)
+
+.Valeur
+La version du plugin document vient de la source unique de vérité
+(`ws.versions.*`) au lieu d'un hardcode local — élimine les bumps éparpillés
+(split-brain type conventions-plugin S-028).
+
+.Critères d'acceptation
+- [ ] `document-plugin/settings.gradle.kts` : `create("ws") { from("education.cccp:workspace-catalog:0.0.30") }` (pin unique D4)
+- [ ] `build.gradle.kts` : `version = ws.versions.document.plugin.get()` (version dérivée D3)
+- [ ] platform `workspace-bom` pin 0.0.26 → 0.0.30 (3 occurrences si functionalTest/e2eTest)
+- [ ] Gate : `./gradlew test` VERT baseline exacte (UT 3039/0, FT 126/126, cucumber 0 failure — cf. S-243)
+- [ ] `publishToMavenLocal` VERT si release
+- [ ] Baby-step TDD : test hygiène version dérivée d'abord (pattern `BakeryPluginPublicationTest` migré S-026)
+
+'''
 == Dette Technique
 
 [cols="1,5,2", options="header"]
