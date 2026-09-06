@@ -1,0 +1,54 @@
+= Session 245 — Synchronisation gouvernance post-S-244 (zéro code)
+:date: 2026-09-07
+:source: Session 245 (gouvernance pure)
+:type: governance
+:borough: New Orleans — document-gradle (N2, WRITE + PUBLISH documentaire)
+:status: TERMINÉE
+
+== Contexte hérité
+
+Session 244 (2026-09-02) — US-ROLLOUT-1 TERMINÉ (EPIC MEM-CAT-ROLLOUT 1/6,
+cross-borough MEMPHIS S-028) : adoption version catalog ws 0.0.30, version
+dérivée du catalogue, platform BOM 0.0.30, garde `DocumentPluginPublicationTest`
+3/3. Gate : test 3272/0 + FT 126/126.
+
+== Mission Session 245
+
+Synchroniser la gouvernance documentaire avec l'état réel (demande pilote,
+suite à code review écosystème foundry/public). Constat : PROMPT_REPRISE
+en retard d'une session — décrivait l'état S-243 (mission "session 244"
+sans mention ROLLOUT-1, consommateurs détaillés S-243) alors que la S-244
+est clôturée dans l'INDEX.
+
+== Déroulement
+
+1. Lecture PROMPT_REPRISE/INDEX + vérification (INDEX à jour S-244).
+2. PROMPT_REPRISE rafraîchi : mission 245, état code S-244 (ws 0.0.30
+   adopté, version catalog dérivé), ROLLOUT-2→5 marqués livrés (codex
+   S-211, MEMPHIS S-032) — document n'a plus d'US ROLLOUT à porter,
+   reste ROLLOUT-6 hors périmètre document.
+
+== Résultats
+
+- ✅ PROMPT_REPRISE aligné sur l'INDEX (S-245).
+- ✅ Zéro code production modifié — gouvernance pure.
+- ✅ Baseline S-244 préservée (test 3272/0 + FT 126/126).
+
+== Prochaine session — 246
+
+Borough DORMANT — backlog vide, travaux uniquement sur besoin réel :
+
+* Maintenance : bumps, corrections de besoins consommateurs (bakery
+  Pièges #12 si le pilote le souhaite).
+* Composite EPUB : CADUQUE jusqu'à besoin N3 réel.
+* Dogfooding PDF FPA : extension epubcheck-like seulement si besoin réel.
+
+== Méthodologie
+
+Gouvernance pure — zéro code, zéro test modifié.
+
+== Références
+
+- `document-plugin/.agents/INDEX.adoc` (S-244)
+- `document-plugin/.agents/sessions/` (rapport S-244)
+- `CADRAGE_EPIC_DOC_BOOK_VALIDATE.adoc`

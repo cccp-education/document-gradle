@@ -1,12 +1,18 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 244
+== Mission session 245
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-243 a
-re-vérifié (après S-242) : backlog vide (zéro marqueur périmé), consommateurs
-OK sur 0.0.15, gates document VERTEs, couverture consommateurs = baseline
-connue. Rien à planifier — travaux uniquement sur besoin réel :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-244 a livré
+US-ROLLOUT-1 (EPIC MEM-CAT-ROLLOUT 1/6, cross-borough MEMPHIS S-028) :
+adoption version catalog ws 0.0.30, version dérivée du catalogue, platform
+BOM 0.0.30, garde `DocumentPluginPublicationTest` 3/3, split-brain toml
+éliminé. Gate : test 3272/0 + FT 126/126. *Rien à planifier — travaux
+uniquement sur besoin réel* :
 
+- *ROLLOUT-2 codex / ROLLOUT-3 plantuml / ROLLOUT-4 hyperframes /
+  ROLLOUT-5 runner* : déjà livrés (codex S-211, MEMPHIS S-032) — document
+  n'a plus d'US ROLLOUT à porter. Reste ROLLOUT-6 (dashboard, readme,
+  graphify, bureau) hors périmètre document.
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
   jusqu'à besoin N3 réel (décision 4 cadrage S-240).
 - *Dogfooding PDF FPA* : pas de garde équivalente epubcheck pour le PDF —
@@ -14,26 +20,11 @@ connue. Rien à planifier — travaux uniquement sur besoin réel :
 - *Maintenance* : 5 failures test bakery préexistantes — à corriger côté
   bakery si le pilote le souhaite (voir Pièges #12).
 
-== État du code (S-243)
+== État du code (S-244)
 
 - *0.0.15 PUBLIÉE* Maven Central (repo1 `<latest>0.0.15</latest>`).
-- *Consommateurs vérifiés S-243* (re-run complet) :
-  - bakery-gradle (seul consommateur dur, `bakery-plugin/build.gradle.kts:43`) :
-    compileKotlin VERT, `test` 1668 tests / 4 failures préexistantes S-241
-    (version hygiene, drift fixtures, golden masters — internes bakery),
-    FT 16/16. `cucumberTest` : 1 failure préexistante de PLUS
-    (Pièges #12, prouvée par sonde 0.0.12 — pas une régression 0.0.15).
-  - runner-gradle N3 : zéro couplage compile direct (consomme bakery 0.0.9
-    qui consomme document 0.0.15) ; contrat de facto
-    metadata.json/composite-context.json prouvé BDD
-    (`n3PipelineCucumberTest` VERT re-exécuté S-243).
-  - office/metiers/FPA : init-script `fpa-book-init.gradle.kts` + CLI
-    `-Pdocument.*` (mavenLocal 0.0.15 présente) ; artefacts réels validés
-    par les FT dogfooding du plugin (book.html lint Valid, book.epub
-    epubcheck Valid).
-- *Gates document re-exécutées S-243* : `test`+`functionalTest` VERT
-  (UT 3039/0, FT 126/126), `cucumberTest` global VERT (10m43s, 0 failure),
-  `n3PipelineCucumberTest` VERT.
+- *Version catalog ws 0.0.30* adopté (S-244) — version dérivée du catalogue.
+- *Gates document* : test 3272/0 + FT 126/126 (baseline exacte S-243/S-244).
 - *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur »
   — `settings.gradle.kts` racine SANS `include(":document-plugin")`.
 - Baselines document : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés

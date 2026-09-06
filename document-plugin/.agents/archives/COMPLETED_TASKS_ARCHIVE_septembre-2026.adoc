@@ -35,3 +35,9 @@
 _Voir `.agents/sessions/242-verification-consommateurs.adoc` (détail
 complet) — audit backlog zéro match, restauration pattern S-006,
 consommateurs 0.0.15 vérifiés, 4 failures bakery prouvées préexistantes._
+== Session 245 — 2026-09-07 — Synchronisation gouvernance post-S-244
+
+Gouvernance pure (zéro code) :
+* PROMPT_REPRISE rafraîchi (mission 245, état code S-244 ws 0.0.30,
+  ROLLOUT-2→5 marqués livrés hors périmètre document).
+* Baseline S-244 préservée (test 3272/0 + FT 126/126).
