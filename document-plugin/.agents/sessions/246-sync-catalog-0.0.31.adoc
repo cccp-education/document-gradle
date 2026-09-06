@@ -1,0 +1,67 @@
+= Session 246 — Sync catalogue ws 0.0.31 (drift attrapé par la garde S-244)
+
+*Date* : 2026-09-07
+*Type* : maintenance cross-borough (MEM-CAT-ROLLOUT, drift catalogue)
+*Score* : 10/10
+
+== Contexte
+
+Borough DORMANT (mission S-245 : rien à planifier, travaux uniquement sur
+besoin réel). La baseline d'ouverture `./gradlew test` est tombée ROUGE :
+1 failure dans `DocumentPluginPublicationTest` — la garde de publication
+créée S-244 (US-ROLLOUT-1, EPIC MEM-CAT-ROLLOUT 1/6) a fait exactement son
+travail.
+
+== Besoin réel identifié (drift cross-borough MEMPHIS)
+
+- *RED prouvé* : `workspace bom platform pin must use the ws catalog BOM
+  version (0.0.31)` — le catalogue ws local (workspace-bom, MEMPHIS) a été
+  bumpé en amont S-032 (commit `61d7b90`, 2026-09-02 : ROLLOUT-2/3/4/5 +
+  entrées `[plugins]` 8 boroughs + release Central BOM+catalog 0.0.31),
+  pendant que document pinne encore 0.0.30.
+- Delta catalogue 0.0.30 → 0.0.31 : `workspace-bom = 0.0.30 → 0.0.31` +
+  entrées `[plugins]` ; `document-plugin` reste `0.0.15` (inchangé — zéro
+  bump de version du plugin lui-même).
+- Central vérifié avant bump : `workspace-bom` `<latest>0.0.31</latest>` +
+  `workspace-catalog:0.0.31` POM HTTP 200.
+
+== Fix (baby-step, 2 lignes)
+
+- `settings.gradle.kts` : pin `from("education.cccp:workspace-catalog:0.0.31")`
+  (D4 — pin unique).
+- `build.gradle.kts` : `implementation(platform("education.cccp:workspace-bom:0.0.31"))`
+  (pin platform aligné).
+- RED → GREEN : la garde `DocumentPluginPublicationTest` 3/3 PASSED.
+
+== Gates (baseline rétablie)
+
+- `test` : 3272 tests / 0 failures / 0 errors (baseline exacte S-244).
+- `functionalTest` : 126/126 (baseline exacte S-244).
+- `epubCheckCucumberTest` : 4/4 PASSED (gate S-240).
+- `publishToMavenLocal` : VERT — POM `0.0.15` porte désormais
+  `workspace-bom:0.0.31` (platform import) vérifié dans le POM local.
+- `compileKotlin` : VERT.
+- Secrets RAS (`grep` standard).
+
+== Zéro publication
+
+La version 0.0.15 publiée sur Central reste auto-consistante (POM Central
+porte platform 0.0.30 — cohérent avec le catalogue publié à l'époque). Le
+pin local 0.0.31 ne sera distribué qu'à la prochaine publication
+document (aucun besoin réel aujourd'hui — pas de bump de version, accord
+pilote requis pour toute publication).
+
+== Méthodologie
+
+Baby-step DDD/TDD : RED documenté (garde existante) → fix minimal 2 lignes
+→ GREEN → non-régression baseline complète. La garde S-244 a prouvé sa
+valeur : le drift cross-borough est détecté au build local, pas en cascade
+côté consommateurs.
+
+== Références
+
+- `document-plugin/.agents/sessions/244-us-rollout-1-version-catalog.adoc`
+  (garde `DocumentPluginPublicationTest`)
+- MEMPHIS S-032 (commit `61d7b90`) — source du drift
+- `document-plugin/BACKLOG.adoc` EPIC MEM-CAT-ROLLOUT (référentiel
+  workspace-bom/BACKLOG.adoc)

@@ -41,3 +41,15 @@ Gouvernance pure (zéro code) :
 * PROMPT_REPRISE rafraîchi (mission 245, état code S-244 ws 0.0.30,
   ROLLOUT-2→5 marqués livrés hors périmètre document).
 * Baseline S-244 préservée (test 3272/0 + FT 126/126).
+
+== Session 246 — 2026-09-07 — Sync catalogue ws 0.0.31 (garde S-244 RED→GREEN)
+
+Maintenance cross-borough MEM-CAT-ROLLOUT :
+* Drift catalogue ws attrapé par la garde `DocumentPluginPublicationTest`
+  (créée S-244) — MEMPHIS a bumpé le catalogue en amont 0.0.31 (S-032)
+  pendant que document pinne 0.0.30.
+* Fix 2 pins : settings `from(...0.0.31)` (D4) + platform BOM 0.0.31.
+* `document-plugin` reste 0.0.15 (inchangé, version dérivée du catalogue).
+* Gates rétablies : test 3272/0 + FT 126/126 + epubCheck 4/4 +
+  mavenLocal VERT (POM platform 0.0.31).
+* Zéro publication Central (0.0.15 POM Central reste auto-consistant).

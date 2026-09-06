@@ -1,36 +1,42 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 245
+== Mission session 247
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-244 a livré
-US-ROLLOUT-1 (EPIC MEM-CAT-ROLLOUT 1/6, cross-borough MEMPHIS S-028) :
-adoption version catalog ws 0.0.30, version dérivée du catalogue, platform
-BOM 0.0.30, garde `DocumentPluginPublicationTest` 3/3, split-brain toml
-éliminé. Gate : test 3272/0 + FT 126/126. *Rien à planifier — travaux
-uniquement sur besoin réel* :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-246 a
+rétabli l'alignement catalogue : drift cross-borough MEMPHIS attrapé par la
+garde `DocumentPluginPublicationTest` (créée S-244) — catalogue ws bumpé en
+amont 0.0.31 (S-032 MEMPHIS), document pinne désormais ws catalog 0.0.31 +
+platform BOM 0.0.31. Gate : test 3272/0 + FT 126/126 + epubCheck 4/4 +
+publishToMavenLocal VERT (POM local porte platform 0.0.31). *Rien à
+planifier — travaux uniquement sur besoin réel* :
 
-- *ROLLOUT-2 codex / ROLLOUT-3 plantuml / ROLLOUT-4 hyperframes /
-  ROLLOUT-5 runner* : déjà livrés (codex S-211, MEMPHIS S-032) — document
-  n'a plus d'US ROLLOUT à porter. Reste ROLLOUT-6 (dashboard, readme,
-  graphify, bureau) hors périmètre document.
+- *ROLLOUT-6 (dashboard, readme, graphify, bureau)* : hors périmètre
+  document — porté par MEMPHIS (référentiel workspace-bom/BACKLOG.adoc).
 - *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
   jusqu'à besoin N3 réel (décision 4 cadrage S-240).
 - *Dogfooding PDF FPA* : pas de garde équivalente epubcheck pour le PDF —
   extension seulement si besoin réel remonté.
-- *Maintenance* : 5 failures test bakery préexistantes — à corriger côté
-  bakery si le pilote le souhaite (voir Pièges #12).
+- *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
+  roundtrip) — à corriger côté bakery si le pilote le souhaite (Pièges
+  #12) — coordonner avant toute intervention bakery (session concurrente
+  possible).
 
-== État du code (S-244)
+== État du code (S-246)
 
-- *0.0.15 PUBLIÉE* Maven Central (repo1 `<latest>0.0.15</latest>`).
-- *Version catalog ws 0.0.30* adopté (S-244) — version dérivée du catalogue.
+- *0.0.15 PUBLIÉE* Maven Central (`<latest>0.0.15</latest>` repo1) — POM
+  Central porte platform 0.0.30 (auto-consistant avec le catalogue publié
+  à l'époque) ; le pin local 0.0.31 sera distribué à la prochaine
+  publication document (aucun besoin réel aujourd'hui).
+- *Version catalog ws 0.0.31* adopté (S-246) — version dérivée du
+  catalogue (`ws.versions.document.plugin.get()` = 0.0.15, inchangée).
 - *Gates document* : test 3272/0 + FT 126/126 (baseline exacte S-243/S-244).
 - *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur »
   — `settings.gradle.kts` racine SANS `include(":document-plugin")`.
-- Baselines document : UT 3039/0, FT 126/126, 17 runners Cucumber dédiés
-  VERTS, `epubCheckCucumberTest` 4/4, `validatePlugins` VERT.
+- Baselines document : UT 3039/0 (hors cucumber intégrés au test), FT
+  126/126, 17 runners Cucumber dédiés VERTS, `epubCheckCucumberTest` 4/4,
+  `validatePlugins` VERT.
 
-== Pièges Gradle à retenir (S-232..S-243)
+== Pièges Gradle à retenir (S-232..S-246)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -50,21 +56,20 @@ uniquement sur besoin réel* :
    `build.gradle.kts` tiers. Liste dans README.md.
 9. *epubcheck callback Java → null* : `info(feature, ...)` reçoit null —
    signature nullable obligatoire côté Kotlin (NPE sinon).
-10. *Preuve négative epubcheck* (S-241) : le flip d'octet naïf est TOLÉRÉ
-    (zip toujours lisible) — corrompre la STRUCTURE (supprimer l'entrée
-    `mimetype` non compressée, première entrée OCF obligatoire) pour
-    déclencher `Invalid`.
-11. *Polling Central* (S-241) : `maven-metadata.xml` `<latest>` peut rester
-    périmé ~27 min après l'acceptation AUTOMATIC — tester aussi le HTTP 200
-    du POM versionné avant de déclarer la propagation.
-12. *Test bakery JBake native roundtrip périmé* (S-243) : le scénario
-    `50_jbake_native_translation.feature:22` attend `:summary:` préservé
-    verbatim mais document traduit volontairement `summary`/`description`
-    depuis S206 (`88f43c1`, ancêtre de 0.0.12). Préexistant (prouvé par
-    sonde 0.12), PAS une régression 0.0.15 — test à mettre à jour côté
-    bakery. *Attention* : session concurrente bakery détectée S-243
-    (version sync 0.0.8→0.0.9 + publication bakery-plugin 0.0.9 Central) —
-    coordonner avant toute intervention bakery.
+10. *Preuve négative epubcheck* (S-241) : corrompre la STRUCTURE (entrée
+    `mimetype` OCF), pas le contenu (flip d'octet toléré).
+11. *Polling Central* (S-241) : `<latest>` peut rester périmé ~27 min —
+    tester aussi le HTTP 200 du POM versionné.
+12. *Test bakery JBake native roundtrip périmé* (S-243) : scénario
+    `50_jbake_native_translation.feature:22` attend `:summary:` verbatim
+    mais document traduit volontairement `summary`/`description` depuis
+    S206. Préexistant (prouvé sonde 0.0.12), PAS une régression 0.0.15 —
+    à mettre à jour côté bakery. *Attention* : coordonner avant toute
+    intervention bakery (session concurrente détectée S-243).
+13. *Drift catalogue ws* (S-246) : MEMPHIS bump le catalogue en amont —
+    la garde `DocumentPluginPublicationTest` RED au prochain build local
+    document. Fix : bump des 2 pins (settings D4 + platform BOM) vers la
+    version publiée Central (vérifier HTTP 200 avant bump).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -92,11 +97,12 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 == À vérifier en ouverture
 
-1. `git status` (document-gradle + bakery-gradle + office/metiers/FPA).
+1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Central : `document-plugin` `<latest>` = 0.0.15.
-5. Baseline : UT 3039/0, `epubCheckCucumberTest` 4/4, FT 126/126.
+4. Central : `document-plugin` `<latest>` = 0.0.15 ; `workspace-catalog`
+   `<latest>` = 0.0.31 (bump MEMPHIS = drift à réaligner via les 2 pins).
+5. Baseline : test 3272/0, FT 126/126, `epubCheckCucumberTest` 4/4.
 
 == Vision « livre FPA SERVER »
 

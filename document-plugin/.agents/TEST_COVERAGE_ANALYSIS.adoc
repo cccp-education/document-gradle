@@ -1044,3 +1044,14 @@ sans modification.
 
 Gates : `compileKotlin` VERT, 16/16 runners Cucumber dédiés SUCCESS (8m47s,
 0 failure / 0 error dans les XML), UT collector 17/17, secrets RAS.
+
+== Session 246 (2026-09-07) — Sync catalogue ws 0.0.31
+
+Zéro test modifié/créé — la garde existante `DocumentPluginPublicationTest`
+(S-244, 3 tests) a attrapé le drift catalogue ws 0.0.30→0.031 (bump amont
+MEMPHIS S-032). RED documenté (`workspace bom platform pin must use the ws
+catalog BOM version (0.0.31)`) → fix 2 pins → GREEN 3/3. Baseline rétablie :
+`test` 3272/0, `functionalTest` 126/126, `epubCheckCucumberTest` 4/4,
+`publishToMavenLocal` VERT. La valeur défensive de la garde de publication
+est prouvée en conditions réelles (drift cross-borough détecté au build
+local, pas en cascade consommateur).
