@@ -1,13 +1,26 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-07 (session 250 — **cadrage EPIC DOC-FPA-PUBLISH
-(GBL-003.6 critical path MVP0)** : republication multi-format du livre FPA
-quand le corpus s'améliore — STANDBY post itération OCR humaine A1
-Tombouctou. 1 US ~1 pt, zéro code. Livre déjà publié S-082. + Cadrage
-EPIC OCR-QUALITY (demande pilote : détection automatique images
-problématiques + transcriptions douteuses) — US-3 document.)
+_Date revision_ : 2026-09-07 (session 250 — **cadrages DOC-FPA-PUBLISH
+(GBL-003.6) + OCR-QUALITY (US-3 document) + RENAME (FPA→content, 3 pts)**
+— gouvernance pure, zéro code. RENAME = renommage dur `FpaPageResolver` →
+`ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` +
+tests/features, exécution session dédiée. Livre déjà publié S-082.)
 _Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
+
+'''
+== EPIC RENAME — Neutralisation nommage métier privé (FPA→content) 🟡 CADRÉ (P0, transverse)
+
+_Origine : demande pilote 2026-09-07 (FPA = fond de commerce privé, jamais dans le nommage public OSS). Cadrage transverse : `.agents/CADRAGE_EPIC_RENAME.adoc` (7 boroughs)._
+
+|===
+| US | Description | Pts | Statut
+| RENAME-2 | `FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask) + commentaires BookTocParser/BookNumbering/DocumentPlugin + 4 tests FT renommés + 3 features Gherkin + check baseline exacte | 3 | 🟡 À FAIRE (document, 2e baby-step après codebase)
+|===
+
+*Gate* : check VERT (zéro changement sémantique) + `grep -ri "fpa" src/` = zéro match. Breaking change dur assumé (D7).
+
+'''
 
 '''
 == EPIC OCR-QUALITY — Détection automatique images problématiques + transcriptions douteuses 🟡 CADRÉ (P0, transverse)

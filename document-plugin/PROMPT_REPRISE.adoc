@@ -2,17 +2,28 @@
 
 == Mission session 251
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-250 (globale)
-a cadré **EPIC DOC-FPA-PUBLISH** (GBL-003.6 critical path MVP0) :
-republication multi-format du livre FPA quand le corpus s'améliore —
-STANDBY, déclenché par le livrable A1 Tombouctou (itération OCR humaine
-16 pages ILLISIBLE). Le livre est déjà publié (S-082) ; l'EPIC garantit
-la fraîcheur de la publication. 1 US ~1 pt, zéro code attendu (run
-dogfooding `assembleBook` + `bookPipeline`, gardes vertes).
+Trois EPICs cadrés S-250 (gouvernance pure, zéro code), exécution en
+session dédiée — ordre :
+
+*1. RENAME-2 (3 pts, `.agents/CADRAGE_EPIC_RENAME.adoc`)* — renommage dur
+`FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` →
+`contentAwareResolver` (+ câblage AssembleBookTask) + commentaires +
+4 tests FT + 3 features Gherkin. Gate : check baseline exacte + grep
+"fpa" = 0. *Premier baby-step après codebase (RENAME-1).*
+*Règle transverse* : FPA/CDA = métiers privés (fond de commerce) —
+jamais dans le nommage public OSS (content/coding les remplacent).
+
+*2. OCR-QUALITY-3 (3 pts, `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc`)* —
+extension `BookOcrIssue`/`BookOcrFailureDetector` : IMAGE_MISSING +
+TABLE_SUSPECT + STRUCT_SUSPECT + backward compat (TDD strict).
+
+*3. DOC-FPA-PUBLISH-0 (1 pt, `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`)* —
+STANDBY : republication multi-format du livre (ex-FPA) quand le corpus
+s'améliore (déclenché par A1 Tombouctou).
 
 S-249 avait publié **0.0.16** sur Maven Central — les 6 gardes (dont
-`pdfCheck` S-247) sont distribuées hors machine de dev. *Rien à
-planifier — travaux uniquement sur besoin réel* :
+`pdfCheck` S-247) sont distribuées hors machine de dev. *Travaux
+au-delà des 3 EPICs uniquement sur besoin réel* :
 
 - *Drift catalogue ws* : si MEMPHIS bump à nouveau (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
@@ -23,14 +34,11 @@ planifier — travaux uniquement sur besoin réel* :
   `Dependency version information is missing`, pattern S-209/S-249).
 - *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
   besoin N3 réel (pattern S-240 conservé).
-- *DOC-FPA-PUBLISH-0* : republication livre FPA post-corpus corrigé
-  (STANDBY — voir `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
   roundtrip, pièges #12) — à corriger côté bakery si le pilote le souhaite,
   coordonner avant toute intervention bakery (session concurrente possible).
 - *ROLLOUT-6* (dashboard, readme, graphify, bureau) : hors périmètre
-  document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc, ordre 6
-  ⏳ À PLANIFIER à la demande).
+  document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc).
 
 == État du code (S-249)
 
