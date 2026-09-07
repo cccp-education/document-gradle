@@ -1,0 +1,50 @@
+= Cadrage EPIC DOC-FPA-PUBLISH — Publication multi-format à jour du corpus FPA (GBL-003.6)
+:date: 2026-09-07
+:epic: DOC-FPA-PUBLISH
+:origine: BACKLOG.adoc racine § GBL-003 + AGENTS.adoc § MVP0 Critical Path
+:methode: Cadrage (gouvernance pure, zéro code) — pattern S-057/S-063
+
+== Contexte
+
+Arbitrage pilote (2026-09-07) : priorité critical path MVP0. Document est
+le maillon WRITE + PUBLISH de la chaîne GBL-003. Constat structurant :
+le livre FPA navigable est DÉJÀ publié multi-format (S-082 : livre.adoc
++ livre.html/pdf/epub + book-ocr-issues.json via assembleBook/bookPipeline).
+
+== Constats
+
+1. S-082 a livré le livre complet navigable via document-gradle (bump
+   0.0.15, dogfooding TDD-validé sur le corpus FPA complet 203 pages).
+   Le plugin est depuis passé 0.0.16 Central (S-249, 6 gardes distribuées).
+2. L'EPIC DOC-BOOK-VALIDATE est en cours (VALIDATE-1/2/3 ✅ S-078, reste
+   ~6 pts) et FPA-BOOK-6-5 (itération humaine OCR 16 pages) est le P0
+   côté Tombouctou. Ces travaux AMÉLIORENT le corpus — la republication
+   document en profite automatiquement.
+3. GBL-003.6 est donc un *vérifier de drift* optionnel : quand le corpus
+   est corrigé (post OCR humain), relancer assembleBook + bookPipeline
+   avec la version courante 0.0.16. Zéro feature nouvelle attendue.
+4. Frontière licence (S-070) : le livre est une œuvre dérivée — les
+   artefacts publiés restent dans office/ ou derrière arbitrage pilote
+   pour une diffusion publique.
+
+== Décisions
+
+- D1 : EPIC en STANDBY — déclenché par le livrable A1 (itération OCR
+  humaine terminée), pas par la chaîne RAG (codex/codebase suffisent).
+- D2 : republication = run dogfooding `assembleBook` + `bookPipeline`
+  version courante, zéro code si les gardes passent (STRONG/STRICT).
+- D3 : si les 16 pages illisibles sont corrigées, retirer les marqueurs
+  `[ILLISIBLE]` du corpus et vérifier le rapport OCR (0 ILLISIBLE attendu).
+- D4 : zéro bump BOM, zéro publication — dogfooding only.
+
+== User Stories (~1 pt)
+
+|===
+| US | Description | Pts
+| DOC-FPA-PUBLISH-0 | République multi-format du livre FPA après correction OCR (post A1 Tombouctou) — run dogfooding + gardes vertes | 1
+|===
+
+== Débloque
+
+Rien de critique — le livre multi-format existe (S-082). Cet EPIC garantit
+la fraîcheur de la publication quand le corpus source s'améliore.

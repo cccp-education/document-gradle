@@ -1,18 +1,18 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 250
+== Mission session 251
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-249 a publié
-**0.0.16** sur Maven Central — les 6 gardes (dont `pdfCheck` S-247) sont
-distribuées hors machine de dev : bump catalogue MEMPHIS (BOM+catalog
-0.0.32, document 0.0.16), re-pin document (D4/D5, version dérivée), POM
-deps versions explicites (pattern S-209 re-joué — 1er upload rejeté
-`Dependency version information is missing` ×15, fix alias `libs.*`),
-propagation repo1 vérifiée (POM HTTP 200 poll 4, JAR 2 classes pdf-check),
-consommateur tiers prouvé depuis Central SANS mavenLocal (STRICT VALID +
-STRICT fail textless), bakery consomme 0.0.16 via platform 0.0.32 sans
-hardcode (compileKotlin VERT). *Rien à planifier — travaux uniquement sur
-besoin réel* :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-250 (globale)
+a cadré **EPIC DOC-FPA-PUBLISH** (GBL-003.6 critical path MVP0) :
+republication multi-format du livre FPA quand le corpus s'améliore —
+STANDBY, déclenché par le livrable A1 Tombouctou (itération OCR humaine
+16 pages ILLISIBLE). Le livre est déjà publié (S-082) ; l'EPIC garantit
+la fraîcheur de la publication. 1 US ~1 pt, zéro code attendu (run
+dogfooding `assembleBook` + `bookPipeline`, gardes vertes).
+
+S-249 avait publié **0.0.16** sur Maven Central — les 6 gardes (dont
+`pdfCheck` S-247) sont distribuées hors machine de dev. *Rien à
+planifier — travaux uniquement sur besoin réel* :
 
 - *Drift catalogue ws* : si MEMPHIS bump à nouveau (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
@@ -23,6 +23,8 @@ besoin réel* :
   `Dependency version information is missing`, pattern S-209/S-249).
 - *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
   besoin N3 réel (pattern S-240 conservé).
+- *DOC-FPA-PUBLISH-0* : republication livre FPA post-corpus corrigé
+  (STANDBY — voir `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
   roundtrip, pièges #12) — à corriger côté bakery si le pilote le souhaite,
   coordonner avant toute intervention bakery (session concurrente possible).

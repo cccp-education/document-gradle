@@ -1,14 +1,30 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-07 (session 249 — **PUB 0.0.16 Maven Central ✅** — les
-6 gardes distribuées hors machine de dev. MEMPHIS bump BOM+catalog 0.0.32
-(document 0.0.16), document re-pin D4/D5 + POM deps versions explicites
-(pattern S-209 — 1er upload rejeté `Dependency version information is
-missing` ×15, fix alias `libs.*`), propagation repo1 vérifiée, consommateur
-tiers prouvé depuis Central SANS mavenLocal, bakery 0.0.16 sans hardcode.
-Pièges #17/#18 documentés.)
+_Date revision_ : 2026-09-07 (session 250 — **cadrage EPIC DOC-FPA-PUBLISH
+(GBL-003.6 critical path MVP0)** : republication multi-format du livre FPA
+quand le corpus s'améliore — STANDBY post itération OCR humaine A1
+Tombouctou. 1 US ~1 pt, zéro code. Livre déjà publié S-082.)
 _Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
+
+'''
+== EPIC DOC-FPA-PUBLISH — Publication multi-format à jour du corpus FPA (GBL-003.6) 🟡 STANDBY
+
+_Origine : BACKLOG.adoc racine § GBL-003 (critical path MVP0, arbitrage pilote 2026-09-07)._
+_Cadrage : `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`._
+
+|===
+| US | Description | Pts | Statut
+| DOC-FPA-PUBLISH-0 | République multi-format du livre FPA après correction OCR (post A1 Tombouctou) — run dogfooding assembleBook + bookPipeline, gardes vertes | 1 | 🟡 STANDBY (déclenché par livrable A1)
+|===
+
+*Constat* : le livre FPA navigable est DÉJÀ publié (S-082 : livre.adoc +
+livre.html/pdf/epub + book-ocr-issues.json). Cet EPIC garantit la
+fraîcheur de la publication quand le corpus source s'améliore.
+*Frontière licence* : œuvre dérivée — artefacts dans office/, diffusion
+publique = arbitrage pilote.
+
+'''
 
 '''
 == Vision Produit
