@@ -2,6 +2,33 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 248 (2026-09-07) — Preuve consommateur 6e garde PDF + diagnostic drift Central ↔ mavenLocal
+
+*Type* : vérification consommateur externe (zéro code modifié)
+*Score* : 10/10
+
+*Résumé* :
+- Besoin réel : la 6e garde `pdfCheck` (S-247) n'avait jamais été prouvée
+  consommable par un projet externe (preuves S-239/S-242/243 antérieures
+  à S-247). Pattern S-239 rejoué : projet tiers `/tmp/opencode/doc-consumer-pdf`
+  (Gradle 9.7.1, JDK 25).
+- *4/4 scénarios VERTS* (résolution mavenLocal prouvée par debug log) :
+  STRICT convert+validate → rapport VALID ; STRICT sur PDF sans texte →
+  BUILD FAILED avec 2 findings `page N: no extractable text` + rapport
+  INVALID ; LENIENT → vert + rapport INVALID ; OFF → skip (rapport stale
+  inchangé, sémantique epub) ; knob `outputFileName` suivi (miroir
+  S-235/236) → `<pdf-file-missing>` sur custom absent / VALID sur converti.
+- *Constat clé (piège #16)* : le jar Central 0.0.15 (publié S-241, AVANT
+  la garde S-247) ne contient PAS la garde (0 classe) ; le jar mavenLocal
+  0.0.15 (republié S-247) la porte (2 classes + câblage javap).
+  `publishToMavenLocal` met à jour l'artefact local sous le MÊME numéro —
+  un consommateur DOIT déclarer `pluginManagement { repositories {
+  mavenLocal() } }` AVANT le Plugin Portal pour tester le HEAD local,
+  sinon Gradle résout silencieusement depuis Central.
+- Zéro code document modifié (économie d'encre). Publication 0.0.16 non
+  demandée (elle alignera Central sur mavenLocal). Central aligné
+  (catalog 0.0.31 = pin local). Secrets RAS.
+
 === Session 247 (2026-09-07) — EPIC DOC-PDF-CHECK : 6e garde, validation structurelle du PDF
 
 *Type* : feat + TDD/BDD (4/4 US, ~12 pts, 1 session)

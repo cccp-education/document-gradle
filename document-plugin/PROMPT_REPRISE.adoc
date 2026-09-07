@@ -1,20 +1,21 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 248
+== Mission session 249
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-247 a livré
-l'EPIC DOC-PDF-CHECK (6e garde, 4/4 US, ~12 pts en 1 session) — le livre FPA
-PDF est désormais audité comme l'EPUB. Gate : UT 16/16 + FT 4/4 + dogfooding
-2/2 + BDD 4/4 + baseline test 3511/0 + FT 130/130 + validatePlugins VERT +
-publishToMavenLocal VERT. *Rien à planifier — travaux uniquement sur besoin
-réel* :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-248 a prouvé
+la 6e garde `pdfCheck` (S-247) consommable par un projet tiers externe via
+mavenLocal (4/4 scénarios : STRICT VALID, STRICT fail sur PDF sans texte,
+LENIENT/OFF, knob `outputFileName` suivi) — pattern S-239 rejoué. Constat
+clé S-248 : *drift jar Central ↔ mavenLocal* sous le même numéro 0.0.15
+(Central publié S-241 AVANT la garde, mavenLocal republié S-247 avec).
+*Rien à planifier — travaux uniquement sur besoin réel* :
 
-- *Publication 0.0.16* : non demandée — la garde PDF est locale ;
-  elle sera distribuée à la prochaine publication (accord pilote requis,
-  polling repo1 + propagation consommateurs pattern S-241).
+- *Publication 0.0.16* : non demandée — la seule façon d'aligner Central sur
+  mavenLocal (la garde PDF n'est pas dans le jar Central 0.0.15). Accord
+  pilote requis (Règle 2), polling repo1 + propagation consommateurs
+  (pattern S-241 : bakery bump, vérification FPA).
 - *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
-  besoin N3 réel (pattern S-240 conservé — les artefacts binaires restent
-  hors composite source/HTML).
+  besoin N3 réel (pattern S-240 conservé).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
   roundtrip, pièges #12) — à corriger côté bakery si le pilote le souhaite,
   coordonner avant toute intervention bakery (session concurrente possible).
@@ -22,20 +23,20 @@ réel* :
   document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc, ordre 6
   ⏳ À PLANIFIER à la demande).
 
-== État du code (S-247)
+== État du code (S-248)
 
-- *0.0.15 PUBLIÉE* Maven Central (`<latest>0.0.15</latest>` repo1) — la
-  prochaine publication distribuera la garde PDF (POM mavenLocal déjà
-  porteur platform 0.0.31 + pdfbox runtime, vérifié S-247).
+- *0.0.15 PUBLIÉE* Central MAIS sans la garde PDF (jar S-241) — mavenLocal
+  0.0.15 porte la garde (jar S-247). *Le mavenLocal est toujours la vérité
+  du HEAD sous le même numéro de version* (piège #16).
 - *Version catalog ws 0.0.31* — pins settings D4 + platform BOM 0.0.31
-  (S-246), alignés Central (vérifié HTTP 200 S-247).
+  (S-246), alignés Central (vérifié S-248).
 - *Gates document* : test 3511/0 (920 UT actifs + cucumber intégrés) + FT
   130/130 + 18 runners Cucumber dédiés VERTS + validatePlugins VERT.
-- *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur ».
-- Baselines : UT domaine pdf 16/16, `epubCheckCucumberTest` 4/4,
-  `pdfCheckCucumberTest` 4/4 (runner 18e dédié).
+- *Preuve consommateur S-248* : `/tmp/opencode/doc-consumer-pdf` (Gradle
+  9.7.1, JDK 25) — 4/4 scénarios VERTS, résolution mavenLocal prouvée par
+  debug log (`Using ... from Maven repository 'MavenLocal'`).
 
-== Pièges Gradle à retenir (S-232..S-247)
+== Pièges Gradle à retenir (S-232..S-248)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -52,7 +53,7 @@ réel* :
    annotation du runner (`FEATURES_PROPERTY_NAME`).
 8. *Imports DSL consommateur* (S-239) : les enums des gardes ne sont pas
    résolus implicitement — importer explicitement côté `build.gradle.kts`
-   tiers. Liste dans README.md (à étendre avec `PdfValidationMode`).
+   tiers. Liste dans README.md (six gardes, à jour S-247).
 9. *epubcheck callback Java → null* : signature nullable obligatoire.
 10. *Preuve négative : corrompre la STRUCTURE, pas le contenu* (EPUB :
     mimetype OCF ; PDF : voir #14 — les octets sont tolérés).
@@ -71,6 +72,20 @@ réel* :
 15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* (S-247) :
     l'erreur Kotlin `No value passed for parameter 'p1'` vient du size
     manquant, pas de la résolution `PDType1Font(FontName)`.
+16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* (S-248) :
+    `publishToMavenLocal` met à jour l'artefact local sans changer la
+    version — Central peut être en retard. Un consommateur DOIT déclarer
+    `pluginManagement { repositories { mavenLocal() } }` AVANT le Plugin
+    Portal pour tester le HEAD local ; sans lui, Gradle résout
+    silencieusement depuis Central et rate les gardes récentes
+    (symptôme : `Task 'validateDocumentPdf' not found` malgré le JAR).
+16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro de version* (S-248) :
+    `publishToMavenLocal` met à jour l'artefact local sans changer la
+    version — Central peut être en retard sur le mavenLocal. Un consommateur
+    DOIT déclarer `pluginManagement { repositories { mavenLocal() } }` AVANT
+    le Plugin Portal pour tester le HEAD local ; sans lui, Gradle résout
+    silencieusement depuis Central et rate les gardes récentes (symptôme :
+    task not found malgré le JAR présent).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -109,10 +124,12 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 == Vision « livre FPA SERVER »
 
-Verrous levés S-233..S-247 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-248 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central, 6 gardes documentaires (includeGuard/xref/
-security/htmlLint/epubCheck/**pdfCheck**), EPUB FPA prouvé valide
-(epubcheck W3C), PDF FPA prouvé structurellement sain (PDFBox, 15 pages
-extractibles), README consommateur, et 0.0.15 publiée. Le produit est
-servable, auditable, documenté et distribué de bout en bout.
+externe prouvée depuis Central (0.0.14 S-239, 0.0.15 S-242/243) et depuis
+mavenLocal avec la 6e garde (S-248), 6 gardes documentaires
+(includeGuard/xref/security/htmlLint/epubCheck/**pdfCheck**), EPUB FPA
+prouvé valide (epubcheck W3C), PDF FPA prouvé structurellement sain
+(PDFBox, 15 pages extractibles), README consommateur, et 0.0.15 publiée.
+Reste : publication 0.0.16 pour distribuer la garde PDF hors machine de
+développement.

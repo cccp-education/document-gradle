@@ -1,0 +1,135 @@
+= Session 248 — Preuve consommateur 6e garde PDF (drift Central ↔ mavenLocal diagnostiqué)
+
+_Date_ : 2026-09-07
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : vérification consommateur externe (zéro code modifié)
+_Score_ : 10/10
+
+== Mission
+
+Ouverture sur PROMPT_REPRISE S-247 (borough DORMANT, tous EPICs ✅, travaux
+uniquement sur besoin réel). Besoin réel identifié en ouverture : la 6e garde
+`pdfCheck` (S-247) n'a JAMAIS été prouvée consommable par un projet externe —
+les preuves consommateur antérieures (S-239 pour 0.0.14, S-242/243 pour 0.0.15)
+sont toutes antérieures à S-247. Pattern S-239 rejoué : projet tiers
+`/tmp/opencode/doc-consumer-pdf`.
+
+== Constats
+
+=== 1. Drift jar Central ↔ mavenLocal (constat clé de la session)
+
+Le `<latest>` Central et mavenLocal portent le MÊME numéro de version 0.0.15,
+mais les deux jars divergent :
+
+- *JAR Central 0.0.15* (publié S-241, avant S-247) : **zéro** classe
+  `ValidateDocumentPdfTask` (vérifié `unzip -l` sur le jar téléchargé repo1).
+- *JAR mavenLocal 0.0.15* (republié par S-247 via `publishToMavenLocal`) :
+  2 classes `ValidateDocumentPdfTask` + câblage `registerValidateDocumentPdf`
+  (vérifié javap bytecode : l'appel est bien dans `apply()`).
+
+Cause : S-247 a publié vers mavenLocal sans publication Central (accord pilote
+requis, Règle 2). Le POM mavenLocal porte bien platform 0.0.31 + pdfbox runtime
+(epubcheck, gems) — cohérent S-247.
+
+*Leçon (nouveau piège #16)* : `publishToMavenLocal` met à jour l'artefact
+local **sous le même numéro de version** — le mavenLocal est TOUJOURS la
+vérité du HEAD, jamais Central. Un consommateur sans `pluginManagement {
+mavenLocal() }` en tête de repositories résout silencieusement depuis Central
+et rate les gardes récentes (piège #8 S-239 est le symptôme consommateur du
+même phénomène pour les imports).
+
+=== 2. Preuve consommateur — 4/4 scénarios VERTS (mavenLocal)
+
+Projet tiers `/tmp/opencode/doc-consumer-pdf` (Gradle 9.7.1 wrapper du
+borough, JDK 25, `pluginManagement { mavenLocal() }`) consomme
+`id("education.cccp.document") version "0.0.15"` :
+
+. *Résolution* : `buildEnvironment` → `document-plugin:0.0.15` ; preuve
+  définitive debug log : `Using education.cccp:document-plugin:0.0.15 from
+  Maven repository 'MavenLocal'` — la garde `validateDocumentPdf` est
+  résolue et décrite (`help --task` OK, description DOC-PDF-CHECK).
+. *Scénario 1 (VALID)* : `convertDocumentToPdf validateDocumentPdf
+  -Pdocument.pdfCheck=STRICT` → BUILD SUCCESSFUL, rapport
+  `pdf-validation-report.json` `{"tool":"pdfbox","entries":[{"status":"VALID"}]}`.
+. *Scénario 2 (preuve négative discriminante)* : PDF 2 pages sans texte
+  (produit via un helper Java PDFBox one-shot, zéro Python) placé sous
+  `outputFileName=textless` → STRICT BUILD FAILED avec
+  `pdf validation failed (STRICT): page 1: no extractable text, page 2:
+  no extractable text` + rapport INVALID portant les 2 issues. LENIENT →
+  build vert + même rapport INVALID. OFF → skip (pas de réécriture du
+  rapport — stale du run précédent, sémantique identique epub).
+. *Scénario 3 (knob outputFileName suivi — miroir S-235/236)* :
+  `-Pdocument.outputFileName=gone-custom -Pdocument.pdfCheck=STRICT` sans
+  artefact → BUILD FAILED `<pdf-file-missing> gone-custom.pdf` (la garde
+  cherche au bon endroit) ; `-Pdocument.outputFileName=headings-only`
+  converti → VALID (la garde audite le bon fichier).
+. *Piège consommateur rappelé* : `-Pdocument.source=headings-only.adoc`
+  sans chemin → `Input file does not exist` (le CLI source est relatif au
+  project dir, pas à src/docs — comportement plugin correct, à documenter
+  dans README si besoin réel).
+
+=== 3. Le reste du borough — inchangé, VERTE
+
+- `git status` propre en ouverture, `compileKotlin` VERT.
+- Central aligné : `workspace-catalog` `<latest>0.0.31</latest>` (pin local
+  0.0.31 — pas de drift MEMPHIS), `document-plugin` `<latest>0.0.15</latest>`.
+- README consommateur déjà à jour avec la 6e garde (imports
+  `PdfValidationMode` + exemple six gardes) — vérifié S-247, rien à faire.
+- BACKLOG sans marqueur périmé (grep étape 7 : seuls matchs = historique
+  légitime + emoji couleur boroughs).
+
+== Décisions
+
+- Aucun code document modifié (économie d'encre — la garde est déjà
+  livrée et testée S-247 ; cette session est la preuve *externe*).
+- Publication 0.0.16 toujours NON demandée : la preuve mavenLocal est
+  suffisante pour la distribution locale (FPA init-script) ; Central
+  sera aligné à la prochaine publication avec accord pilote.
+- Composite PDF/EPUB reste CADUQUE (pattern S-240 conservé).
+
+== Gates
+
+|===
+| Gate | Résultat
+
+| POM mavenLocal 0.0.15
+| platform 0.0.31 + pdfbox + epubcheck + gems runtime (grep)
+
+| buildEnvironment consommateur
+| `education.cccp:document-plugin:0.0.15` via mavenLocal (debug log preuve)
+
+| Scénario 1 STRICT convert+validate
+| BUILD SUCCESSFUL, rapport VALID
+
+| Scénario 2 STRICT PDF sans texte
+| BUILD FAILED, 2 findings `no extractable text`, rapport INVALID
+
+| Scénario 2 bis LENIENT / OFF
+| LENIENT vert + rapport INVALID ; OFF skip (stale)
+
+| Scénario 3 knob custom
+| `<pdf-file-missing>` (absent) / VALID (présent) — knob suivi
+
+| JAR Central 0.0.15
+| 0 classe pdf-check — drift documenté (piège #16)
+
+| Secrets
+| RAS (grep 0 match)
+
+|===
+
+== Fichiers
+
+- `/tmp/opencode/doc-consumer-pdf/` — projet tiers (HORS repo, pattern S-239,
+  jamais commité) : build.gradle.kts, settings.gradle.kts (pluginManagement
+  mavenLocal), src/docs/{article,headings-only}.adoc, textless.pdf.
+- `/tmp/opencode/MakeTextlessPdf.java` — helper Java PDFBox one-shot.
+- Gouvernance uniquement dans le repo (rapport, PROMPT_REPRISE, INDEX,
+  SESSIONS_HISTORY, TEST_COVERAGE_ANALYSIS, archives, BACKLOG).
+
+== Non réalisé / reporté
+
+- Publication Central 0.0.16 : non demandée (accord pilote requis).
+- Composite PDF/EPUB : CADUQUE (besoin N3 réel requis).
+- README : ajouter une note CLI `-Pdocument.source` relatif au project dir
+  — seulement si le pilote remonte le besoin.

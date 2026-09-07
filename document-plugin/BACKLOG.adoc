@@ -1,7 +1,16 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-07 (session 247 — **EPIC DOC-PDF-CHECK ✅ TERMINÉ (4/4 US, ~12 pts, 1 session)** — 6e garde : validation structurelle du PDF via PDFBox 3.0.4 (BOM-constraint, zéro bump). Domaine `document.pdf` miroir `document.epub`, tâche `validateDocumentPdf`, DSL `converter { pdfCheck }` + CLI, BDD runner 18e `pdfCheckCucumberTest` 4/4, dogfooding : le VRAI `book.pdf` FPA (15 pages) passe VALID. Gates : UT 16/16 + FT 130/130 + test 3511/0 + validatePlugins VERT + mavenLocal VERT. Constat : PDFBox lénient sur les octets — le garde est texte extractible par page. Publication 0.0.16 non demandée — la garde sera distribuée à la prochaine publication.)
+_Date revision_ : 2026-09-07 (session 248 — preuve consommateur externe de la
+6e garde `pdfCheck` (S-247) — projet tiers `/tmp/opencode/doc-consumer-pdf`
+consomme `education.cccp.document:0.0.15` via mavenLocal, 4/4 scénarios VERTS
+(STRICT VALID / STRICT fail PDF sans texte / LENIENT / OFF / knob
+`outputFileName` suivi). Constat clé : *drift jar Central ↔ mavenLocal sous
+le même numéro 0.0.15* — le jar Central (S-241, avant garde) ne porte pas la
+garde, le jar mavenLocal (S-247) oui ; piège #16 documenté (un consommateur
+DOIT mettre `mavenLocal()` avant le Plugin Portal pour tester le HEAD).
+Zéro code modifié (économie d'encre). Publication 0.0.16 non demandée —
+elle alignera Central sur mavenLocal.)
 _Version_ : 0.0.15 (publié Maven Central — `<latest>0.0.15</latest>` repo1)
 
 '''

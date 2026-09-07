@@ -1,6 +1,33 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-07
-:session: 247
+:session: 248
+
+== Session 248 — Preuve consommateur 6e garde PDF (zéro test modifié)
+
+*Objectif* : prouver la garde `pdfCheck` (S-247) consommable par un projet
+tiers externe (les preuves S-239/S-242/243 sont antérieures à S-247).
+
+*Zéro test modifié/créé* — session de vérification consommateur pure
+(économie d'encre : la garde est déjà couverte par 16 UT + 4 FT + 4 BDD +
+2 FT dogfooding S-247). Preuve externe via projet `/tmp/opencode/doc-consumer-pdf`
+(HORS repo, jamais commité — pattern S-239) :
+
+- Résolution `education.cccp.document:0.0.15` via `pluginManagement
+  { mavenLocal() }` — prouvée debug log (`Using ... from Maven repository
+  'MavenLocal'`) ; sans `mavenLocal()`, Gradle résout silencieusement
+  Central (jar S-241 sans la garde) → `Task 'validateDocumentPdf' not found`.
+- 4/4 scénarios : STRICT VALID / STRICT fail PDF sans texte (2 findings
+  `page N: no extractable text`) / LENIENT vert + rapport INVALID / OFF skip
+  (rapport stale inchangé) / knob `outputFileName` suivi
+  (`<pdf-file-missing>` ↔ VALID).
+
+*Constat (documenté piège #16)* : jar Central 0.0.15 = 0 classe pdf-check ;
+jar mavenLocal 0.0.15 (republié S-247) = 2 classes + câblage. Le mavenLocal
+est toujours la vérité du HEAD sous le même numéro de version.
+
+*Baseline inchangée* : test 3511/0, FT 130/130, 18 runners Cucumber dédiés
+VERTS (aucune suite du borough ré-exécutée — zéro code modifié, la baseline
+S-247 fait foi).
 
 == Session 247 — EPIC DOC-PDF-CHECK (6e garde)
 
