@@ -1,0 +1,143 @@
+= Session 249 — PUB 0.0.16 : bump + distribution de la 6e garde pdfCheck hors machine de dev
+
+_Date_ : 2026-09-07
+_Boroughs_ : MEMPHIS 🎸 (workspace-bom) + New Orleans 🟢 (document-gradle) + Bushwick 🟤 (bakery-gradle, propagation)
+_Type_ : PUB cross-borough (accord pilote explicite)
+_Score_ : 10/10
+
+== Mission
+
+Le pilote demande : bump + répercussion consommateur + clôture + commit/push.
+La garde `pdfCheck` (S-247) n'était distribuée QUE dans le jar mavenLocal
+0.0.15 (constat S-248 : Central 0.0.15 sans la garde). La publication 0.0.16
+aligne Central sur mavenLocal et distribue les 6 gardes à tout consommateur
+externe.
+
+== Chaîne de release (DAG respecté N0 → N2)
+
+. *MEMPHIS* — bump catalogue `document-plugin = "0.0.15" → "0.0.16"` +
+  `workspace-bom = "0.0.31" → "0.0.32"` (toml unique source de vérité).
+  Gates réalignées : `PlatformCatalogAlignmentTest` (0.0.32) +
+  `WorkspaceCatalogStructureTest.document plugin version matches bakery
+  consumer pin` (0.0.16) — RED 1 failure attrapée par la garde → GREEN
+  111 tests 0 FAIL. `publishToMavenLocal` VERT (BOM 0.0.32 + catalog
+  0.0.32 avec document 0.0.16). `publishAggregationToCentralPortal` VERT
+  (bundle AUTOMATIC) — propagation repo1 `<latest>0.0.32</latest>` ×2
+  (BOM + catalog), BOM Central porte pdfbox 3.0.4.
+. *New Orleans* — re-pin 3 sources : settings `from("...workspace-catalog:0.0.32")`
+  (D4) + platform `workspace-bom:0.0.32` + toml local `document = "0.0.16"`
+  (D5 — la garde `DocumentPluginPublicationTest` a RED sur le split-brain
+  toml local, exactement son rôle S-244). Version dérivée = **0.0.16**
+  automatique. Garde publication 3/3 VERT.
+. *Rejet Central 1er upload (constat clé)* : nmcp AUTOMATIC a rejeté le
+  déploiement avec `Dependency version information is missing` ×15 deps
+  (kotlin-stdlib-jdk8, jackson-module-kotlin, asciidoctorj×3, koog,
+  langchain4j-ollama, plantuml-plugin, contracts×3, coroutines×2, pdfbox,
+  slf4j). Cause : les deps `implementation` SANS version explicite
+  (résolues par platform BOM) produisent un POM avec deps sans `<version>`
+  — Central exige une version explicite par dépendance. *Pattern S-209*
+  (Queens, EPIC MEMPHIS-BOM-FIX US-4, même rejet sur kotlin-stdlib-jdk8)
+  : basculer les coordonnées littérales sur des alias `libs.*` du catalogue
+  local document. Delta build.gradle.kts : 12 deps `implementation`
+  littérales → alias (`libs.jackson.module.kotlin`, `libs.asciidoctorj`,
+  `libs.asciidoctorj.diagram(.plantuml)`, `libs.koog.agents`,
+  `libs.langchain4j.ollama`, `libs.plantuml.plugin`, `libs.i18n.contracts`,
+  `libs.opencode.session.contracts`, `libs.pipeline.contracts`,
+  `libs.kotlinx.coroutines.core/.jdk8`, `libs.pdfbox`, `libs.slf4j.api`).
+  Catalogue local document enrichi : `jackson = "2.21.2"` + `pdfbox = "3.0.4"`
+  + 2 entrées `[libraries]`. Gems PDF/EPUB (2.3.23/2.2.0) et epubcheck
+  (5.2.1) conservés avec version littérale (déjà explicites).
+. `publishToMavenLocal` VERT — POM 0.0.16 : TOUTES les deps ont une
+  `<version>` explicite. `publishAggregationToCentralPortal` VERT 25s
+  (AUTOMATIC accepté). Propagation repo1 : POM HTTP 200 au poll 4
+  (~2 min), POM porte pdfbox 3.0.4 + platform 0.0.32, JAR Central contient
+  2 classes `ValidateDocumentPdfTask`.
+. *Consommateur tiers depuis Central (sans mavenLocal)* —
+  `/tmp/opencode/doc-consumer-pdf` passe `version "0.0.15" → "0.0.16"`
+  avec `pluginManagement` SANS mavenLocal (drift S-248 résolu par
+  construction) : résolution prouvée debug log `Using
+  education.cccp:document-plugin:0.0.16 from Maven repository 'Gradle
+  Central Plugin Repository'`. `convertDocumentToPdf validateDocumentPdf
+  -Pdocument.pdfCheck=STRICT` → BUILD SUCCESSFUL, rapport VALID. Preuve
+  négative discriminante : PDF sans texte → STRICT BUILD FAILED
+  `page 1: no extractable text, page 2: no extractable text`. La 6e garde
+  est distribuée hors machine de dev.
+. *Bushwick (bakery, consommateur dur)* — pas de hardcode : le pin
+  catalogue `workspace-catalog:0.0.30 → 0.0.32` + platform
+  `workspace-bom:0.0.30 → 0.0.32` suffisent (MEM-CAT-3 D5), document
+  résout `0.0.16` automatiquement (vérifié `gradlew dependencies` :
+  `document-plugin -> 0.0.16`). `compileKotlin` VERT.
+
+== Constats (pièges à retenir)
+
+17. *Central exige une version explicite par dépendance POM* (pattern
+    S-209 re-joué) : une dep `implementation` sans version (résolue par
+    platform BOM) → POM sans `<version>` → rejet nmcp AUTOMATIC. Fix :
+    alias `libs.*` avec version.ref dans le catalogue local du borough.
+    Un borough qui publie doit expliciter TOUTES ses deps runtime dans
+    son toml local, pas seulement ses self-versions.
+18. *Le bump catalogue MEMPHIS déclenche les 2 gardes en cascade* :
+    `WorkspaceCatalogStructureTest` (document = version Central consommée
+    par bakery) + `PlatformCatalogAlignmentTest` (workspace-bom) — les
+    2 doivent être réalignées dans le même commit, sinon gate RED.
+
+== Gates
+
+|===
+| Gate | Résultat
+
+| MEMPHIS `agent-contracts:test`
+| 111 tests 0 FAIL (gardes réalignées 0.0.32/0.0.16)
+
+| MEMPHIS `publishToMavenLocal`
+| VERT — BOM 0.0.32 + catalog 0.0.32 (document 0.0.16)
+
+| MEMPHIS `publishAggregationToCentralPortal`
+| VERT — propagation repo1 BOM+catalog `<latest>0.0.32</latest>`
+
+| document garde publication (`DocumentPluginPublicationTest`)
+| 3/3 VERT (version dérivée 0.0.16 + D5 toml aligné + pin platform 0.0.32)
+
+| document `publishToMavenLocal`
+| VERT — POM 0.0.16 toutes deps versionnées
+
+| document `publishAggregationToCentralPortal`
+| VERT 25s AUTOMATIC (après fix S-209)
+
+| Central document 0.0.16
+| POM HTTP 200 poll 4, pdfbox 3.0.4, platform 0.0.32, JAR 2 classes pdf-check
+
+| Consommateur tiers (Central, sans mavenLocal)
+| STRICT VALID + STRICT fail textless — résolution `Gradle Central Plugin Repository` prouvée
+
+| bakery `dependencies`
+| `document-plugin -> 0.0.16` via platform 0.0.32 (zéro hardcode)
+
+| bakery `compileKotlin`
+| BUILD SUCCESSFUL
+
+| Secrets
+| RAS (grep 0 match)
+
+|===
+
+== Fichiers
+
+- *MEMPHIS* : `gradle/libs.versions.toml` (2 bumps) +
+  `PlatformCatalogAlignmentTest.kt` (0.0.32) +
+  `WorkspaceCatalogStructureTest.kt` (0.0.16). Commit `988fda5` poussé.
+- *document* : `settings.gradle.kts` (pin 0.0.32) + `build.gradle.kts`
+  (platform 0.0.32 + 12 alias libs.*) + `gradle/libs.versions.toml`
+  (document 0.0.16 + jackson/pdfbox + 2 entrées). Commit `31010ac` poussé.
+- *bakery* : `settings.gradle.kts` (pin 0.0.32) + `build.gradle.kts`
+  (platform 0.0.32). Commit `343aeaa` poussé.
+- Projet tiers `/tmp/opencode/doc-consumer-pdf` bumpé 0.0.16 (HORS repo).
+
+== Non réalisé / reporté
+
+- runner-gradle N3 : consomme bakery (pas document directement), zéro
+  couplage compile — pas de bump nécessaire (contrat metadata.json
+  inchangé).
+- Composite PDF/EPUB : CADUQUE (besoin N3 réel requis).
+- Session 248 (preuve consommateur mavenLocal) reste valide — son piège
+  #16 est désormais résolu par construction (Central = mavenLocal 0.0.16).

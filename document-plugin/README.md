@@ -5,7 +5,7 @@ Gradle plugin for AsciiDoc document creation and multi-format publication
 
 - Group / artifact: `education.cccp:document-plugin`
 - Plugin id: `education.cccp.document`
-- Latest published version: **0.0.15** (Maven Central + Gradle Plugin Portal)
+- Latest published version: **0.0.16** (Maven Central + Gradle Plugin Portal)
 - License: Apache 2.0
 
 Boundary: **Document = WRITE + PUBLISH** (create, enrich, validate, convert,
@@ -16,7 +16,7 @@ publish). Codex (Brooklyn) = READ + RAG. plantuml-gradle (HTOWN) = composition
 
 ```kotlin
 plugins {
-    id("education.cccp.document") version "0.0.15"
+    id("education.cccp.document") version "0.0.16"
 }
 
 document {
@@ -56,7 +56,7 @@ import document.xref.XrefValidationMode
 import org.asciidoctor.SafeMode
 
 plugins {
-    id("education.cccp.document") version "0.0.15"
+    id("education.cccp.document") version "0.0.16"
 }
 
 document {

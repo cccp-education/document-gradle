@@ -6,23 +6,23 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-|_Derniere mise a jour_ : 2026-09-07 (session 248 — preuve consommateur externe
-de la 6e garde `pdfCheck` (S-247) — projet tiers `/tmp/opencode/doc-consumer-pdf`
-(Gradle 9.7.1, JDK 25) consomme `education.cccp.document:0.0.15` via mavenLocal :
-4/4 scénarios VERTS (STRICT convert+validate → rapport VALID ; STRICT fail sur
-PDF sans texte → 2 findings `no extractable text` + rapport INVALID ; LENIENT
-vert + rapport ; OFF skip ; knob `outputFileName` suivi → `<pdf-file-missing>`
-sur custom absent / VALID sur custom présent). Résolution mavenLocal prouvée
-par debug log (`Using ... from Maven repository 'MavenLocal'`). Constat clé :
-*drift jar Central ↔ mavenLocal sous le même numéro 0.0.15* — le jar Central
-(publié S-241, avant S-247) ne contient PAS la garde PDF (0 classe), le jar
-mavenLocal (republié S-247) oui (2 classes + câblage). Leçon piège #16 :
-`publishToMavenLocal` met à jour l'artefact local sous le même numéro — un
-consommateur DOIT mettre `mavenLocal()` avant le Plugin Portal pour tester le
-HEAD local. Zéro code modifié (économie d'encre) — publication 0.0.16 non
-demandée. Rapport : `.agents/sessions/248-pdf-check-consumer-proof.adoc`.)
-|_Derniere session terminee_ : 248 — preuve consommateur 6e garde PDF (drift Central ↔ mavenLocal diagnostiqué)
-  _Prochaine session_ : 249 — maintenance DORMANT sur besoin réel (publication 0.0.16 pour distribuer la garde PDF si accord pilote).
+|_Derniere mise a jour_ : 2026-09-07 (session 249 — **PUB 0.0.16 Maven Central ✅** —
+la 6e garde `pdfCheck` (S-247) est distribuée hors machine de dev. Chaîne
+cross-borough : MEMPHIS bump BOM+catalog **0.0.32** (document 0.0.16, gardes
+`PlatformCatalogAlignmentTest` + `WorkspaceCatalogStructureTest` réalignées,
+111 tests 0 FAIL, publication Central VERT) ; document re-pin D4/D5 (version
+dérivée 0.0.16, garde publication 3/3) ; **1er upload Central rejeté**
+`Dependency version information is missing` ×15 — fix pattern S-209 (12 deps
+`implementation` littérales → alias `libs.*` + catalogue local enrichi
+jackson 2.21.2 / pdfbox 3.0.4) → publication VERT, propagation repo1 POM
+HTTP 200 poll 4, JAR Central 2 classes pdf-check ; consommateur tiers prouvé
+depuis Central SANS mavenLocal (résolution `Gradle Central Plugin Repository`
+prouvée debug log, STRICT VALID + STRICT fail textless) ; bakery pin ws 0.0.32
++ platform 0.0.32 → document 0.0.16 sans hardcode (compileKotlin VERT).
+Piège #17 documenté (PROMPT_REPRISE). Commits : MEMPHIS `988fda5`, document
+`31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`.)
+|_Derniere session terminee_ : 249 — PUB 0.0.16 Central (6 gardes distribuées, pattern S-209 POM re-joué)
+  _Prochaine session_ : 250 — maintenance DORMANT sur besoin réel.
 
 '''
 == REGLES ABSOLUES (resume)
@@ -229,6 +229,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 246 | 2026-09-07 | maintenance | **Sync catalogue ws 0.0.31 (drift cross-borough MEMPHIS)** — la garde S-244 `DocumentPluginPublicationTest` a attrapé le drift : MEMPHIS a bumpé le catalogue en amont 0.0.31 (S-032, commit `61d7b90`) pendant que document pinne 0.0.30. RED `workspace bom platform pin must use the ws catalog BOM version (0.0.31)` → fix 2 pins : settings `from("education.cccp:workspace-catalog:0.0.31")` (D4) + platform BOM 0.0.30→0.0.31. `document-plugin` reste 0.0.15 (inchangé). Gates : test 3272/0 + FT 126/126 + epubCheck 4/4 + publishToMavenLocal VERT (POM local porte platform 0.0.31). Zéro publication Central (0.0.15 POM Central reste auto-consistant ; pin 0.0.31 distribué à la prochaine publication). Zéro code prod modifié — pins build uniquement. Rapport : `.agents/sessions/246-sync-catalog-0.0.31.adoc`. | ✅ TERMINE
 | 247 | 2026-09-07 | feat + TDD/BDD | **EPIC DOC-PDF-CHECK ✅ TERMINÉ (4/4 US, ~12 pts, 1 session)** — 6e garde : validation structurelle du PDF (PDFBox 3.0.4, BOM-constraint, zéro bump). US-1 (TDD strict) : domaine `document.pdf` Gradle-free miroir `document.epub` — `PdfValidationMode`/`PdfValidationResult` sealed/`PdfValidator` port fun interface/`PdfValidationReport` (NON_NULL, fromJson dégradé silencieux) + adapter `PdfBoxValidatorAdapter` (`<pdf-file-missing>`/`<pdf-load-failed>` dont PDF chiffré/`<pdf-no-pages>`/`page N: no extractable text`) — RED 8 `Unresolved reference` → GREEN 16/16 UT (8 adapter + 8 report). US-2 (FT) : tâche `validateDocumentPdf` miroir exact epub (`@Input @Optional pdfFile`, knob `outputFileName` dérivé, `mustRunAfter(convertDocumentToPdf)`, rapport JSON, `@DisableCachingByDefault`) + DSL `converter { pdfCheck }` + mirror plat + CLI `-Pdocument.pdfCheck` (défaut OFF) — RED 4 BUILD FAILED → GREEN 4/4 + baseline FT 130/130. US-3 (BDD) : `pdf_check.feature` 4 scénarios + runner dédié 18e `pdfCheckCucumberTest` + `PdfCheckSteps` préfixés « pdf-check » anti-glue S-223 — 4/4 PASSED. US-4 : dogfooding `PdfCheckFpaFunctionalTest` 2/2 — le VRAI `book.pdf` FPA (15 pages) VALID ; preuve négative = PDF 3 pages sans texte → 3 findings (PDFBox lénient sur les octets : header corrompu → warning + charge quand même — le garde est texte-extractible par page, leçon miroir piège EPUB #10). Gates : test 3511/0, validatePlugins VERT, mavenLocal VERT (platform 0.0.31 + pdfbox runtime), secrets RAS. Publication 0.0.16 non demandée. Rapport : `.agents/sessions/247-pdf-check-guard.adoc`. | ✅ TERMINE
 | 248 | 2026-09-07 | vérification consommateur | **Preuve consommateur 6e garde PDF + diagnostic drift Central ↔ mavenLocal** — projet tiers `/tmp/opencode/doc-consumer-pdf` (pattern S-239, Gradle 9.7.1, JDK 25, `pluginManagement { mavenLocal() }`) : 4/4 scénarios VERTS (STRICT convert+validate → rapport VALID ; STRICT PDF sans texte → BUILD FAILED `page 1: no extractable text, page 2: no extractable text` + rapport INVALID ; LENIENT vert + rapport INVALID ; OFF skip stale ; knob `outputFileName` suivi → `<pdf-file-missing> gone-custom.pdf` sur custom absent / VALID sur `headings-only` converti). Résolution mavenLocal prouvée par debug log (`Using education.cccp:document-plugin:0.0.15 from Maven repository 'MavenLocal'`). Constat clé : jar Central 0.0.15 (publié S-241 avant S-247) = **0 classe** `ValidateDocumentPdfTask` (téléchargé repo1 + `unzip -l`) ; jar mavenLocal 0.0.15 (republié S-247) = 2 classes + câblage `registerValidateDocumentPdf` (javap). Piège #16 documenté : `publishToMavenLocal` met à jour l'artefact local sous le MÊME numéro — un consommateur DOIT mettre `mavenLocal()` en tête de `pluginManagement.repositories` pour tester le HEAD local, sinon Gradle résout silencieusement Central. Zéro code modifié (économie d'encre). Publication 0.0.16 non demandée (elle alignera Central). Rapport : `.agents/sessions/248-pdf-check-consumer-proof.adoc`. | ✅ TERMINE
+| 249 | 2026-09-07 | PUB cross-borough | **PUB 0.0.16 Maven Central ✅ — les 6 gardes distribuées hors machine de dev** — accord pilote explicite. Chaîne DAG N0→N2 : (1) MEMPHIS bump toml `workspace-bom 0.0.32` + `document-plugin 0.0.16`, gardes réalignées (`PlatformCatalogAlignmentTest` 0.0.32 + `WorkspaceCatalogStructureTest` 0.0.16, RED 1 failure attrapée → GREEN 111/0), `publishToMavenLocal` VERT, Central VERT — propagation repo1 `<latest>0.0.32</latest>` ×2, BOM porte pdfbox 3.0.4 ; (2) document re-pin 3 sources (settings D4 `workspace-catalog:0.0.32` + platform `workspace-bom:0.0.32` + toml local `document = "0.0.16"` — garde RED sur split-brain toml local, rôle S-244 confirmé) → version dérivée 0.0.16, garde publication 3/3 VERT ; (3) **1er upload Central rejeté** `Dependency version information is missing` ×15 deps — fix **pattern S-209** (Queens MEMPHIS-BOM-FIX US-4) : 12 deps `implementation` littérales → alias `libs.*` + catalogue local enrichi (`jackson = 2.21.2`, `pdfbox = 3.0.4` + 2 entrées `[libraries]`) → POM toutes deps versionnées → publication VERT 25s AUTOMATIC, propagation POM HTTP 200 poll 4, JAR Central = 2 classes pdf-check ; (4) consommateur tiers `/tmp/opencode/doc-consumer-pdf` bumpé 0.0.16 SANS mavenLocal : résolution `Gradle Central Plugin Repository` prouvée debug log, STRICT VALID + STRICT fail textless — drift S-248 résolu par construction ; (5) bakery pin ws 0.0.32 + platform 0.0.32 → `document-plugin -> 0.0.16` sans hardcode (D5), compileKotlin VERT. Piège #17 (POM deps version explicite, pattern S-209) documenté PROMPT_REPRISE. Secrets RAS. Commits : MEMPHIS `988fda5`, document `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`. | ✅ TERMINE
 |===
 
 '''

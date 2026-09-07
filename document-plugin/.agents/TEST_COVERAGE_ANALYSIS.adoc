@@ -1,6 +1,28 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-07
-:session: 248
+:session: 249
+
+== Session 249 — PUB 0.0.16 (gardes MEMPHIS réalignées)
+
+*Objectif* : distribuer la 6e garde `pdfCheck` hors machine de dev (bump +
+publication Central + propagation consommateurs).
+
+*Tests modifiés (2 gardes MEMPHIS réalignées, zéro nouveau test)* :
+- `PlatformCatalogAlignmentTest` (workspace-bom/agent-contracts) —
+  `workspace-bom = "0.0.31" → "0.0.32"` (RED sans bump → GREEN).
+- `WorkspaceCatalogStructureTest.document plugin version matches bakery
+  consumer pin` — `document-plugin = "0.0.15" → "0.0.16"` (RED attrapée
+  par la garde → GREEN). 111 tests 0 FAIL.
+
+*Côté document* : zéro test nouveau/modifié — la garde existante
+`DocumentPluginPublicationTest` a fait son travail (RED sur le split-brain
+toml local `document = 0.0.15` vs ws 0.0.16 → fix D5 → 3/3 GREEN).
+*Baseline inchangée* : test 3511/0, FT 130/130, 18 runners Cucumber dédiés
+VERTS (aucune suite ré-exécutée — la baseline S-247 fait foi, les bumps
+n'affectent ni le domaine ni les tâches).
+
+*Preuve externe (hors suite)* : consommateur tiers 0.0.16 depuis Central
+(VALID + STRICT fail) — voir rapport S-249.
 
 == Session 248 — Preuve consommateur 6e garde PDF (zéro test modifié)
 

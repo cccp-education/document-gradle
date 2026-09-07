@@ -2,6 +2,31 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 249 (2026-09-07) — PUB 0.0.16 : distribution des 6 gardes hors machine de dev
+
+*Type* : PUB cross-borough MEMPHIS + document + bakery (accord pilote)
+*Score* : 10/10
+
+*Résumé* :
+- MEMPHIS : bump toml BOM 0.0.32 + document 0.0.16, gardes réalignées
+  (PlatformCatalogAlignment + WorkspaceCatalogStructure, 111/0), Central
+  VERT — propagation repo1 `<latest>0.0.32</latest>` ×2.
+- document : re-pin D4/D5 (garde RED sur split-brain toml local — rôle
+  S-244 confirmé), version dérivée 0.0.16, garde publication 3/3.
+- **Rejet Central 1er upload** (`Dependency version information is
+  missing` ×15) → fix pattern S-209 : 12 deps `implementation` littérales
+  → alias `libs.*` + catalogue local enrichi (jackson 2.21.2, pdfbox
+  3.0.4) → POM toutes deps versionnées → publication VERT 25s,
+  propagation POM HTTP 200 poll 4, JAR Central 2 classes pdf-check.
+- Consommateur tiers 0.0.16 depuis Central SANS mavenLocal : résolution
+  `Gradle Central Plugin Repository` prouvée, STRICT VALID + STRICT fail
+  textless — drift S-248 résolu par construction.
+- bakery : pin ws 0.0.32 + platform 0.0.32 → document 0.0.16 sans
+  hardcode (compileKotlin VERT).
+- Piège #17 (POM deps version explicite) + #18 (2 gardes MEMPHIS en
+  cascade) documentés. Commits : MEMPHIS `988fda5`, document `31010ac`,
+  bakery `343aeaa`.
+
 === Session 248 (2026-09-07) — Preuve consommateur 6e garde PDF + diagnostic drift Central ↔ mavenLocal
 
 *Type* : vérification consommateur externe (zéro code modifié)

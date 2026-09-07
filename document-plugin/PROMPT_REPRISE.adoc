@@ -1,19 +1,26 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 249
+== Mission session 250
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-248 a prouvé
-la 6e garde `pdfCheck` (S-247) consommable par un projet tiers externe via
-mavenLocal (4/4 scénarios : STRICT VALID, STRICT fail sur PDF sans texte,
-LENIENT/OFF, knob `outputFileName` suivi) — pattern S-239 rejoué. Constat
-clé S-248 : *drift jar Central ↔ mavenLocal* sous le même numéro 0.0.15
-(Central publié S-241 AVANT la garde, mavenLocal republié S-247 avec).
-*Rien à planifier — travaux uniquement sur besoin réel* :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-249 a publié
+**0.0.16** sur Maven Central — les 6 gardes (dont `pdfCheck` S-247) sont
+distribuées hors machine de dev : bump catalogue MEMPHIS (BOM+catalog
+0.0.32, document 0.0.16), re-pin document (D4/D5, version dérivée), POM
+deps versions explicites (pattern S-209 re-joué — 1er upload rejeté
+`Dependency version information is missing` ×15, fix alias `libs.*`),
+propagation repo1 vérifiée (POM HTTP 200 poll 4, JAR 2 classes pdf-check),
+consommateur tiers prouvé depuis Central SANS mavenLocal (STRICT VALID +
+STRICT fail textless), bakery consomme 0.0.16 via platform 0.0.32 sans
+hardcode (compileKotlin VERT). *Rien à planifier — travaux uniquement sur
+besoin réel* :
 
-- *Publication 0.0.16* : non demandée — la seule façon d'aligner Central sur
-  mavenLocal (la garde PDF n'est pas dans le jar Central 0.0.15). Accord
-  pilote requis (Règle 2), polling repo1 + propagation consommateurs
-  (pattern S-241 : bakery bump, vérification FPA).
+- *Drift catalogue ws* : si MEMPHIS bump à nouveau (piège #13), la garde
+  `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
+  (settings D4 + platform + toml local D5) vers la version Central.
+- *POM future release (piège #17)* : toute nouvelle dep `implementation`
+  doit passer par un alias `libs.*` avec version explicite dans le toml
+  local — jamais de coordonnée littérale sans version (rejet Central
+  `Dependency version information is missing`, pattern S-209/S-249).
 - *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
   besoin N3 réel (pattern S-240 conservé).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
@@ -23,20 +30,18 @@ clé S-248 : *drift jar Central ↔ mavenLocal* sous le même numéro 0.0.15
   document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc, ordre 6
   ⏳ À PLANIFIER à la demande).
 
-== État du code (S-248)
+== État du code (S-249)
 
-- *0.0.15 PUBLIÉE* Central MAIS sans la garde PDF (jar S-241) — mavenLocal
-  0.0.15 porte la garde (jar S-247). *Le mavenLocal est toujours la vérité
-  du HEAD sous le même numéro de version* (piège #16).
-- *Version catalog ws 0.0.31* — pins settings D4 + platform BOM 0.0.31
-  (S-246), alignés Central (vérifié S-248).
+- *0.0.16 PUBLIÉE* Maven Central (`<latest>0.0.16</latest>` repo1) — les 6
+  gardes distribuées ; POM porte platform 0.0.32 + pdfbox 3.0.4 + epubcheck
+  5.2.1 + gems PDF/EPUB, toutes deps versionnées.
+- *BOM+catalog ws 0.0.32* Central (document 0.0.16 dans le catalog).
+- *bakery* : pin ws 0.0.32 + platform 0.0.32 → document résout 0.0.16
+  sans hardcode (D5), compileKotlin VERT.
 - *Gates document* : test 3511/0 (920 UT actifs + cucumber intégrés) + FT
   130/130 + 18 runners Cucumber dédiés VERTS + validatePlugins VERT.
-- *Preuve consommateur S-248* : `/tmp/opencode/doc-consumer-pdf` (Gradle
-  9.7.1, JDK 25) — 4/4 scénarios VERTS, résolution mavenLocal prouvée par
-  debug log (`Using ... from Maven repository 'MavenLocal'`).
 
-== Pièges Gradle à retenir (S-232..S-248)
+== Pièges Gradle à retenir (S-232..S-249)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -79,13 +84,12 @@ clé S-248 : *drift jar Central ↔ mavenLocal* sous le même numéro 0.0.15
     Portal pour tester le HEAD local ; sans lui, Gradle résout
     silencieusement depuis Central et rate les gardes récentes
     (symptôme : `Task 'validateDocumentPdf' not found` malgré le JAR).
-16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro de version* (S-248) :
-    `publishToMavenLocal` met à jour l'artefact local sans changer la
-    version — Central peut être en retard sur le mavenLocal. Un consommateur
-    DOIT déclarer `pluginManagement { repositories { mavenLocal() } }` AVANT
-    le Plugin Portal pour tester le HEAD local ; sans lui, Gradle résout
-    silencieusement depuis Central et rate les gardes récentes (symptôme :
-    task not found malgré le JAR présent).
+17. *Central exige une version explicite par dépendance POM* (S-249,
+    pattern S-209) : une dep `implementation` sans version (résolue par
+    platform BOM) produit un POM sans `<version>` → rejet nmcp AUTOMATIC
+    `Dependency version information is missing`. Fix : alias `libs.*`
+    avec version.ref dans le catalogue local du borough (12 deps
+    basculées S-249). Toute nouvelle dep doit suivre ce pattern.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -117,19 +121,20 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Central : `document-plugin` `<latest>` = 0.0.15 ; `workspace-catalog`
-   `<latest>` = 0.0.31 (drift MEMPHIS = réaligner via les 2 pins, piège #13).
+4. Central : `document-plugin` `<latest>` = 0.0.16 ; `workspace-catalog`
+   `<latest>` = 0.0.32 (drift MEMPHIS = réaligner via les 3 sources D4/D5,
+   pièges #13).
 5. Baseline : test 3511/0, FT 130/130, `epubCheckCucumberTest` 4/4,
    `pdfCheckCucumberTest` 4/4.
 
 == Vision « livre FPA SERVER »
 
-Verrous levés S-233..S-248 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-249 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central (0.0.14 S-239, 0.0.15 S-242/243) et depuis
-mavenLocal avec la 6e garde (S-248), 6 gardes documentaires
+externe prouvée depuis Central (0.0.14 S-239, 0.0.15 S-242/243,
+**0.0.16 S-249 avec les 6 gardes — résolution Central prouvée sans
+mavenLocal**), 6 gardes documentaires
 (includeGuard/xref/security/htmlLint/epubCheck/**pdfCheck**), EPUB FPA
 prouvé valide (epubcheck W3C), PDF FPA prouvé structurellement sain
-(PDFBox, 15 pages extractibles), README consommateur, et 0.0.15 publiée.
-Reste : publication 0.0.16 pour distribuer la garde PDF hors machine de
-développement.
+(PDFBox, 15 pages extractibles), README consommateur. Le produit est
+servable, auditable, documenté et **distribué** de bout en bout.
