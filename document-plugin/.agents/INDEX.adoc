@@ -21,8 +21,8 @@ prouvée debug log, STRICT VALID + STRICT fail textless) ; bakery pin ws 0.0.32
 + platform 0.0.32 → document 0.0.16 sans hardcode (compileKotlin VERT).
 Piège #17 documenté (PROMPT_REPRISE). Commits : MEMPHIS `988fda5`, document
 `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`.)
-|_Derniere session terminee_ : 250 — Cadrage EPIC DOC-FPA-PUBLISH (GBL-003.6 critical path MVP0 — gouvernance pure, zéro code). Le livre FPA navigable est déjà publié (S-082) : cet EPIC en STANDBY garantit la republication quand le corpus s'améliore (post itération OCR humaine A1 Tombouctou). 1 US ~1 pt. Doc `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`.
-  _Prochaine session_ : à la demande — DOC-FPA-PUBLISH-0 (republication post-corpus corrigé) OU maintenance DORMANT sur besoin réel.
+|_Derniere session terminee_ : 250 — Cadrage EPIC DOC-FPA-PUBLISH (GBL-003.6 critical path MVP0 — gouvernance pure, zéro code). Le livre FPA navigable est déjà publié (S-082) : cet EPIC en STANDBY garantit la republication quand le corpus s'améliore (post itération OCR humaine A1 Tombouctou). 1 US ~1 pt. Doc `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`. + **Cadrage EPIC OCR-QUALITY** (demande pilote : détection auto images problématiques + transcriptions douteuses — US-3 document : extension `BookOcrIssue`/`BookOcrFailureDetector` IMAGE_MISSING + TABLE_SUSPECT + STRUCT_SUSPECT, backward compat. Doc `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc`.)
+  _Prochaine session_ : à la demande — OCR-QUALITY-3 (US-3 document) OU DOC-FPA-PUBLISH-0 (republication post-corpus corrigé) OU maintenance DORMANT sur besoin réel.
 
 '''
 == REGLES ABSOLUES (resume)

@@ -4,8 +4,29 @@
 _Date revision_ : 2026-09-07 (session 250 — **cadrage EPIC DOC-FPA-PUBLISH
 (GBL-003.6 critical path MVP0)** : republication multi-format du livre FPA
 quand le corpus s'améliore — STANDBY post itération OCR humaine A1
-Tombouctou. 1 US ~1 pt, zéro code. Livre déjà publié S-082.)
+Tombouctou. 1 US ~1 pt, zéro code. Livre déjà publié S-082. + Cadrage
+EPIC OCR-QUALITY (demande pilote : détection automatique images
+problématiques + transcriptions douteuses) — US-3 document.)
 _Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
+
+'''
+== EPIC OCR-QUALITY — Détection automatique images problématiques + transcriptions douteuses 🟡 CADRÉ (P0, transverse)
+
+_Origine : demande pilote 2026-09-07. Cadrage transverse : `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc` (identique dans codex/document/codebase)._
+
+|===
+| US | Description | Pts | Statut
+| OCR-QUALITY-3 | Extension `BookOcrIssue`/`BookOcrFailureDetector` : IMAGE_MISSING (références `image::` sans fichier), TABLE_SUSPECT (tableaux linéarisés/pertes cellules), STRUCT_SUSPECT (invalid part / out of sequence / items sautés) + backward compat | 3 | 🟡 À FAIRE (document)
+|===
+
+*Constat déclencheur (S-082 corpus FPA réel)* : `BookOcrFailureDetector`
+ne flagge que `[ILLISIBLE]` + pages <40 chars — les 5 images fantômes
+(3 RSC-007 epubcheck), 11 tableaux perdus et structures douteuses ont
+été découverts manuellement. US-1/2 codex (confidence réelle) et US-4
+codebase (métadonnées doute RAG) sont cadrées dans les gouvernances
+respectives.
+
+'''
 
 '''
 == EPIC DOC-FPA-PUBLISH — Publication multi-format à jour du corpus FPA (GBL-003.6) 🟡 STANDBY
