@@ -12,47 +12,47 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.31"))
+    implementation(platform("education.cccp:workspace-bom:0.0.32"))
 
     implementation(kotlin("stdlib-jdk8"))
 
     // DOC-METADATA-VALIDATION — Jackson Kotlin module for data-class deserialization
     // (DocumentValidationReport.fromJson). Version constrained by workspace-bom.
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation(libs.jackson.module.kotlin)
 
     // AsciidoctorJ — implementation directe (boundary Codex : pas de compileOnly codex)
-    implementation("org.asciidoctor:asciidoctorj")
-    implementation("org.asciidoctor:asciidoctorj-diagram")
-    implementation("org.asciidoctor:asciidoctorj-diagram-plantuml")
+    implementation(libs.asciidoctorj)
+    implementation(libs.asciidoctorj.diagram)
+    implementation(libs.asciidoctorj.diagram.plantuml)
     // Session 233 (option C) — PDF/EPUB backend gems. The core asciidoctorj jar only
     // bundles the `asciidoctor` gem; the `pdf`/`epub3` backends live in their own
     // gem jars (versioned by the catalogue, present in repositories). runtimeOnly:
     // the converter gems are discovered from the classpath, no compile-time API used.
-    runtimeOnly("org.asciidoctor:asciidoctorj-pdf:2.3.23")
-    runtimeOnly("org.asciidoctor:asciidoctorj-epub3:2.2.0")
+    runtimeOnly(libs.asciidoctorj.pdf)
+    runtimeOnly(libs.asciidoctorj.epub3)
 
     // koog — orchestrateur de graphe agentique (EPIC L : koog orchestre, langchain4j execute)
-    implementation("ai.koog:koog-agents")
+    implementation(libs.koog.agents)
 
     // langchain4j — execution LLM (Ollama local, port 11437-11465)
-    implementation("dev.langchain4j:langchain4j-ollama")
+    implementation(libs.langchain4j.ollama)
 
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
     compileOnly("education.cccp:planner-plugin:0.0.1")
 
     // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
-    implementation("education.cccp:plantuml-plugin")
+    implementation(libs.plantuml.plugin)
 
     // N0 contracts — i18n (internationalisation documents)
     // + opencode-session (traçabilité release notes, vision MEM-4 — non implémenté, gardé pour roadmap)
     // + pipeline-contracts (release notes generator, MEM-2 DOC-8)
-    implementation("education.cccp:i18n-contracts")
-    implementation("education.cccp:opencode-session-contracts")
-    implementation("education.cccp:pipeline-contracts")
+    implementation(libs.i18n.contracts)
+    implementation(libs.opencode.session.contracts)
+    implementation(libs.pipeline.contracts)
 
     // Coroutines — ContentTranslationService parallel translation
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.jdk8)
 
     // DOC-EPUBCHECK — W3C epubcheck as a Java library (org.w3c:epubcheck 5.2.1) for
     // the EpubCheckRunner port adapter. US-1 domain stays Gradle-free; this dep is
@@ -62,10 +62,10 @@ dependencies {
     // DOC-PDF-CHECK — Apache PDFBox (org.apache.pdfbox:pdfbox, BOM-constrained 3.0.4)
     // for the PdfValidator port adapter. US-1 domain stays Gradle-free; this dep is
     // consumed only by the adapter (PdfBoxValidatorAdapter).
-    implementation("org.apache.pdfbox:pdfbox")
+    implementation(libs.pdfbox)
 
     // SLF4J — logging in ContentTranslationService
-    implementation("org.slf4j:slf4j-api")
+    implementation(libs.slf4j.api)
 
     // Tests unitaires
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

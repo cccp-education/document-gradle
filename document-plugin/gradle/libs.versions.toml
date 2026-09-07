@@ -1,5 +1,5 @@
 [versions]
-document = "0.0.15"
+document = "0.0.16"
 workspace-bom = "0.0.11"
 asciidoctorj = "3.0.1"
 asciidoctorj-diagram = "3.2.0"
@@ -23,6 +23,8 @@ opencode-session-contracts = "0.0.2"
 pipeline-contracts = "0.0.2"
 epubcheck = "5.2.1"
 coroutines = "1.10.2"
+jackson = "2.21.2"
+pdfbox = "3.0.4"
 
 [libraries]
 i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
@@ -35,6 +37,8 @@ asciidoctorj-diagram-plantuml = { module = "org.asciidoctor:asciidoctorj-diagram
 asciidoctorj-pdf = { module = "org.asciidoctor:asciidoctorj-pdf", version.ref = "asciidoctorj-pdf" }
 asciidoctorj-epub3 = { module = "org.asciidoctor:asciidoctorj-epub3", version.ref = "asciidoctorj-epub3" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 langchain4j-ollama = { module = "dev.langchain4j:langchain4j-ollama", version.ref = "langchain4j-ollama" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
