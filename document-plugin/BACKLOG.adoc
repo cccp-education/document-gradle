@@ -1,7 +1,7 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-07 (session 246 — **sync catalogue ws 0.0.31** : drift cross-borough MEMPHIS attrapé par la garde S-244 — MEMPHIS a bumpé le catalogue en amont 0.0.31 (S-032, commit `61d7b90`) ; fix 2 pins settings D4 + platform BOM 0.0.30→0.0.31. Gate : test 3272/0 + FT 126/126 + epubCheck 4/4 + mavenLocal VERT POM platform 0.0.31. EPIC MEM-CAT-ROLLOUT 1/6 boroughs — voir BACKLOG workspace-bom.)
+_Date revision_ : 2026-09-07 (session 247 — **EPIC DOC-PDF-CHECK ✅ TERMINÉ (4/4 US, ~12 pts, 1 session)** — 6e garde : validation structurelle du PDF via PDFBox 3.0.4 (BOM-constraint, zéro bump). Domaine `document.pdf` miroir `document.epub`, tâche `validateDocumentPdf`, DSL `converter { pdfCheck }` + CLI, BDD runner 18e `pdfCheckCucumberTest` 4/4, dogfooding : le VRAI `book.pdf` FPA (15 pages) passe VALID. Gates : UT 16/16 + FT 130/130 + test 3511/0 + validatePlugins VERT + mavenLocal VERT. Constat : PDFBox lénient sur les octets — le garde est texte extractible par page. Publication 0.0.16 non demandée — la garde sera distribuée à la prochaine publication.)
 _Version_ : 0.0.15 (publié Maven Central — `<latest>0.0.15</latest>` repo1)
 
 '''
@@ -1895,4 +1895,52 @@ _Consommateur naturel : livre FPA EPUB (`livre-navigable/book.epub`)._
 - **Propagation bakery ✅** : `bakery-plugin/build.gradle.kts:43`
   0.0.12 → 0.0.15 (commit `1b937eb`). Non-régression : 4 failures test
   préexistantes prouvées identiques par stash (hors périmètre document).
+====
+
+'''
+== ✅ EPIC DOC-PDF-CHECK — 6e garde : validation structurelle du PDF (TERMINÉ, Session 247)
+
+_Suite directe de DOC-EPUBCHECK (S-240). Option 1 du PROMPT_REPRISE 246-247 —
+besoin réel remonté : le livre FPA est publié en PDF stagiaire sans aucune
+garde (symétrie des 5 gardes brisée)._
+_statut_ : ✅ TERMINÉ (S-247 — 4/4 US, ~12 pts, 1 session).
+
+[NOTE]
+====
+**Motivation** : EPUB a epubcheck (S-240), HTML a le lint navigabilité
+(S-226/232), la source AsciiDoc a 3 gardes (CR4/xref/CR5) — le PDF, format
+prioritaire MVP0 (PDF stagiaire), n'avait AUCUNE garde.
+
+**Livrée S-247 (baby-step DDD/TDD/BDD)** :
+- US-1 : domaine `document.pdf` Gradle-free (miroir `document.epub`) —
+  `PdfValidationMode` (OFF/STRICT/LENIENT, défaut OFF),
+  `PdfValidationResult` sealed, `PdfValidator` port (fun interface
+  stateless), `PdfValidationReport` (tool "pdfbox", toJson/fromJson dégradé
+  silencieux) + adapter `PdfBoxValidatorAdapter` (PDFBox 3.0.4
+  BOM-constraint) : `<pdf-file-missing>` / `<pdf-load-failed>` (dont PDF
+  chiffré) / `<pdf-no-pages>` / finding métier `page N: no extractable
+  text`. 16 UT GREEN (RED prouvé : 8 `Unresolved reference`).
+- US-2 : tâche `validateDocumentPdf` (miroir exact `validateDocumentEpub` —
+  `@Input @Optional pdfFile` piège S-232 #3, knob `outputFileName` dérivé,
+  `mustRunAfter(convertDocumentToPdf)` pitfall S-233 #2,
+  `@DisableCachingByDefault`, rapport `pdf-validation-report.json`) + DSL
+  `converter { pdfCheck }` + mirror plat + CLI `-Pdocument.pdfCheck` (défaut
+  OFF backward-compat). 4 FT GREEN + baseline FT 130/130.
+- US-3 : `pdf_check.feature` 4 scénarios `@pdf-check` + runner dédié 18e
+  `pdfCheckCucumberTest` + steps préfixés « pdf-check » (anti-glue S-223).
+  4/4 PASSED.
+- US-4 : dogfooding `PdfCheckFpaFunctionalTest` 2/2 — le VRAI
+  `livre-navigable/book.pdf` FPA (15 pages) passe la garde VALID ; preuve
+  négative = PDF reconstruit 3 pages sans texte → 3 findings.
+
+**Constat réel (à retenir)** : PDFBox 3.x est *lénient sur les octets* —
+header corrompu → WARNING + charge quand même ; xref tronqué →
+reconstruction. Le garde PDF est donc un garde *texte extractible par page*
+(le check load/pages couvre les fichiers vraiment cassés). Leçon miroir du
+piège EPUB #10 : corrompre la STRUCTURE, pas le contenu.
+
+**Gates** : test 3511/0, validatePlugins VERT, `publishToMavenLocal` VERT
+(platform 0.0.31 + pdfbox runtime), secrets RAS. Publication 0.0.16 NON
+demandée — la garde sera distribuée à la prochaine publication (accord
+pilote requis).
 ====

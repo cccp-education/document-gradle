@@ -3,6 +3,7 @@ package document
 import document.batch.BatchConvertDocumentsTask
 import document.batch.BatchDsl
 import document.epub.EpubValidationMode
+import document.pdf.PdfValidationMode
 import document.template.ApplyDocumentTemplateTask
 import document.template.TemplateDsl
 import document.translation.TranslateDocumentTask
@@ -141,6 +142,7 @@ class DocumentPlugin : Plugin<Project> {
                  xrefValidation = project.objects.property(XrefValidationMode::class.java),
                  htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
                  epubCheck = project.objects.property(EpubValidationMode::class.java),
+                 pdfCheck = project.objects.property(PdfValidationMode::class.java),
              ),
               verification = VerificationDsl(project.objects.property(Boolean::class.java)),
         )
@@ -205,6 +207,9 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-EPUBCHECK — converter epubCheck default OFF (backward-compatible) + mirror flat property
         ext.converter.epubCheck.convention(EpubValidationMode.OFF)
         ext.epubCheck.convention(ext.converter.epubCheck)
+        // DOC-PDF-CHECK — converter pdfCheck default OFF (backward-compatible) + mirror flat property
+        ext.converter.pdfCheck.convention(PdfValidationMode.OFF)
+        ext.pdfCheck.convention(ext.converter.pdfCheck)
         // Verification DSL conventions
         ext.verification.htmlLinks.convention(false)
 
@@ -256,6 +261,7 @@ class DocumentPlugin : Plugin<Project> {
         registerRetranslateFrontmatter(project, ext)
         registerValidateDocumentXref(project, ext)
         registerValidateDocumentEpub(project, ext)
+        registerValidateDocumentPdf(project, ext)
         registerValidateDocument(project, ext)
         registerLintHtmlDocument(project, ext)
         registerVerifyHtmlLinksTask(project, ext)
@@ -604,6 +610,25 @@ class DocumentPlugin : Plugin<Project> {
             task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
             task.targetLanguage.set(tgtLang)
             task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+        }
+    }
+
+    private fun registerValidateDocumentPdf(project: Project, ext: DocumentExtension) {
+        project.tasks.register("validateDocumentPdf", ValidateDocumentPdfTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Validates the PDF artifact produced by convertDocumentToPdf with PDFBox (structure, extractable text) and writes a JSON report. — DOC-PDF-CHECK"
+            task.pdfFile.set(
+                cliProp(project, "outputFileName")
+                    .orElse("document")
+                    .flatMap { name -> project.layout.buildDirectory.file("docs/document/$name.pdf") }
+                    .map { it.asFile.absolutePath },
+            )
+            task.pdfCheck.set(cliProp(project, "pdfCheck").map { PdfValidationMode.valueOf(it.uppercase()) }.orElse(ext.pdfCheck))
+            // Pitfall S-233 #2 — mustRunAfter orders but never couples: the audit runs
+            // after the PDF conversion when both are requested, but stays usable
+            // standalone (no implicit dependence on the producer's outputFile).
+            task.mustRunAfter("convertDocumentToPdf")
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/pdf-validation-report.json"))
         }
     }
 

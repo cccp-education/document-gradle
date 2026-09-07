@@ -1,42 +1,41 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 247
+== Mission session 248
 
-Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-246 a
-rétabli l'alignement catalogue : drift cross-borough MEMPHIS attrapé par la
-garde `DocumentPluginPublicationTest` (créée S-244) — catalogue ws bumpé en
-amont 0.0.31 (S-032 MEMPHIS), document pinne désormais ws catalog 0.0.31 +
-platform BOM 0.0.31. Gate : test 3272/0 + FT 126/126 + epubCheck 4/4 +
-publishToMavenLocal VERT (POM local porte platform 0.0.31). *Rien à
-planifier — travaux uniquement sur besoin réel* :
+Borough DORMANT (maintenance + dogfooding livre FPA SERVER). S-247 a livré
+l'EPIC DOC-PDF-CHECK (6e garde, 4/4 US, ~12 pts en 1 session) — le livre FPA
+PDF est désormais audité comme l'EPUB. Gate : UT 16/16 + FT 4/4 + dogfooding
+2/2 + BDD 4/4 + baseline test 3511/0 + FT 130/130 + validatePlugins VERT +
+publishToMavenLocal VERT. *Rien à planifier — travaux uniquement sur besoin
+réel* :
 
-- *ROLLOUT-6 (dashboard, readme, graphify, bureau)* : hors périmètre
-  document — porté par MEMPHIS (référentiel workspace-bom/BACKLOG.adoc).
-- *Composite EPUB (fusion 5e garde dans `validateDocument`)* : CADUQUE
-  jusqu'à besoin N3 réel (décision 4 cadrage S-240).
-- *Dogfooding PDF FPA* : pas de garde équivalente epubcheck pour le PDF —
-  extension seulement si besoin réel remonté.
+- *Publication 0.0.16* : non demandée — la garde PDF est locale ;
+  elle sera distribuée à la prochaine publication (accord pilote requis,
+  polling repo1 + propagation consommateurs pattern S-241).
+- *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
+  besoin N3 réel (pattern S-240 conservé — les artefacts binaires restent
+  hors composite source/HTML).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
-  roundtrip) — à corriger côté bakery si le pilote le souhaite (Pièges
-  #12) — coordonner avant toute intervention bakery (session concurrente
-  possible).
+  roundtrip, pièges #12) — à corriger côté bakery si le pilote le souhaite,
+  coordonner avant toute intervention bakery (session concurrente possible).
+- *ROLLOUT-6* (dashboard, readme, graphify, bureau) : hors périmètre
+  document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc, ordre 6
+  ⏳ À PLANIFIER à la demande).
 
-== État du code (S-246)
+== État du code (S-247)
 
-- *0.0.15 PUBLIÉE* Maven Central (`<latest>0.0.15</latest>` repo1) — POM
-  Central porte platform 0.0.30 (auto-consistant avec le catalogue publié
-  à l'époque) ; le pin local 0.0.31 sera distribué à la prochaine
-  publication document (aucun besoin réel aujourd'hui).
-- *Version catalog ws 0.0.31* adopté (S-246) — version dérivée du
-  catalogue (`ws.versions.document.plugin.get()` = 0.0.15, inchangée).
-- *Gates document* : test 3272/0 + FT 126/126 (baseline exacte S-243/S-244).
-- *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur »
-  — `settings.gradle.kts` racine SANS `include(":document-plugin")`.
-- Baselines document : UT 3039/0 (hors cucumber intégrés au test), FT
-  126/126, 17 runners Cucumber dédiés VERTS, `epubCheckCucumberTest` 4/4,
-  `validatePlugins` VERT.
+- *0.0.15 PUBLIÉE* Maven Central (`<latest>0.0.15</latest>` repo1) — la
+  prochaine publication distribuera la garde PDF (POM mavenLocal déjà
+  porteur platform 0.0.31 + pdfbox runtime, vérifié S-247).
+- *Version catalog ws 0.0.31* — pins settings D4 + platform BOM 0.0.31
+  (S-246), alignés Central (vérifié HTTP 200 S-247).
+- *Gates document* : test 3511/0 (920 UT actifs + cucumber intégrés) + FT
+  130/130 + 18 runners Cucumber dédiés VERTS + validatePlugins VERT.
+- *Structure* : pattern S-006 « Plugin Indépendant + Racine Consommateur ».
+- Baselines : UT domaine pdf 16/16, `epubCheckCucumberTest` 4/4,
+  `pdfCheckCucumberTest` 4/4 (runner 18e dédié).
 
-== Pièges Gradle à retenir (S-232..S-246)
+== Pièges Gradle à retenir (S-232..S-247)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -48,37 +47,40 @@ planifier — travaux uniquement sur besoin réel* :
    `outputFile` du producteur, jamais `.get()` configuration-time.
 6. *`@InputFile` valide l'existence AVANT l'action* — porter les chemins
    audités en `@Input @Optional Property<String>` (pattern `htmlFilePath`
-   / `epubFile`).
+   / `epubFile` / `pdfFile`).
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
    annotation du runner (`FEATURES_PROPERTY_NAME`).
-8. *Imports DSL consommateur* (S-239, documenté S-241) : les enums des
-   gardes ne sont pas résolus implicitement — importer explicitement côté
-   `build.gradle.kts` tiers. Liste dans README.md.
-9. *epubcheck callback Java → null* : `info(feature, ...)` reçoit null —
-   signature nullable obligatoire côté Kotlin (NPE sinon).
-10. *Preuve négative epubcheck* (S-241) : corrompre la STRUCTURE (entrée
-    `mimetype` OCF), pas le contenu (flip d'octet toléré).
-11. *Polling Central* (S-241) : `<latest>` peut rester périmé ~27 min —
-    tester aussi le HTTP 200 du POM versionné.
-12. *Test bakery JBake native roundtrip périmé* (S-243) : scénario
-    `50_jbake_native_translation.feature:22` attend `:summary:` verbatim
-    mais document traduit volontairement `summary`/`description` depuis
-    S206. Préexistant (prouvé sonde 0.0.12), PAS une régression 0.0.15 —
-    à mettre à jour côté bakery. *Attention* : coordonner avant toute
-    intervention bakery (session concurrente détectée S-243).
-13. *Drift catalogue ws* (S-246) : MEMPHIS bump le catalogue en amont —
-    la garde `DocumentPluginPublicationTest` RED au prochain build local
-    document. Fix : bump des 2 pins (settings D4 + platform BOM) vers la
-    version publiée Central (vérifier HTTP 200 avant bump).
+8. *Imports DSL consommateur* (S-239) : les enums des gardes ne sont pas
+   résolus implicitement — importer explicitement côté `build.gradle.kts`
+   tiers. Liste dans README.md (à étendre avec `PdfValidationMode`).
+9. *epubcheck callback Java → null* : signature nullable obligatoire.
+10. *Preuve négative : corrompre la STRUCTURE, pas le contenu* (EPUB :
+    mimetype OCF ; PDF : voir #14 — les octets sont tolérés).
+11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester aussi
+    le HTTP 200 du POM versionné.
+12. *Test bakery JBake native roundtrip périmé* : `50_jbake_native_translation.feature:22`
+    attend `:summary:` verbatim mais document traduit `summary`/`description`
+    depuis S206. Préexistant — à mettre à jour côté bakery.
+13. *Drift catalogue ws* : MEMPHIS bump le catalogue en amont — la garde
+    `DocumentPluginPublicationTest` RED au prochain build. Fix : bump des
+    2 pins (settings D4 + platform BOM) vers la version publiée Central.
+14. *PDFBox 3.x lénient sur les octets* (S-247) : header corrompu → WARNING
+    + charge quand même ; xref tronqué → reconstruction. Le garde PDF est
+    un garde *texte extractible par page*. Preuve négative = pages sans
+    texte, jamais des octets.
+15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* (S-247) :
+    l'erreur Kotlin `No value passed for parameter 'p1'` vient du size
+    manquant, pas de la résolution `PDType1Font(FontName)`.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` +
 `release-notes.feature` + `frontmatter_retranslate.feature`. Toute
-nouvelle feature doit soit rejoindre un runner dédié (pattern : runner + glue + tag + CucumberTaskSpec dans build.gradle.kts), soit
-explicitement rejoindre le global avec ses steps dans `document.scenarios`.
-Le 17e runner dédié est `epubCheckCucumberTest` (S-240).
+nouvelle feature doit soit rejoindre un runner dédié (pattern : runner +
+glue + tag + CucumberTaskSpec dans build.gradle.kts), soit explicitement
+rejoindre le global avec ses steps dans `document.scenarios`.
+Le 18e runner dédié est `pdfCheckCucumberTest` (S-247).
 
 == Méthode
 
@@ -91,8 +93,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
 - Zéro secret, zéro commit/push sans accord.
-- `bookPipeline` lit l'AsciiDoc/HTML sur disque en lecture seule (boundary
-  Codex READ / Document WRITE+PUBLISH).
+- `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule
+  (boundary Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
 
 == À vérifier en ouverture
@@ -101,15 +103,16 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.15 ; `workspace-catalog`
-   `<latest>` = 0.0.31 (bump MEMPHIS = drift à réaligner via les 2 pins).
-5. Baseline : test 3272/0, FT 126/126, `epubCheckCucumberTest` 4/4.
+   `<latest>` = 0.0.31 (drift MEMPHIS = réaligner via les 2 pins, piège #13).
+5. Baseline : test 3511/0, FT 130/130, `epubCheckCucumberTest` 4/4,
+   `pdfCheckCucumberTest` 4/4.
 
 == Vision « livre FPA SERVER »
 
-Verrous levés S-233..S-241 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-247 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central, 5 gardes documentaires, EPUB FPA prouvé
-valide (epubcheck W3C sur l'artefact réel), README consommateur, et
-0.0.15 publiée avec propagation consommateur bakery vérifiée deux fois
-(S-242, S-243). Le produit est servable, auditable, documenté et distribué
-de bout en bout.
+externe prouvée depuis Central, 6 gardes documentaires (includeGuard/xref/
+security/htmlLint/epubCheck/**pdfCheck**), EPUB FPA prouvé valide
+(epubcheck W3C), PDF FPA prouvé structurellement sain (PDFBox, 15 pages
+extractibles), README consommateur, et 0.0.15 publiée. Le produit est
+servable, auditable, documenté et distribué de bout en bout.

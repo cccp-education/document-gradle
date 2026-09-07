@@ -2,6 +2,29 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 247 (2026-09-07) — EPIC DOC-PDF-CHECK : 6e garde, validation structurelle du PDF
+
+*Type* : feat + TDD/BDD (4/4 US, ~12 pts, 1 session)
+*Score* : 10/10
+
+*Résumé* :
+- Besoin réel remonté : le livre FPA est publié en PDF stagiaire sans
+  aucune garde (symétrie des 5 gardes brisée) — option 1 du
+  PROMPT_REPRISE 246-247.
+- *US-1 domaine pur* : `document.pdf` (miroir `document.epub`) —
+  Mode/Result/Validator port + Report + adapter `PdfBoxValidatorAdapter`
+  (PDFBox 3.0.4 BOM-constraint, zéro bump). RED → GREEN 16/16 UT.
+- *US-2 tâche + DSL* : `validateDocumentPdf` + `converter { pdfCheck }` +
+  mirror + CLI (défaut OFF). RED → GREEN 4/4 + baseline FT 130/130.
+- *US-3 BDD* : `pdf_check.feature` 4 scénarios + runner 18e dédié
+  `pdfCheckCucumberTest` — 4/4 PASSED.
+- *US-4 dogfooding* : le VRAI `book.pdf` FPA (15 pages) VALID ;
+  preuve négative pages-sans-texte. *Constat* : PDFBox lénient sur les
+  octets (header corrompu → warning + charge quand même) — le garde est
+  texte extractible par page.
+- Gates : test 3511/0, validatePlugins VERT, mavenLocal VERT (platform
+  0.0.31 + pdfbox runtime), secrets RAS. Publication 0.0.16 non demandée.
+
 === Session 243 (2026-09-01) — Re-vérification backlog vide + consommateurs 0.0.15 + couverture de test
 
 *Type* : gouvernance + vérification consommateurs (zéro code modifié)

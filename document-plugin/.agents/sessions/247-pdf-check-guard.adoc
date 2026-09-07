@@ -1,0 +1,126 @@
+= Session 247 — EPIC DOC-PDF-CHECK : 6e garde, validation structurelle du PDF
+
+_Date_ : 2026-09-07
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Mission PROMPT_REPRISE_ : besoin réel remonté par le pilote — le livre FPA est
+publié en PDF stagiaire sans aucune garde (symétrie des 5 gardes brisée).
+Option 1 du PROMPT_REPRISE 246-247 : garde PDF, miroir exact de
+`document.epub` (S-240).
+
+== Résumé
+
+EPIC DOC-PDF-CHECK livré en 1 session (4/4 US, ~12 pts) — baby-step
+DDD/TDD/BDD strict :
+
+. *US-1 domaine pur* — `document.pdf` (Gradle-free, miroir `document.epub`) :
+  `PdfValidationMode` (OFF/STRICT/LENIENT, défaut OFF), `PdfValidationResult`
+  sealed (Valid/Invalid), `PdfValidator` (port fun interface stateless),
+  `PdfValidationReport` (tool "pdfbox", toJson/fromResult dégradé silencieux),
+  adapter `PdfBoxValidatorAdapter` (bridge PDFBox 3.0.4 BOM-constraint :
+  `<pdf-file-missing>` / `<pdf-load-failed>` (dont PDF chiffré) /
+  `<pdf-no-pages>` / finding métier `page N: no extractable text`).
+  RED prouvé (8 `Unresolved reference`) → GREEN 16/16 UT (8 adapter + 8 report).
+. *US-2 tâche + DSL* — `validateDocumentPdf` (miroir exact
+  `validateDocumentEpub`) : `@Input @Optional pdfFile` (jamais `@InputFile`,
+  piège S-232 #3), knob `outputFileName` dérivé du même chemin que la
+  conversion (jamais provider outputFile, piège S-232 #1),
+  `mustRunAfter("convertDocumentToPdf")` (pitfall S-233 #2), rapport
+  `build/docs/document/pdf-validation-report.json`, `@DisableCachingByDefault`.
+  DSL `converter { pdfCheck }` + mirror plat `ext.pdfCheck` (convention OFF
+  backward-compat) + CLI `-Pdocument.pdfCheck`. RED FT prouvé (4 BUILD
+  FAILED tâche inexistante) → GREEN 4/4 + baseline FT 130/130 (126 + 4).
+. *US-3 BDD* — `pdf_check.feature` 4 scénarios `@pdf-check` (OFF silencieux /
+  STRICT absent → fail+finding / LENIENT absent → build vert / STRICT accepte
+  PDF converti), runner dédié 18e `pdfCheckCucumberTest` (glue
+  `document.pdfcheck`, steps `PdfCheckSteps` préfixés « pdf-check »,
+  textes DISTINCTS d'epub-check — anti-glue S-223). 4/4 PASSED.
+. *US-4 dogfooding* — `PdfCheckFpaFunctionalTest` 2/2 : le VRAI
+  `livre-navigable/book.pdf` FPA (15 pages) passe la garde VALID ; preuve
+  négative = PDF reconstruit 3 pages sans texte → 3 findings
+  `no extractable text`.
+
+== Constat réel dogfooding (à retenir)
+
+*PDFBox 3.x est ultra-lénient sur les dommages binaires* :
+- fichier tronqué (xref manquant) → **charge quand même** (reconstruction xref) ;
+- header corrompu (garbage dans les 26 premiers octets) → **WARNING**
+  « Header doesn't contain versioninfo » + charge quand même (15 pages) ;
+- seul un fichier sans structure parsable échoue (`<pdf-load-failed>`).
+Leçon miroir du piège EPUB #10 : la preuve négative PDF doit corrompre la
+*signification métier* (pages sans texte extractible), pas les octets.
+Le garde PDF est donc surtout un garde *texte extractible par page* (le
+check load/pages reste utile pour les fichiers vraiment cassés).
+
+== Pièges découverts (à retenir)
+
+1. `PDPageContentStream.setFont(PDFont, float)` — 2 params obligatoires en
+   PDFBox 3.x (l'erreur `No value passed for parameter 'p1'` Kotlin vient du
+   size manquant, PAS de la résolution du constructeur `PDType1Font(FontName)`).
+2. PDFBox tolère header corrompu + xref tronqué (warnings) — voir constat
+   dogfooding ci-dessus.
+3. L'enum nested se référence proprement via
+   `import org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName`.
+
+== Gates
+
+|===
+| Gate | Résultat
+
+| UT `document.pdf` (adapter + report)
+| 16/16 GREEN
+
+| FT `ValidateDocumentPdfTaskFunctionalTest`
+| 4/4 GREEN
+
+| FT dogfooding `PdfCheckFpaFunctionalTest`
+| 2/2 GREEN
+
+| BDD `pdfCheckCucumberTest` (runner 18e dédié)
+| 4/4 PASSED
+
+| Baseline `test` complet (--rerun-tasks)
+| 3511/0 failure (920 UT actifs + cucumber intégrés skippés)
+
+| Baseline `functionalTest`
+| 130/130 (126 + 4)
+
+| `epubCheckCucumberTest` (non-régression 5e garde)
+| 4/4 PASSED, BUILD SUCCESSFUL
+
+| `validatePlugins`
+| VERT
+
+| `publishToMavenLocal`
+| VERT — POM porte platform 0.0.31 + pdfbox runtime
+
+| Secrets
+| RAS (grep 0 match)
+
+|===
+
+== Dépendance
+
+- `implementation("org.apache.pdfbox:pdfbox")` — contraint par le BOM 0.0.31
+  (`pdfbox = "3.0.4"`), zéro bump BOM. POM mavenLocal porte pdfbox runtime.
+
+== Fichiers
+
+- `src/main/kotlin/document/pdf/` — 4 fichiers prod (Mode/Result/Validator/Report + adapter)
+- `src/main/kotlin/document/ValidateDocumentPdfTask.kt` — 6e garde
+- `ConverterDsl.kt` / `DocumentExtension.kt` / `DocumentPlugin.kt` — câblage
+- `src/test/kotlin/document/pdf/` — 2 fichiers test (16 UT)
+- `src/test/kotlin/document/pdfcheck/` — feature + runner + steps (BDD)
+- `src/test/kotlin/document/PdfCheckFpaFunctionalTest.kt` — dogfooding
+- `src/functionalTest/kotlin/document/ValidateDocumentPdfTaskFunctionalTest.kt` — 4 FT
+- `src/test/resources/features/pdf_check.feature` — 4 scénarios
+- `.agents/CADRAGE_EPIC_DOC_PDF_CHECK.adoc` — cadrage
+
+== Non réalisé / reporté
+
+- Publication Central 0.0.16 : PAS demandée — 0.0.15 reste publiée ; la garde
+  PDF sera distribuée à la prochaine publication (accord pilote requis).
+- Fusion dans `validateDocument` composite (7e position ?) : le PDF est un
+  artefact *binaire* comme l'EPUB — le composite audite la *source* + HTML.
+  Fusion composite PDF/EPUB : seulement si besoin N3 réel (pattern CADUQUE
+  S-240 conservé).
+- `TODO.adoc` : absent du borough — n/a.

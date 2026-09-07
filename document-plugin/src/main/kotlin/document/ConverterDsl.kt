@@ -3,6 +3,7 @@ package document
 import org.asciidoctor.SafeMode
 import org.gradle.api.provider.Property
 import document.epub.EpubValidationMode
+import document.pdf.PdfValidationMode
 import document.security.IncludeGuardMode
 import document.validation.HtmlLinkLintMode
 import document.xref.XrefValidationMode
@@ -15,5 +16,6 @@ class ConverterDsl(
     val includeGuard: Property<IncludeGuardMode>,
     val xrefValidation: Property<XrefValidationMode>,
     val htmlLinkLint: Property<HtmlLinkLintMode>,
-    val epubCheck: Property<EpubValidationMode>
+    val epubCheck: Property<EpubValidationMode>,
+    val pdfCheck: Property<PdfValidationMode>,
 )

@@ -59,6 +59,11 @@ dependencies {
     // consumed only by the adapter (LibEpubCheckAdapter).
     implementation(libs.epubcheck)
 
+    // DOC-PDF-CHECK — Apache PDFBox (org.apache.pdfbox:pdfbox, BOM-constrained 3.0.4)
+    // for the PdfValidator port adapter. US-1 domain stays Gradle-free; this dep is
+    // consumed only by the adapter (PdfBoxValidatorAdapter).
+    implementation("org.apache.pdfbox:pdfbox")
+
     // SLF4J — logging in ContentTranslationService
     implementation("org.slf4j:slf4j-api")
 
@@ -187,6 +192,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/epub_check.feature"),
             tags = listOf("@epub-check"),
             runnerClass = "document.epubcheck.EpubCheckCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "pdfCheckCucumberTest",
+            features = listOf("src/test/resources/features/pdf_check.feature"),
+            tags = listOf("@pdf-check"),
+            runnerClass = "document.pdfcheck.PdfCheckCucumberRunner",
         ),
     )
 }

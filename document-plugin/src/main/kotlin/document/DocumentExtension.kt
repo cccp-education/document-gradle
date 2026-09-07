@@ -1,6 +1,7 @@
 package document
 
 import document.epub.EpubValidationMode
+import document.pdf.PdfValidationMode
 
 import document.batch.BatchDsl
 import document.template.TemplateDsl
@@ -186,6 +187,13 @@ abstract class DocumentExtension {
      * Mirrors [converter].epubCheck.
      */
     abstract val epubCheck: Property<EpubValidationMode>
+
+    /**
+     * PDF (PDFBox) structural validation strictness for the converted artifact
+     * (DOC-PDF-CHECK). [PdfValidationMode.OFF] by default (backward-compatible).
+     * Mirrors [converter].pdfCheck.
+     */
+    abstract val pdfCheck: Property<PdfValidationMode>
 
     internal fun initNested(
         enrich: DocumentEnrichDsl,

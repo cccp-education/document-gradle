@@ -31,23 +31,25 @@ or the compound `bookPipeline` / `validateDocument`).
 
 ## Consumer imports — required for the guard DSL
 
-The five guard knobs on the `converter { }` block are **typed enums**: their
+The six guard knobs on the `converter { }` block are **typed enums**: their
 imports are NOT resolved implicitly in a consumer `build.gradle.kts`. Without
 them the build script fails to compile (pitfall confirmed by an external
 0.0.14 consumer, S-239/S-240).
 
 ```kotlin
 import document.epub.EpubValidationMode        // converter { epubCheck }
+import document.pdf.PdfValidationMode          // converter { pdfCheck }
 import document.security.IncludeGuardMode      // converter { includeGuard }
 import document.validation.HtmlLinkLintMode    // converter { htmlLinkLint }
 import document.xref.XrefValidationMode        // converter { xrefValidation }
 import org.asciidoctor.SafeMode                // converter { safeMode }
 ```
 
-### Example — all five guards
+### Example — all six guards
 
 ```kotlin
 import document.epub.EpubValidationMode
+import document.pdf.PdfValidationMode
 import document.security.IncludeGuardMode
 import document.validation.HtmlLinkLintMode
 import document.xref.XrefValidationMode
@@ -65,6 +67,7 @@ document {
         xrefValidation  = XrefValidationMode.LENIENT // audit <<id>> / xref:id[]
         htmlLinkLint    = HtmlLinkLintMode.STRICT    // audit rendered HTML href="#id"
         epubCheck       = EpubValidationMode.STRICT  // audit the EPUB artifact (epubcheck)
+        pdfCheck        = PdfValidationMode.STRICT   // audit the PDF artifact (PDFBox: load, pages, extractable text per page)
         safeMode        = SafeMode.SERVER            // AsciidoctorJ safe mode
     }
 }
@@ -86,7 +89,7 @@ report is written).
 | `convertDocumentToHtml/Pdf/Epub/DocBook/ManPage` | AsciidoctorJ backends |
 | `assembleBook` / `bookPipeline` | FPA-style book assembly + full pipeline |
 | `validateDocument` | Composite pre-flight: includeGuard + xref + security + htmlLint |
-| `validateDocumentXref` / `validateDocumentEpub` | Dedicated xref / epubcheck audits |
+| `validateDocumentXref` / `validateDocumentEpub` / `validateDocumentPdf` | Dedicated xref / epubcheck / PDFBox audits |
 | `lintHtmlDocument` / `verifyHtmlLinks` | Rendered-HTML navigability lint |
 | `collectDocumentRetrieve` | N3 `metadata.json` (+ `validationStatus`) |
 | `serializeDocumentConfig` / `deserializeDocumentConfig` | DSL round-trip |

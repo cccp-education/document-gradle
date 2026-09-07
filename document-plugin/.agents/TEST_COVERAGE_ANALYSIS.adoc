@@ -1,6 +1,50 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-08-31
-:session: 241
+:date: 2026-09-07
+:session: 247
+
+== Session 247 — EPIC DOC-PDF-CHECK (6e garde)
+
+*Objectif* : auditer le PDF produit par `convertDocumentToPdf` comme l'EPUB
+est audité par epubcheck (S-240) — le livre FPA était publié en PDF stagiaire
+sans aucune garde.
+
+*Nouveaux tests (+22)* :
+
+. UT domaine `document.pdf` (+16, suite `test`) :
+  .. `PdfBoxValidatorAdapterTest` (8) — fichier manquant/répertoire →
+     `<pdf-file-missing>` ; non-PDF → `<pdf-load-failed>` ; PDF minimal 1 page
+     avec texte construit à la main via PDFBox (PDDocument + PDPage +
+     PDPageContentStream `setFont(PDType1Font(FontName.HELVETICA), 12f)` — 2
+     params obligatoires, piège découvert) → Valid ; PDF 0 page →
+     `<pdf-no-pages>` ; pages sans texte → findings `page N: no extractable
+     text` ; document mixte → seule la page vide est rapportée ; stateless.
+  .. `PdfValidationReportTest` (8) — fromResult Valid/Invalid (issues triées +
+     dédupliquées), toJson (tool "pdfbox", NON_NULL), fromJson round-trip +
+     dégradé silencieux (blank/JSON invalide → null).
+. FT `ValidateDocumentPdfTaskFunctionalTest` (+4, suite `functionalTest`) —
+  OFF skip sans rapport / STRICT absent → fail + `<pdf-file-missing>` /
+  LENIENT absent → warn build vert / STRICT accepte un PDF fraîchement
+  converti par `convertDocumentToPdf` dans le build de test.
+. BDD `pdf_check.feature` (+4 scénarios, runner dédié 18e
+  `pdfCheckCucumberTest`) — miroir `@epub-check`, steps `PdfCheckSteps`
+  préfixés « pdf-check », textes DISTINCTS d'epub-check (anti-glue S-223).
+. FT dogfooding `PdfCheckFpaFunctionalTest` (+2, suite `test`, miroir du
+  placement `EpubCheckFpaFunctionalTest` S-241) :
+  .. `real FPA book pdf passes the structural checks` — le VRAI
+     `office/metiers/FPA/.../livre-navigable/book.pdf` (15 pages) est Valid
+     (loadable, non-vide, texte extractible sur chaque page) — read-only
+     Rule 7, self-skips hors machine de dev.
+  .. `textless FPA book pdf copy is reported Invalid - negative proof` —
+     PDF reconstruit 3 pages sans texte → 3 findings `no extractable text`.
+     **Constat** : PDFBox 3.x est lénient sur les octets (header corrompu →
+     WARNING + charge quand même ; xref tronqué → reconstruction) — la preuve
+     négative porte sur la signification métier (pages sans texte), jamais
+     sur des octets (leçon miroir piège EPUB #10).
+
+*Baseline après S-247* : test 3511 total (920 UT actifs + 2591 cucumber
+intégrés skippés), 0 failure ; functionalTest 130/130 ; 18 runners Cucumber
+dédiés VERTS (`pdfCheckCucumberTest` 4/4 + `epubCheckCucumberTest` 4/4
+non-régression) ; validatePlugins VERT.
 
 == Session 241 — Dogfooding EPUB FPA + README consommateur
 

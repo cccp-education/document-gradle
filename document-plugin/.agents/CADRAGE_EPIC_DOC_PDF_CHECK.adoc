@@ -1,0 +1,94 @@
+= CADRAGE EPIC DOC-PDF-CHECK — 6e garde : validation structurelle du PDF (Session 247)
+
+_Origine : PROMPT_REPRISE 246-247 — « Dogfooding PDF FPA : pas de garde équivalente
+epubcheck pour le PDF — extension seulement si besoin réel remonté. » Besoin remonté
+par le pilote S-247 : le livre FPA est publié en PDF stagiaire (S-217/218) sans
+aucune garde, alors que l'EPUB a epubcheck (S-240). Symétrie des 5 gardes brisée._
+_Pattern miroir : `CADRAGE_EPIC_DOC_EPUBCHECK.adoc` (S-240) — 5e garde EPUB._
+
+== Constats (audit)
+
+. *Gap symétrique* : EPUB a epubcheck (W3C, `validateDocumentEpub`), HTML a le lint
+  navigabilité (S-226/232), la source AsciiDoc a 3 gardes (CR4/xref/CR5) — le PDF,
+  format prioritaire MVP0 (PDF stagiaire > EPUB, BACKLOG Notes), n'a AUCUNE garde.
+. *Le livre FPA est servable en PDF* (`livre-navigable/book.pdf`, produit S-217/218)
+  sans audit — un PDF corrompu/tronqué serait déployé via gh-pages sans trace.
+. *PDFBox déjà contraint par le BOM* : `gradle/libs.versions.toml` workspace-bom
+  0.0.31 porte `pdfbox = "3.0.4"` (consommé par d'autres boroughs). Zéro bump BOM,
+  dépendance `implementation(libs.pdfbox)` immédiate.
+. *Pattern EPUB miroitable à l'identique* : port `fun interface` stateless + adapter
+  bibliothèque + `PdfValidationMode`/`Result`/`Report` + tâche dédiée + DSL
+  `converter { }` + mirror plat + CLI + runner Cucumber dédié.
+. *Asciidoctor PDF peut produire des pages sans texte extractible* (pages image /
+  couverture). Un check « texte par page » est un *finding*, jamais une erreur
+  bloquante — la sévérité est gouvernée par le mode (pattern STRICT/LENIENT/OFF).
+. *Dogfooding possible* : `book.pdf` FPA réel, audit read-only (Rule 7) — le FT
+  lit le fichier existant, zéro régénération JRuby.
+
+== Décisions architecturales
+
+. *Dépendance* : `implementation(libs.pdfbox)` — `org.apache.pdfbox:pdfbox`
+  contraint BOM 0.0.31 (3.0.4). Version locale `pdfbox = "3.0.4"` dans le toml.
+. *Domaine `document.pdf`* — Gradle-free, pure (miroir `document.epub`) :
+  `PdfValidationMode` (OFF/STRICT/LENIENT, défaut OFF), `PdfValidationResult`
+  sealed (Valid / Invalid issues), `PdfValidator` (port fun interface stateless),
+  `PdfValidationReport` (tool "pdfbox", entries status/issues NON_NULL,
+  toJson/fromResult dégradé silencieux).
+. *Adapter `PdfBoxValidatorAdapter`* — bridge PDFBox 3.x (`Loader.loadPDF`) :
+  - fichier manquant/répertoire → `Invalid("<pdf-file-missing> label")` (jamais throw) ;
+  - échec load (corrompu/non-PDF) → `Invalid("<pdf-load-failed> ...")` ;
+  - `numberOfPages == 0` → `Invalid("<pdf-no-pages>")` ;
+  - page sans texte extractible (PDFTextStripper per-page, startPage=endPage=n) →
+    finding `page N: no extractable text` ;
+  - issues triées + dédupliquées (miroir epub) ; toute exception PDFBox est
+    attrapée en `Invalid`, jamais propagée (contrat du port).
+. *Tâche `validateDocumentPdf`* — miroir exact de `validateDocumentEpub` :
+  `@Input @Optional pdfFile: Property<String>` (PAS `@InputFile` — piège S-232 #3),
+  `pdfCheck: Property<PdfValidationMode>`, `@OutputFile reportFile`
+  (`build/docs/document/pdf-validation-report.json`), `@DisableCachingByDefault`,
+  sévérité STRICT fail-fast après rapport / LENIENT warn / OFF skip,
+  `mustRunAfter("convertDocumentToPdf")` (pitfall S-233 #2 — ordre sans couplage),
+  chemin dérivé du MÊME knob `outputFileName` que la conversion (jamais provider
+  outputFile du producer — piège S-232 #1).
+. *DSL* : `converter { pdfCheck = ... }` (ConverterDsl) + mirror plat
+  `ext.pdfCheck` (convention OFF backward-compat) + CLI `-Pdocument.pdfCheck`.
+. *BDD* : `pdf_check.feature` 4 scénarios `@pdf-check` (OFF silencieux / STRICT
+  absent → fail+finding / LENIENT absent → build vert / STRICT accepte PDF
+  converti) + runner dédié 18e `pdfCheckCucumberTest` + steps `document.pdfcheck`
+  préfixés « pdf-check » (anti-glue S-223 — textes de steps DISTINCTS d'epub).
+. *Fixtures de test* : PDF minimal construit À LA MAIN via PDFBox dans le test
+  (PDDocument + PDPage + PDPageContentStream + texte) — pas de binaire versionné,
+  pas d'AsciidoctorJ spin-up (Ink Economy Law, pattern fixture EPUB S-240).
+. *Dogfooding* : FT `PdfCheckFpaFunctionalTest` sur le VRAI `book.pdf` FPA
+  (audit read-only, preuve de navigabilité PDF réelle).
+. *Zéro bump BOM* — pdfbox 3.0.4 déjà contraint. Zéro nouveau concept de knob.
+
+== Baby-steps (méthodo DDD/TDD/BDD)
+
+|===
+| US | Livrable | Tests | Statut
+
+| PDF-CHECK-1
+| Domaine `document.pdf` pur + adapter PDFBox
+| 10 UT (missing/dir/non-pdf/valid/0-page/no-text/stateless/report)
+| ✅ (S-247)
+
+| PDF-CHECK-2
+| Tâche `validateDocumentPdf` + DSL + CLI + câblage
+| 4 FT (OFF skip / STRICT missing / LENIENT missing / STRICT valid converti)
+| ✅ (S-247)
+
+| PDF-CHECK-3
+| Cucumber BDD `@pdf-check` + runner 18e dédié
+| 4 scénarios BDD
+| ✅ (S-247)
+
+| PDF-CHECK-4
+| Dogfooding FT sur le vrai `book.pdf` FPA
+| 1 FT (Valid réel) + 1 preuve négative (PDF altéré → Invalid)
+| ✅ (S-247)
+
+|===
+
+_Total : ~12 pts, 4 US — visé en 1 session (pattern EPUB S-240+241 prouve la
+faisabilité du découpage)._
