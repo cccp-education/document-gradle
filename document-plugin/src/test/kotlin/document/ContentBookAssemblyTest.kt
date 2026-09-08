@@ -111,6 +111,26 @@ class ContentBookAssemblyTest {
     }
 
     @Test
+    fun `IMAGE_MISSING flags the inline image macro whose referenced file does not exist next to the page`(@TempDir dir: File) {
+        val scans = dir.resolve("scans").apply { mkdirs() }
+        // The inline macro (single colon, e.g. `image:brain.jpg[...]`) is the
+        // form the real corpus uses on pages 61 and 83_1 — both produced RSC-007
+        // findings in the published EPUB but were silently skipped by a
+        // block-macro-only regex (discovered by real dogfooding S-252).
+        scans.resolve("061.adoc").writeText(
+            "== 1.2.8 Schema heuristique\n" +
+                "Le cerveau se decompose ainsi :\n" +
+                "image:cerveau_gauche_vs_cerveau_droit.jpg[Brain mapping]\n" +
+                "Le texte poursuit son analyse pedagogique avec assez de contenu.",
+        )
+        val issues = BookOcrFailureDetector.detect(scans, emptyList())
+        val missing = issues.filter { it.reason == OcrFailureReason.IMAGE_MISSING }
+        assertEquals(1, missing.size, "the inline ghost image must be flagged too")
+        assertEquals(61, missing[0].page)
+        assertEquals("cerveau_gauche_vs_cerveau_droit.jpg", missing[0].detail)
+    }
+
+    @Test
     fun `IMAGE_MISSING is silent when the referenced image file exists`(@TempDir dir: File) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("011.adoc").writeText(

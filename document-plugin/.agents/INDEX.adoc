@@ -21,31 +21,32 @@ prouvée debug log, STRICT VALID + STRICT fail textless) ; bakery pin ws 0.0.32
 + platform 0.0.32 → document 0.0.16 sans hardcode (compileKotlin VERT).
 Piège #17 documenté (PROMPT_REPRISE). Commits : MEMPHIS `988fda5`, document
 `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`.)
-|_Derniere mise a jour_ : 2026-09-08 (session 251 — **RENAME-2 + OCR-QUALITY-3 ✅** —
-renommage dur `FpaPageResolver` → `ContentPageResolver` +
-`fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask),
-9 fichiers tests renommés, knob `fpa.book.publish` → `content.book.publish`,
-3 features Gherkin neutralisées — gate `grep -ri "fpa" src/` = zéro match
-hors citations office/ (cadrage : "ils vivent en privé ou citent office/")
-+ faux positif `LeafPath` documenté. Drift catalogue ws **0.0.34** fixé au
-passage (piège #13 — garde `DocumentPluginPublicationTest` RED → réaligné
-3 sources, Central `<latest>0.0.34</latest>` vérifié). OCR-QUALITY-3 :
-`OcrFailureReason` +IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT,
-`BookOcrIssue` +`detail` (backward compatible), detector whole-page
-exclusive-first + structuré multi-issues, rapport JSON `detail` conditionnel ;
-11 UT (TDD RED 8 unresolved → GREEN) + `ocr_quality.feature` 7/7 +
-19e runner dédié `ocrQualityCucumberTest`. Gates : `check` VERT,
-`test` 3801/0, FT 130/130. Zéro publication (0.0.16 reste Central — HEAD
-porte RENAME-2+OCR-QUALITY en attente accord pilote). Rapport :
-`.agents/sessions/251-rename-2-ocr-quality-3.adoc`.)
-|_Derniere session terminee_ : 251 — RENAME-2 (renommage dur exécuté,
-gate grep OK) + drift ws 0.0.34 (piège #13) + OCR-QUALITY-3 (3 nouvelles
-raisons OCR + detail + 19e runner BDD). EPIC RENAME (document) ✅
-TERMINÉ. EPIC OCR-QUALITY-3 (document) ✅ TERMINÉ. DOC-FPA-PUBLISH-0
-STANDBY (déclenché par A1 Tombouctou).
-  _Prochaine session_ : DOC-FPA-PUBLISH-0 (si A1 livré) OU publication
-next release (sur accord pilote — breaking change RENAME à distribuer)
-OU maintenance sur besoin réel.
+|_Derniere mise a jour_ : 2026-09-08 (session 252 — **dogfooding convergence + fix inline image ✅** —
+livre FPA régénéré avec le HEAD (RENAME-2 + OCR-QUALITY-3 + 6 gardes) via
+la commande canonique étendue `bookPipeline validateDocumentEpub
+validateDocumentPdf fpaPublish` (2 runs : 3m18 puis 4m10 BUILD
+SUCCESSFUL). **Bug réel découvert par le dogfooding** : le détecteur
+IMAGE_MISSING (`image::` block-only) ignorait la macro *inline*
+`image:file[]` — 2/4 images fantômes invisibles (p.61 cerveau, p.83_1
+flèche). Fix baby-step TDD : RED (`expected: <1> but was: <0>`) → GREEN
+(`image::?` 1 ligne, 12/12 UT) → BDD `@inline-image` (8/8 PASSED,
+ocrQualityCucumberTest). Outillage fpaPublish : rapport
+`pdf-validation-report.json` ajouté aux artefacts déplacés + README tools.
+Convergence run 2 : **16 ILLISIBLE + 4 IMAGE_MISSING (4/4 localisées
+section+detail) + 7 TABLE_SUSPECT + PDF VALID** — rapport prêt pour
+l'itération humaine A1 Tombouctou. Dette S-082 clôturée : consumer racine
+bumpé 0.0.15→0.0.16 (Central). Gates : `check` VERT 19m56s, UT 3820/0,
+FT 130/130, cucumber global 3055/0. Zéro publication Central (HEAD porte
+RENAME-2+OCR-QUALITY+fix inline en attente accord pilote). Rapport :
+`.agents/sessions/252-dogfooding-convergence-inline-image-fix.adoc`.)
+|_Derniere session terminee_ : 252 — dogfooding réel livre FPA (HEAD +
+6 gardes) + fix TDD IMAGE_MISSING macro inline (`image::?`) + fpaPublish
+rapport PDF + convergence 4/4 images fantômes localisées + dette S-082
+consumer racine 0.0.16.
+  _Prochaine session_ : publication next release (sur accord pilote —
+RENAME-2 + OCR-QUALITY-3 + fix inline à distribuer) OU ré-itération
+DOC-FPA-PUBLISH-0 (si A1 livre le corpus corrigé) OU maintenance sur
+besoin réel.
 
 '''
 == REGLES ABSOLUES (resume)
@@ -255,6 +256,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 249 | 2026-09-07 | PUB cross-borough | **PUB 0.0.16 Maven Central ✅ — les 6 gardes distribuées hors machine de dev** — accord pilote explicite. Chaîne DAG N0→N2 : (1) MEMPHIS bump toml `workspace-bom 0.0.32` + `document-plugin 0.0.16`, gardes réalignées (`PlatformCatalogAlignmentTest` 0.0.32 + `WorkspaceCatalogStructureTest` 0.0.16, RED 1 failure attrapée → GREEN 111/0), `publishToMavenLocal` VERT, Central VERT — propagation repo1 `<latest>0.0.32</latest>` ×2, BOM porte pdfbox 3.0.4 ; (2) document re-pin 3 sources (settings D4 `workspace-catalog:0.0.32` + platform `workspace-bom:0.0.32` + toml local `document = "0.0.16"` — garde RED sur split-brain toml local, rôle S-244 confirmé) → version dérivée 0.0.16, garde publication 3/3 VERT ; (3) **1er upload Central rejeté** `Dependency version information is missing` ×15 deps — fix **pattern S-209** (Queens MEMPHIS-BOM-FIX US-4) : 12 deps `implementation` littérales → alias `libs.*` + catalogue local enrichi (`jackson = 2.21.2`, `pdfbox = 3.0.4` + 2 entrées `[libraries]`) → POM toutes deps versionnées → publication VERT 25s AUTOMATIC, propagation POM HTTP 200 poll 4, JAR Central = 2 classes pdf-check ; (4) consommateur tiers `/tmp/opencode/doc-consumer-pdf` bumpé 0.0.16 SANS mavenLocal : résolution `Gradle Central Plugin Repository` prouvée debug log, STRICT VALID + STRICT fail textless — drift S-248 résolu par construction ; (5) bakery pin ws 0.0.32 + platform 0.0.32 → `document-plugin -> 0.0.16` sans hardcode (D5), compileKotlin VERT. Piège #17 (POM deps version explicite, pattern S-209) documenté PROMPT_REPRISE. Secrets RAS. Commits : MEMPHIS `988fda5`, document `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`. | ✅ TERMINE
 | 250 | 2026-09-07 | cadrage | Cadrages DOC-FPA-PUBLISH (GBL-003.6, STANDBY — republication post-corpus A1) + OCR-QUALITY US-3 + RENAME (FPA→content, gouvernance pure zéro code). Docs `.agents/CADRAGE_EPIC_*.adoc`. | ✅ TERMINE
 | 251 | 2026-09-08 | feat + refactor + TDD/BDD | **RENAME-2 + drift ws 0.0.34 + OCR-QUALITY-3 ✅** — RENAME-2 renommage dur : `FpaPageResolver` → `ContentPageResolver` (classe+KDoc, convention `NNN.adoc`/`NNN_N.adoc` = content générique), `BookAssembler.fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask:107), commentaires 5 fichiers prod neutralisés, 9 fichiers tests renommés (git mv), knob `fpa.book.publish` → `content.book.publish` (point d'entrée public), 3 features Gherkin ("FPA pipeline"→"scanned-content pipeline", "FPA Guide"→"Content Guide"), README — gate `grep -ri "fpa" src/` = zéro match hors citations filesystem office/metiers/FPA (cadrage : légitimes) + faux positif `LeafPath` (documenté cadrage, piège #18 PROMPT_REPRISE). Drift catalogue ws attrapé par la garde S-244 pendant la baseline `test` : MEMPHIS a bumpé BOM+catalog 0.0.34 (S-215 racine) → réaligné 3 sources (settings D4 `workspace-catalog:0.0.34` + platform + toml local `workspace-bom`), Central `<latest>0.0.34</latest>` vérifié, version dérivée plugin 0.0.16 inchangée (catalog MEMPHIS `document-plugin = 0.0.16`), garde publication 3/3 GREEN — pattern S-246/S-249 réappliqué. OCR-QUALITY-3 (TDD strict RED 8 unresolved → GREEN → REFACTOR) : `OcrFailureReason` +3 (IMAGE_MISSING — images fantômes RSC-007 via regex `image::` + résolution filesystem locale à la page, TABLE_SUSPECT — rangée linéarisée `|...|`, STRUCT_SUSPECT — marqueurs `invalid part`/`out of sequence`) + `BookOcrIssue.detail: String? = null` (backward compatible, preuve discriminante) + detector raisons whole-page exclusive-first (ILLISIBLE/TOO_SHORT) puis structuré multi-issues (une page peut porter les 3 signaux) + rapport JSON `detail` conditionnel (shape backward compatible). Tests : `ContentBookAssemblyTest` 11/11 (4 originaux préservés + 7 nouveaux), `ocr_quality.feature` 7 scénarios `@ocr-quality` (ghost-image, materialised-image, linearised-table, invalid-part, out-of-sequence, multi-issue, report-shape) + `OcrQualitySteps` préfixés « ocr-quality » anti-glue S-223 + `OcrQualityCucumberRunner` 19e runner dédié + `CucumberTaskSpec("ocrQualityCucumberTest")` — 7/7 PASSED. Gates : `check` VERT 5m10s, `test` 3801/0, FT 130/130, secrets RAS. Zéro publication (0.0.16 reste Central — HEAD porte RENAME-2+OCR-QUALITY, breaking change D7 à distribuer sur accord pilote). Rapport : `.agents/sessions/251-rename-2-ocr-quality-3.adoc`. | ✅ TERMINE
+| 252 | 2026-09-08 | dogfooding + fix TDD/BDD | **Dogfooding convergence livre FPA + fix IMAGE_MISSING macro inline ✅** — livre FPA régénéré avec le HEAD (RENAME-2+OCR-QUALITY-3+6 gardes) via commande canonique étendue `bookPipeline validateDocumentEpub validateDocumentPdf fpaPublish` + `-Pdocument.pdfCheck=LENIENT` (2 runs : 3m18 + 4m10 BUILD SUCCESSFUL). **Bug réel découvert par le dogfooding** : détecteur IMAGE_MISSING block-only (`image::`) ignorait la macro inline `image:file[]` — 2/4 images fantômes invisibles (p.61 `cerveau_gauche_vs_cerveau_droit.jpg`, p.83_1 `arrow-curved-left`). Fix baby-step TDD : RED UT (`expected: <1> but was: <0>`) → GREEN 1 ligne `image::?` (12/12 UT `ContentBookAssemblyTest`) → BDD scénario `@inline-image` `ocr_quality.feature` 8/8 PASSED. Outillage fpaPublish : `pdf-validation-report.json` ajouté aux artefacts déplacés + README tools (commande canonique + table 7 livrables). Convergence run 2 : **16 ILLISIBLE + 4 IMAGE_MISSING (4/4 localisées ref+titre+detail) + 7 TABLE_SUSPECT + `pdf-validation-report.json` VALID** — rapport prêt pour l'itération humaine A1 Tombouctou. Note : STRUCT_SUSPECT=0 légitime (les 3 `invalid part` du log Asciidoctor sont des diagnostics de rendu du livre assemblé, pas des marqueurs de scans). Dette S-082 clôturée : consumer racine `document = "0.0.16"` (Central). Gates : `check` VERT 19m56s, UT 3820/0, FT 130/130, cucumber global 3055/0, ocrQuality 8/8. Pièges #19 (macro image 2 formes `image::?`) + #20 (dogfooding HEAD via mavenLocal + fpaPublish rapport PDF) documentés PROMPT_REPRISE. Zéro publication Central (HEAD en attente accord pilote). Rapport : `.agents/sessions/252-dogfooding-convergence-inline-image-fix.adoc`. | ✅ TERMINE
 |===
 
 '''

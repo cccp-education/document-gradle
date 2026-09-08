@@ -148,3 +148,19 @@ Maintenance cross-borough MEM-CAT-ROLLOUT :
 * Gates rétablies : test 3272/0 + FT 126/126 + epubCheck 4/4 +
   mavenLocal VERT (POM platform 0.0.31).
 * Zéro publication Central (0.0.15 POM Central reste auto-consistant).
+
+== Session 252 — 2026-09-08 — Dogfooding convergence + fix IMAGE_MISSING inline
+
+Dogfooding réel + fix TDD :
+* Livre FPA régénéré avec le HEAD (RENAME-2 + OCR-QUALITY-3 + 6 gardes)
+  — commande canonique étendue `bookPipeline validateDocumentEpub
+  validateDocumentPdf fpaPublish` (2 runs BUILD SUCCESSFUL).
+* Bug réel découvert : détecteur IMAGE_MISSING block-only (`image::`)
+  ignorait la macro inline `image:file[]` (p.61 + p.83_1 invisibles).
+* Fix baby-step TDD : RED UT → GREEN `image::?` (1 ligne) → BDD
+  `@inline-image` (ocrQuality 8/8).
+* fpaPublish déplace `pdf-validation-report.json` + README tools.
+* Convergence : 16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT + PDF
+  VALID — rapport prêt pour l'itération humaine A1 Tombouctou.
+* Dette S-082 clôturée : consumer racine bumpé 0.0.16 (Central).
+* Gates : check VERT 19m56s, UT 3820/0, FT 130/130, cucumber 3055/0.

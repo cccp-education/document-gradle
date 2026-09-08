@@ -1,5 +1,5 @@
 [versions]
-document = "0.0.15"
+document = "0.0.16"
 epubcheck = "5.2.1"
 
 [libraries]

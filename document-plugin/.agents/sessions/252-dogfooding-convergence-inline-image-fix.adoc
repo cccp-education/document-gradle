@@ -1,0 +1,103 @@
+= Session 252 — Dogfooding convergence livre FPA + fix IMAGE_MISSING macro inline
+
+:date: 2026-09-08
+:borough: New Orleans 🟢 (document-gradle)
+:method: baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR)
+
+== Mission
+
+PROMPT_REPRISE S-251 : DOC-FPA-PUBLISH-0 STANDBY (A1 Tombouctou non livré),
+publication next release sur accord pilote (non demandée). La session a
+pivoté sur le besoin réel immédiat : le rapport OCR exhaustif S-251
+(IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT + detail) doit *alimenter
+l'itération humaine A1* (goulot #1 MVP0) — or le `book-ocr-issues.json`
+de `livre-navigable/` datait du pipeline 0.0.15 (16 ILLISIBLE seulement).
+Il fallait régénérer le livre avec le HEAD (RENAME-2 + OCR-QUALITY-3) et
+les 6 gardes.
+
+== Ouverture
+
+- Baseline : compileKotlin VERT, test 3801/0, FT 130/130, runners dédiés
+  ocrQuality 7/7 + pdfCheck 4/4 + epubCheck 4/4.
+- Dette cross-borough S-082 clôturée : consumer racine `gradle/libs.versions.toml`
+  bumpé `document = "0.0.15"` → `"0.0.16"` (version Central publiée).
+- HEAD publié mavenLocal (piège #16 : le consumer racine résout mavenLocal
+  en tête de pluginManagement) — jar porte `ContentPageResolver` +
+  `BookOcrFailureDetector` OCR-QUALITY.
+
+== Dogfooding réel (run 1, avant fix)
+
+Commande canonique tools/README étendue au 6e garde :
+`bookPipeline validateDocumentEpub validateDocumentPdf fpaPublish`
++ `-Pdocument.pdfCheck=LENIENT` — BUILD SUCCESSFUL 3m18, artefacts publiés
+dans `livre-navigable/` (livre.{adoc,html,pdf,epub} + rapports JSON).
+
+Rapport OCR régénéré : 16 ILLISIBLE + 2 IMAGE_MISSING + 7 TABLE_SUSPECT.
+
+== Bug réel découvert par le dogfooding
+
+L'EPUB rejetait 4 images RSC-007 mais le détecteur ne flaggait que 2
+IMAGE_MISSING. Cause : les pages 61 et 83_1 utilisent la macro *inline*
+`image:cerveau_gauche_vs_cerveau_droit.jpg[]` / `image:arrow-curved-left[]`
+(1 seul deux-points) — la regex `IMAGE_DIRECTIVE = image::…` (block,
+2-points) les ignorait silencieusement.
+
+=== Fix baby-step TDD
+
+- *RED* : UT `IMAGE_MISSING flags the inline image macro…` →
+  `expected: <1> but was: <0>` (prouvé).
+- *GREEN* : `image::` → `image::?` (1 ligne, exige `[` donc zéro faux
+  positif sur `image:` prose). 12/12 UT `ContentBookAssemblyTest`.
+- *BDD* : scénario `@inline-image` dans `ocr_quality.feature`
+  (runner propriétaire `ocrQualityCucumberTest`, glue préfixée anti-glue
+  S-223) — 8/8 PASSED.
+
+=== Fix outillage fpaPublish
+
+`fpaPublish` ne déplaçait pas `pdf-validation-report.json` (rapport 6e
+garde perdu au wipe /tmp). Ajouté à la liste des artefacts + README tools
+mis à jour (commande canonique avec `-Pdocument.pdfCheck=LENIENT` + table
+des livrables 7 fichiers).
+
+== Re-dogfooding (run 2, convergence)
+
+HEAD republicé mavenLocal, run complet 4m10 BUILD SUCCESSFUL :
+
+- *4 IMAGE_MISSING* exactement = les 4 images fantômes du corpus :
+  p.61 `cerveau_gauche_vs_cerveau_droit.jpg` (ref 1.2.8), p.80_1
+  `triangle-gradient.png` (ref 2.1.6), p.83_1 `arrow-curved-left`
+  (ref 2.2.3), p.183 `qr-code.png` (ref 4.3.2) — toutes localisées
+  section + detail.
+- 16 ILLISIBLE + 7 TABLE_SUSPECT stables (0 faux positif).
+- `pdf-validation-report.json` : `VALID` (15 pages texte extractible).
+- `epub-validation-report.json` : 3 RSC-007 (les 4 images fantômes — 2
+  seulement visibles RSC-007 côté EPUB, inline résolues par le fix).
+
+Le rapport est prêt à alimenter l'itération humaine A1 Tombouctou
+(`rapport_generation.adoc` priorisation).
+
+== Note sur STRUCT_SUSPECT = 0
+
+Le log Asciidoctor affiche 3× `invalid part` (lignes livre assemblé
+4132/4163/4620) — ce sont des diagnostics du *rendu* du livre assemblé,
+pas des marqueurs dans les *scans sources*. Le détecteur scanne les
+scans (correct) : les 3 invalid part proviennent de pages dont la
+structure TOC→section est brisée à l'assemblage, à traiter côté TOC.
+Backlog : candidat extension future (audit structure assemblée), hors
+périmètre S-252.
+
+== Gates
+
+- `check` VERT 19m56s — UT 3820/0 (baseline 3801 → +19 net dont 12
+  détecteur), FT 130/130, cucumber global 3055/0 (1re fois verte sur ce
+  run complet).
+- Runners dédiés : ocrQuality 8/8, pdfCheck 4/4, epubCheck 4/4.
+- Secrets RAS. Zéro publication Central (0.0.16 reste la dernière —
+  le fix inline est dans le HEAD, distribué à la prochaine publication
+  sur accord pilote).
+
+== Commits
+
+- document-gradle : fix détecteur + tests + bump consumer racine (S-252).
+- office/metiers/FPA : outils livre-navigable (fpaPublish + README) +
+  artefacts régénérés (livre-navigable/, contenu privé).

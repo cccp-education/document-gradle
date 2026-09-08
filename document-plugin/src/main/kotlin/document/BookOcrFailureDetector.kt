@@ -116,5 +116,8 @@ object BookOcrFailureDetector {
         return issues
     }
 
-    private val IMAGE_DIRECTIVE = Regex("""image::([^\[\s]+)\[""")
+    // Covers both the block macro `image::target[]` and the inline macro
+    // `image:target[]` — the real corpus uses the inline form (pages 61/83_1
+    // produced RSC-007 findings that a block-only regex silently skipped).
+    private val IMAGE_DIRECTIVE = Regex("""image::?([^\[\s]+)\[""")
 }

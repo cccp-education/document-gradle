@@ -1,6 +1,45 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-08
-:session: 251
+:session: 252
+
+== Session 252 — Dogfooding convergence + fix IMAGE_MISSING macro inline
+
+*Objectif* : régénérer le livre FPA avec le HEAD (RENAME-2 + OCR-QUALITY-3
++ 6 gardes) pour produire le rapport OCR exhaustif alimentant l'itération
+humaine A1 — bug réel découvert et fixé au passage.
+
+*Bug découvert par le dogfooding* : le détecteur IMAGE_MISSING
+(`IMAGE_DIRECTIVE = image::…`, block macro uniquement) ignorait la macro
+*inline* `image:file[]` — les pages 61 et 83_1 du corpus réel utilisaient
+cette forme, 2/4 images fantômes invisibles au rapport.
+
+*Tests créés (TDD strict RED → GREEN → REFACTOR)* :
+- UT `ContentBookAssemblyTest` +1 : `IMAGE_MISSING flags the inline image
+  macro whose referenced file does not exist next to the page` — RED
+  prouvé (`expected: <1> but was: <0>`, macro inline non matchée), GREEN
+  par fix 1 ligne (`image::` → `image::?`, zéro faux positif : exige `[`).
+  12/12 UT détecteur (11 originaux préservés).
+- BDD `ocr_quality.feature` +1 scénario `@inline-image` (page 061 avec
+  `image:cerveau_gauche_vs_cerveau_droit.jpg[Brain mapping]` →
+  IMAGE_MISSING detail = chemin) — runner propriétaire
+  `ocrQualityCucumberTest` inchangé (glue préfixée anti-glue S-223
+  réutilisée telle quelle) — 8/8 PASSED.
+
+*Fix outillage (consommateur, pas de test)* : `fpaPublish`
+(fpa-book-init.gradle.kts) déplace désormais `pdf-validation-report.json`
+(rapport 6e garde, sinon perdu au wipe /tmp) + README tools mis à jour
+(commande canonique avec `-Pdocument.pdfCheck=LENIENT`, table 7 livrables).
+
+*Convergence dogfooding (2 runs réels sur corpus FPA 203 pages)* :
+run 1 (avant fix) : 16 ILLISIBLE + 2 IMAGE_MISSING + 7 TABLE_SUSPECT ;
+run 2 (après fix) : 16 ILLISIBLE + **4 IMAGE_MISSING** (p.61, p.80_1,
+p.83_1, p.183 — toutes localisées ref+titre+detail) + 7 TABLE_SUSPECT +
+`pdf-validation-report.json` VALID + EPUB 3 RSC-007 connues. 0 faux
+positif.
+
+*Baseline* : `check` VERT 19m56s ; UT 3820/0 (3801 → +19 dont +1 détecteur
+inline et le reste des suites du check complet) ; FT 130/130 ; cucumber
+global 3055/0 ; ocrQuality 8/8, pdfCheck 4/4, epubCheck 4/4.
 
 == Session 251 — RENAME-2 + OCR-QUALITY-3
 

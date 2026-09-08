@@ -29,6 +29,19 @@ Feature: OCR quality detection on scanned pages (OCR-QUALITY-3)
     When ocr-quality the OCR failures are detected
     Then ocr-quality no issue is reported
 
+  @inline-image
+  Scenario: An inline image macro reference is flagged as IMAGE_MISSING
+    Given ocr-quality a scans directory with page "061.adoc" containing
+      """
+      == 1.2.8 Schema heuristique
+      image:cerveau_gauche_vs_cerveau_droit.jpg[Brain mapping]
+      Le texte poursuit son analyse pedagogique avec assez de contenu.
+      """
+    When ocr-quality the OCR failures are detected
+    Then ocr-quality the issues are
+      | reason        | detail                              |
+      | IMAGE_MISSING | cerveau_gauche_vs_cerveau_droit.jpg |
+
   @linearised-table
   Scenario: A linearised table row is flagged as TABLE_SUSPECT
     Given ocr-quality a scans directory with page "020.adoc" containing

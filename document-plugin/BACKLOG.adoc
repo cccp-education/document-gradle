@@ -1,15 +1,17 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-08 (session 251 — **RENAME-2 + OCR-QUALITY-3
-exécutés ✅** — renommage dur `FpaPageResolver` → `ContentPageResolver` +
-`fpaAwareResolver` → `contentAwareResolver` (gate grep OK — seules les
-citations filesystem office/metiers/FPA restent, légitimes), drift
-catalogue ws 0.0.34 réaligné (piège #13), OCR-QUALITY-3 : 3 nouvelles
-raisons IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT + champ `detail`
-backward compatible + 19e runner BDD `ocrQualityCucumberTest`. Zéro
-publication — HEAD porte RENAME-2+OCR-QUALITY à distribuer sur accord
-pilote. DOC-FPA-PUBLISH-0 STANDBY.)
+_Date revision_ : 2026-09-08 (session 252 — **dogfooding convergence + fix
+IMAGE_MISSING inline ✅** — livre FPA régénéré avec le HEAD (RENAME-2 +
+OCR-QUALITY-3 + 6 gardes) via commande canonique étendue au 6e garde
+(2 runs BUILD SUCCESSFUL). Bug réel découvert : détecteur block-only
+`image::` ignorait la macro inline `image:file[]` (2/4 images fantômes
+invisibles) — fix TDD `image::?` (1 ligne, 12/12 UT + BDD @inline-image
+8/8). Convergence : 16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT +
+PDF VALID — rapport prêt pour l'itération humaine A1. fpaPublish déplace
+le rapport PDF. Dette S-082 clôturée (consumer racine 0.0.16). Zéro
+publication — HEAD porte RENAME-2+OCR-QUALITY+fix inline en attente
+accord pilote.)
 _Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
 
 '''
@@ -43,6 +45,11 @@ ne flagge que `[ILLISIBLE]` + pages <40 chars — les 5 images fantômes
 codebase (métadonnées doute RAG) sont cadrées dans les gouvernances
 respectives.
 
+*Fix suivi S-252 (dogfooding réel)* : le détecteur block-only (`image::`)
+ignorait la macro *inline* `image:file[]` — 2/4 images fantômes du corpus
+invisibles (p.61, p.83_1). Fix TDD `image::?` (1 ligne prod, 12/12 UT +
+BDD `@inline-image` 8/8). Convergence : 4/4 IMAGE_MISSING localisées.
+
 '''
 
 '''
@@ -53,12 +60,15 @@ _Cadrage : `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`._
 
 |===
 | US | Description | Pts | Statut
-| DOC-FPA-PUBLISH-0 | République multi-format du livre FPA après correction OCR (post A1 Tombouctou) — run dogfooding assembleBook + bookPipeline, gardes vertes | 1 | 🟡 STANDBY (déclenché par livrable A1)
+| DOC-FPA-PUBLISH-0 | République multi-format du livre FPA après correction OCR (post A1 Tombouctou) — run dogfooding assembleBook + bookPipeline, gardes vertes | 1 | 🟡 STANDBY (pipeline validé 2 runs S-252 — convergence 4 IMAGE_MISSING localisées, PDF VALID ; re-régénération déclenchée par livrable A1)
 |===
 
 *Constat* : le livre FPA navigable est DÉJÀ publié (S-082 : livre.adoc +
-livre.html/pdf/epub + book-ocr-issues.json). Cet EPIC garantit la
-fraîcheur de la publication quand le corpus source s'améliore.
+livre.html/pdf/epub + book-ocr-issues.json) et **régénéré S-252 avec le
+HEAD + 6 gardes** (16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT +
+PDF VALID — le rapport OCR exhaustif alimente l'itération humaine A1).
+Cet EPIC garantit la fraîcheur de la publication quand le corpus source
+s'améliore.
 *Frontière licence* : œuvre dérivée — artefacts dans office/, diffusion
 publique = arbitrage pilote.
 
