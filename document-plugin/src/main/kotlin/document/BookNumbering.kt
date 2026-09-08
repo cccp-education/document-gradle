@@ -21,11 +21,11 @@ object BookNumbering {
     /**
      * Computes the hierarchical number of every non-root node in [tree].
      *
-     * The FPA table-of-contents convention encodes the book hierarchy directly
-     * in the `ref` (`1`, `1.2`, `1.2.1`; `0.x` = front matter, `9.x` = back
-     * matter), so the hierarchical number of a node *is* its `ref`. The map is
-     * built by walking the tree so that every (real or synthetic) node is
-     * covered, independent of the digits that happen to appear in the ref.
+     * The scanned-book table-of-contents convention encodes the book hierarchy
+     * directly in the `ref` (`1`, `1.2`, `1.2.1`; `0.x` = front matter, `9.x` =
+     * back matter), so the hierarchical number of a node *is* its `ref`. The
+     * map is built by walking the tree so that every (real or synthetic) node
+     * is covered, independent of the digits that happen to appear in the ref.
      *
      * @return a map from node `ref` to its hierarchical number (equal to the
      *   `ref`); the synthetic root is not present

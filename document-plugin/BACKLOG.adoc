@@ -1,35 +1,39 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-07 (session 250 — **cadrages DOC-FPA-PUBLISH
-(GBL-003.6) + OCR-QUALITY (US-3 document) + RENAME (FPA→content, 3 pts)**
-— gouvernance pure, zéro code. RENAME = renommage dur `FpaPageResolver` →
-`ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` +
-tests/features, exécution session dédiée. Livre déjà publié S-082.)
+_Date revision_ : 2026-09-08 (session 251 — **RENAME-2 + OCR-QUALITY-3
+exécutés ✅** — renommage dur `FpaPageResolver` → `ContentPageResolver` +
+`fpaAwareResolver` → `contentAwareResolver` (gate grep OK — seules les
+citations filesystem office/metiers/FPA restent, légitimes), drift
+catalogue ws 0.0.34 réaligné (piège #13), OCR-QUALITY-3 : 3 nouvelles
+raisons IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT + champ `detail`
+backward compatible + 19e runner BDD `ocrQualityCucumberTest`. Zéro
+publication — HEAD porte RENAME-2+OCR-QUALITY à distribuer sur accord
+pilote. DOC-FPA-PUBLISH-0 STANDBY.)
 _Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
 
 '''
-== EPIC RENAME — Neutralisation nommage métier privé (FPA→content) 🟡 CADRÉ (P0, transverse)
+== EPIC RENAME — Neutralisation nommage métier privé (FPA→content) ✅ TERMINÉ (S-251, document)
 
 _Origine : demande pilote 2026-09-07 (FPA = fond de commerce privé, jamais dans le nommage public OSS). Cadrage transverse : `.agents/CADRAGE_EPIC_RENAME.adoc` (7 boroughs)._
 
 |===
 | US | Description | Pts | Statut
-| RENAME-2 | `FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask) + commentaires BookTocParser/BookNumbering/DocumentPlugin + 4 tests FT renommés + 3 features Gherkin + check baseline exacte | 3 | 🟡 À FAIRE (document, 2e baby-step après codebase)
+| RENAME-2 | `FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask) + commentaires BookTocParser/BookNumbering/DocumentPlugin + 4 tests FT renommés + 3 features Gherkin + check baseline exacte | 3 | ✅ TERMINÉ (S-251 — gate grep OK : 9 fichiers tests + knob `content.book.publish` + README neutralisés au-delà de l'audit cadrage, citations office/ préservées)
 |===
 
-*Gate* : check VERT (zéro changement sémantique) + `grep -ri "fpa" src/` = zéro match. Breaking change dur assumé (D7).
+*Gate* : check VERT (zéro changement sémantique) + `grep -ri "fpa" src/` = zéro match (hors faux positifs `ggufPa`/`ofPa`/`LeafPath` + citations office/metiers/FPA légitimes). ✅ S-251 : check VERT, test 3801/0, FT 130/130.
 
 '''
 
 '''
-== EPIC OCR-QUALITY — Détection automatique images problématiques + transcriptions douteuses 🟡 CADRÉ (P0, transverse)
+== EPIC OCR-QUALITY — Détection automatique images problématiques + transcriptions douteuses ✅ TERMINÉ (S-251, document)
 
 _Origine : demande pilote 2026-09-07. Cadrage transverse : `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc` (identique dans codex/document/codebase)._
 
 |===
 | US | Description | Pts | Statut
-| OCR-QUALITY-3 | Extension `BookOcrIssue`/`BookOcrFailureDetector` : IMAGE_MISSING (références `image::` sans fichier), TABLE_SUSPECT (tableaux linéarisés/pertes cellules), STRUCT_SUSPECT (invalid part / out of sequence / items sautés) + backward compat | 3 | 🟡 À FAIRE (document)
+| OCR-QUALITY-3 | Extension `BookOcrIssue`/`BookOcrFailureDetector` : IMAGE_MISSING (références `image::` sans fichier), TABLE_SUSPECT (tableaux linéarisés/pertes cellules), STRUCT_SUSPECT (invalid part / out of sequence / items sautés) + backward compat | 3 | ✅ TERMINÉ (S-251 — 3 raisons + `BookOcrIssue.detail` + detector multi-issues + rapport `detail` conditionnel ; 11 UT TDD + 7 scénarios BDD 19e runner ; backward compat ILLISIBLE/TOO_SHORT préservée)
 |===
 
 *Constat déclencheur (S-082 corpus FPA réel)* : `BookOcrFailureDetector`

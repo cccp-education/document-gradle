@@ -398,7 +398,7 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-BOOK-DOMAIN-3 — the converters must consume the *assembled* book
         // (output of assembleBook), not ext.source which is unrelated to the
         // book pipeline. This is what makes `bookPipeline` actually produce a
-        // navigable HTML/PDF/EPUB of the assembled book (FPA-BOOK-4).
+        // navigable HTML/PDF/EPUB of the assembled book (BOOK-4).
         // The override is applied ONLY when `bookPipeline` is in the task graph,
         // so the standalone `convertDocumentToHtml` (driven by `ext.source`) keeps
         // working — otherwise its sourceFile is permanently hijacked to a

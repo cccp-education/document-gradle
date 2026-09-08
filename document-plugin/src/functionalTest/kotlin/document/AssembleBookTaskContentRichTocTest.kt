@@ -10,11 +10,11 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 /**
- * Dogfooding functional test — `assembleBook` against the *full* FPA corpus
- * (FPA-BOOK-6 rigorous-layout reconstruction).
+ * Dogfooding functional test — `assembleBook` against the *full* private content corpus
+ * (BOOK-6 rigorous-layout reconstruction).
  *
- * Unlike [AssembleBookTaskFpaTest] (which uses the 3-page root `toc.adoc`),
- * this test feeds the **rich** TOC (`Devenir_..._FPA_II.adoc`, 116 sections with
+ * Unlike [AssembleBookTaskContentTest] (which uses the 3-page root `toc.adoc`),
+ * this test feeds the **rich** TOC (`Devenir_..._Tome_II.adoc`, 116 sections with
  * page numbers) and the complete 203-page scan set, proving that:
  *
  *  1. the book is assembled as a *structured, navigable* AsciiDoc document
@@ -26,20 +26,20 @@ import java.io.File
  *     with their page number + owning TOC section (ref + title) so a human
  *     can iterate without re-reading the whole book.
  *
- * The FPA content never enters this repository: pages are copied into a
+ * The private content never enters this repository: pages are copied into a
  * throw-away TestKit project at runtime, and the test self-skips (`assumeTrue`)
  * when the corpus is absent.
  */
-class AssembleBookTaskFpaRichTocTest {
+class AssembleBookTaskContentRichTocTest {
 
     companion object {
-        private val FPA_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
-        private val FPA_RICH_TOC = File(
-            FPA_DIR,
+        private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
+        private val CONTENT_RICH_TOC = File(
+            CONTENT_DIR,
             "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc",
         )
-        private val FPA_SCANS = File(
-            FPA_DIR,
+        private val CONTENT_SCANS = File(
+            CONTENT_DIR,
             "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
         )
     }
@@ -48,11 +48,11 @@ class AssembleBookTaskFpaRichTocTest {
     lateinit var projectDir: File
 
     @Test
-    fun `assembleBook reconstructs the full FPA book from the rich TOC with located OCR failures`() {
-        assumeTrue(FPA_RICH_TOC.isFile) { "FPA rich TOC not found at ${FPA_RICH_TOC.absolutePath}" }
-        assumeTrue(FPA_SCANS.isDirectory) { "FPA scans not found at ${FPA_SCANS.absolutePath}" }
+    fun `assembleBook reconstructs the full scanned-content book from the rich TOC with located OCR failures`() {
+        assumeTrue(CONTENT_RICH_TOC.isFile) { "content rich TOC not found at ${CONTENT_RICH_TOC.absolutePath}" }
+        assumeTrue(CONTENT_SCANS.isDirectory) { "content scans not found at ${CONTENT_SCANS.absolutePath}" }
 
-        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-fpa-rich\"\n")
+        projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-content-rich\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -60,10 +60,10 @@ class AssembleBookTaskFpaRichTocTest {
             }
             document {
                 book {
-                    pagesDir.set(layout.projectDirectory.dir("fpa/pages"))
-                    title.set("Devenir Formateur Professionnel d'Adultes FPA II")
+                    pagesDir.set(layout.projectDirectory.dir("content/pages"))
+                    title.set("Devenir Formateur Professionnel d'Adultes Tome II")
                     author.set("Henry-Laurent JANSA")
-                    tocFile.set(layout.projectDirectory.file("fpa/toc.adoc"))
+                    tocFile.set(layout.projectDirectory.file("content/toc.adoc"))
                 }
             }
             """.trimIndent(),
@@ -71,9 +71,9 @@ class AssembleBookTaskFpaRichTocTest {
 
         // Copy the rich TOC + the full scan set (Ink Economy Law — copy only what
         // the corpus provides; resolution happens by page number, not file name).
-        FPA_RICH_TOC.copyTo(projectDir.resolve("fpa/toc.adoc"), overwrite = true)
-        val pagesDir = projectDir.resolve("fpa/pages").apply { mkdirs() }
-        FPA_SCANS.listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
+        CONTENT_RICH_TOC.copyTo(projectDir.resolve("content/toc.adoc"), overwrite = true)
+        val pagesDir = projectDir.resolve("content/pages").apply { mkdirs() }
+        CONTENT_SCANS.listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
             ?.forEach { it.copyTo(pagesDir.resolve(it.name), overwrite = true) }
         assumeTrue(pagesDir.listFiles()?.isNotEmpty() == true) { "no scan pages copied" }
 
@@ -89,7 +89,7 @@ class AssembleBookTaskFpaRichTocTest {
         val output = projectDir.resolve("build/docs/document/book.adoc")
         assertTrue(output.isFile, "the assembled book must exist")
         val content = output.readText()
-        assertTrue(content.contains("= Devenir Formateur Professionnel d'Adultes FPA II"), "title page missing")
+        assertTrue(content.contains("= Devenir Formateur Professionnel d'Adultes Tome II"), "title page missing")
         assertTrue(content.contains(":author: Henry-Laurent JANSA"), "author missing")
         assertTrue(content.contains(":toc: macro"), "TOC macro attribute missing")
         assertTrue(content.contains("toc::[]"), "TOC block macro missing")

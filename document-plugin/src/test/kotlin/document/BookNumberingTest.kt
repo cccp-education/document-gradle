@@ -52,7 +52,7 @@ class BookNumberingTest {
             BookSection(ref = "2.3", title = "Chap 3", page = 3, pdfFile = "003.adoc"),
         )
         val tree2 = BookTreeBuilder.fromSections(sections)
-        // the hierarchical number is the ref itself (FPA TOC convention)
+        // the hierarchical number is the ref itself (scanned-book TOC convention)
         assertEquals("2.3", BookNumbering.number(tree2, "2.3"))
     }
 

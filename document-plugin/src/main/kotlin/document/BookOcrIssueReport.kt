@@ -15,6 +15,11 @@ import java.io.File
  * ]
  * ```
  *
+ * The `detail` field is appended only when the issue carries discriminating
+ * evidence (missing image path, suspect table row, structural marker) —
+ * whole-page issues keep the original shape, so existing consumers parsing
+ * the report stay unaffected (backward-compatible extension).
+ *
  * Ink Economy Law: pure serialisation, no I/O side effects beyond the single
  * [write] target, deterministic field order.
  */
@@ -33,6 +38,7 @@ object BookOcrIssueReport {
                         "\"sectionTitle\": ${issue.sectionTitle?.let { quote(it) } ?: "null"}, ",
                     )
                     append("\"reason\": ${quote(issue.reason.name)}")
+                    issue.detail?.let { append(", \"detail\": ${quote(it)}") }
                     append("}")
                     if (index < issues.lastIndex) append(",")
                     append("\n")

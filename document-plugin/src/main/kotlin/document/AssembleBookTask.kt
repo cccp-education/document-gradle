@@ -104,7 +104,7 @@ abstract class AssembleBookTask : DefaultTask() {
                 layout = BookLayout(),
                 title = title.get(),
                 author = author.get(),
-                resolveContent = BookAssembler.fpaAwareResolver(pages),
+                resolveContent = BookAssembler.contentAwareResolver(pages),
             )
         } else {
             BookAssembler.assemble(pages, title.get(), author.get(), photos)
@@ -119,7 +119,7 @@ abstract class AssembleBookTask : DefaultTask() {
             tocPresent && sections.isNotEmpty(),
         )
 
-        // FPA-BOOK-6 — locate OCR / LLM-vision failures for human iteration: the
+        // BOOK-6 — locate OCR / LLM-vision failures for human iteration: the
         // report carries page number + owning TOC section ref + title.
         val issues = if (tocPresent) BookOcrFailureDetector.detect(pages, sections) else emptyList()
         if (issues.isNotEmpty()) {

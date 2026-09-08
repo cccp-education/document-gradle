@@ -10,51 +10,51 @@ import java.io.File
 
 /**
  * Integration dogfooding — generates a *navigable* HTML/PDF/EPUB of the real
- * FPA book using the structured assembly (DOC-BOOK-DOMAIN) + AsciidoctorJ
- * converters (FPA-BOOK-4).
+ * scanned-content book using the structured assembly (DOC-BOOK-DOMAIN) +
+ * AsciidoctorJ converters (BOOK-4).
  *
- * The FPA corpus (OCR-ed AsciiDoc pages in `office/metiers/FPA/.../scans/`
+ * The scanned content corpus (OCR-ed AsciiDoc pages in `office/metiers/FPA/.../scans/`
  * and the scan-aligned `toc.adoc`) is consumed read-only (Rule 7). The test
  * self-skips when the corpus is absent.
  *
  * By default the artifacts are written under the test working directory. Set
- * the `fpa.book.publish` system property to also copy the generated
+ * the `content.book.publish` system property to also copy the generated
  * HTML/PDF/EPUB into `office/metiers/FPA/.../livre-navigable/` (the real
- * deliverable for the FPA consumer).
+ * deliverable for the content consumer).
  */
 @Tag("integration")
-class FpaBookArtifactGenerationTest {
+class ContentBookArtifactGenerationTest {
 
     companion object {
-        private val FPA_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
-        private val FPA_TOC = File(FPA_DIR, "toc.adoc")
-        private val FPA_SCANS = File(
-            FPA_DIR,
+        private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
+        private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
+        private val CONTENT_SCANS = File(
+            CONTENT_DIR,
             "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
         )
-        private val PUBLISH = System.getProperty("fpa.book.publish") != null
+        private val PUBLISH = System.getProperty("content.book.publish") != null
     }
 
     @TempDir
     lateinit var workDir: File
 
     @Test
-    fun `generate a navigable HTML, PDF and EPUB of the real FPA book`() {
-        assumeTrue(FPA_TOC.isFile) { "FPA TOC not found at ${FPA_TOC.absolutePath}" }
-        assumeTrue(FPA_SCANS.isDirectory) { "FPA scans not found at ${FPA_SCANS.absolutePath}" }
+    fun `generate a navigable HTML, PDF and EPUB of the real scanned-content book`() {
+        assumeTrue(CONTENT_TOC.isFile) { "content TOC not found at ${CONTENT_TOC.absolutePath}" }
+        assumeTrue(CONTENT_SCANS.isDirectory) { "content scans not found at ${CONTENT_SCANS.absolutePath}" }
 
         // --- structured assembly (DOC-BOOK-DOMAIN)
-        val sections = BookTocParser.parse(FPA_TOC)
-        assumeTrue(sections.isNotEmpty()) { "FPA TOC parsed to no sections" }
+        val sections = BookTocParser.parse(CONTENT_TOC)
+        assumeTrue(sections.isNotEmpty()) { "content TOC parsed to no sections" }
         val tree = BookTreeBuilder.fromSections(sections)
         val resolver: (BookSection) -> String = { section ->
-            val page = File(FPA_SCANS, section.pdfFile)
+            val page = File(CONTENT_SCANS, section.pdfFile)
             if (page.isFile) page.readText().trim() else ""
         }
         val assembled = BookAssembler.assemble(
             tree = tree,
             layout = BookLayout(),
-            title = "Devenir Formateur Professionnel d'Adultes - FPA II",
+            title = "Devenir Formateur Professionnel d'Adultes - Tome II",
             author = "CCCP Education",
             resolveContent = resolver,
         )
@@ -91,14 +91,14 @@ class FpaBookArtifactGenerationTest {
 
         if (PUBLISH) {
             val outDir = File(
-                FPA_DIR,
+                CONTENT_DIR,
                 "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable",
             ).apply { mkdirs() }
             bookAdoc.copyTo(outDir.resolve("book.adoc"), overwrite = true)
             html.copyTo(outDir.resolve("book.html"), overwrite = true)
             pdf.copyTo(outDir.resolve("book.pdf"), overwrite = true)
             epub.copyTo(outDir.resolve("book.epub"), overwrite = true)
-            println("FPA-BOOK-4 — published navigable book artifacts to ${outDir.absolutePath}")
+            println("BOOK-4 — published navigable book artifacts to ${outDir.absolutePath}")
         }
     }
 }

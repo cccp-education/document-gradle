@@ -1,6 +1,42 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-07
-:session: 249
+:date: 2026-09-08
+:session: 251
+
+== Session 251 — RENAME-2 + OCR-QUALITY-3
+
+*Objectif* : renommage dur FPA→content (gate grep zéro match) + extension
+détection qualité OCR (3 nouvelles raisons + detail + rapport backward
+compatible).
+
+*Tests renommés (RENAME-2 — 9 fichiers via git mv, zéro changement
+sémantique)* :
+- `FpaBookAssemblyTest` → `ContentBookAssemblyTest`
+- `FpaBookArtifactGenerationTest` → `ContentBookArtifactGenerationTest`
+- `EpubCheckFpaFunctionalTest` → `EpubCheckContentFunctionalTest`
+- `PdfCheckFpaFunctionalTest` → `PdfCheckContentFunctionalTest`
+- `AssembleBookTaskFpaTest` → `AssembleBookTaskContentTest` (FT)
+- `AssembleBookTaskFpaRichTocTest` → `AssembleBookTaskContentRichTocTest` (FT)
+- `BookPipelineFpaFunctionalTest` → `BookPipelineContentFunctionalTest` (FT)
+- `BookPipelineN3FpaFunctionalTest` → `BookPipelineN3ContentFunctionalTest` (FT)
+- knb `fpa.book.publish` → `content.book.publish` (build.gradle.kts systemProperty)
+- features : book_tree/book_validation ("scanned-content pipeline"),
+  cross_borough_book ("Content Guide")
+
+*Tests créés (OCR-QUALITY-3 — TDD strict RED 8 unresolved → GREEN)* :
+- UT `ContentBookAssemblyTest` +7 : IMAGE_MISSING flag (ghost image) /
+  IMAGE_MISSING silent (fichier existant) / TABLE_SUSPECT (rangée
+  linéarisée + detail) / STRUCT_SUSPECT ×2 (`invalid part`, `out of
+  sequence`) / multi-issues même page (3 signaux préservés) / rapport
+  detail + backward compat ILLISIBLE sans detail. 4 originaux préservés
+  (ContentPageResolver happy path + missing page + detector ILLISIBLE/
+  TOO_SHORT + unowned null section) — 11/11 GREEN.
+- BDD `ocr_quality.feature` 7 scénarios `@ocr-quality` + `OcrQualitySteps`
+  (préfixe anti-glue S-223) + `OcrQualityCucumberRunner` 19e runner dédié
+  + `CucumberTaskSpec("ocrQualityCucumberTest")` — 7/7 PASSED.
+
+*Baseline* : `check` VERT ; `test` 3801/0 (3511 baseline + ocr_quality
+découvert + 11 UT book — les suites existantes intactes) ; FT 130/130
+baseline exacte (les 4 FT renommés repassent VERT).
 
 == Session 249 — PUB 0.0.16 (gardes MEMPHIS réalignées)
 

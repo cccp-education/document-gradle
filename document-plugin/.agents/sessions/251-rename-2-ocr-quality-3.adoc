@@ -1,0 +1,110 @@
+= Session 251 — RENAME-2 + OCR-QUALITY-3 (New Orleans 🟢)
+:date: 2026-09-08
+:type: feat + refactor + TDD/BDD
+:statut: ✅ TERMINÉ
+
+== Mission (PROMPT_REPRISE S-250)
+
+Trois EPICs cadrés S-250 : RENAME-2 (renommage dur FPA→content),
+OCR-QUALITY-3 (détection qualité OCR étendue), DOC-FPA-PUBLISH-0
+(STANDBY — non déclenché, corpus A1 Tombouctou pas encore corrigé).
+
+== 1. RENAME-2 — Renommage dur FpaPageResolver → ContentPageResolver (3 pts)
+
+Renommage dur (D7 : backward compat NON préservée) exécuté en baby-step
+audit → git mv → sed → gates :
+
+*Prod* :
+- `FpaPageResolver.kt` → `ContentPageResolver.kt` (classe + KDoc,
+  convention `NNN.adoc`+`NNN_N.adoc` = convention content générique)
+- `BookAssembler.fpaAwareResolver()` → `contentAwareResolver()`
+  (+ câblage `AssembleBookTask:107`)
+- Commentaires : `BookTocParser` (FPA-BOOK-1→BOOK-1 + exemple fichier
+  neutralisé), `BookNumbering`, `Matter`, `DocumentPlugin` (BOOK-4),
+  `AssembleBookTask` (BOOK-6)
+
+*Tests renommés (9 fichiers, git mv)* :
+- UT : `FpaBookAssemblyTest` → `ContentBookAssemblyTest`,
+  `FpaBookArtifactGenerationTest` → `ContentBookArtifactGenerationTest`,
+  `EpubCheckFpaFunctionalTest` → `EpubCheckContentFunctionalTest`,
+  `PdfCheckFpaFunctionalTest` → `PdfCheckContentFunctionalTest`
+- FT : `AssembleBookTaskFpaTest` → `AssembleBookTaskContentTest`,
+  `AssembleBookTaskFpaRichTocTest` → `AssembleBookTaskContentRichTocTest`,
+  `BookPipelineFpaFunctionalTest` → `BookPipelineContentFunctionalTest`,
+  `BookPipelineN3FpaFunctionalTest` → `BookPipelineN3ContentFunctionalTest`
+- Knob `fpa.book.publish` → `content.book.publish` (build.gradle.kts +
+  test) — point d'entrée public neutralisé
+
+*Features Gherkin (3)* : `book_tree.feature`, `book_validation.feature`
+("FPA pipeline" → "scanned-content pipeline"), `cross_borough_book.feature`
+("FPA Guide" → "Content Guide"). README (`FPA-style` → `Scanned-content`).
+
+*Preservation légitime* : les chemins filesystem
+`office/metiers/FPA/..._FPA_II/...` (citations du corpus privé) sont
+conservés — cadrage §"Après exécution" : "ils vivent en privé ou citent
+office/". Faux positif `LeafPath` documenté dans le cadrage.
+
+*Gate* : `grep -ri "fpa" src/` = zéro match hors citations office/ +
+`LeafPath`. Audit du cadrage était incomplet (9 fichiers tests + knob
+build non listés) — le gate grep a fait foi.
+
+== 2. Drift catalogue ws 0.0.34 (piège #13) — fixé au passage
+
+La baseline `test` est tombée ROUGE : la garde `DocumentPluginPublicationTest`
+a attrapé le drift — MEMPHIS a bumpé BOM+catalog à 0.0.34 (S-215 racine).
+Fix pattern S-246/S-249 : 3 sources réalignées (settings D4
+`workspace-catalog:0.0.34` + platform `workspace-bom:0.0.34` + toml local
+`workspace-bom = "0.0.34"`). Central vérifié avant bump
+(`workspace-catalog` `<latest>0.0.34</latest>`). Version dérivée plugin
+`0.0.16` inchangée (catalog MEMPHIS `document-plugin = "0.0.16"`).
+
+== 3. OCR-QUALITY-3 — Détection qualité OCR étendue (3 pts)
+
+Extension `BookOcrIssue`/`BookOcrFailureDetector`/`BookOcrIssueReport`
+(TDD strict RED → GREEN → REFACTOR) :
+
+*RED* : 8 erreurs `Unresolved reference` prouvées (3 raisons + champ
+`detail`) avant tout code prod.
+
+*Prod* :
+- `OcrFailureReason` : +IMAGE_MISSING (référence `image::` sans fichier —
+  images fantômes RSC-007), +TABLE_SUSPECT (rangée linéarisée `\| A \| B \|`
+  — cellules finales perdues), +STRUCT_SUSPECT (marqueurs `invalid part` /
+  `out of sequence` émis par le modèle vision)
+- `BookOcrIssue` : +champ `detail: String? = null` (preuve discriminante :
+  chemin image manquante / rangée suspecte / marqueur structurel) —
+  backward compatible (default null)
+- `BookOcrFailureDetector.detect` : raisons whole-page (ILLISIBLE,
+  TOO_SHORT) restent exclusive-first (an illisible page is not additionally
+  probed) ; raisons structurées sondées sur toute page lisible ; une page
+  peut porter plusieurs issues distinctes (aucun signal perdu)
+- `BookOcrIssueReport.write` : champ `"detail"` ajouté seulement quand
+  non-null — shape backward compatible pour les consommateurs existants
+
+*Tests* :
+- UT : `ContentBookAssemblyTest` 4 originaux préservés + 7 nouveaux
+  (IMAGE_MISSING flag/silent, TABLE_SUSPECT, STRUCT_SUSPECT ×2,
+  multi-issues même page, rapport detail + backward compat) = 11/11 GREEN
+- BDD : `ocr_quality.feature` 7 scénarios `@ocr-quality` (ghost-image,
+  materialised-image, linearised-table, invalid-part, out-of-sequence,
+  multi-issue, report-shape) + `OcrQualitySteps` (préfixe `ocr-quality `,
+  anti-glue S-223) + `OcrQualityCucumberRunner` (19e runner dédié,
+  pattern S-082) + `CucumberTaskSpec("ocrQualityCucumberTest")` — 7/7 PASSED
+
+== Gates finales
+
+- `check` BUILD SUCCESSFUL (5m10s)
+- `test` 3801/0 — baseline 3511 inclut déjà les features Cucumber via le
+  moteur global ; +290 = ocr_quality.feature découvert ×3 runners (global
+  + dédié ×2 patterns) + ContentBookAssemblyTest 11 UT. FT 130/130
+  baseline exacte.
+
+== Bilan
+
+RENAME-2 + drift ws 0.0.34 + OCR-QUALITY-3 en une session. EPIC RENAME
+(document) ✅ TERMINÉ. EPIC OCR-QUALITY-3 (document) ✅ TERMINÉ.
+DOC-FPA-PUBLISH-0 STANDBY inchangé.
+
+Zéro secret. Zéro publication (0.0.16 reste la dernière Central — le
+renommage dur et les nouvelles raisons seront distribués à la prochaine
+publication sur accord pilote).

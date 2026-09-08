@@ -2,6 +2,26 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 251 (2026-09-08) — RENAME-2 + drift ws 0.0.34 + OCR-QUALITY-3
+
+*Type* : feat + refactor + TDD/BDD
+*Score* : 10/10
+
+*Résumé* :
+- RENAME-2 : renommage dur `FpaPageResolver` → `ContentPageResolver`,
+  `fpaAwareResolver` → `contentAwareResolver` (+ câblage), 5 fichiers
+  prod commentaires neutralisés, 9 fichiers tests git mv, knob
+  `fpa.book.publish` → `content.book.publish`, 3 features Gherkin,
+  README. Gate grep OK (citations office/ légitimes + faux positif
+  LeafPath).
+- Drift catalogue ws 0.0.34 attrapé par la garde S-244 (piège #13) —
+  réaligné 3 sources, pattern S-246/S-249 réappliqué.
+- OCR-QUALITY-3 : 3 raisons (IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT)
+  + `BookOcrIssue.detail` backward compatible + detector multi-issues +
+  rapport `detail` conditionnel. 11 UT TDD + 7 scénarios BDD
+  (`ocr_quality.feature`, 19e runner `ocrQualityCucumberTest`).
+- Gates : `check` VERT, test 3801/0, FT 130/130. Zéro publication.
+
 === Session 249 (2026-09-07) — PUB 0.0.16 : distribution des 6 gardes hors machine de dev
 
 *Type* : PUB cross-borough MEMPHIS + document + bakery (accord pilote)

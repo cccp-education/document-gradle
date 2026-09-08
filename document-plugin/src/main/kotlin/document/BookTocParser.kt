@@ -7,8 +7,8 @@ import java.io.File
  * [BookSection]s — the source of truth for the order and page mapping of a
  * book being assembled from OCR-ed pages.
  *
- * The TOC is the AsciiDoc table produced during [FPA-BOOK-1] (e.g. the root
- * `Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc`), with four columns:
+ * The TOC is the AsciiDoc table produced during [BOOK-1] (e.g. the root
+ * scanned-book TOC of the private content corpus), with four columns:
  * `Référence | Sujet / Titre | Page | Fichier`.
  *
  * Multi-page rows (`Page = 5, 6, 7, 8` with matching `Fichier` list) are

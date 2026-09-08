@@ -146,19 +146,20 @@ object BookAssembler {
     /**
      * Resolves OCR page content for both naming conventions used across the
      * corpus:
-     * - the FPA scans (`NNN.adoc` + `NNN_N.adoc` splits) via [FpaPageResolver];
+     * - the scanned-page corpus (`NNN.adoc` + `NNN_N.adoc` splits) via
+     *   [ContentPageResolver];
      * - the codex `%03d-*.adoc` convention via [pageContentResolver].
      *
-     * The FPA resolver is tried first; only when it yields nothing do we fall
-     * back to the legacy codex resolver, so the same [AssembleBookTask] serves
-     * every consumer without a convention flag.
+     * The content resolver is tried first; only when it yields nothing do we
+     * fall back to the legacy codex resolver, so the same [AssembleBookTask]
+     * serves every consumer without a convention flag.
      */
-    fun fpaAwareResolver(pagesDir: File): (BookSection) -> String {
-        val fpa = FpaPageResolver(pagesDir)
+    fun contentAwareResolver(pagesDir: File): (BookSection) -> String {
+        val content = ContentPageResolver(pagesDir)
         val legacy = pageContentResolver(pagesDir)
         return { section ->
-            val fromFpa = fpa.content(section)
-            if (fromFpa.isNotEmpty()) fromFpa else legacy(section)
+            val fromContent = content.content(section)
+            if (fromContent.isNotEmpty()) fromContent else legacy(section)
         }
     }
 

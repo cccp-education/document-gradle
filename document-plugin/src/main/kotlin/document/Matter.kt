@@ -10,7 +10,7 @@ package document
  *
  * [Matter] is a pure DDD value object. By default a node is classified from
  * the root segment of its `ref` (`0.x` → FRONT, `9.x` → BACK, anything else →
- * BODY), which matches the FPA table-of-contents convention. The prefixes are
+ * BODY), which matches the scanned-book table-of-contents convention. The prefixes are
  * configurable so the classifier can be tuned without hard-coding a specific
  * TOC shape (see the risk noted in the DOC-BOOK-DOMAIN cadrage).
  *

@@ -1,37 +1,33 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 251
+== Mission session 252
 
-Trois EPICs cadrés S-250 (gouvernance pure, zéro code), exécution en
-session dédiée — ordre :
+S-251 a livré RENAME-2 + OCR-QUALITY-3 + fix drift ws 0.0.34. Reste sur
+la gouvernance S-250 :
 
-*1. RENAME-2 (3 pts, `.agents/CADRAGE_EPIC_RENAME.adoc`)* — renommage dur
-`FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` →
-`contentAwareResolver` (+ câblage AssembleBookTask) + commentaires +
-4 tests FT + 3 features Gherkin. Gate : check baseline exacte + grep
-"fpa" = 0. *Premier baby-step après codebase (RENAME-1).*
-*Règle transverse* : FPA/CDA = métiers privés (fond de commerce) —
-jamais dans le nommage public OSS (content/coding les remplacent).
-
-*2. OCR-QUALITY-3 (3 pts, `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc`)* —
-extension `BookOcrIssue`/`BookOcrFailureDetector` : IMAGE_MISSING +
-TABLE_SUSPECT + STRUCT_SUSPECT + backward compat (TDD strict).
-
-*3. DOC-FPA-PUBLISH-0 (1 pt, `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`)* —
+*1. DOC-FPA-PUBLISH-0 (1 pt, `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`)* —
 STANDBY : republication multi-format du livre (ex-FPA) quand le corpus
-s'améliore (déclenché par A1 Tombouctou).
+s'améliore (déclenché par A1 Tombouctou). Le rapport OCR exhaustif
+(`book-ocr-issues.json` avec IMAGE_MISSING/TABLE_SUSPECT/STRUCT_SUSPECT
+dès S-251) alimente l'itération humaine.
 
-S-249 avait publié **0.0.16** sur Maven Central — les 6 gardes (dont
-`pdfCheck` S-247) sont distribuées hors machine de dev. *Travaux
-au-delà des 3 EPICs uniquement sur besoin réel* :
+*2. Publication next release (sur accord pilote)* — 0.0.16 reste la
+dernière Central. Le renommage dur RENAME-2 (`ContentPageResolver`,
+`contentAwareResolver`, knob `content.book.publish`) + les 3 nouvelles
+raisons OCR-QUALITY sont dans le HEAD non distribué. Breaking change
+assumé (D7) — bump de version au choix pilote. Toute publication doit
+suivre : réaligner les 3 sources si MEMPHIS re-bump (piège #13), version
+explicite par dep POM (piège #17).
+
+*3. Travaux au-delà uniquement sur besoin réel* :
 
 - *Drift catalogue ws* : si MEMPHIS bump à nouveau (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
-  (settings D4 + platform + toml local D5) vers la version Central.
+  (settings D4 + platform + toml local) vers la version Central.
+  *S-251 : drift 0.0.34 déjà réaligné.*
 - *POM future release (piège #17)* : toute nouvelle dep `implementation`
   doit passer par un alias `libs.*` avec version explicite dans le toml
-  local — jamais de coordonnée littérale sans version (rejet Central
-  `Dependency version information is missing`, pattern S-209/S-249).
+  local — jamais de coordonnée littérale sans version.
 - *Composite PDF/EPUB (7e garde dans `validateDocument`)* : CADUQUE jusqu'à
   besoin N3 réel (pattern S-240 conservé).
 - *Maintenance* : 4-5 failures test bakery préexistantes (JBake native
@@ -40,18 +36,19 @@ au-delà des 3 EPICs uniquement sur besoin réel* :
 - *ROLLOUT-6* (dashboard, readme, graphify, bureau) : hors périmètre
   document — porté par MEMPHIS (workspace-bom/BACKLOG.adoc).
 
-== État du code (S-249)
+== État du code (S-251)
 
 - *0.0.16 PUBLIÉE* Maven Central (`<latest>0.0.16</latest>` repo1) — les 6
-  gardes distribuées ; POM porte platform 0.0.32 + pdfbox 3.0.4 + epubcheck
-  5.2.1 + gems PDF/EPUB, toutes deps versionnées.
-- *BOM+catalog ws 0.0.32* Central (document 0.0.16 dans le catalog).
-- *bakery* : pin ws 0.0.32 + platform 0.0.32 → document résout 0.0.16
-  sans hardcode (D5), compileKotlin VERT.
-- *Gates document* : test 3511/0 (920 UT actifs + cucumber intégrés) + FT
-  130/130 + 18 runners Cucumber dédiés VERTS + validatePlugins VERT.
+  gardes distribuées. Le HEAD local porte RENAME-2 + OCR-QUALITY-3 non
+  distribués.
+- *Catalogue ws 0.0.34* réaligné (settings D4 + platform + toml local,
+  garde publication 3/3 VERT). Version dérivée plugin 0.0.16 (catalog
+  MEMPHIS `document-plugin = "0.0.16"`).
+- *Gates document* : `check` VERT ; `test` 3801/0 ; FT 130/130 ; 19
+  runners Cucumber dédiés VERTS (le 19e est `ocrQualityCucumberTest`
+  S-251) + `ocr_quality.feature` 7/7 PASSED.
 
-== Pièges Gradle à retenir (S-232..S-249)
+== Pièges Gradle à retenir (S-232..S-251)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -62,8 +59,7 @@ au-delà des 3 EPICs uniquement sur besoin réel* :
 5. *Dérivation knob sans dépendance de tâche* : jamais provider vers
    `outputFile` du producteur, jamais `.get()` configuration-time.
 6. *`@InputFile` valide l'existence AVANT l'action* — porter les chemins
-   audités en `@Input @Optional Property<String>` (pattern `htmlFilePath`
-   / `epubFile` / `pdfFile`).
+   audités en `@Input @Optional Property<String>`.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
    annotation du runner (`FEATURES_PROPERTY_NAME`).
 8. *Imports DSL consommateur* (S-239) : les enums des gardes ne sont pas
@@ -71,15 +67,17 @@ au-delà des 3 EPICs uniquement sur besoin réel* :
    tiers. Liste dans README.md (six gardes, à jour S-247).
 9. *epubcheck callback Java → null* : signature nullable obligatoire.
 10. *Preuve négative : corrompre la STRUCTURE, pas le contenu* (EPUB :
-    mimetype OCF ; PDF : voir #14 — les octets sont tolérés).
+    mimetype OCF ; PDF : les octets sont tolérés — texte extractible par
+    page).
 11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester aussi
     le HTTP 200 du POM versionné.
 12. *Test bakery JBake native roundtrip périmé* : `50_jbake_native_translation.feature:22`
     attend `:summary:` verbatim mais document traduit `summary`/`description`
     depuis S206. Préexistant — à mettre à jour côté bakery.
 13. *Drift catalogue ws* : MEMPHIS bump le catalogue en amont — la garde
-    `DocumentPluginPublicationTest` RED au prochain build. Fix : bump des
-    2 pins (settings D4 + platform BOM) vers la version publiée Central.
+    `DocumentPluginPublicationTest` RED au prochain build. Fix : réaligner
+    les 3 sources (settings D4 + platform BOM + toml local) vers la version
+    publiée Central. *Réappliqué S-251 (0.0.32 → 0.0.34).*
 14. *PDFBox 3.x lénient sur les octets* (S-247) : header corrompu → WARNING
     + charge quand même ; xref tronqué → reconstruction. Le garde PDF est
     un garde *texte extractible par page*. Preuve négative = pages sans
@@ -91,15 +89,16 @@ au-delà des 3 EPICs uniquement sur besoin réel* :
     `publishToMavenLocal` met à jour l'artefact local sans changer la
     version — Central peut être en retard. Un consommateur DOIT déclarer
     `pluginManagement { repositories { mavenLocal() } }` AVANT le Plugin
-    Portal pour tester le HEAD local ; sans lui, Gradle résout
-    silencieusement depuis Central et rate les gardes récentes
-    (symptôme : `Task 'validateDocumentPdf' not found` malgré le JAR).
+    Portal pour tester le HEAD local.
 17. *Central exige une version explicite par dépendance POM* (S-249,
-    pattern S-209) : une dep `implementation` sans version (résolue par
-    platform BOM) produit un POM sans `<version>` → rejet nmcp AUTOMATIC
-    `Dependency version information is missing`. Fix : alias `libs.*`
-    avec version.ref dans le catalogue local du borough (12 deps
-    basculées S-249). Toute nouvelle dep doit suivre ce pattern.
+    pattern S-209) : une dep `implementation` sans version produit un POM
+    sans `<version>` → rejet nmcp AUTOMATIC. Fix : alias `libs.*` avec
+    version.ref dans le catalogue local du borough.
+18. *Faux positif grep "fpa"* (S-251) : `LeafPath` (translation) contient
+    littéralement "fpa" — exclusion documentée dans le cadrage RENAME.
+    Les chemins `office/metiers/FPA/..._FPA_II/...` sont des citations
+    légitimes du corpus privé (cadrage : "ils vivent en privé ou citent
+    office/") — ne pas les renommer.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -109,7 +108,7 @@ Chaque feature a UN runner propriétaire. Le runner global (glue
 nouvelle feature doit soit rejoindre un runner dédié (pattern : runner +
 glue + tag + CucumberTaskSpec dans build.gradle.kts), soit explicitement
 rejoindre le global avec ses steps dans `document.scenarios`.
-Le 18e runner dédié est `pdfCheckCucumberTest` (S-247).
+Le 19e runner dédié est `ocrQualityCucumberTest` (S-251).
 
 == Méthode
 
@@ -132,19 +131,20 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.16 ; `workspace-catalog`
-   `<latest>` = 0.0.32 (drift MEMPHIS = réaligner via les 3 sources D4/D5,
-   pièges #13).
-5. Baseline : test 3511/0, FT 130/130, `epubCheckCucumberTest` 4/4,
-   `pdfCheckCucumberTest` 4/4.
+   `<latest>` = 0.0.34 (drift réaligné S-251 ; si MEMPHIS re-bump, piège #13).
+5. Baseline : test 3801/0, FT 130/130, `ocrQualityCucumberTest` 7/7,
+   `epubCheckCucumberTest` 4/4, `pdfCheckCucumberTest` 4/4.
 
-== Vision « livre FPA SERVER »
+== Vision « livre content SERVER »
 
-Verrous levés S-233..S-249 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-251 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central (0.0.14 S-239, 0.0.15 S-242/243,
-**0.0.16 S-249 avec les 6 gardes — résolution Central prouvée sans
-mavenLocal**), 6 gardes documentaires
-(includeGuard/xref/security/htmlLint/epubCheck/**pdfCheck**), EPUB FPA
-prouvé valide (epubcheck W3C), PDF FPA prouvé structurellement sain
-(PDFBox, 15 pages extractibles), README consommateur. Le produit est
-servable, auditable, documenté et **distribué** de bout en bout.
+externe prouvée depuis Central (0.0.16 S-249 avec les 6 gardes), 6 gardes
+documentaires (includeGuard/xref/security/htmlLint/epubCheck/pdfCheck),
+**rapport OCR exhaustif** (S-251 : IMAGE_MISSING/TABLE_SUSPECT/
+STRUCT_SUSPECT + detail localisé — l'itération humaine A1 ne re-lit plus
+le livre entier), neutralisation nommage métier privé (S-251 :
+`ContentPageResolver`/`contentAwareResolver` — FPA vit en privé, les
+chemins office/ restent des citations). Le produit est servable, auditable,
+documenté et **distribué** de bout en bout (0.0.16 ; HEAD porte RENAME-2 +
+OCR-QUALITY-3 en attente de publication sur accord pilote).

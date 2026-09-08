@@ -9,52 +9,52 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 /**
- * Dogfooding test — 6th guard (DOC-PDF-CHECK) against the real FPA book PDF.
+ * Dogfooding test — 6th guard (DOC-PDF-CHECK) against the real scanned-content book PDF.
  *
  * Audits `livre-navigable/book.pdf` (produced by the bookPipeline in S-217/218)
  * with Apache PDFBox — the exact same adapter the `validateDocumentPdf` task
  * wires. Read-only ink-economy audit of the existing artefact: no regeneration,
- * no JRuby conversion (mirrors [EpubCheckFpaFunctionalTest]).
+ * no JRuby conversion (mirrors [EpubCheckContentFunctionalTest]).
  *
- * This locks the "livre FPA SERVER" product: the shipped PDF must be
+ * This locks the "livre content SERVER" product: the shipped PDF must be
  * structurally sound (loadable, non-empty, extractable text on every page),
  * not just open. The test self-skips (`assumeTrue`) when the corpus is absent.
  */
-class PdfCheckFpaFunctionalTest {
+class PdfCheckContentFunctionalTest {
 
     companion object {
-        private val FPA_BOOK_PDF = File(
+        private val CONTENT_BOOK_PDF = File(
             "/home/cheroliv/workspace/office/metiers/FPA",
             "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.pdf",
         )
     }
 
     @Test
-    fun `real FPA book pdf passes the structural checks`() {
-        assumeTrue(FPA_BOOK_PDF.isFile) {
-            "FPA book.pdf not found at ${FPA_BOOK_PDF.absolutePath}"
+    fun `real scanned-content book pdf passes the structural checks`() {
+        assumeTrue(CONTENT_BOOK_PDF.isFile) {
+            "scanned-content book.pdf not found at ${CONTENT_BOOK_PDF.absolutePath}"
         }
-        val result = PdfBoxValidatorAdapter().validate(FPA_BOOK_PDF)
+        val result = PdfBoxValidatorAdapter().validate(CONTENT_BOOK_PDF)
         assertEquals(
             PdfValidationResult.Valid,
             result,
-            "shipped FPA PDF must pass the PDFBox structural checks; issues=${(result as? PdfValidationResult.Invalid)?.issues}",
+            "shipped scanned-content PDF must pass the PDFBox structural checks; issues=${(result as? PdfValidationResult.Invalid)?.issues}",
         )
     }
 
     @Test
-    fun `textless FPA book pdf copy is reported Invalid - negative proof`() {
-        assumeTrue(FPA_BOOK_PDF.isFile) {
-            "FPA book.pdf not found at ${FPA_BOOK_PDF.absolutePath}"
+    fun `textless scanned-content book pdf copy is reported Invalid - negative proof`() {
+        assumeTrue(CONTENT_BOOK_PDF.isFile) {
+            "scanned-content book.pdf not found at ${CONTENT_BOOK_PDF.absolutePath}"
         }
         // Structural corruption on a byte copy (never the source artefact — Rule 7
         // read-only). PDFBox is lenient about a corrupted header/truncated tail
-        // (xref rebuilding + header warning — both proven FPA-real), so the
+        // (xref rebuilding + header warning — both proven corpus-real), so the
         // meaningful negative proof is the *business* finding: a rebuilt PDF whose
         // pages carry NO extractable text must be reported with the per-page
         // findings. Mirrors the EPUB lesson (pitfall #10: corrupt the STRUCTURE,
         // not the content — PDFBox tolerates byte-level damage in a parseable file).
-        val copy = File.createTempFile("fpa-book-textless", ".pdf")
+        val copy = File.createTempFile("content-book-textless", ".pdf")
         copy.deleteOnExit()
         org.apache.pdfbox.pdmodel.PDDocument().use { doc ->
             repeat(3) {

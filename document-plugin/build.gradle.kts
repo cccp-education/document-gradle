@@ -12,7 +12,7 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.32"))
+    implementation(platform("education.cccp:workspace-bom:0.0.34"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -83,10 +83,11 @@ dependencies {
 }
 
 
-// Forward the dogfooding publish flag to the test JVM so the FPA-BOOK-4
-// integration test can copy generated artifacts into office/metiers/FPA.
+// Forward the dogfooding publish flag to the test JVM so the BOOK-4
+// integration test can copy generated artifacts into the private content
+// corpus directory (office/metiers/...).
 tasks.named<Test>("test") {
-    systemProperty("fpa.book.publish", System.getProperty("fpa.book.publish") ?: "false")
+    systemProperty("content.book.publish", System.getProperty("content.book.publish") ?: "false")
 }
 
 cucumberConventions {
@@ -132,6 +133,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/book_validation.feature"),
             tags = listOf("@book-validation"),
             runnerClass = "document.bookvalidation.BookValidationCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "ocrQualityCucumberTest",
+            features = listOf("src/test/resources/features/ocr_quality.feature"),
+            tags = listOf("@ocr-quality"),
+            runnerClass = "document.ocrquality.OcrQualityCucumberRunner",
         ),
         CucumberTaskSpec(
             name = "converterSafeModeCucumberTest",

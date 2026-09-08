@@ -11,9 +11,9 @@ import java.io.File
 
 /**
  * Dogfooding functional test — the *complete* N3 pipeline against the real
- * FPA corpus (Option A of session 233, PROMPT_REPRISE).
+ * private content corpus (Option A of session 233, PROMPT_REPRISE).
  *
- * Session 233 goal : lock the full N3 status of the "livre FPA SERVER" product.
+ * Session 233 goal : lock the full N3 status of the "livre content SERVER" product.
  * Prior sessions proved each link in isolation :
  * - S-217/218 : `bookPipeline` produces the navigable book (HTML/PDF/EPUB) ;
  * - S-226     : `HtmlLinkLinter` validates the *real* rendered book.html (Valid) ;
@@ -21,13 +21,13 @@ import java.io.File
  * - S-232     : `validateDocument` composes the four guards (include + xref +
  *   security + htmlLint).
  *
- * This test proves the *chain* on the real FPA corpus : `bookPipeline
+ * This test proves the *chain* on the real private content corpus : `bookPipeline
  * validateDocument collectDocumentRetrieve` in one build produces
  * `document-validation-report.json` with all four guards audited (VALID) and
  * `metadata.json` carrying `validationStatus=PASS` — the composite validation
  * status the runner-gradle N3 dashboard will read.
  *
- * The FPA corpus is consumed read-only (Rule 7): pages are copied into a
+ * The private content corpus is consumed read-only (Rule 7): pages are copied into a
  * throw-away TestKit project, and the test self-skips (`assumeTrue`) when the
  * corpus is absent.
  *
@@ -38,13 +38,13 @@ import java.io.File
  * working directory, not the throw-away project dir). Passing STRICT on the two
  * filesystem-free guards proves zero dead link / unresolved xref in the real book.
  */
-class BookPipelineN3FpaFunctionalTest {
+class BookPipelineN3ContentFunctionalTest {
 
     companion object {
-        private val FPA_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
-        private val FPA_TOC = File(FPA_DIR, "toc.adoc")
-        private val FPA_SCANS = File(
-            FPA_DIR,
+        private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
+        private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
+        private val CONTENT_SCANS = File(
+            CONTENT_DIR,
             "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
         )
     }
@@ -53,13 +53,13 @@ class BookPipelineN3FpaFunctionalTest {
     lateinit var projectDir: File
 
     @Test
-    fun `full N3 pipeline on the real FPA book carries validationStatus PASS in metadata`() {
-        assumeTrue(FPA_TOC.isFile) { "FPA TOC not found at ${FPA_TOC.absolutePath}" }
-        assumeTrue(FPA_SCANS.isDirectory) { "FPA scans not found at ${FPA_SCANS.absolutePath}" }
+    fun `full N3 pipeline on the real scanned-content book carries validationStatus PASS in metadata`() {
+        assumeTrue(CONTENT_TOC.isFile) { "content TOC not found at ${CONTENT_TOC.absolutePath}" }
+        assumeTrue(CONTENT_SCANS.isDirectory) { "content scans not found at ${CONTENT_SCANS.absolutePath}" }
 
         projectDir.resolve("settings.gradle.kts").writeText(
             """
-            rootProject.name = "test-bookpipeline-n3-fpa"
+            rootProject.name = "test-bookpipeline-n3-content"
             """.trimIndent(),
         )
         projectDir.resolve("build.gradle.kts").writeText(
@@ -74,10 +74,10 @@ class BookPipelineN3FpaFunctionalTest {
             }
             document {
                 book {
-                    pagesDir.set(layout.projectDirectory.dir("fpa/pages"))
-                    title.set("Devenir Formateur Professionnel d'Adultes - FPA II")
+                    pagesDir.set(layout.projectDirectory.dir("content/pages"))
+                    title.set("Devenir Formateur Professionnel d'Adultes - Tome II")
                     author.set("CCCP Education")
-                    tocFile.set(layout.projectDirectory.file("fpa/toc.adoc"))
+                    tocFile.set(layout.projectDirectory.file("content/toc.adoc"))
                 }
                 // enrich/collect read this source; the assembled book lives here
                 source.set(layout.buildDirectory.file("docs/document/book.adoc"))
@@ -97,10 +97,10 @@ class BookPipelineN3FpaFunctionalTest {
             """.trimIndent(),
         )
 
-        // Copy the TOC + referenced pages (BookPipelineFpaFunctionalTest pattern).
-        val pagesDir = projectDir.resolve("fpa/pages").apply { mkdirs() }
-        val tocText = FPA_TOC.readText()
-        FPA_TOC.copyTo(projectDir.resolve("fpa/toc.adoc"), overwrite = true)
+        // Copy the TOC + referenced pages (BookPipelineContentFunctionalTest pattern).
+        val pagesDir = projectDir.resolve("content/pages").apply { mkdirs() }
+        val tocText = CONTENT_TOC.readText()
+        CONTENT_TOC.copyTo(projectDir.resolve("content/toc.adoc"), overwrite = true)
         val referenced = tocText.lines()
             .mapNotNull { line ->
                 val cells = line.trim().split("|").map { it.trim() }.drop(1)
@@ -113,10 +113,10 @@ class BookPipelineN3FpaFunctionalTest {
                     null
                 }
             }
-        assumeTrue(referenced.isNotEmpty()) { "no .adoc page reference found in the FPA TOC" }
+        assumeTrue(referenced.isNotEmpty()) { "no .adoc page reference found in the content TOC" }
         referenced.forEach { name ->
-            val page = File(FPA_SCANS, name)
-            assumeTrue(page.isFile) { "referenced FPA page '$name' not found in scans" }
+            val page = File(CONTENT_SCANS, name)
+            assumeTrue(page.isFile) { "referenced content page '$name' not found in scans" }
             page.copyTo(pagesDir.resolve(name), overwrite = true)
         }
 
@@ -167,9 +167,9 @@ class BookPipelineN3FpaFunctionalTest {
         // includeGuard VALID (no traversal in the real book), xref VALID (no unresolved
         // cross-reference), security WARN (DOC-CR5: LENIENT include guard × UNSAFE safe
         // mode — visibility advice, not a failure), htmlLint VALID (navigable HTML).
-        assertTrue(report.contains("\"status\" : \"INVALID\"") == false, "include guard must not fail on the real FPA book — actual: $report")
-        assertTrue(report.contains("\"status\" : \"MISSING\"") == false, "xref must have no unresolved reference on the real FPA book — actual: $report")
-        assertTrue(report.contains("\"status\" : \"DEAD\"") == false, "htmlLint must find no dead internal link on the real FPA book — actual: $report")
+        assertTrue(report.contains("\"status\" : \"INVALID\"") == false, "include guard must not fail on the real scanned-content book — actual: $report")
+        assertTrue(report.contains("\"status\" : \"MISSING\"") == false, "xref must have no unresolved reference on the real scanned-content book — actual: $report")
+        assertTrue(report.contains("\"status\" : \"DEAD\"") == false, "htmlLint must find no dead internal link on the real scanned-content book — actual: $report")
         assertTrue(report.contains("\"advice\" : \"REJECT\"") == false, "security must not reject the N3 chain config — actual: $report")
         assertTrue(report.contains("\"htmlLint\""), "the fourth guard must be audited — actual: $report")
 

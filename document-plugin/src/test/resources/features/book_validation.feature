@@ -1,6 +1,6 @@
 @book-validation
 Feature: Book validation pipeline (DOC-BOOK-VALIDATE-4)
-  As a book producer (FPA pipeline)
+  As a book producer (scanned-content pipeline)
   I want the assembled book validated against its table of contents
   So that missing pages, empty sections and orphan pages are caught before publication
 

@@ -87,7 +87,7 @@ report is written).
 | `translateDocument` / `translateDocumentBatch` | AsciiDoc translation pipeline |
 | `retranslateFrontmatter` | Frontmatter re-translation |
 | `convertDocumentToHtml/Pdf/Epub/DocBook/ManPage` | AsciidoctorJ backends |
-| `assembleBook` / `bookPipeline` | FPA-style book assembly + full pipeline |
+| `assembleBook` / `bookPipeline` | Scanned-content book assembly + full pipeline |
 | `validateDocument` | Composite pre-flight: includeGuard + xref + security + htmlLint |
 | `validateDocumentXref` / `validateDocumentEpub` / `validateDocumentPdf` | Dedicated xref / epubcheck / PDFBox audits |
 | `lintHtmlDocument` / `verifyHtmlLinks` | Rendered-HTML navigability lint |

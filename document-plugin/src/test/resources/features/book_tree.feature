@@ -1,6 +1,6 @@
 @book-tree
 Feature: Structured book assembly from the table-of-contents tree
-  As a book producer (FPA pipeline)
+  As a book producer (scanned-content pipeline)
   I want the book assembler to emit a structured, navigable AsciiDoc book from the TOC tree
   So that the PDF/EPUB export carries a real hierarchy (parts, chapters, sections)
 

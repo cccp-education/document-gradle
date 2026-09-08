@@ -195,12 +195,12 @@ class BookAssemblerStructuredTest {
         val content = BookAssembler.assemble(
             tree = tree,
             layout = BookLayout(),
-            title = "FPA Book",
+            title = "Content Book",
             author = "Cheroliv",
             resolveContent = BookAssembler.pageContentResolver(pagesDir),
         ).content
 
-        assertTrue(content.contains("= FPA Book"), "title page must be present")
+        assertTrue(content.contains("= Content Book"), "title page must be present")
         assertTrue(content.contains("=== 0.1. Preface"), "front matter must be a level-2 heading")
         assertTrue(content.contains("== 1. Part I"), "part must be a level-1 heading")
         assertTrue(content.contains("=== 1.1. Chapter 1"), "chapter must be a level-2 heading")
