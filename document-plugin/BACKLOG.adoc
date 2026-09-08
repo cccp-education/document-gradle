@@ -27,6 +27,16 @@ _Origine : demande pilote 2026-09-07 (FPA = fond de commerce privé, jamais dans
 *Gate* : check VERT (zéro changement sémantique) + `grep -ri "fpa" src/` = zéro match (hors faux positifs `ggufPa`/`ofPa`/`LeafPath` + citations office/metiers/FPA légitimes). ✅ S-251 : check VERT, test 3801/0, FT 130/130.
 
 '''
+== EPIC RENAME Vague 3 — Confiner REAC/AFNOR/SPG/SPD 🟡 CADRÉ (S-215, document)
+
+_Origine : demande pilote — REAC/AFNOR/SPG/SPD = vocabulaire métier privé. Nuance : AFNOR/RNCP restent mentionnables en détection off-topic (références publiques d'État) ; sortent des prompts/listes/fixtures où ils désignent le corpus du pilote. Cadrage : `.agents/CADRAGE_EPIC_RENAME_V3.adoc`._
+
+|===
+| US | Description | Pts | Statut
+| RENAME-8 | `borrowedVocabulary` 2 fichiers (PlantUmlClassifier:16 + PlantUmlTranslationAdapter:21 — "REAC","AFNOR","DC","TS","CP","ECF" sortent, RNCP reste) → config injectée (D14) ou `referential` + 12 fixtures tests (PlantUmlTranslationAdapterTest 8, PlantUmlClassifierTest 4) + check baseline | 2 | 🟡 À FAIRE
+|===
+
+'''
 
 '''
 == EPIC OCR-QUALITY — Détection automatique images problématiques + transcriptions douteuses ✅ TERMINÉ (S-251, document)
