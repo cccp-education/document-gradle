@@ -1,0 +1,84 @@
+= Session 252b — PUB 0.0.17 Central + distribution fix inline (consommateurs prouvés sans mavenLocal)
+
+:date: 2026-09-08
+:borough: New Orleans 🟢 (document-gradle) + cross-borough MEMPHIS 🎸
+:method: PUB (accord pilote explicite "oui fait le de suite")
+
+== Mission
+
+Le pilote a demandé l'exécution immédiate de la publication next release :
+le HEAD (RENAME-2 + OCR-QUALITY-3 + fix inline `image::?` S-252) doit être
+distribué hors machine de dev, puis les consommateurs re-exécutés.
+
+== Chaîne DAG N0→N2 exécutée
+
+1. *MEMPHIS* : bump toml `workspace-bom 0.0.35` + `document-plugin 0.0.17`,
+   gardes réalignées (`PlatformCatalogAlignmentTest` + `WorkspaceCatalogStructureTest`),
+   `test` VERT, `publishToMavenLocal` + `publishAggregationToCentralPortal`.
+2. *document* : re-pin 3 sources (settings D4 + platform + toml local),
+   garde publication 3/3 VERT, `publishToMavenLocal` + Central.
+3. *Consommateur tiers* `/tmp/opencode/doc-consumer-pdf` : bump 0.0.17,
+   mavenLocal retiré, scénarios re-exécutés.
+4. *bakery* : pin ws 0.0.36 + platform 0.0.36 → document 0.0.17 sans hardcode.
+5. *Re-dogfooding livre FPA* : consumer racine sans mavenLocal, run complet.
+
+== Collision cross-agent MEMPHIS (constat structurant)
+
+Pendant mes polls Central (~70 min d'attente du déploiement BOM), un
+*autre agent MEMPHIS* a travaillé en parallèle sur le même toml :
+- bump `workspace-bom 0.0.36` + `bakery-plugin 0.0.10` + `codebase-plugin 0.0.13` ;
+- a publié un déploiement Central à 15:28 UTC contenant **le même
+  `document-plugin:0.0.17`** (JAR byte-identique, sha256 `a005ff2e` prouvé) ;
+- ses publications `workspace-bom 0.0.36` / `bakery-plugin 0.0.10` étaient
+  en cours (`already exists` = collision de deployment `7da71b97`).
+
+Résolution : mes uploads `0.0.35` (BOM + catalog) sont passés
+(`<latest>0.0.35</latest>` ×2 vérifié, POM HTTP 200) ; le
+`document-plugin:0.0.17` Central (de l'agent concurrent) est
+byte-identique au mien → distribution équivalente, aucun re-bump nécessaire.
+
+**Pièges appris** :
+- Central est immutable par version — jamais d'écrasement possible ; un
+  "already exists" après un deployment concurrent = le contenu est là.
+- Deux agents ne doivent PAS bumper MEMPHIS en même temps : coordonner
+  (piège #13 étendu au multi-agent).
+
+== Distribution prouvée
+
+- *Consommateur tiers SANS mavenLocal* : debug log `Using
+  education.cccp.document:education.cccp.document.gradle.plugin:0.0.17
+  from Maven repository 'Gradle Central Plugin Repository'`.
+  - STRICT convert+validate → rapport VALID.
+  - Preuve négative (PDF textless pattern S-248) : BUILD FAILED
+    `pdf validation failed (STRICT): page 1: no extractable text,
+    page 2: no extractable text` + rapport INVALID.
+- *Bakery D5* : `dependencies` → `education.cccp:document-plugin -> 0.0.17`
+  depuis la contrainte BOM 0.0.36, compileKotlin VERT.
+- *Re-dogfooding livre FPA depuis Central* : debug log Central,
+  BUILD SUCCESSFUL 3m52s, convergence maintenue (16 ILLISIBLE + 4
+  IMAGE_MISSING + 7 TABLE_SUSPECT + PDF VALID). mavenLocal retiré du
+  consumer racine document-gradle (Central = source unique).
+
+== Note sur le pin POM Central
+
+Le POM Central `document-plugin:0.0.17` pinne `workspace-bom 0.0.34`
+(déploiement concurrent 15:28 UTC, avant mon re-pin 0.0.36). Impact zéro :
+toutes les deps `implementation` de document sont versionnées
+explicitement dans le POM (pattern S-209) — l'import BOM ne contraint
+aucune dep utilisée. Le prochain bump naturel de document alignera le pin.
+
+== Gates
+
+- MEMPHIS `test` VERT (gardes réalignées), Central 0.0.35 ×2 POM HTTP 200.
+- Garde publication document 3/3 VERT (0.0.17 + ws 0.0.36).
+- Consommateur tiers : STRICT VALID + preuve négative FAILED.
+- bakery compileKotlin + dependencies VERT.
+- Dogfooding livre FPA Central BUILD SUCCESSFUL.
+- Secrets RAS.
+
+== Commits
+
+- document-gradle `8989a05` (bump 0.0.17 + pin ws 0.0.36, publié Central)
+- document-gradle `cbaf8d9` (consumer racine 0.0.17 sans mavenLocal)
+- bakery-gradle `bbd5cde` (bump 0.0.10 + pin ws 0.0.36 — agent concurrent)
+- workspace-bom : bumps 0.0.35 (moi) / 0.0.36 (agent concurrent, en cours)
