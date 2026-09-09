@@ -1,31 +1,30 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 254
+== Mission session 255
 
-S-253 a livré RENAME-8 (EPIC RENAME Vague 3, cadrage S-250) : la liste
-hardcodée `borrowedVocabulary` (REAC/AFNOR/DC/TS/RNCP/CP/ECF) est sortie
-des 2 fichiers prod via config injectée D14 — `PlantUmlBlock(raw,
-borrowedVocabulary: Set<String> = emptySet())` + `PlantUmlTranslationAdapter(...,
-borrowedVocabulary: Set<String> = emptySet())` (paramètre additif fin de
-signature). Le plugin public ne connaît plus AUCUN vocabulaire métier ;
-chaque consommateur fournit le sien. 12 fixtures neutralisées (REF/ORG/MOD/EVA
-+ injection explicite). Gates : UT 3822/0, FT 130/130, cucumber plantuml 10/10,
-validatePlugins VERT, grep word-boundary = 1 match (citation corpus réel,
-piège #18). Zéro publication — la config injectée sera distribuée au prochain
-bump version.
+S-254 a clôturé l'EPIC RENAME Vague 3 (cadrage transverse bakery
+`CADRAGE_EPIC_RENAME_V3.adoc`) : RENAME-7 planner (prompts LLM
+`IntentionPlanner.kt:149,208` → génériques + 6 fixtures), RENAME-10
+codebase (description tâche + 9 fixtures koog, exclusion D11 keyword
+AFNOR documentée), RENAME-11 plantuml (KDoc + 5 fixtures registres
+publics + docs courantes + drift ws 0.0.37 réaligné), RENAME-12
+hyperframes (BACKLOG + doc/PILOTAGE + AGENT règle 9). RENAME-9 bakery
+était déjà livré (S-212, session parallèle). **EPIC TERMINÉ 6/6 US**
+(7/8/9/10/11/12). Gate transverse D16 VERT sur les 5 boroughs. Zéro
+publication — chaînes non-significatives distribuées aux prochains bumps.
 
 *1. Rien d'urgent* — le borough est à jour (0.0.17 Central, catalogue ws
-0.0.36, BOM 0.0.36, garde publication 3/3 VERT au build). A1 Tombouctou
-n'a pas livré le corpus corrigé (16 ILLISIBLE au 2026-09-09) :
-DOC-FPA-PUBLISH-0 reste STANDBY.
+0.0.37, BOM 0.0.37, garde publication 3/3 VERT au build, compileKotlin
+VERT). A1 Tombouctou n'a pas livré le corpus corrigé (16 ILLISIBLE au
+2026-09-09) : DOC-FPA-PUBLISH-0 reste STANDBY.
 
 *2. Candidats prochaine session (sur demande pilote)* :
 
-- *RENAME-9 bakery (2 pts)* — `I18nMigrationService.kt:59,82` "SPG" dans
-  whitelist + substringBlacklist + fixtures features 53/55/56 +
-  `vocabulaire-metier.adoc` (cross-borough Bushwick, à coordonner).
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
   le corpus corrigé (convergence attendue : 0 ILLISIBLE).
+- *Rappel Vague 3 cross-borough (pré-requis réactivation A2)* : le
+  pipeline A2 produit l'enveloppe K-2 `type == "content"` (ex-"SPD") —
+  planner/hyperframes alignés à la réactivation.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
   vers la version Central. Vérifier `<latest>` avant tout pin (piège #21 :
@@ -33,19 +32,20 @@ DOC-FPA-PUBLISH-0 reste STANDBY.
 - *POM future release (piège #17)* : toute nouvelle dep `implementation`
   passe par alias `libs.*` avec version explicite.
 
-== État du code (S-253)
+== État du code (S-254)
 
 - *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200. La 0.0.18
   (RENAME-8 config injectée) n'est PAS publiée — bump au prochain besoin.
-- *Catalogue ws* : 0.0.36 (document pin 0.0.17).
+- *Catalogue ws* : 0.0.37 (document pin 0.0.17 — à réaligner si drift).
 - *Consumer racine* : `document = "0.0.17"` sans mavenLocal (Central pur).
 - *Gates document* : UT 3822/0, FT 130/130, 19 runners Cucumber dédiés
   VERTS, garde publication 3/3.
 - *API translation* : `borrowedVocabulary` injectable sur PlantUmlBlock +
-  PlantUmlTranslationAdapter (défaut vide = tout est traduit). Bakery
-  consommateur 0.0.17 publié compile sans changement (paramètre additif).
+  PlantUmlTranslationAdapter (défaut vide = tout est traduit).
+- *EPIC RENAME Vague 3* : ✅ TERMINÉ 6/6 US (cadrage S-215, gate D16
+  transverse VERT 5 boroughs).
 
-== Pièges Gradle à retenir (S-232..S-253)
+== Pièges Gradle à retenir (S-232..S-254)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -72,7 +72,9 @@ DOC-FPA-PUBLISH-0 reste STANDBY.
     jour côté bakery.
 13. *Drift catalogue ws* : MEMPHIS bump le catalogue en amont — la garde
     `DocumentPluginPublicationTest` RED au prochain build. Fix : réaligner
-    les 3 sources vers la version publiée Central. *Réappliqué S-251 (0.0.34).*
+    les 3 sources vers la version publiée Central. *Réappliqué S-251
+    (0.0.34) et S-254 côté plantuml (0.0.37 — la garde plantuml a
+    attrapé le drift au build, pattern généralisé).*
 14. *PDFBox 3.x lénient sur les octets* : le garde PDF est un garde
     *texte extractible par page*. Preuve négative = pages sans texte.
 15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size
@@ -109,6 +111,17 @@ DOC-FPA-PUBLISH-0 reste STANDBY.
     ajouté en DERNIER paramètre du constructeur (défaut `emptySet()`) —
     les consommateurs binaires (bakery 0.0.17 publié) compilent sans
     changement. Toute extension d'API publique du plugin suit ce pattern.
+25. *Verrous RENAME sont des tests de comportement, pas des fixtures
+    nominales (S-254)* : quand une fixture porte le terme métier dans
+    SON NOM (`contains("AFNOR Referentiel")`), la substitution doit
+    migrer l'assertion aussi — sinon le verrou échoue (RED réel attrapé
+    en baby-step planner). Idem `RollbackStrategyExecutorTest` : le
+    message d'erreur contient la description de la step → substituer
+    les 2.
+26. *WIP parallèle dans le working tree (S-254)* : les boroughs multi-
+    sessions (codebase CB-FPA-RAG, planner toml) peuvent porter un
+    working tree sale d'une session concurrente — commit UNIQUEMENT ses
+    propres fichiers (git add sélectif), jamais `git add -A`.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -141,14 +154,14 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.17 ; `workspace-catalog`
-   `<latest>` = 0.0.36 ; `workspace-bom` `<latest>` = 0.0.36 (vérifier
+   `<latest>` = 0.0.37 ; `workspace-bom` `<latest>` = 0.0.37 (vérifier
    `<latest>` avant tout pin, pièges #13/#21).
 5. Baseline : UT 3822/0, FT 130/130, `plantUmlValidationCucumberTest`
    10/10 PASSED, `pdfCheckCucumberTest` 4/4, `epubCheckCucumberTest` 4/4.
 
 == Vision « livre content SERVER »
 
-Verrous levés S-233..S-253 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-254 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
 externe prouvée depuis Central (0.0.16 S-249 puis **0.0.17 S-252b sans
 mavenLocal**), 6 gardes documentaires
@@ -156,7 +169,8 @@ mavenLocal**), 6 gardes documentaires
 exhaustif (S-251 : 4 raisons + detail) prouvé sur le corpus réel
 (16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT, PDF VALID),
 neutralisation nommage métier privé (S-251 RENAME-2 + S-253 RENAME-8 :
-borrowedVocabulary sorti du nommage public, config injectée D14). Le
-produit est servable, auditable, documenté et **distribué** de bout en
-bout (0.0.17 = RENAME-2 + OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8
-en attente du prochain bump).
+borrowedVocabulary sorti du nommage public, config injectée D14 ; S-254 :
+clôture transverse Vague 3 — 5 boroughs CLEAN). Le produit est servable,
+auditable, documenté et **distribué** de bout en bout (0.0.17 = RENAME-2
++ OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8 en attente du prochain
+bump).

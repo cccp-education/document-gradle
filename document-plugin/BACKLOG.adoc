@@ -1,38 +1,32 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-09 (session 253 — **RENAME-8 ✅ config injectée
-D14** — borrowedVocabulary (REAC/AFNOR/DC/TS/RNCP/CP/ECF) sorti des 2
-fichiers prod : `PlantUmlBlock(raw, borrowedVocabulary = emptySet())` +
-`PlantUmlTranslationAdapter(..., borrowedVocabulary = emptySet())`
-(paramètre additif). Le plugin public ne connaît plus AUCUN vocabulaire
-métier. 12 fixtures neutralisées. Gates : UT 3822/0, FT 130/130, cucumber
-plantuml 10/10, grep word-boundary = 1 match (citation corpus réel, piège
-#18). Zéro publication — distribuée au prochain bump.)
+_Date revision_ : 2026-09-09 (session 254 — **EPIC RENAME Vague 3
+✅ TERMINÉ 6/6 US** — RENAME-7 planner (prompts LLM génériques + 6
+fixtures), RENAME-10 codebase (description + 9 fixtures koog), RENAME-11
+plantuml (KDoc + 5 fixtures + docs), RENAME-12 hyperframes (docs
+courantes). RENAME-9 bakery était déjà livré (S-212 session parallèle).
+Gate transverse D16 VERT 5 boroughs. Zéro publication — chaînes
+non-significatives aux prochains bumps.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 en attente
 du prochain bump)
 
 '''
-== EPIC RENAME — Neutralisation nommage métier privé (FPA→content) ✅ TERMINÉ (S-251, document)
+== EPIC RENAME Vague 3 — Confiner REAC/AFNOR/SPG/SPD ✅ TERMINÉ (S-254, transverse 6/6 US)
 
-_Origine : demande pilote 2026-09-07 (FPA = fond de commerce privé, jamais dans le nommage public OSS). Cadrage transverse : `.agents/CADRAGE_EPIC_RENAME.adoc` (7 boroughs)._
-
-|===
-| US | Description | Pts | Statut
-| RENAME-2 | `FpaPageResolver` → `ContentPageResolver` + `fpaAwareResolver` → `contentAwareResolver` (+ câblage AssembleBookTask) + commentaires BookTocParser/BookNumbering/DocumentPlugin + 4 tests FT renommés + 3 features Gherkin + check baseline exacte | 3 | ✅ TERMINÉ (S-251 — gate grep OK : 9 fichiers tests + knob `content.book.publish` + README neutralisés au-delà de l'audit cadrage, citations office/ préservées)
-|===
-
-*Gate* : check VERT (zéro changement sémantique) + `grep -ri "fpa" src/` = zéro match (hors faux positifs `ggufPa`/`ofPa`/`LeafPath` + citations office/metiers/FPA légitimes). ✅ S-251 : check VERT, test 3801/0, FT 130/130.
-
-'''
-== EPIC RENAME Vague 3 — Confiner REAC/AFNOR/SPG/SPD 🟡 CADRÉ (S-215, document)
-
-_Origine : demande pilote — REAC/AFNOR/SPG/SPD = vocabulaire métier privé. Nuance : AFNOR/RNCP restent mentionnables en détection off-topic (références publiques d'État) ; sortent des prompts/listes/fixtures où ils désignent le corpus du pilote. Cadrage : `.agents/CADRAGE_EPIC_RENAME_V3.adoc`._
+_Origine : demande pilote — REAC/AFNOR/SPG/SPD = vocabulaire métier privé. Nuance : AFNOR/RNCP restent mentionnables en détection off-topic (références publiques d'État) ; sortent des prompts/listes/fixtures où ils désignent le corpus du pilote. Cadrage : `.agents/CADRAGE_EPIC_RENAME_V3.adoc` (dans bakery-gradle)._
 
 |===
 | US | Description | Pts | Statut
+| RENAME-7 | planner IntentionPlanner prompts (:149,:208) → génériques + 5 fichiers tests/features + check | 2 | ✅ TERMINÉ (S-254 — `test` 144 VERT + `cucumberTest` 23 VERT, RED réel sur verrou "codex corpus" corrigé) |
 | RENAME-8 | `borrowedVocabulary` 2 fichiers (PlantUmlClassifier:16 + PlantUmlTranslationAdapter:21 — "REAC","AFNOR","DC","TS","CP","ECF" sortent, RNCP reste) → config injectée (D14) ou `referential` + 12 fixtures tests (PlantUmlTranslationAdapterTest 8, PlantUmlClassifierTest 4) + check baseline | 2 | ✅ TERMINÉ (S-253 — D14 config injectée : `PlantUmlBlock(raw, borrowedVocabulary = emptySet())` + `PlantUmlTranslationAdapter(..., borrowedVocabulary = emptySet())` paramètre additif, défaut vide = tout traduit ; 12 fixtures neutralisées REF/ORG/MOD/EVA + injection explicite ; gate UT 3822/0 + FT 130/130 + cucumber plantuml 10/10 + grep word-boundary = 1 citation corpus réel (piège #18)) |
+| RENAME-9 | bakery I18nMigrationService "SPG" → générique + fixtures/features (53/55/56 + vocabulaire-metier.adoc) + docs courantes + check | 2 | ✅ TERMINÉ (S-212, borough bakery — session parallèle) |
+| RENAME-10 | codebase CodebasePlugin.kt:176 description → générique + check | 0.5 | ✅ TERMINÉ (S-254 — description + 9 fixtures koog neutralisées, exclusion D11 keyword AFNOR documentée, commit sélectif WIP CB-FPA-RAG exclu) |
+| RENAME-11 | plantuml KDoc loader exemple YAML → QUALIOPI (déjà registre) + check | 0.5 | ✅ TERMINÉ (S-254 — KDoc + 5 fixtures + docs courantes + drift ws 0.0.37 réaligné, `test` 2531/0) |
+| RENAME-12 | capsule/hyperframes docs courantes → génériques | 1 | ✅ TERMINÉ (S-254 — BACKLOG ×4 + doc/PILOTAGE + doc/ARCHITECTURE + AGENT règle 9, capsule docs OK cadrage) |
 |===
+
+*Gate D16* : `grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/ docs-courants` = zéro match hors faux positifs (SPDX, asparagus, SmolLM2 tokenizer binaire ML, DeterministicOffTopicDetector AFNOR keyword public D11, citations corpus office/ légitimes #18, WIP untracked CB-FPA-RAG codebase session propriétaire). ✅ S-254 : VERT sur 5 boroughs.
 
 '''
 

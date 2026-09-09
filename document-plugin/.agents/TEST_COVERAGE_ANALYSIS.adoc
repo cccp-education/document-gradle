@@ -1,5 +1,32 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-08
+:date: 2026-09-09
+:session: 254
+
+== Session 254 — RENAME Vague 3 (transverse, fixtures seulement)
+
+*Objectif* : clôturer l'EPIC RENAME Vague 3 (RENAME-7 planner, RENAME-10
+codebase, RENAME-11 plantuml, RENAME-12 hyperframes — RENAME-8 document
+S-253, RENAME-9 bakery S-212).
+
+*Zéro nouveau test créé* — Économie d'Encre : les fixtures de test
+existantes sont *neutralisées* (terme métier → terme générique/registre
+public), pas enrichies. Le comportement testé reste identique :
+
+- planner : `test` 144 VERT (baseline préservée) + `cucumberTest` 23
+  VERT — verrou `contains("codex corpus")` migré vers
+  `contains("corpus documents")` avec le prompt (comportement préservé,
+  fixture nominale alignée).
+- codebase : `test` 10602 (4 échecs préexistantes S-212 inchangées) —
+  fixtures koog/planning/agentic/rag/finetuning migrées, classes ciblées
+  VERTES.
+- plantuml : `test` 2531/0 — fixtures registres publics (QUALIOPI/ISO/NFP),
+  glue Cucumber paramétrée (zéro step changé).
+- hyperframes : compileKotlin VERT (docs seulement).
+
+*Backward compat* : aucun test supprimé, aucune assertion de
+comportement affaiblie — seules les données (fixtures) changent.
+
+:date: 2026-09-08 (sessions précédentes)
 :session: 252
 
 == Session 252 — Dogfooding convergence + fix IMAGE_MISSING macro inline

@@ -2,6 +2,29 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 254 (2026-09-09) — RENAME Vague 3 CLÔTURÉE 6/6 US (transverse)
+
+*Type* : rename transverse (planner/codebase/plantuml/hyperframes)
+*Score* : 10/10
+
+*Résumé* :
+- RENAME-7 planner : prompts LLM génériques (`IntentionPlanner.kt:149,208`)
+  + 6 fixtures neutralisées. Gates : grep = 0, `test` 144 VERT,
+  `cucumberTest` 23 VERT (RED réel attrapé sur verrou "codex corpus").
+- RENAME-10 codebase : description tâche + 9 fixtures koog, exclusion
+  D11 keyword AFNOR documentée, `test` 10602 (4 échecs préexistants
+  S-212), classes ciblées VERTES, commit sélectif (WIP CB-FPA-RAG exclu).
+- RENAME-11 plantuml : KDoc + 5 fixtures registres publics + docs
+  courantes (AGENT/BACKLOG/PROMPT_REPRISE/strategie_orange_money) +
+  drift ws 0.0.37 attrapé par la garde plantuml → réaligné.
+  `test` 2531/0.
+- RENAME-12 hyperframes : BACKLOG + doc/PILOTAGE + doc/ARCHITECTURE +
+  AGENT règle 9. compileKotlin VERT.
+- Gate transverse D16 VERT 5 boroughs. EPIC RENAME Vague 3 TERMINÉ
+  6/6 US (7/8/9/10/11/12). Pièges #25/#26 documentés PROMPT_REPRISE.
+- Zéro publication — chaînes non-significatives distribuées aux
+  prochains bumps de chaque borough.
+
 === Session 251 (2026-09-08) — RENAME-2 + drift ws 0.0.34 + OCR-QUALITY-3
 
 *Type* : feat + refactor + TDD/BDD

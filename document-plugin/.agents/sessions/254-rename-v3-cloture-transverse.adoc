@@ -1,0 +1,134 @@
+= Session 254 — RENAME Vague 3 : clôture transverse (RENAME-7/10/11/12)
+:date: 2026-09-09
+:epic: RENAME Vague 3 (transverse) — clôture EPIC
+:statut: ✅ TERMINÉ (4 pts)
+
+== Mission
+
+S-253 a livré RENAME-8 (document). Le PROMPT_REPRISE S-254 proposait
+RENAME-9 (bakery) — constat d'ouverture : **déjà livré par le borough
+bakery** (S-212, 2026-09-09, session parallèle). La suite naturelle est
+la clôture de la Vague 3 selon l'ordre acté du cadrage transverse
+(`bakery-gradle/.agents/CADRAGE_EPIC_RENAME_V3.adoc`) : RENAME-7 → 10 →
+11 → 12.
+
+== Constats d'ouverture
+
+. RENAME-9 bakery ✅ déjà livré (S-212) — prompt périmé sur ce point.
+. DOC-FPA-PUBLISH-0 toujours STANDBY (corpus A1 inchangé : 16 ILLISIBLE
+  + 4 IMAGE_MISSING + 7 TABLE_SUSPECT au 2026-09-09).
+. Garde publication document 3/3 VERT — pas de drift MEMPHIS au build
+  document.
+. Périmètre réel disponible : 4 US RENAME restantes (~4 pts).
+
+== Exécution (baby-step TDD/BDD par borough)
+
+=== RENAME-7 planner (2 pts) — prompts LLM
+
+- `IntentionPlanner.kt:149` : `DOCUMENT CONTEXT (codex corpus — AFNOR,
+  REAC, manuals)` → `DOCUMENT CONTEXT (corpus documents — manuals,
+  referentials)`.
+- `IntentionPlanner.kt:208` : exemple `"SPG generated"` → `"Content plan
+  generated"` (D12).
+- 6 fichiers fixtures neutralisés : IntentionPlannerMultiCanalTest
+  (docsContext "AFNOR Referentiel" → "Referentiel Normatif" + verrou
+  "codex corpus" → "corpus documents"), StdoutFormatterVerifyTest,
+  LLMTaskVerifyTest, DecomposeIntentionMultiCanalTest (CLI docsContext),
+  planner_verify.feature (5 scénarios : expectedOutput/verifyHook/
+  intentions), PlannerVerifySteps (fixture JSON).
+- Gates : grep word-boundary `src/` = zéro ; `test` VERT (144 tests,
+  1 échec de verrou attrapé pendant le baby-step puis corrigé — RED
+  réel) ; `cucumberTest` VERT (23 scénarios PASSED).
+
+=== RENAME-10 codebase (0.5 pt + périmètre élargi par la gate)
+
+- `CodebasePlugin.kt:176` : description tâche `training-gradle
+  (AFNOR/REAC)` → `corpus de formation`.
+- Fixtures apparues depuis le cadrage (PLN-VERIFY S-063..068 +
+  agentic) neutralisées : VibecodingPlanTest, RollbackStrategyExecutorTest,
+  StepVerifierTest, TaskResultVerifierTest (8), VibecodingGraphVerifyStepTest,
+  AgenticCompilerTest ×2, AgenticChunkerTest, MetadataUnitTest (SPG →
+  CONTENT_PLAN type inconnu), PublishExpertToOllamaTaskTest (domainLabel).
+- Exclusion D11 documentée : `DeterministicOffTopicDetectorTest` — AFNOR
+  est un keyword de détection PUBLIC (`keywordsFor(CONTENT)`), fixture
+  légitime conservée.
+- Note : working tree codebase porte un WIP parallèle CB-FPA-RAG (bump
+  0.0.14 + StoreStatements fix + CorpusIngest*/DoubtPolicy* untracked)
+  — n'y a pas été touché, committé séparément.
+- Gates : grep = zéro (hors keyword D11 + WIP untracked) ; `test` VERT
+  24m10s (10602 tests, 4 failures préexistantes documentées S-212 :
+  2×Z-6 Cucumber autofocus + 2×OcrTaskTest drift pdf) ; classes RENAME
+  ciblées VERTES (--tests planning/agentic/rag/finetuning).
+
+=== RENAME-11 plantuml (0.5 pt + drift 0.0.37)
+
+- KDoc `NonTranslatableTermRegistryLoader` : exemple YAML REAC/AFNOR →
+  QUALIOPI/ISO/RNCP.
+- 5 fichiers fixtures neutralisés (registres publics) :
+  NonTranslatableTermRegistryLoaderTest, NonTranslatableTermRegistryTest,
+  TranslationResolverTest, IdiomaticGlossaryLoaderTest,
+  21_i18n_translation_boundary.feature (12 occurrences — glue
+  paramétrée, zéro step changé).
+- Docs courantes : AGENT (mention "training SPG/SPD" → "scénarios
+  pédagogiques"), BACKLOG (terme métier générique), PROMPT_REPRISE,
+  doc/strategie_orange_money.adoc (17 occurrences FPA → formation
+  adulte/formation, AFNOR → COFRAC référence publique équivalente).
+- **Drift catalogue ws attrapé par la garde au build** : MEMPHIS a bumpé
+  BOM+catalog **0.0.37** en amont → réaligné settings D4 (0.0.37) +
+  platform BOM (0.0.30 → 0.0.37). Pattern S-246/S-251 réappliqué.
+- Gates : `test` VERT 2531/0, compileKotlin VERT.
+
+=== RENAME-12 hyperframes (1 pt) — docs courantes
+
+- BACKLOG : teasing "AFNOR/REAC" → "du référentiel", dictionnaire
+  "vocabulaire formation FPA (AFNOR, REAC...)" → "vocabulaire formation
+  (référentiel...)", exemple YAML `AFNOR: afnor` → `referentiel:
+  rayferencyel`, "formation FPA" → "formation réglementaire".
+- doc/HYPERFRAMES_ARCHITECTURE.adoc:369 : "Manuel AFNOR" → "Manuel de
+  formation".
+- doc/PILOTAGE_HYPERFRAMES.adoc : Formateurs FPA → professionnels, 32
+  sessions FPA → sessions de formation, SPG/SPD → scénarios pédagogiques
+  (×4), vocabulaire FPA (AFNOR, REAC) → vocabulaire formation
+  (référentiel), persona Formateur FPA → Formateur professionnel.
+- AGENT.adoc règle 9 : "FPA, médical, juridique" → "formation
+  réglementaire, médical, juridique".
+- Gate : grep docs courantes + `src/` = zéro ; compileKotlin VERT.
+
+== Gate transverse finale (D16)
+
+[cols="2,3"]
+|===
+| Borough | Gate
+| planner-gradle | ✅ CLEAN (src + docs)
+| codebase-gradle | ✅ CLEAN (src + docs ; WIP untracked CB-FPA-RAG
+  hors périmètre, session propriétaire)
+| plantuml-gradle | ✅ CLEAN (src + docs, tokenizer SmolLM2 fixture
+  binaire ML exclu)
+| hyperframes-gradle | ✅ CLEAN (src + docs)
+| document-gradle | ✅ CLEAN (citations corpus office/metiers/FPA
+  légitimes S-251, piège #18)
+|===
+
+== Clôture EPIC RENAME Vague 3
+
+- RENAME-7 ✅ (S-254) | RENAME-8 ✅ (S-253) | RENAME-9 ✅ (S-212 bakery)
+- RENAME-10 ✅ (S-254) | RENAME-11 ✅ (S-254) | RENAME-12 ✅ (S-254)
+- **EPIC TERMINÉ 6/6 US.** Le vocabulaire métier privé (FPA, REAC, AFNOR
+  usages privatifs, SPG, SPD, DC, TS, CP, ECF) est sorti du nommage
+  public des boroughs OSS. AFNOR/RNCP restent en keyword de détection
+  (références publiques, D11).
+
+== Zéro publication
+
+Aucune version publiée cette session — les changements de code prod
+(planner prompt + codebase description + plantuml KDoc) sont des chaînes
+non-significatives distribuées au prochain bump de chaque borough (aucun
+consommateur binaire n'importe ces chaînes).
+
+== Commits
+
+- planner-gradle : `rename(rename): RENAME-7 prompts LLM génériques (S-254)`
+- codebase-gradle : `rename(rename): RENAME-10 neutralisation fixtures koog (S-254)` — uniquement mes fichiers (WIP CB-FPA-RAG exclu du commit)
+- plantuml-gradle : `rename(rename): RENAME-11 + docs + drift 0.0.37 (S-254)`
+- hyperframes-gradle : `rename(rename): RENAME-12 docs courantes (S-254)`
+- document-gradle : gouvernance seule (rapport + sync INDEX/PROMPT_REPRISE/BACKLOG)
