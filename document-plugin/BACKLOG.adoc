@@ -1,15 +1,13 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-09 (session 254 — **EPIC RENAME Vague 3
-✅ TERMINÉ 6/6 US** — RENAME-7 planner (prompts LLM génériques + 6
-fixtures), RENAME-10 codebase (description + 9 fixtures koog), RENAME-11
-plantuml (KDoc + 5 fixtures + docs), RENAME-12 hyperframes (docs
-courantes). RENAME-9 bakery était déjà livré (S-212 session parallèle).
-Gate transverse D16 VERT 5 boroughs. Zéro publication — chaînes
-non-significatives aux prochains bumps.)
-_Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 en attente
-du prochain bump)
+_Date revision_ : 2026-09-09 (session 255 — **Sync catalogue ws 0.0.37 ✅**
+— drift MEMPHIS attrapé par la garde `DocumentPluginPublicationTest`
+(RED prouvé), 3 sources réalignées (pattern S-246/S-251), version plugin
+inchangée 0.0.17. Baseline revalidée : UT 3822/0, FT 130/130, 19 runners
+3068/0, garde 3/3. Zéro publication.)
+_Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + pins ws
+0.0.37 en attente du prochain bump)
 
 '''
 == EPIC RENAME Vague 3 — Confiner REAC/AFNOR/SPG/SPD ✅ TERMINÉ (S-254, transverse 6/6 US)

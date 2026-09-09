@@ -2,6 +2,22 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 255 (2026-09-09) — Sync catalogue ws 0.0.37 (drift cross-borough)
+
+*Type* : maintenance (réalignement drift, pattern S-246/S-251)
+*Score* : 10/10
+
+*Résumé* :
+- Drift MEMPHIS attrapé par la garde `DocumentPluginPublicationTest`
+  (RED prouvé avant fix — discipline TDD). 4e occurrence du cycle
+  piège #13 (S-244 découverte, S-246, S-251, S-255).
+- Réalignement 3 sources : settings D4 `workspace-catalog:0.0.37` +
+  platform `workspace-bom:0.0.37` + toml local.
+- `document-plugin` reste 0.0.17 (catalogue MEMPHIS pinnait déjà 0.0.17).
+- Diff BOM 0.0.36→0.0.37 : codebase-plugin 0.0.12→0.0.14, zéro impact.
+- Gates : garde 3/3, mavenLocal VERT (POM platform 0.0.37), UT 3822/0,
+  FT 130/130, 19 runners 3068/0, `check` VERT. Zéro publication.
+
 === Session 254 (2026-09-09) — RENAME Vague 3 CLÔTURÉE 6/6 US (transverse)
 
 *Type* : rename transverse (planner/codebase/plantuml/hyperframes)

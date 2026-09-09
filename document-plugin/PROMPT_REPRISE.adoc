@@ -1,17 +1,16 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 255
+== Mission session 256
 
-S-254 a clôturé l'EPIC RENAME Vague 3 (cadrage transverse bakery
-`CADRAGE_EPIC_RENAME_V3.adoc`) : RENAME-7 planner (prompts LLM
-`IntentionPlanner.kt:149,208` → génériques + 6 fixtures), RENAME-10
-codebase (description tâche + 9 fixtures koog, exclusion D11 keyword
-AFNOR documentée), RENAME-11 plantuml (KDoc + 5 fixtures registres
-publics + docs courantes + drift ws 0.0.37 réaligné), RENAME-12
-hyperframes (BACKLOG + doc/PILOTAGE + AGENT règle 9). RENAME-9 bakery
-était déjà livré (S-212, session parallèle). **EPIC TERMINÉ 6/6 US**
-(7/8/9/10/11/12). Gate transverse D16 VERT sur les 5 boroughs. Zéro
-publication — chaînes non-significatives distribuées aux prochains bumps.
+S-255 a réaligné le drift catalogue ws (piège #13 — pattern S-246/S-251
+réappliqué) : MEMPHIS a bumpé catalog+BOM 0.0.37 en amont, la garde
+`DocumentPluginPublicationTest` était RED au build (problème prouvé avant
+fix — discipline TDD). Les 3 sources sont réalignées vers 0.0.37
+(settings D4 + platform + toml local). `document-plugin` reste **0.0.17**
+(le catalogue MEMPHIS pinnait déjà 0.0.17 — zéro bump plugin). Diff BOM
+0.0.36→0.0.37 : codebase-plugin 0.0.12→0.0.14, zéro impact document.
+Gates : UT 3822/0, FT 130/130, 19 runners Cucumber 3068/0, garde 3/3,
+`check` VERT, `publishToMavenLocal` VERT (POM porte platform 0.0.37).
 
 *1. Rien d'urgent* — le borough est à jour (0.0.17 Central, catalogue ws
 0.0.37, BOM 0.0.37, garde publication 3/3 VERT au build, compileKotlin
@@ -30,6 +29,9 @@ functionalTest 1/1 GREEN. Gate D16 src/ = 0 confirmée.
 - *Rappel Vague 3 cross-borough (pré-requis réactivation A2)* : le
   pipeline A2 produit l'enveloppe K-2 `type == "content"` (ex-"SPD") —
   planner/hyperframes alignés à la réactivation.
+- *Publication 0.0.18* (accord pilote) : distribue RENAME-8
+  (borrowedVocabulary config injectée) + pins ws 0.0.37. Bump seulement
+  sur demande pilote — Règle 2.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
   vers la version Central. Vérifier `<latest>` avant tout pin (piège #21 :
@@ -37,20 +39,20 @@ functionalTest 1/1 GREEN. Gate D16 src/ = 0 confirmée.
 - *POM future release (piège #17)* : toute nouvelle dep `implementation`
   passe par alias `libs.*` avec version explicite.
 
-== État du code (S-254)
+== État du code (S-255)
 
 - *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200. La 0.0.18
   (RENAME-8 config injectée) n'est PAS publiée — bump au prochain besoin.
-- *Catalogue ws* : 0.0.37 (document pin 0.0.17 — à réaligner si drift).
+- *Catalogue ws* : **0.0.37** (document pin 0.0.17 — réaligné S-255, garde 3/3).
 - *Consumer racine* : `document = "0.0.17"` sans mavenLocal (Central pur).
 - *Gates document* : UT 3822/0, FT 130/130, 19 runners Cucumber dédiés
-  VERTS, garde publication 3/3.
+  (3068 scénarios / 0 fail), garde publication 3/3, `check` VERT.
 - *API translation* : `borrowedVocabulary` injectable sur PlantUmlBlock +
   PlantUmlTranslationAdapter (défaut vide = tout est traduit).
 - *EPIC RENAME Vague 3* : ✅ TERMINÉ 6/6 US (cadrage S-215, gate D16
   transverse VERT 5 boroughs).
 
-== Pièges Gradle à retenir (S-232..S-254)
+== Pièges Gradle à retenir (S-232..S-255)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -78,8 +80,9 @@ functionalTest 1/1 GREEN. Gate D16 src/ = 0 confirmée.
 13. *Drift catalogue ws* : MEMPHIS bump le catalogue en amont — la garde
     `DocumentPluginPublicationTest` RED au prochain build. Fix : réaligner
     les 3 sources vers la version publiée Central. *Réappliqué S-251
-    (0.0.34) et S-254 côté plantuml (0.0.37 — la garde plantuml a
-    attrapé le drift au build, pattern généralisé).*
+    (0.0.34), S-254 côté plantuml (0.0.37 — la garde plantuml a
+    attrapé le drift au build, pattern généralisé) et S-255 (0.0.36→0.0.37
+    — 4e occurrence du cycle, garde = filet défensif prouvé).*
 14. *PDFBox 3.x lénient sur les octets* : le garde PDF est un garde
     *texte extractible par page*. Preuve négative = pages sans texte.
 15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size
@@ -166,7 +169,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 == Vision « livre content SERVER »
 
-Verrous levés S-233..S-254 : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-255 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
 externe prouvée depuis Central (0.0.16 S-249 puis **0.0.17 S-252b sans
 mavenLocal**), 6 gardes documentaires
@@ -175,7 +178,7 @@ exhaustif (S-251 : 4 raisons + detail) prouvé sur le corpus réel
 (16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT, PDF VALID),
 neutralisation nommage métier privé (S-251 RENAME-2 + S-253 RENAME-8 :
 borrowedVocabulary sorti du nommage public, config injectée D14 ; S-254 :
-clôture transverse Vague 3 — 5 boroughs CLEAN). Le produit est servable,
-auditable, documenté et **distribué** de bout en bout (0.0.17 = RENAME-2
-+ OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8 en attente du prochain
-bump).
+clôture transverse Vague 3 — 5 boroughs CLEAN ; S-255 : pins ws 0.0.37).
+Le produit est servable, auditable, documenté et **distribué** de bout en
+bout (0.0.17 = RENAME-2 + OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8
++ pins 0.0.37 en attente du prochain bump).

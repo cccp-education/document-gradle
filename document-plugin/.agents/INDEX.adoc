@@ -21,6 +21,19 @@ prouvée debug log, STRICT VALID + STRICT fail textless) ; bakery pin ws 0.0.32
 + platform 0.0.32 → document 0.0.16 sans hardcode (compileKotlin VERT).
 Piège #17 documenté (PROMPT_REPRISE). Commits : MEMPHIS `988fda5`, document
 `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`.)
+|_Derniere mise a jour_ : 2026-09-09 (session 255 — **Sync catalogue ws 0.0.37 ✅** —
+drift cross-borough MEMPHIS attrapé par la garde `DocumentPluginPublicationTest`
+(RED prouvé avant fix — discipline TDD, 4e occurrence du cycle piège #13 :
+S-244 découverte, S-246, S-251, S-255). Réalignement 3 sources : settings D4
+`workspace-catalog:0.0.36`→`0.0.37` + platform `workspace-bom`→0.0.37 + toml
+local. `document-plugin` reste 0.0.17 (le catalogue MEMPHIS pinnait déjà
+0.0.17 — zéro bump plugin). Diff BOM 0.0.36→0.0.37 : codebase-plugin
+0.0.12→0.0.14, zéro impact document. Gates : garde 3/3 VERT,
+`publishToMavenLocal` VERT (POM porte platform 0.0.37), UT 3822/0, FT
+130/130, 19 runners Cucumber 3068/0, `check` VERT. Zéro publication —
+pins distribués au prochain bump (accord pilote). DOC-FPA-PUBLISH-0
+STANDBY (corpus A1 : 16 ILLISIBLE au 2026-09-09). Rapport :
+`.agents/sessions/255-sync-catalog-0.0.37.adoc`.)
 |_Derniere mise a jour_ : 2026-09-09 (session 254 — **RENAME Vague 3 CLÔTURÉE ✅ 6/6 US** —
 S-254 clôture la Vague 3 (RENAME-9 bakery était déjà livré S-212 session
 parallèle) : RENAME-7 planner (prompts LLM `IntentionPlanner.kt:149,208`
@@ -61,15 +74,15 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 254 — RENAME Vague 3 CLÔTURÉE 6/6 US
-(transverse : planner RENAME-7, codebase RENAME-10, plantuml RENAME-11
-+ drift 0.0.37, hyperframes RENAME-12 ; RENAME-8 document S-253, RENAME-9
-bakery S-212). EPIC RENAME Vague 3 : ✅ TERMINÉ.
-DOC-FPA-PUBLISH-0 STANDBY (re-déclenché par A1 — 16 ILLISIBLE au
-2026-09-09).
+|_Derniere session terminee_ : 255 — Sync catalogue ws 0.0.37 (drift
+MEMPHIS attrapé par la garde, 3 sources réalignées, pattern
+S-246/S-251 réappliqué). Baseline préservée : UT 3822/0, FT 130/130,
+19 runners 3068/0, garde 3/3. DOC-FPA-PUBLISH-0 STANDBY (re-déclenché
+par A1 — 16 ILLISIBLE au 2026-09-09).
   _Prochaine session_ : DOC-FPA-PUBLISH-0 (si A1 livre le corpus corrigé
 — convergence attendue 0 ILLISIBLE) OU maintenance/consommateur sur
-demande pilote.
+demande pilote. Publication 0.0.18 (RENAME-8 + pins ws 0.0.37) sur
+accord pilote seulement.
 
 '''
 == REGLES ABSOLUES (resume)

@@ -1,5 +1,32 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-09
+:session: 255
+
+== Session 255 — Sync catalogue ws 0.0.37 (drift, zéro test modifié)
+
+*Objectif* : réaligner les 3 pins du drift catalogue ws (MEMPHIS bump
+0.0.37 en amont — garde `DocumentPluginPublicationTest` RED prouvée
+avant fix).
+
+*Zéro test modifié/créé* — Économie d'Encre : la garde publication
+existante (S-244) a fait son travail défensif. Seuls les 3 fichiers de
+build changent (settings + platform + toml local).
+
+*Baseline revalidée après réalignement* (le bump BOM 0.0.36→0.0.37
+pouvait casser des deps contraintes) :
+
+- `test` : **3822 / 0 FAIL** (baseline S-254 préservée exactement —
+  477 suites XML scannées, zéro failure/error)
+- `functionalTest` : **130 / 130**
+- 19 runners Cucumber dédiés : **3068 scénarios / 0 fail** (tous PASS)
+- `DocumentPluginPublicationTest` : 3/3 PASSED (RED→GREEN)
+- `check` VERT (validatePlugins inclus), `publishToMavenLocal` VERT
+  (POM porte platform 0.0.37)
+
+*Conclusion* : le bump BOM (codebase-plugin 0.0.12→0.0.14) n'impacte
+aucun test document — zéro régression prouvée par revalidation complète.
+
+:date: 2026-09-09 (sessions précédentes)
 :session: 254
 
 == Session 254 — RENAME Vague 3 (transverse, fixtures seulement)

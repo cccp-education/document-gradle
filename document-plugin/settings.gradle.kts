@@ -35,11 +35,11 @@ dependencyResolutionManagement {
 }
 
 // ── MEM-CAT-ROLLOUT-1 — Catalog workspace published (MEMPHIS): single pin per borough (D4) ──
-// education.cccp:workspace-catalog:0.0.36 — cross-borough source of truth for plugin versions.
+// education.cccp:workspace-catalog:0.0.37 — cross-borough source of truth for plugin versions.
 dependencyResolutionManagement {
     versionCatalogs {
         create("ws") {
-            from("education.cccp:workspace-catalog:0.0.36")
+            from("education.cccp:workspace-catalog:0.0.37")
         }
     }
 }

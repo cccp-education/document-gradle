@@ -1,0 +1,76 @@
+= Session 255 — Sync catalogue ws 0.0.37 (drift cross-borough MEMPHIS)
+
+_Date_ : 2026-09-09
+_Type_ : maintenance (réalignement drift, pattern S-246/S-251)
+_Score_ : 10/10
+
+== Contexte
+
+Mission 255 (« rien d'urgent » — candidats sur demande pilote). Le seul
+déclencheur automatique était le piège #13 : MEMPHIS a bumpé le catalogue
+workspace en amont (0.0.37, S-215 racine) pendant que document pinne
+encore 0.0.36. La garde `DocumentPluginPublicationTest` doit être RED au
+build — rôle défensif prouvé S-246 (0.0.30→0.0.31) puis S-251 (0.0.34).
+
+== Diagnostic (RED prouvé)
+
+- Central vérifié à l'ouverture : `workspace-catalog` `<latest>` = 0.0.37,
+  `workspace-bom` `<latest>` = 0.0.37, `document-plugin` `<latest>` = 0.0.17.
+- Guard RED réel : `workspace bom platform pin matches ws catalog bom
+  version()` FAILED — message attendu `platform pin must use the ws
+  catalog BOM version (0.0.37)`.
+- Diff POM BOM 0.0.36 → 0.0.37 : seule `codebase-plugin` 0.0.12 → 0.0.14
+  (aucun impact document — zéro dépendance réelle, 3 mentions = commentaires
+  KDoc).
+
+== Fix (3 sources, pattern S-246/S-251 réappliqué)
+
+. `settings.gradle.kts` — pin D4 : `workspace-catalog:0.0.36` → `0.0.37`
+. `build.gradle.kts` — platform : `workspace-bom:0.0.36` → `0.0.37`
+. `gradle/libs.versions.toml` — toml local : `workspace-bom = "0.0.36"` →
+  `"0.0.37"` (la garde publication attrape aussi le split-brain toml local)
+
+`document-plugin` reste **0.0.17** (inchangé) — le catalogue MEMPHIS
+pinnait déjà `document-plugin = 0.0.17`, zéro bump plugin nécessaire.
+
+== Gates (VERTES)
+
+- `DocumentPluginPublicationTest` 3/3 PASSED (RED → GREEN)
+- `publishToMavenLocal` VERT — POM local porte platform **0.0.37**
+  (vérifié `grep` sur le POM publié)
+- `test` 3822 / 0 FAIL (baseline S-254 préservée exactement)
+- `functionalTest` 130 / 130
+- 19 runners Cucumber dédiés : 3068 scénarios / 0 fail (tous PASS)
+- `check` VERT (6m20s, validatePlugins inclus)
+- Secrets : RAS (scan .kts/.properties/.yml = 0 match)
+
+== DOC-FPA-PUBLISH-0 (STANDBY — inchangé)
+
+Corpus A1 Tombouctou non corrigé à l'ouverture : `book-ocr-issues.json`
+compte toujours **16 ILLISIBLE** (2026-09-09). La re-régénération du livre
+reste déclenchée par le livrable A1 (convergence attendue : 0 ILLISIBLE).
+Pipeline validé 2 runs S-252 — rien à faire tant qu'A1 ne livre pas.
+
+== Publication
+
+Zéro publication Central. La version 0.0.17 reste la dernière publiée ;
+les pins 0.0.37 seront distribués à la prochaine publication (accord
+pilote requis, Règle 2). Le BOM 0.0.37 ne porte aucun changement impactant
+document (codebase-plugin 0.0.14 non consommé).
+
+== Fichiers modifiés
+
+- `settings.gradle.kts` (pin catalog 0.0.37)
+- `build.gradle.kts` (platform 0.0.37)
+- `gradle/libs.versions.toml` (toml local 0.0.37)
+- Gouvernance : PROMPT_REPRISE (mission 256), INDEX (S-255),
+  SESSIONS_HISTORY, archives, ce rapport.
+
+== Leçon confirmée
+
+Le pattern drift catalogue (piège #13) est un *cycle* : chaque bump amont
+MEMPHIS redéclenche la garde au prochain build du borough consommateur.
+La garde `DocumentPluginPublicationTest` est le filet défensif — sa valeur
+a été prouvée 4 fois (S-244 découverte initiale, S-246, S-251, S-255).
+Vérifier `<latest>` Central avant tout pin (piège #21 : déploiements
+concurrents MEMPHIS — coordonner avant tout bump).
