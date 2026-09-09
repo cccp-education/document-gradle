@@ -1,11 +1,12 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-09 (session 255 — **Sync catalogue ws 0.0.37 ✅**
-— drift MEMPHIS attrapé par la garde `DocumentPluginPublicationTest`
-(RED prouvé), 3 sources réalignées (pattern S-246/S-251), version plugin
-inchangée 0.0.17. Baseline revalidée : UT 3822/0, FT 130/130, 19 runners
-3068/0, garde 3/3. Zéro publication.)
+_Date revision_ : 2026-09-09 (session 256 — **Audit RENAME verdict ✅ CADUQUE**
+— gate D16 re-déroulée : 10 matches src/ TOUS faux positifs piège #18
+(chemins corpus `office/metiers/FPA`), sweep exhaustif = 0, docs
+gouvernance légitimes. Zéro résidu métier privé — aucun cadrage
+RENAME-13. Gouvernance pure, baseline S-255 préservée. Zéro
+publication.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + pins ws
 0.0.37 en attente du prochain bump)
 
@@ -24,7 +25,7 @@ _Origine : demande pilote — REAC/AFNOR/SPG/SPD = vocabulaire métier privé. N
 | RENAME-12 | capsule/hyperframes docs courantes → génériques | 1 | ✅ TERMINÉ (S-254 — BACKLOG ×4 + doc/PILOTAGE + doc/ARCHITECTURE + AGENT règle 9, capsule docs OK cadrage) |
 |===
 
-*Gate D16* : `grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/ docs-courants` = zéro match hors faux positifs (SPDX, asparagus, SmolLM2 tokenizer binaire ML, DeterministicOffTopicDetector AFNOR keyword public D11, citations corpus office/ légitimes #18, WIP untracked CB-FPA-RAG codebase session propriétaire). ✅ S-254 : VERT sur 5 boroughs.
+*Gate D16* : `grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/ docs-courants` = zéro match hors faux positifs (SPDX, asparagus, SmolLM2 tokenizer binaire ML, DeterministicOffTopicDetector AFNOR keyword public D11, citations corpus office/ légitimes #18, WIP untracked CB-FPA-RAG codebase session propriétaire). ✅ S-254 : VERT sur 5 boroughs. **✅ S-256 : re-déroulée sur document — 10 matches src/ TOUS faux positifs piège #18 (chemins corpus office/FPA), sweep exhaustif = 0, docs gouvernance légitimes → verdict CADUQUE, aucun RENAME-13.**
 
 '''
 

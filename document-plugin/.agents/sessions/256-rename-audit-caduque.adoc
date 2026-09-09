@@ -1,0 +1,105 @@
+= Session 256 — Audit RENAME résidus métier privé (gate D16 re-run + sweep exhaustif)
+
+_Date_ : 2026-09-09
+_Type_ : gouvernance pure (audit de vérification — arbitrage pilote S-255)
+_Score_ : 10/10
+
+== Mission
+
+Arbitrage pilote S-255 : la session 256 est un RENAME — audit de résidus
+métier privé (FPA/REAC/AFNOR/SPG/SPD) dans src/ + docs courantes, suite
+des Vagues 1-3 (S-251 RENAME-2 dur + S-253 RENAME-8 config injectée +
+S-254 Vague 3 transverse 6/6). Re-dérouler la gate D16 du cadrage Vague
+3 (`grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/` = zéro match hors faux
+positifs documentés) + audit exhaustif des résidus restants (commentaires,
+KDoc, fixtures, noms de tests, feature files, README).
+
+Décision à l'issue : si zéro résidu → ✅ CADUQUE ; si résidus → cadrage
+RENAME-13 (gouvernance pure pattern S-057) puis US baby-step DDD/TDD/BDD.
+Ne PAS renommer les citations légitimes du corpus `office/metiers/FPA`
+(piège #18).
+
+Complément S-255 : résidu REAC en cours de correction (S-213) — vérifié
+en ouverture (`AssembleBookTaskContentRichTocTest.kt:100` → `"enquête
+terrain"`).
+
+== Audit — Gate D16 exacte (src/ word-boundary)
+
+`grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/` :
+
+- **10 matches, TOUS des chemins corpus légitimes** `office/metiers/FPA`
+  (faux positifs documentés, piège #18 — à NE PAS renommer) :
+  `AssembleBookTaskContentRichTocTest.kt:36`,
+  `BookPipelineContentFunctionalTest.kt:26`,
+  `BookPipelineN3ContentFunctionalTest.kt:44`,
+  `AssembleBookTaskContentTest.kt:17,19,32`,
+  `HtmlLinkLintFunctionalTest.kt:27`,
+  `ContentBookArtifactGenerationTest.kt:16,22,29`,
+  `PdfCheckContentFunctionalTest.kt:27`,
+  `EpubCheckContentFunctionalTest.kt:31`.
+- **Zéro autre match** dans l'ensemble `src/` (prod + test).
+
+Le verrou REAC connu est corrigé : `AssembleBookTaskContentRichTocTest.kt:100`
+assère `"enquête terrain"` (corps OCR page 22, absent du TOC — plus
+discriminant, S-213). FunctionalTest 1/1 GREEN (baseline).
+
+== Audit — Sweep exhaustif des résidus restants
+
+| Zone scrutée | Commande | Résultat
+| src/ insensible à la casse, hors chemins corpus | `grep -rniw "fpa\|reac\|afnor\|spg\|spd" src/` filtré | zéro match
+| Noms de fichiers src/ | `git ls-files src/ | grep -iE "fpa\|reac..."` | zéro match
+| Feature files (resources) | `grep` sur `src/*/resources/` | zéro match
+| src/main (hors chemins corpus) | grep word-boundary | zéro match
+| README.md | grep word-boundary | zéro match
+| build/settings/wrapper/catalogue | grep sur `.kts`/`.properties`/`.toml` | zéro match
+| `.github/` | absent du repo | n/a
+
+== Audit — Docs gouvernance (légitimes, hors RENAME)
+
+Les mentions FPA/REAC/AFNOR/SPG/SPD restantes sont toutes des références
+de gouvernance **légitimes** (documents `.adoc` en français, exclus de la
+règle English-only par AGENTS.adoc racine) :
+
+- `AGENT.adoc:22,64,68` — distinction planner (SPG/SPD = domaine métier
+  de Manhattan), consommateurs `office/metiers/FPA` (chemin corpus),
+  cas d'usage MVP0. Légitimes : citations du corpus réel + description du
+  DAG N2.
+- `BACKLOG.adoc` — EPIC DOC-FPA-PUBLISH (GBL-003.6, STANDBY), historique
+  Vagues 1-3 RENAME (RENAME-7→12 ✅), references corpus. Légitimes : le
+  vocabulaire y est le SUJET de la trace RENAME + le chemin corpus réel.
+- `PROMPT_REPRISE.adoc`, `INDEX.adoc`, `SESSIONS_HISTORY.adoc`,
+  `.agents/sessions/*`, `.agents/archives/*` — rapports de session,
+  cadrages, historique. Légitimes : traces de gouvernance, non renommables
+  (pattern git history).
+
+== Verdict
+
+***✅ CADUQUE — zéro résidu métier privé dans le périmètre RENAME.***
+
+- Gate D16 src/ = 10 matches, tous faux positifs documentés piège #18.
+- Sweep exhaustif (KDoc, commentaires, fixtures, noms de tests, features,
+  README, build) = zéro.
+- Docs gouvernance : mentions légitimes uniquement.
+
+Aucun cadrage RENAME-13 nécessaire. L'EPIC RENAME Vague 3 reste ✅
+TERMINÉ (S-254) et la gate D16 est confirmée VERTE sur le borough document
+(5e re-vérification document : S-253 gate word-boundary, S-254 transverse).
+
+== Gates
+
+Aucune suite de test exécutée (gouvernance pure — zéro code modifié).
+Baseline S-255 préservée par construction : UT 3822/0, FT 130/130,
+19 runners Cucumber 3068/0, garde publication 3/3, `check` VERT.
+
+== DOC-FPA-PUBLISH-0 (STANDBY — inchangé)
+
+Corpus A1 Tombouctou non corrigé (16 ILLISIBLE au 2026-09-09).
+Re-régénération déclenchée par le livrable A1. Rien à faire — la mention
+FPA dans l'EPIC DOC-FPA-PUBLISH est une citation du corpus réel, légitime.
+
+== Fichiers modifiés
+
+- Gouvernance uniquement : PROMPT_REPRISE (mission 257), INDEX (S-256),
+  SESSIONS_HISTORY, archive septembre, ce rapport.
+
+Zéro code production modifié, zéro bump BOM, zéro secret, zéro publication.

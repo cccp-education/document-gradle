@@ -2,6 +2,35 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 256 (2026-09-09) — Audit RENAME ✅ CADUQUE (zéro résidu métier privé)
+
+*Type* : gouvernance pure (audit de vérification — arbitrage pilote S-255)
+*Score* : 10/10
+
+*Résumé* :
+- Mission : re-dérouler la gate D16 du cadrage RENAME Vague 3
+  (`grep -rwn "FPA\|REAC\|AFNOR\|SPG\|SPD" src/`) + sweep exhaustif des
+  résidus restants (commentaires, KDoc, fixtures, noms de tests, feature
+  files, README) dans document — verdict attendu : CADUQUE si zéro résidu,
+  sinon cadrage RENAME-13.
+- Gate D16 src/ : **10 matches, TOUS faux positifs piège #18** — chemins
+  corpus `office/metiers/FPA` légitimes (à conserver) dans 8 fichiers de
+  test fonctionnel/audit dogfooding.
+- Sweep exhaustif : insensible casse = zéro, noms de fichiers = zéro,
+  src/main KDoc/commentaires = zéro, feature files = zéro, README = zéro,
+  build/settings/wrapper/catalogue = zéro, `.github/` absent.
+- Docs gouvernance : mentions FPA/REAC/AFNOR/SPG/SPD légitimes uniquement
+  (EPIC DOC-FPA-PUBLISH réel GBL-003.6, historique Vagues RENAME,
+  rapports de session / archives — non renommables).
+- Verrou REAC `AssembleBookTaskContentRichTocTest.kt:100` vérifié corrigé
+  depuis S-213 (`"enquête terrain"` corps OCR p.22, plus discriminant).
+- **Verdict : ✅ CADUQUE — aucun cadrage RENAME-13 nécessaire.** Gate D16
+  confirmée VERTE sur document, EPIC RENAME Vague 3 reste ✅ TERMINÉ.
+- Gouvernance pure : zéro code modifié, zéro bump BOM, zéro secret, zéro
+  publication. Baseline S-255 préservée par construction (UT 3822/0,
+  FT 130/130, 19 runners 3068/0, garde 3/3).
+- DOC-FPA-PUBLISH-0 : STANDBY inchangé (A1 corpus 16 ILLISIBLE).
+
 === Session 255 (2026-09-09) — Sync catalogue ws 0.0.37 (drift cross-borough)
 
 *Type* : maintenance (réalignement drift, pattern S-246/S-251)
