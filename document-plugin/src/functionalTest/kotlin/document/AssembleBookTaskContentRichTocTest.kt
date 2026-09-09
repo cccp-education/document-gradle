@@ -97,7 +97,10 @@ class AssembleBookTaskContentRichTocTest {
         assertTrue(content.contains("[[1.0.2.1]]"), "anchor for 1.0.2.1 must be emitted")
         assertTrue(content.contains("==== 1.0.2.1"), "section 1.0.2.1 must be a ==== heading")
         // real OCR body recovered (page 22 content), not only TOC headings
-        assertTrue(content.contains("REAC"), "real OCR body content must be recovered into the book")
+        assertTrue(
+            content.contains("enquête terrain"),
+            "real OCR body content must be recovered into the book",
+        )
 
         // --- OCR failures located for human iteration
         val report = projectDir.resolve("build/docs/document/book-ocr-issues.json")

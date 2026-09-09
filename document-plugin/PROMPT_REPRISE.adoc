@@ -18,6 +18,11 @@ publication — chaînes non-significatives distribuées aux prochains bumps.
 VERT). A1 Tombouctou n'a pas livré le corpus corrigé (16 ILLISIBLE au
 2026-09-09) : DOC-FPA-PUBLISH-0 reste STANDBY.
 
+*Résidu RENAME Vague 3 corrigé (S-213 bakery, 2026-09-09)* : assertion
+`REAC` dans `AssembleBookTaskContentRichTocTest.kt:100` → `"enquête
+terrain"` (corps OCR page 22, absent du TOC — plus discriminant).
+functionalTest 1/1 GREEN. Gate D16 src/ = 0 confirmée.
+
 *2. Candidats prochaine session (sur demande pilote)* :
 
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
