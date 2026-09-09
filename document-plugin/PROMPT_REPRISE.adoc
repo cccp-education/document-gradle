@@ -1,49 +1,51 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 253
+== Mission session 254
 
-S-252 a fixé le bug réel du détecteur IMAGE_MISSING (macro inline
-`image:file[]`) et S-252b a PUBLIÉ 0.0.17 Central avec distribution
-prouvée sur 3 consommateurs (tiers sans mavenLocal, bakery D5, dogfooding
-livre FPA depuis Central). RENAME-2 + OCR-QUALITY-3 + fix inline sont
-DISTRIBUÉS hors machine de dev.
+S-253 a livré RENAME-8 (EPIC RENAME Vague 3, cadrage S-250) : la liste
+hardcodée `borrowedVocabulary` (REAC/AFNOR/DC/TS/RNCP/CP/ECF) est sortie
+des 2 fichiers prod via config injectée D14 — `PlantUmlBlock(raw,
+borrowedVocabulary: Set<String> = emptySet())` + `PlantUmlTranslationAdapter(...,
+borrowedVocabulary: Set<String> = emptySet())` (paramètre additif fin de
+signature). Le plugin public ne connaît plus AUCUN vocabulaire métier ;
+chaque consommateur fournit le sien. 12 fixtures neutralisées (REF/ORG/MOD/EVA
++ injection explicite). Gates : UT 3822/0, FT 130/130, cucumber plantuml 10/10,
+validatePlugins VERT, grep word-boundary = 1 match (citation corpus réel,
+piège #18). Zéro publication — la config injectée sera distribuée au prochain
+bump version.
 
-*1. Rien d'urgent* — l'EPIC RENAME est distribué, le rapport OCR exhaustif
-de `livre-navigable/book-ocr-issues.json` est régénéré (16 ILLISIBLE + 4
-IMAGE_MISSING + 7 TABLE_SUSPECT + PDF VALID) et alimente l'itération
-humaine A1 Tombouctou.
+*1. Rien d'urgent* — le borough est à jour (0.0.17 Central, catalogue ws
+0.0.36, BOM 0.0.36, garde publication 3/3 VERT au build). A1 Tombouctou
+n'a pas livré le corpus corrigé (16 ILLISIBLE au 2026-09-09) :
+DOC-FPA-PUBLISH-0 reste STANDBY.
 
-*2. DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
-le corpus corrigé (convergence attendue : 0 ILLISIBLE). Le pipeline est
-validé de bout en bout depuis Central.
+*2. Candidats prochaine session (sur demande pilote)* :
 
-*3. Travaux au-delà uniquement sur besoin réel* :
-
+- *RENAME-9 bakery (2 pts)* — `I18nMigrationService.kt:59,82` "SPG" dans
+  whitelist + substringBlacklist + fixtures features 53/55/56 +
+  `vocabulaire-metier.adoc` (cross-borough Bushwick, à coordonner).
+- *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
+  le corpus corrigé (convergence attendue : 0 ILLISIBLE).
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
-  vers la version Central. Le toml MEMPHIS courant est 0.0.36 (agent
-  concurrent S-212, workspace-bom 0.0.36 non encore propagé Central à ma
-  clôture — vérifier `<latest>` avant tout pin).
-- *Pin POM Central* : le POM Central 0.0.17 pinnait bom 0.0.34 (déploiement
-  concurrent). Prochain bump document réalignera. Zéro impact (deps toutes
-  versionnées explicitement).
+  vers la version Central. Vérifier `<latest>` avant tout pin (piège #21 :
+  déploiements concurrents, coordonner MEMPHIS avant tout bump).
 - *POM future release (piège #17)* : toute nouvelle dep `implementation`
   passe par alias `libs.*` avec version explicite.
-- *Maintenance* : 4-5 failures test bakery préexistantes — à corriger
-  côté bakery si le pilote le souhaite (coordonner, session concurrente
-  possible — deux sessions MEMPHIS ont déjà collisionné S-252b).
 
-== État du code (S-252b)
+== État du code (S-253)
 
-- *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200, JAR porte le
-  fix `image::?` (sha256 `a005ff2e` byte-identique au local).
-- *Catalogue ws* : MEMPHIS 0.0.35 publié (moi) ; 0.0.36 en préparation
-  par l'agent concurrent (toml courant, pas encore Central à ma clôture).
+- *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200. La 0.0.18
+  (RENAME-8 config injectée) n'est PAS publiée — bump au prochain besoin.
+- *Catalogue ws* : 0.0.36 (document pin 0.0.17).
 - *Consumer racine* : `document = "0.0.17"` sans mavenLocal (Central pur).
-- *Gates document* : UT 3820/0, FT 130/130, cucumber global 3055/0,
-  19 runners Cucumber dédiés VERTS (ocrQuality 8/8), garde publication 3/3.
+- *Gates document* : UT 3822/0, FT 130/130, 19 runners Cucumber dédiés
+  VERTS, garde publication 3/3.
+- *API translation* : `borrowedVocabulary` injectable sur PlantUmlBlock +
+  PlantUmlTranslationAdapter (défaut vide = tout est traduit). Bakery
+  consommateur 0.0.17 publié compile sans changement (paramètre additif).
 
-== Pièges Gradle à retenir (S-232..S-252)
+== Pièges Gradle à retenir (S-232..S-253)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -78,31 +80,35 @@ validé de bout en bout depuis Central.
 16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : `publishToMavenLocal`
     met à jour l'artefact local sans changer la version — un consommateur
     DOIT déclarer `pluginManagement { repositories { mavenLocal() } }` AVANT
-    le Plugin Portal pour tester le HEAD local. *S-252 : mécanisme utilisé
-    pour dogfooder le HEAD sans publication.*
+    le Plugin Portal pour tester le HEAD local.
 17. *Central exige une version explicite par dépendance POM* : alias
     `libs.*` avec version.ref dans le catalogue local du borough.
 18. *Faux positif grep "fpa"* : `LeafPath` contient littéralement "fpa" —
     exclusion documentée. Les chemins `office/metiers/FPA/..._FPA_II/...`
     sont des citations légitimes du corpus privé — ne pas les renommer.
+    *S-253 : idem "REAC"* — `AssembleBookTaskContentRichTocTest:100` asserte
+    le corps OCR réel du corpus (citation légitime, hors RENAME).
 19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline
     `image:f[]` — toute détection de références image doit couvrir les deux
-    (`image::?`). Découvert par dogfooding réel : 2/4 images fantômes
-    invisibles au détecteur block-only.
+    (`image::?`).
 20. *Dogfooding HEAD via mavenLocal (S-252)* : republication
     `publishToMavenLocal` + consumer racine résolvant mavenLocal en tête =
     chaîne de dogfooding sans publication Central. Le rapport
     `pdf-validation-report.json` doit être ajouté à la liste fpaPublish
     sinon il est perdu au wipe /tmp.
-21. *Central immutable × deployment concurrent (S-252b)* : deux agents
-    MEMPHIS qui bumpent en parallèle publient des deployments concurrents
-    — le premier arrivé fixe le POM/JAR, le second reçoit `already exists`.
-    Si les JARs sont byte-identiques, distribution équivalente (vérifier
-    sha256 au lieu de re-bumper). Coordonner MEMPHIS avant tout bump.
-22. *Pin POM BOM divergent = zéro impact si deps versionnées (S-252b)* :
-    le POM Central peut pinner un BOM plus ancien que le toml local —
-    l'import BOM `scope=import` ne contraint que les deps NON versionnées
-    du POM. Pattern S-209 (deps explicites) rend le pin inopérant.
+21. *Central immutable × deployment concurrent (S-252b)* : coordonner
+    MEMPHIS avant tout bump.
+22. *Pin POM BOM divergent = zéro impact si deps versionnées (S-252b)*.
+23. *Fake de test doit matcher le contrat sémantique (S-253)* : le test
+    « terme non configuré traduit par défaut » exige un fake qui traduit
+    TOUT (`fakeTranslator` préfixe universel) — un fake sélectif
+    (`preservingOnlyLabelsTranslator`) laisse les termes inconnus inchangés
+    et l'assertion `doesNotContain` devient infondée. Choisir le fake selon
+    le comportement LLM réel à prouver.
+24. *Paramètre additif fin de signature (S-253)* : `borrowedVocabulary`
+    ajouté en DERNIER paramètre du constructeur (défaut `emptySet()`) —
+    les consommateurs binaires (bakery 0.0.17 publié) compilent sans
+    changement. Toute extension d'API publique du plugin suit ce pattern.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -135,21 +141,22 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.17 ; `workspace-catalog`
-   `<latest>` = 0.0.35 (MEMPHIS 0.0.36 en préparation par l'agent
-   concurrent S-212 — vérifier `<latest>` avant tout pin, pièges #13/#21).
-5. Baseline : UT 3820/0, FT 130/130, `ocrQualityCucumberTest` 8/8,
-   `pdfCheckCucumberTest` 4/4, `epubCheckCucumberTest` 4/4.
+   `<latest>` = 0.0.36 ; `workspace-bom` `<latest>` = 0.0.36 (vérifier
+   `<latest>` avant tout pin, pièges #13/#21).
+5. Baseline : UT 3822/0, FT 130/130, `plantUmlValidationCucumberTest`
+   10/10 PASSED, `pdfCheckCucumberTest` 4/4, `epubCheckCucumberTest` 4/4.
 
 == Vision « livre content SERVER »
 
-Verrous levés S-233..S-252b : statut N3 (`validationStatus=PASS`), knob
+Verrous levés S-233..S-253 : statut N3 (`validationStatus=PASS`), knob
 `outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
 externe prouvée depuis Central (0.0.16 S-249 puis **0.0.17 S-252b sans
 mavenLocal**), 6 gardes documentaires
 (includeGuard/xref/security/htmlLint/epubCheck/pdfCheck), rapport OCR
-exhaustif (S-251 : 4 raisons + detail) **prouvé sur le corpus réel**
-(S-252 : 16 ILLISIBLE + 4 IMAGE_MISSING — dont 2 inline découvertes par
-le dogfooding — + 7 TABLE_SUSPECT, PDF VALID), neutralisation nommage
-métier privé (S-251). Le produit est servable, auditable, documenté et
-**distribué** de bout en bout (**0.0.17** = RENAME-2 + OCR-QUALITY-3 +
-fix inline, prouvé sur 3 consommateurs sans mavenLocal).
+exhaustif (S-251 : 4 raisons + detail) prouvé sur le corpus réel
+(16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT, PDF VALID),
+neutralisation nommage métier privé (S-251 RENAME-2 + S-253 RENAME-8 :
+borrowedVocabulary sorti du nommage public, config injectée D14). Le
+produit est servable, auditable, documenté et **distribué** de bout en
+bout (0.0.17 = RENAME-2 + OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8
+en attente du prochain bump).

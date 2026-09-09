@@ -1,18 +1,16 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-08 (session 252 — **dogfooding convergence + fix
-IMAGE_MISSING inline ✅** — livre FPA régénéré avec le HEAD (RENAME-2 +
-OCR-QUALITY-3 + 6 gardes) via commande canonique étendue au 6e garde
-(2 runs BUILD SUCCESSFUL). Bug réel découvert : détecteur block-only
-`image::` ignorait la macro inline `image:file[]` (2/4 images fantômes
-invisibles) — fix TDD `image::?` (1 ligne, 12/12 UT + BDD @inline-image
-8/8). Convergence : 16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT +
-PDF VALID — rapport prêt pour l'itération humaine A1. fpaPublish déplace
-le rapport PDF. Dette S-082 clôturée (consumer racine 0.0.16). Zéro
-publication — HEAD porte RENAME-2+OCR-QUALITY+fix inline en attente
-accord pilote.)
-_Version_ : 0.0.16 (publié Maven Central — POM HTTP 200, JAR porte les 6 gardes)
+_Date revision_ : 2026-09-09 (session 253 — **RENAME-8 ✅ config injectée
+D14** — borrowedVocabulary (REAC/AFNOR/DC/TS/RNCP/CP/ECF) sorti des 2
+fichiers prod : `PlantUmlBlock(raw, borrowedVocabulary = emptySet())` +
+`PlantUmlTranslationAdapter(..., borrowedVocabulary = emptySet())`
+(paramètre additif). Le plugin public ne connaît plus AUCUN vocabulaire
+métier. 12 fixtures neutralisées. Gates : UT 3822/0, FT 130/130, cucumber
+plantuml 10/10, grep word-boundary = 1 match (citation corpus réel, piège
+#18). Zéro publication — distribuée au prochain bump.)
+_Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 en attente
+du prochain bump)
 
 '''
 == EPIC RENAME — Neutralisation nommage métier privé (FPA→content) ✅ TERMINÉ (S-251, document)
@@ -33,7 +31,7 @@ _Origine : demande pilote — REAC/AFNOR/SPG/SPD = vocabulaire métier privé. N
 
 |===
 | US | Description | Pts | Statut
-| RENAME-8 | `borrowedVocabulary` 2 fichiers (PlantUmlClassifier:16 + PlantUmlTranslationAdapter:21 — "REAC","AFNOR","DC","TS","CP","ECF" sortent, RNCP reste) → config injectée (D14) ou `referential` + 12 fixtures tests (PlantUmlTranslationAdapterTest 8, PlantUmlClassifierTest 4) + check baseline | 2 | 🟡 À FAIRE
+| RENAME-8 | `borrowedVocabulary` 2 fichiers (PlantUmlClassifier:16 + PlantUmlTranslationAdapter:21 — "REAC","AFNOR","DC","TS","CP","ECF" sortent, RNCP reste) → config injectée (D14) ou `referential` + 12 fixtures tests (PlantUmlTranslationAdapterTest 8, PlantUmlClassifierTest 4) + check baseline | 2 | ✅ TERMINÉ (S-253 — D14 config injectée : `PlantUmlBlock(raw, borrowedVocabulary = emptySet())` + `PlantUmlTranslationAdapter(..., borrowedVocabulary = emptySet())` paramètre additif, défaut vide = tout traduit ; 12 fixtures neutralisées REF/ORG/MOD/EVA + injection explicite ; gate UT 3822/0 + FT 130/130 + cucumber plantuml 10/10 + grep word-boundary = 1 citation corpus réel (piège #18)) |
 |===
 
 '''

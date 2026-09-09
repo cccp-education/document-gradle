@@ -14,11 +14,10 @@ class PlantUmlTranslationAdapter(
     private val classifier: PlantUmlClassifier = PlantUmlClassifier(),
     private val plantUmlValidator: PlantUmlSyntaxValidator = PlantUmlSyntaxValidator.create(),
     private val plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT,
+    private val borrowedVocabulary: Set<String> = emptySet(),
 ) {
 
     private val log = LoggerFactory.getLogger(PlantUmlTranslationAdapter::class.java)
-
-    private val borrowedVocabulary = setOf("REAC", "AFNOR", "DC", "TS", "RNCP", "CP", "ECF")
 
     private val placeholderOpen = "\uE000"
     private val placeholderClose = "\uE001"
@@ -33,7 +32,7 @@ class PlantUmlTranslationAdapter(
         blockIndex: Int = 0,
     ): PivotBlock.Source {
         if (block.language != "plantuml") return block
-        val strategy = classifier.classify(PlantUmlBlock(block.content))
+        val strategy = classifier.classify(PlantUmlBlock(block.content, borrowedVocabulary))
         val result = when (strategy) {
             PlantUmlStrategy.PreserveTechnical -> block
             PlantUmlStrategy.TranslateLabels -> translateLabels(block, sourceLanguage, targetLanguage, preserveVocabulary = false)

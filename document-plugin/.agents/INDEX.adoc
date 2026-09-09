@@ -21,6 +21,18 @@ prouvée debug log, STRICT VALID + STRICT fail textless) ; bakery pin ws 0.0.32
 + platform 0.0.32 → document 0.0.16 sans hardcode (compileKotlin VERT).
 Piège #17 documenté (PROMPT_REPRISE). Commits : MEMPHIS `988fda5`, document
 `31010ac`, bakery `343aeaa`. Rapport : `.agents/sessions/249-pub-0.0.16-pdf-check-distribution.adoc`.)
+|_Derniere mise a jour_ : 2026-09-09 (session 253 — **RENAME-8 ✅ config injectée D14** —
+la liste hardcodée `borrowedVocabulary` (REAC/AFNOR/DC/TS/RNCP/CP/ECF) est
+sortie des 2 fichiers prod : `PlantUmlBlock(raw, borrowedVocabulary: Set<String> = emptySet())`
++ `PlantUmlTranslationAdapter(..., borrowedVocabulary: Set<String> = emptySet())`
+(paramètre additif fin de signature — bakery 0.0.17 publié compile sans
+changement). Le plugin public ne connaît plus AUCUN vocabulaire métier ;
+chaque consommateur fournit le sien. 12 fixtures neutralisées (REF/ORG/MOD/EVA
++ injection explicite). Baby-step TDD strict : RED (compile fail ×5) →
+GREEN 16/16 classifier + 12/12 adapter. Gates : UT 3822/0, FT 130/130,
+cucumber plantuml 10/10, validatePlugins VERT, grep word-boundary = 1 match
+(citation corpus réel, piège #18). Zéro publication — distribuée au
+prochain bump. Rapport : `.agents/sessions/253-rename-8-borrowed-vocabulary-config.adoc`.)
 |_Derniere mise a jour_ : 2026-09-08 (session 252b — **PUB 0.0.17 Central ✅ + fix inline image distribué** —
 le HEAD (RENAME-2 + OCR-QUALITY-3 + fix `image::?`) est DISTRIBUÉ hors
 machine de dev : bump ws catalog `document-plugin 0.0.17` (MEMPHIS, déploiement
@@ -37,13 +49,14 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 252b — PUB 0.0.17 Central (fix inline
-distribué) + consommateurs prouvés sans mavenLocal (tiers + bakery D5 +
-dogfooding livre FPA Central). EPIC RENAME/OCR-QUALITY/fix inline
-DISTRIBUÉS. DOC-FPA-PUBLISH-0 STANDBY (re-déclenché par A1).
-  _Prochaine session_ : maintenance sur besoin réel OU ré-itération
-DOC-FPA-PUBLISH-0 (si A1 livre le corpus corrigé — convergence attendue
-0 ILLISIBLE).
+|_Derniere session terminee_ : 253 — RENAME-8 (borrowedVocabulary sorti du
+nommage public, config injectée D14, 12 fixtures neutralisées). EPIC RENAME
+Vague 3 : RENAME-8 ✅ (document) — restent RENAME-9 (bakery), RENAME-10
+(codebase), RENAME-11 (plantuml), RENAME-12 (hyperframes docs).
+DOC-FPA-PUBLISH-0 STANDBY (re-déclenché par A1 — 16 ILLISIBLE au 2026-09-09).
+  _Prochaine session_ : RENAME-9 bakery (cross-borough Bushwick, à
+coordonner) OU ré-itération DOC-FPA-PUBLISH-0 (si A1 livre le corpus
+corrigé — convergence attendue 0 ILLISIBLE).
 
 '''
 == REGLES ABSOLUES (resume)

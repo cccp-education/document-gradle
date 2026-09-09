@@ -84,18 +84,34 @@ stop
     }
 
     @Test
-    fun `classify REAC vocabulary returns BorrowVocabulary`() {
+    fun `classify injected vocabulary returns BorrowVocabulary`() {
         val block = PlantUmlBlock(
             raw = """[plantuml]
 ----
 @startuml
-class "REAC"
-class "AFNOR"
-"REAC" --> "AFNOR" : "Référentiel"
+class "REF"
+class "ORG"
+"REF" --> "ORG" : "Référentiel"
+@enduml
+----""",
+            borrowedVocabulary = setOf("REF", "ORG")
+        )
+        assertEquals(PlantUmlStrategy.BorrowVocabulary, classifier.classify(block))
+    }
+
+    @Test
+    fun `classify without injected vocabulary falls back to TranslateLabels`() {
+        val block = PlantUmlBlock(
+            raw = """[plantuml]
+----
+@startuml
+class "REF"
+class "ORG"
+"REF" --> "ORG" : "Référentiel"
 @enduml
 ----"""
         )
-        assertEquals(PlantUmlStrategy.BorrowVocabulary, classifier.classify(block))
+        assertEquals(PlantUmlStrategy.TranslateLabels, classifier.classify(block))
     }
 
     @Test
@@ -104,11 +120,12 @@ class "AFNOR"
             raw = """[plantuml]
 ----
 @startuml
-class "DC" as DC
-class "TS" as TS
-"DC" --> "TS" : "Évaluation"
+class "MOD" as MOD
+class "EVA" as EVA
+"MOD" --> "EVA" : "Évaluation"
 @enduml
-----"""
+----""",
+            borrowedVocabulary = setOf("MOD", "EVA")
         )
         assertEquals(PlantUmlStrategy.BorrowVocabulary, classifier.classify(block))
     }

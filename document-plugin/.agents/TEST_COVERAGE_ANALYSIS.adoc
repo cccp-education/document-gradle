@@ -1223,3 +1223,38 @@ catalog BOM version (0.0.31)`) → fix 2 pins → GREEN 3/3. Baseline rétablie 
 `publishToMavenLocal` VERT. La valeur défensive de la garde de publication
 est prouvée en conditions réelles (drift cross-borough détecté au build
 local, pas en cascade consommateur).
+
+== Session 253 (2026-09-09) — RENAME-8 config injectée D14
+
+*Nouveaux tests* (baby-step TDD strict RED → GREEN) :
+- `PlantUmlClassifierTest` : +2 UT nettes (`classify injected vocabulary
+  returns BorrowVocabulary` — REF/ORG injectés → BorrowVocabulary ;
+  `classify without injected vocabulary falls back to TranslateLabels` —
+  défaut vide → TranslateLabels). RED : `No parameter with name
+  'borrowedVocabulary'` ×2. GREEN : 16/16.
+- `PlantUmlTranslationAdapterTest` : +3 UT (`BorrowVocabulary preserves
+  injected term verbatim`, `BorrowVocabulary translates non-vocabulary
+  labels with injected config`, `unconfigured vocabulary terms are
+  translated by default`). RED : compile fail ×3. GREEN : 12/12. Fix
+  itération : le fake `preservingOnlyLabelsTranslator` ne traduit pas les
+  termes inconnus → le test « défaut traduit » exige `fakeTranslator`
+  (préfixe universel) — piège #23 : le fake doit matcher le contrat
+  sémantique à prouver.
+- `PlantUmlTranslationAdapterValidationTest` : fixture `BorrowVocabulary
+  validates after translation` bascule REAC → REF injecté (nombre tests
+  inchangé).
+
+*Fixtures neutralisées* : 12 occurrences REAC/AFNOR/DC/TS remplacées par
+REF/ORG/MOD/EVA + injection explicite `borrowedVocabulary = setOf(...)`
+pour préserver la sémantique des tests (classification + préservation
+verbatim). Faux positif conservé : `AssembleBookTaskContentRichTocTest:100`
+(assertion corps OCR réel — citation corpus, piège #18).
+
+*Backward-compat prouvée* : paramètre `borrowedVocabulary` en fin de
+signature avec défaut `emptySet()` → les 14 UT classifier + 9 UT adapter
+préexistantes passent sans modification ; bakery 0.0.17 publié (paramètre
+non passé) compile sans changement.
+
+Gates : `test` 3822/0 (baseline 3820 + 3 nettes), `functionalTest` 130/130
+baseline exacte, `plantUmlValidationCucumberTest` 10 scénarios PASSED,
+`validatePlugins` VERT, gate D16 word-boundary = 1 citation corpus réel.

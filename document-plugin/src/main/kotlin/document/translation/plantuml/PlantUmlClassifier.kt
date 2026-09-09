@@ -7,13 +7,12 @@ sealed interface PlantUmlStrategy {
 }
 
 data class PlantUmlBlock(
-    val raw: String
+    val raw: String,
+    val borrowedVocabulary: Set<String> = emptySet()
 ) {
     private val labelRegex = Regex("\"([^\"]+)\"")
 
     private val technicalIdentifierRegex = Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z0-9_.]+$")
-
-    private val borrowedVocabulary = setOf("REAC", "AFNOR", "DC", "TS", "RNCP", "CP", "ECF")
 
     fun labels(): List<String> {
         val matches = labelRegex.findAll(raw).map { it.groupValues[1] }.toList()

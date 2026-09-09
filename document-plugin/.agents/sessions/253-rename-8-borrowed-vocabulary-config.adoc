@@ -1,0 +1,105 @@
+= Session 253 — RENAME-8 : neutralisation borrowedVocabulary (config injectée D14)
+
+_Date_ : 2026-09-09
+_Borough_ : New Orleans (document-gradle)
+_Mission_ : RENAME-8 (EPIC RENAME Vague 3, cadrage S-250 `.agents/CADRAGE_EPIC_RENAME_V3.adoc`)
+
+== Contexte
+
+S-252b a publié 0.0.17 Central (distribution prouvée). A1 Tombouctou n'a pas
+encore livré le corpus corrigé (16 ILLISIBLE toujours présents dans
+`book-ocr-issues.json` au 2026-09-09 18:21) → DOC-FPA-PUBLISH-0 reste STANDBY.
+La seule US ouverte du backlog est RENAME-8 (2 pts) — mission naturelle de la
+session, alignée sur la critical path gouvernance (vocabulaire métier privé
+hors du nommage public OSS).
+
+== Travail réalisé (baby-step DDD/TDD/BDD strict)
+
+=== Constats d'ouverture
+
+- `PlantUmlClassifier.kt:16` + `PlantUmlTranslationAdapter.kt:21` : liste
+  hardcodée `borrowedVocabulary = setOf("REAC","AFNOR","DC","TS","RNCP","CP","ECF")`
+- Fixtures : `PlantUmlTranslationAdapterTest` (8), `PlantUmlClassifierTest` (4),
+  `PlantUmlTranslationAdapterValidationTest` (:146)
+- Faux positif légitime : `AssembleBookTaskContentRichTocTest:100` — assertion
+  sur le corps OCR réel du corpus (citation office/, hors périmètre, piège #18)
+- `ContentTranslationService` construit l'adapter via paramètre optionnel
+  (défaut null) — l'injection config passe par ce point sans breaking
+- Bakery consomme document 0.0.17 *publié* (MigrateContentI18nTask.kt:149) :
+  paramètre additif en fin de signature → zéro impact compile
+
+=== Décisions (grille D13/D14 cadrage V3)
+
+- D14 *config injectée* retenue (pas de substitution littérale) :
+  - `PlantUmlBlock(raw, borrowedVocabulary: Set<String> = emptySet())` — le
+    bloc porte le vocabulaire pour la classification
+  - `PlantUmlTranslationAdapter(..., borrowedVocabulary: Set<String> = emptySet())`
+    — l'adapter injecte sa config dans le bloc (classify) + l'utilise pour la
+    préservation placeholder (translateLabels)
+  - Défaut = ensemble vide : le plugin public ne connaît plus AUCUN vocabulaire
+    métier ; chaque consommateur fournit le sien
+- D13 : RNCP/AFNOR (références publiques) ne restent plus nulle part dans
+  document — la liste hardcodée EST le vecteur de fuite, elle disparaît
+- Fixtures : sigles neutres équivalents (`REF`/`ORG`/`MOD`/`EVA`) avec
+  injection explicite pour prouver le mécanisme
+
+=== RED 1 → GREEN 1 (classifier)
+
+- RED : 2 UT nouvelles → `No parameter with name 'borrowedVocabulary'` (×2)
+- GREEN : `PlantUmlBlock` paramètre `borrowedVocabulary` (défaut `emptySet()`),
+  hardcode supprimé ; `hasBorrowedVocabulary()` consomme le champ
+- Gate : `PlantUmlClassifierTest` 16/16 (14 + 2 nouvelles : injection →
+  BorrowVocabulary, défaut vide → TranslateLabels)
+
+=== RED 2 → GREEN 2 (adapter)
+
+- RED : 3 UT nouvelles → `No parameter with name 'borrowedVocabulary'` (×3)
+- GREEN : `PlantUmlTranslationAdapter` paramètre `borrowedVocabulary` (défaut
+  `emptySet()`) en fin de signature (additif, backward-compat) + wiring
+  `classifier.classify(PlantUmlBlock(block.content, borrowedVocabulary))`
+- Fix itération : test « unconfigured vocabulary terms are translated by
+  default » utilisait `preservingOnlyLabelsTranslator` (fake qui ne traduit
+  pas les termes inconnus → assertion `[EN] REF` infondée) → switch sur
+  `fakeTranslator` (préfixe universel, comportement LLM réel)
+- Gate : `PlantUmlTranslationAdapterTest` 12/12
+
+=== Fixtures neutralisées (12 occurrences)
+
+- `PlantUmlClassifierTest` : `classify REAC vocabulary` → `classify injected
+  vocabulary` (REF/ORG injectés) + `classify DC and TS` → MOD/EVA injectés
+- `PlantUmlTranslationAdapterTest` : `BorrowVocabulary preserves REAC term`
+  → REF/ORG injectés + `translates non-vocabulary labels` → REF injecté +
+  `preserves DC and TS` → MOD/EVA injectés + 1 UT nouvelle (défaut vide
+  traduit tout)
+- `PlantUmlTranslationAdapterValidationTest` : `BorrowVocabulary validates
+  after translation` → REF injecté
+
+== Gates (baseline exacte)
+
+- `test` : 3822 / 0 FAIL (baseline 3820 + 3 UT nouvelles − 1 supprimée/net)
+- `functionalTest` : 130 / 130 (baseline exacte S-251)
+- `plantUmlValidationCucumberTest` : 10 scénarios PASSED, 0 failure
+  (features étrangères skipped par tag filter — comportement normal)
+- `validatePlugins` : VERT
+- Gate D16 word-boundary : `grep -rwn "REAC|AFNOR|SPG|SPD" src/` = 1 match
+  = citation corpus réel `AssembleBookTaskContentRichTocTest:100`
+  (faux positif documenté piège #18 — le fichier du livre vit dans office/)
+- Grep large (REAC/AFNOR/RNCP/ECF/DC/TS/CP) sur src/main + src/test : zéro match
+- Zéro secret, zéro bump BOM, zéro publication (accord pilote non demandé —
+  la config injectée sera distribuée au prochain bump)
+
+== Impact consommateurs
+
+- bakery 0.0.17 publié : compile inchangée (paramètre additif). Changement
+  sémantique voulu : sans config, les sigles autrefois préservés sont
+  désormais traduits — chaque consommateur passe son vocabulaire via le
+  nouveau paramètre (D14).
+- Les tâches `translateDocument`/`translateDocumentBatch` ne construisent pas
+  l'adapter PlantUML (chemin DocumentTranslator sans plantUmlAdapter) — non
+  concernées.
+
+== Arbre de décision si reprise
+
+Prochaine session : DOC-FPA-PUBLISH-0 quand A1 livre le corpus corrigé
+(convergence attendue 0 ILLISIBLE) OU RENAME-9 bakery (I18nMigrationService
+"SPG" whitelist/blacklist, 2 pts) sur demande pilote.

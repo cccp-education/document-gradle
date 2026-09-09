@@ -164,3 +164,20 @@ Dogfooding réel + fix TDD :
   VALID — rapport prêt pour l'itération humaine A1 Tombouctou.
 * Dette S-082 clôturée : consumer racine bumpé 0.0.16 (Central).
 * Gates : check VERT 19m56s, UT 3820/0, FT 130/130, cucumber 3055/0.
+
+=== Session 253 (2026-09-09) — RENAME-8 ✅ config injectée D14
+
+*EPIC RENAME Vague 3 (cadrage S-250)* — borrowedVocabulary sorti du
+nommage public :
+* Liste hardcodée REAC/AFNOR/DC/TS/RNCP/CP/ECF supprimée de
+  `PlantUmlClassifier` + `PlantUmlTranslationAdapter`.
+* D14 config injectée : `PlantUmlBlock(raw, borrowedVocabulary =
+  emptySet())` + `PlantUmlTranslationAdapter(..., borrowedVocabulary =
+  emptySet())` (paramètre additif fin de signature — bakery 0.0.17
+  publié compile sans changement).
+* 12 fixtures neutralisées (REF/ORG/MOD/EVA + injection explicite).
+* Baby-step TDD strict : RED compile fail ×5 → GREEN 16/16 + 12/12.
+* Gates : UT 3822/0, FT 130/130, cucumber plantuml 10/10,
+  validatePlugins VERT, grep word-boundary = 1 citation corpus réel
+  (piège #18).
+* Zéro publication — distribuée au prochain bump.

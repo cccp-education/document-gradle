@@ -139,11 +139,12 @@ class PlantUmlTranslationAdapterValidationTest {
             translationService = fakeTranslator(),
             plantUmlValidator = alwaysInvalidValidator(),
             plantUmlValidationMode = ValidationMode.LENIENT,
+            borrowedVocabulary = setOf("REF"),
         )
         val block = plantumlSource(
             """
             @startuml
-            class "REAC"
+            class "REF"
             class "Utilisateur"
             @enduml
             """.trimIndent()

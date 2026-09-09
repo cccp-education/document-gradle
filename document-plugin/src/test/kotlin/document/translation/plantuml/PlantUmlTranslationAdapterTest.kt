@@ -91,37 +91,60 @@ class PlantUmlTranslationAdapterTest {
     }
 
     @Test
-    fun `BorrowVocabulary preserves REAC term verbatim`() {
-        val adapter = PlantUmlTranslationAdapter(preservingOnlyLabelsTranslator())
+    fun `BorrowVocabulary preserves injected term verbatim`() {
+        val adapter = PlantUmlTranslationAdapter(
+            translationService = preservingOnlyLabelsTranslator(),
+            borrowedVocabulary = setOf("REF", "ORG"),
+        )
         val block = plantumlSource(
             """
             @startuml
-            class "REAC"
-            class "AFNOR"
-            "REAC" --> "AFNOR" : "Référentiel"
+            class "REF"
+            class "ORG"
+            "REF" --> "ORG" : "Référentiel"
             @enduml
             """.trimIndent()
         )
         val result = adapter.translate(block, "fr", "en")
-        assertThat(result.content).contains("\"REAC\"")
-        assertThat(result.content).contains("\"AFNOR\"")
+        assertThat(result.content).contains("\"REF\"")
+        assertThat(result.content).contains("\"ORG\"")
+        assertThat(result.content).doesNotContain("\"[EN] Référentiel\"")
     }
 
     @Test
-    fun `BorrowVocabulary translates non-vocabulary labels`() {
-        val adapter = PlantUmlTranslationAdapter(preservingOnlyLabelsTranslator())
+    fun `BorrowVocabulary translates non-vocabulary labels with injected config`() {
+        val adapter = PlantUmlTranslationAdapter(
+            translationService = preservingOnlyLabelsTranslator(),
+            borrowedVocabulary = setOf("REF"),
+        )
         val block = plantumlSource(
             """
             @startuml
-            class "REAC"
+            class "REF"
             class "Utilisateur"
             @enduml
             """.trimIndent()
         )
         val result = adapter.translate(block, "fr", "en")
-        assertThat(result.content).contains("\"REAC\"")
+        assertThat(result.content).contains("\"REF\"")
         assertThat(result.content).contains("\"User\"")
         assertThat(result.content).doesNotContain("\"Utilisateur\"")
+    }
+
+    @Test
+    fun `unconfigured vocabulary terms are translated by default`() {
+        val adapter = PlantUmlTranslationAdapter(fakeTranslator())
+        val block = plantumlSource(
+            """
+            @startuml
+            class "REF"
+            class "Utilisateur"
+            @enduml
+            """.trimIndent()
+        )
+        val result = adapter.translate(block, "fr", "en")
+        assertThat(result.content).contains("\"[EN] REF\"")
+        assertThat(result.content).contains("\"[EN] Utilisateur\"")
     }
 
     @Test
@@ -156,19 +179,22 @@ class PlantUmlTranslationAdapterTest {
 
     @Test
     fun `BorrowVocabulary preserves DC and TS terms`() {
-        val adapter = PlantUmlTranslationAdapter(preservingOnlyLabelsTranslator())
+        val adapter = PlantUmlTranslationAdapter(
+            translationService = preservingOnlyLabelsTranslator(),
+            borrowedVocabulary = setOf("MOD", "EVA"),
+        )
         val block = plantumlSource(
             """
             @startuml
-            class "DC" as DC
-            class "TS" as TS
-            "DC" --> "TS" : "Évaluation"
+            class "MOD" as MOD
+            class "EVA" as EVA
+            "MOD" --> "EVA" : "Évaluation"
             @enduml
             """.trimIndent()
         )
         val result = adapter.translate(block, "fr", "en")
-        assertThat(result.content).contains("\"DC\"")
-        assertThat(result.content).contains("\"TS\"")
+        assertThat(result.content).contains("\"MOD\"")
+        assertThat(result.content).contains("\"EVA\"")
     }
 
     @Test
