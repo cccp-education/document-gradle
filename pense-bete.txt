@@ -1,0 +1,178 @@
+= asciidoc semantique
+
+== prompt
+
+a travers cel se dessine des structure de données porté par le sens et l'intention du contenu des cases, et je fais du kotlin avec asciidoctorj je dois integrer cette dimension dans mon code de plugin https://github.com/cccp-education/document-gradle
+
+
+
+== reponse
+
+C'est exactement la bonne approche : exploiter le modèle d'objet AsciiDoc (**AST - Abstract Syntax Tree**) via AsciidoctorJ pour transformer de simples cellules textuelles en structures de données fortement typées, porteuses de sens métier.
+
+Dans le contexte d'un plugin Gradle Kotlin pour **cccp-education**, tu peux capturer cette sémantique au moment de la passe de parsing d'AsciidoctorJ en créant un **TreeProcessor** ou un **AST Processor**.
+
+Voici la démarche et la structure de code Kotlin à mettre en place.
+
+---
+
+### 1. Modéliser la structure de données métier (Kotlin)
+
+On définit des objets de domaine (*data classes*) qui représentent une séquence pédagogique plutôt qu'un simple tableau HTML/PDF.
+
+```kotlin
+data class SequencePedagogique(
+    val titre: String,
+    val dureeTotale: String?,
+    val colonnes: List<EnteteColonne>,
+    val lignes: List<LigneSequence>
+)
+
+data class EnteteColonne(
+    val index: Int,
+    val titre: String
+)
+
+data class LigneSequence(
+    val intentionFormateur: String?,
+    val activiteFormateur: String?,
+    val objectifsIntermediaires: String?,
+    val activitesApprenant: String?,
+    val aidesMateriels: String?,
+    val pointsVigilance: String?,
+    val supportsApprenant: String?,
+    val evaluationDuree: String?
+)
+
+```
+
+---
+
+### 2. Écrire le processeur AST AsciidoctorJ en Kotlin
+
+AsciidoctorJ permet de parcourir l'arbre (`Document`), d'intercepter les blocs de type `Table` et d'inspecter la grille de `Cell`.
+
+Voici comment extraire la sémantique métier depuis l'AST :
+
+```kotlin
+import org.asciidoctor.ast.Document
+import org.asciidoctor.ast.Table
+import org.asciidoctor.extension.Treeprocessor
+
+class SequenceTableTreeprocessor : Treeprocessor() {
+
+    override fun process(document: Document): Document {
+        // Recherche de tous les tableaux du document
+        val tables = document.findBy(mapOf("context" to ":table"))
+            .filterIsInstance<Table>()
+
+        for (table in tables) {
+            // Optionnel : filtrer sur un rôle ou un attribut spécifique
+            // ex: [table.sequence-pedagogique]
+            if (table.hasRole("sequence") || isSequenceTable(table)) {
+                val sequenceData = parseSequenceTable(table)
+
+                // Stocker la structure de données dans les attributs du document
+                // ou l'injecter dans ton pipeline cccp-education
+                document.attributes["sequenceData"] = sequenceData
+
+                // Tu peux aussi enrichir le composant AST (ex: ajouter des classes CSS auto)
+                table.addRole("parsed-semantic-sequence")
+            }
+        }
+        return document
+    }
+
+    private fun isSequenceTable(table: Table): Boolean {
+        // Détection basée sur la présence de 8 colonnes et du titre caractéristique
+        return table.columns.size == 8
+    }
+
+    private fun parseSequenceTable(table: Table): SequencePedagogique {
+        val rows = table.body
+        val headerRows = table.header
+
+        // Extraction du titre et de la durée dans la 1ère ligne (qui contient des fusions)
+        val firstRowCells = headerRows.firstOrNull()?.cells ?: rows.firstOrNull()?.cells
+        val titre = firstRowCells?.getOrNull(0)?.text ?: ""
+        val duree = firstRowCells?.getOrNull(1)?.text?.removePrefix("Durée totale :")?.trim()
+
+        val listLignes = mutableListOf<LigneSequence>()
+
+        // Parcours des lignes de contenu
+        // Remarque : AsciidoctorJ gère les 'colspan' et 'rowspan' via cell.gridPosition
+        for (row in table.rows) {
+            // Extraction sémantique cellule par cellule selon l'index de colonne
+            val cells = row.cells
+            if (cells.size >= 8) {
+                val ligne = LigneSequence(
+                    intentionFormateur = cells[0].text,
+                    activiteFormateur = cells[1].text,
+                    objectifsIntermediaires = cells[2].text,
+                    activitesApprenant = cells[3].text,
+                    aidesMateriels = cells[4].text,
+                    pointsVigilance = cells[5].text,
+                    supportsApprenant = cells[6].text,
+                    evaluationDuree = cells[7].text
+                )
+                listLignes.add(ligne)
+            }
+        }
+
+        return SequencePedagogique(
+            titre = titre,
+            dureeTotale = duree,
+            colonnes = emptyList(),
+            lignes = listLignes
+        )
+    }
+}
+
+```
+
+---
+
+### 3. Déclarer l'extension dans le Plugin Gradle
+
+Pour que le plugin Gradle enregistre automatiquement ton processeur lors du build Asciidoctor, il faut utiliser le registre d'extensions d'AsciidoctorJ.
+
+Dans ton plugin Gradle Kotlin (`apply` du plugin) :
+
+```kotlin
+import org.asciidoctor.gradle.jvm.AsciidoctorTask
+
+class DocumentPlugin : Plugin<Project> {
+    override fun apply(project: Project) {
+        project.tasks.withType(AsciidoctorTask::class.java).configureEach { task ->
+            task.configurations("asciidoctorExtensions")
+
+            // Enregistrement de l'extension
+            task.doFirst {
+                // Via l'API AsciidoctorJRegistry
+            }
+        }
+    }
+}
+
+```
+
+Ou en enregistrant un `AsciidoctorExtensionRegistry` via le Service Loader SPI (`META-INF/services/org.asciidoctor.extension.spi.ExtensionRegistry`) :
+
+```kotlin
+import org.asciidoctor.Asciidoctor
+import org.asciidoctor.extension.spi.ExtensionRegistry
+
+class SequenceExtensionRegistry : ExtensionRegistry {
+    override fun register(asciidoctor: Asciidoctor) {
+        asciidoctor.javaExtensionRegistry().treeprocessor(SequenceTableTreeprocessor::class.java)
+    }
+}
+
+```
+
+---
+
+### Ce que ça t'apporte pour `cccp-education` :
+
+1. **Génération multi-format intelligente :** Une fois le tableau converti en `SequencePedagogique` Kotlin, tu peux générer automatiquement d'autres artefacts (un export JSON pour une application web, une fiche synthétique LMS, des métriques de temps de formation).
+2. **Validation à la compilation :** Tu peux émettre des `Warnings` Gradle si une case obligatoire ("Objectifs intermédiaires") n'est pas remplie ou mal formatée dans le document AsciiDoc source.
