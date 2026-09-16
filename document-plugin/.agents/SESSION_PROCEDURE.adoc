@@ -63,4 +63,4 @@ grep -r "TOKEN\|SECRET\|PASSWORD\|API_KEY\|gho_\|ghp_" --include="*.kts" --inclu
 
 * Plugin Gradle N2 — dépend compileOnly codex-gradle (AsciidoctorJ partagé)
 * Contrat : formats documentaires standards (AsciiDoc, HTML, PDF, EPUB)
-* Aucun commit sans permission explicite
+* Commit/push/merge autorisés (décision pilote 2026-09-17). Ne JAMAIS commiter de secret.
