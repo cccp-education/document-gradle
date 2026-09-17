@@ -41,7 +41,7 @@ Ce couplage posait trois problèmes :
 
 | Entrée
 | PDF, EPUB, AsciiDoc *existants* (provenant de `books-collection/`
-  ou du pipeline de formation) + *photos de pages* (OCR via LLM)
+  ou du pipeline de contenu) + *photos de pages* (OCR via LLM)
 | Prompt LLM → AsciiDoc *généré* OU AsciiDoc *source* écrit par l'humain
   OU AsciiDoc *OCRisé* produit par codex (fichier disque, pont N2↔N2)
 
@@ -249,7 +249,7 @@ PLANTUML est un constituant du document, pas un pair.
 | Moyen
 | Codex garde l'export *knowledge base* (JSON-LD structure) mais les
   conversions de *publication* (HTML/PDF/EPUB) restent dans document.
-  ExportKnowledgeBase ne produit pas de HTML/PDF/EPUB livrable stagiaire.
+  ExportKnowledgeBase ne produit pas de HTML/PDF/EPUB livrable lecteur.
 
 | BND-02
 | Deux versions d'AsciidoctorJ cohabitent (codex vs document)

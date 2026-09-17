@@ -35,7 +35,7 @@ Feature: OCR quality detection on scanned pages (OCR-QUALITY-3)
       """
       == 1.2.8 Schema heuristique
       image:cerveau_gauche_vs_cerveau_droit.jpg[Brain mapping]
-      Le texte poursuit son analyse pedagogique avec assez de contenu.
+      Le texte poursuit son analyse documentaire avec assez de contenu.
       """
     When ocr-quality the OCR failures are detected
     Then ocr-quality the issues are

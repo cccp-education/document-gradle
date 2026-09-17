@@ -121,7 +121,7 @@ class ContentBookAssemblyTest {
             "== 1.2.8 Schema heuristique\n" +
                 "Le cerveau se decompose ainsi :\n" +
                 "image:cerveau_gauche_vs_cerveau_droit.jpg[Brain mapping]\n" +
-                "Le texte poursuit son analyse pedagogique avec assez de contenu.",
+                "Le texte poursuit son analyse documentaire avec assez de contenu.",
         )
         val issues = BookOcrFailureDetector.detect(scans, emptyList())
         val missing = issues.filter { it.reason == OcrFailureReason.IMAGE_MISSING }

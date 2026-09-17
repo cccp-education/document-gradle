@@ -2,6 +2,23 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 257 (2026-09-17) — RENAME Vague 4 ✅ (champ lexical métier complet)
+
+*Type* : refactor + gouvernance (cross-borough depuis Queens mission 4)
+*Score* : 10/10
+*Livrables* :
+- Transfusion `training/.agents/TRANSFER_LEXIQUE_FORMATION.adoc` § 1bis
+  (convention page scannée `ContentPageResolver` + 5 raisons
+  `BookOcrFailureDetector`) + § 2 complète.
+- Neutralisation docs courantes : AGENT, BACKLOG, INDEX, ARCHITECTURE_BOUNDARY.
+- Neutralisation fixtures synthétiques (11 fichiers) : `Devenir Formateur`
+  → `Introduction`/`Content Book`, `formation.adoc`→`document.adoc`,
+  `Livre de Formation`→`Livre de Contenu`, `formations/`→`contents/`.
+*Gates* : compile VERT, 81 UT 0 FAIL, `ocrQualityCucumberTest` 8/8, 2 FT
+corpus PASSED, gate Vague 4 `src/` zéro + docs courantes zéro. Échec
+`RichTocTest` page 73 stash-confirmé préexistant (drift corpus A1).
+*Fichiers* : 18 (2 docs gouvernance ×2 sync + 14 src/docs + rapport).
+
 === Session 256 (2026-09-09) — Audit RENAME ✅ CADUQUE (zéro résidu métier privé)
 
 *Type* : gouvernance pure (audit de vérification — arbitrage pilote S-255)

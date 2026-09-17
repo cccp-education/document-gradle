@@ -13,11 +13,10 @@ import java.io.File
  * Dogfooding functional test — `assembleBook` against the *real* private
  * content corpus (DOC-BOOK-DOMAIN-5, consumer office (private content corpus)).
  *
- * The scanned-content book (Devenir Formateur Professionnel d'Adultes — Tome II) is a
- * scanned work whose OCR-ed AsciiDoc pages live in `office/metiers/FPA/
- * Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans/` and whose table
- * of contents is `office/metiers/FPA/toc.adoc` (refs `1.0.0`, `1.0.1`,
- * `1.0.2`). No private content enters this repository: the pages are *copied*
+ * The scanned-content book is a scanned work whose OCR-ed AsciiDoc pages live
+ * in `office/metiers/FPA/Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans/`
+ * and whose table of contents is `office/metiers/FPA/toc.adoc` (refs `1.0.0`,
+ * `1.0.1`, `1.0.2`). No private content enters this repository: the pages are *copied*
  * into a throw-away TestKit project at runtime, and the test self-skips
  * (`assumeTrue`) when the corpus is absent (CI, contributor machine).
  *

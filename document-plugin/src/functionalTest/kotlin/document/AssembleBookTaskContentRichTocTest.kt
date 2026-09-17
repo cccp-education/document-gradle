@@ -61,7 +61,7 @@ class AssembleBookTaskContentRichTocTest {
             document {
                 book {
                     pagesDir.set(layout.projectDirectory.dir("content/pages"))
-                    title.set("Devenir Formateur Professionnel d'Adultes Tome II")
+                    title.set("Content Book")
                     author.set("Henry-Laurent JANSA")
                     tocFile.set(layout.projectDirectory.file("content/toc.adoc"))
                 }
@@ -89,7 +89,7 @@ class AssembleBookTaskContentRichTocTest {
         val output = projectDir.resolve("build/docs/document/book.adoc")
         assertTrue(output.isFile, "the assembled book must exist")
         val content = output.readText()
-        assertTrue(content.contains("= Devenir Formateur Professionnel d'Adultes Tome II"), "title page missing")
+        assertTrue(content.contains("= Content Book"), "title page missing")
         assertTrue(content.contains(":author: Henry-Laurent JANSA"), "author missing")
         assertTrue(content.contains(":toc: macro"), "TOC macro attribute missing")
         assertTrue(content.contains("toc::[]"), "TOC block macro missing")

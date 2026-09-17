@@ -19,7 +19,7 @@ a partir d'un prompt structure. La tache `generateDocument` utilise un LLM
 (gpt-oss:120b-cloud) via langchain4j pour produire le squelette AsciiDoc que
 l'humain valide et enrichit.
 
-Distinct de planner-gradle (Manhattan) qui genere des SPG/SPD pedagogiques.
+Distinct de planner-gradle (Manhattan) qui genere des plans de contenu.
 Ici, on genere de la documentation technique generaliste.
 
 === 2. Enrichissement — Incrustation HTML, PlantUML, images, theming
@@ -65,8 +65,8 @@ l'arbre depuis la TOC, `BookLayout.emit(tree)` produit l'AsciiDoc navigable, et
 
 Cas d'usage MVP0 :
 - Generation de documentation technique des plugins (README, specs)
-- Conversion des SPG/SPD AsciiDoc en PDF stagiaire
-- Export EPUB des sessions de formation pour lecture hors-ligne
+- Conversion des plans de contenu AsciiDoc en PDF lecteur
+- Export EPUB des contenus pour lecture hors-ligne
 - Generation de manuels utilisateur et documentation API
 - Documentation technique des plugins Gradle au format DocBook
 
@@ -88,7 +88,7 @@ de pages d'un ouvrage existant.
     ├─ enrichissement images (photos originales en illustration)
     ├─ application theme (theme.yml PDF, talaria.css HTML)
     ├─ convertDocumentToHtml → HTML5
-    ├─ convertDocumentToPdf  → PDF stagiaire
+    ├─ convertDocumentToPdf  → PDF lecteur
     └─ convertDocumentToEpub → EPUB3
             │
 [RUNNER N3] assembleCompositeContext → deploy gh-pages

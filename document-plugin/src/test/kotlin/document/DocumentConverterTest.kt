@@ -35,7 +35,7 @@ class DocumentConverterTest {
         val dir = tempDir()
         val source = adocSource(
             dir,
-            content = "= Livre de Formation\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
+            content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
         )
 
         val html = DocumentConverter.convertToHtml(source)
@@ -206,7 +206,7 @@ class DocumentConverterTest {
         val source = adocSource(
             dir,
             content = """
-            = Livre de Formation
+            = Livre de Contenu
 
             == Chapitre 1
 
@@ -576,7 +576,7 @@ class DocumentConverterTest {
         val dir = tempDir()
         val source = adocSource(
             dir,
-            content = "= Livre de Formation\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
+            content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
         )
 
         val docbook = DocumentConverter.convertToDocBook(source)

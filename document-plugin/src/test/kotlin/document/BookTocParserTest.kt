@@ -44,7 +44,7 @@ class BookTocParserTest {
             |===
             | Référence | Sujet | Page | Fichier
 
-            | 1.0.1 | Devenir Formateur | 5, 6, 7, 8 | 005.pdf, 006.pdf, 007.pdf, 008.pdf
+            | 1.0.1 | Introduction | 5, 6, 7, 8 | 005.pdf, 006.pdf, 007.pdf, 008.pdf
             |===
             """.trimIndent()
         )
@@ -54,7 +54,7 @@ class BookTocParserTest {
         assertEquals(4, sections.size, "quatre sections (une par page)")
         assertEquals(listOf(5, 6, 7, 8), sections.map { it.page })
         assertEquals(listOf("005.pdf", "006.pdf", "007.pdf", "008.pdf"), sections.map { it.pdfFile })
-        sections.forEach { assertEquals("Devenir Formateur", it.title) }
+        sections.forEach { assertEquals("Introduction", it.title) }
         sections.forEach { assertEquals("1.0.1", it.ref) }
     }
 

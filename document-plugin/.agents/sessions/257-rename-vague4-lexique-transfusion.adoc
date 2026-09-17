@@ -1,0 +1,127 @@
+= Session 257 — RENAME Vague 4 : lexique métier sort de document-gradle + transfusion training
+
+_Date_ : 2026-09-17
+_Borough_ : New Orleans (document-gradle) — pilotée depuis Queens (codebase, mission 4)
+_Type_ : refactor (RENAME Vague 4) + gouvernance — TDD/DDD strict
+_Statut_ : ✅ TERMINÉ
+
+== Mission
+
+Mission 4 de la session codebase (ordre pilote 4 → 1 → 3) : RENAME vague
+document. Constat d'ouverture : la Vague 3 (sigles REAC/AFNOR/SPG/SPD) est
+DÉJÀ livrée (RENAME-2 S-251, RENAME-8 S-253, clôture S-254, audit CADUQUE
+S-256). Mais le cadrage RENAME a été **révisé Vague 4 le 2026-09-10**
+(`CADRAGE_EPIC_RENAME_V3.adoc` note de tête — D5/D11 ABROGÉES) : le champ
+lexical métier *complet* (pas seulement les sigles) sort des repos publics.
+Cet audit Vague 4 **postdate** l'audit document S-256 (2026-09-09) qui ne
+couvrait que les sigles.
+
+Delta réel : **transfusion d'abord** (rien n'est perdu → training-gradle),
+puis neutralisation lexicale Vague 4 (code + docs courantes).
+
+== 1. Transfusion training (zéro perte) — FAITE
+
+`foundry/private/training-gradle/training-plugin/.agents/TRANSFER_LEXIQUE_FORMATION.adoc` :
+
+- **§ 1bis** créé — ce qui est transfusé de document-gradle :
+  - **§ 1bis.1** convention page scannée (`ContentPageResolver` ex-
+    `FpaPageResolver`) : `<page paddée 3>.adoc` + `<page>_N.adoc` = signature
+    d'un livre formation scanné (corpus FPA II : 202 pages, découpages).
+  - **§ 1bis.2** détection de doute OCR structurel (`BookOcrFailureDetector` +
+    `OcrFailureReason`) : 5 raisons (ILLISIBLE/TOO_SHORT/IMAGE_MISSING/
+    TABLE_SUSPECT/STRUCT_SUSPECT) + seuils encodant *ce qui casse un scan*.
+- **§ 2** complétée — table des transfusions par borough (document/planner/
+  bakery/capsule/plantuml/hyperframes), toutes vagues closes.
+
+== 2. Neutralisation lexicale Vague 4 (baby-step DDD/TDD strict)
+
+Gate cible : `grep -rniE "formation|pédagog|pedagog|qualiopi|afnor|bloom|
+harrow|krathwohl|apprenant|stagiaire|formateur|livret|reac\b" src/` = zéro
+(hors faux positifs informations/transformation/plateforme + citations corpus
+`office/metiers` piège #18).
+
+=== Docs courantes
+
+- `AGENT.adoc` : `SPG/SPD pedagogiques` → `plans de contenu` ; `PDF stagiaire`
+  → `PDF lecteur` (×2 : diagramme pipeline + cas d'usage) ; `sessions de
+  formation` → `contenus`.
+- `BACKLOG.adoc` : US-DOC-02 (`formateur`→`auteur`, `SPG/SPD`→`plan de
+  contenu`, `stagiaire`→`lecteur`) ; US-DOC-04 (`formation`→`contenu`) ;
+  priorité MVP0 `PDF stagiaire`→`PDF lecteur` (×3).
+- `.agents/INDEX.adoc` : diagramme `PDF stagiaire` → `PDF lecteur`.
+- `.agents/ARCHITECTURE_BOUNDARY.adoc` : `pipeline de formation`→`pipeline de
+  contenu` ; `livrable stagiaire`→`livrable lecteur`.
+
+=== Fixtures synthétiques
+
+- `ocr_quality.feature` + `ContentBookAssemblyTest` : `analyse pedagogique`
+  → `analyse documentaire`.
+- `BookValidatorTest` : `Devenir Formateur` → `Introduction` (titre
+  synthétique).
+- `BookTocParserTest` : `Devenir Formateur` → `Introduction`.
+- `DocumentPluginTest` : `formation.adoc`/`= Formation` → `document.adoc`/
+  `= Document` (+ assertions `.html`/`.pdf`/`.epub` alignées).
+- `DocumentConverterTest` : `Livre de Formation` → `Livre de Contenu` (×3).
+- `ContentBookArtifactGenerationTest` : titre arbitraire `Devenir Formateur
+  Professionnel d'Adultes` → `Content Book` + assertion.
+- `AssembleBookTaskContentRichTocTest` + `BookPipelineN3ContentFunctionalTest` :
+  titre TestKit arbitraire → `Content Book` (+ assertion).
+- `SubtreeI18nDeltaTest` : chemin de site synthétique `formations/` →
+  `contents/` (42 occurrences, variable `formations`→`contents`).
+- KDoc `AssembleBookTaskContentTest` : prose descriptive neutralisée (chemin
+  `office/metiers/FPA` conservé — citation légitime piège #18).
+
+=== Conservé (piège #18 — citations du corpus privé)
+
+- Chemins `office/metiers/FPA/...` (citations filesystem du corpus réel).
+- `AssembleBookTaskContentRichTocTest` assertion `"enquête terrain"` (corps
+  OCR réel page 22) + `[[1.0.2.1]]` (structure TOC réelle).
+- BACKLOG § DOC-FPA-PUBLISH (STANDBY — citation corpus + trace historique).
+- Traces d'audit RENAME (`.agents/INDEX` : « métier privé FPA/REAC/AFNOR/
+  SPG/SPD » = description de *ce qui a été neutralisé*).
+
+== Gates
+
+- Compilation VERTE (`compileKotlin` + `compileTestKotlin` +
+  `compileFunctionalTestKotlin`).
+- UT ciblés VERTS : 81 tests 0 FAIL (BookValidatorTest 15, BookTocParserTest 6,
+  DocumentPluginTest 4, DocumentConverterTest 38, ContentBookAssemblyTest 12,
+  SubtreeI18nDeltaTest 10 — via XML JUnit).
+- Cucumber `ocrQualityCucumberTest` 8/8 PASSED, 0 failure.
+- FT dogfooding corpus : `AssembleBookTaskContentTest` 1/1 +
+  `BookPipelineN3ContentFunctionalTest` 1/1 PASSED.
+- **Échec préexistant documenté** : `AssembleBookTaskContentRichTocTest`
+  FAILED (`page 73 failure must be reported`) — **stash-confirmé identique à
+  HEAD** : le corpus A1 a convergé, il n'y a plus de `073.adoc` ILLISIBLE.
+  Orthogonal au RENAME (drift corpus, non re-testé S-256).
+- Gate Vague 4 `src/` = **zéro match** (hors faux positifs + citations).
+- Gate docs courantes = **zéro match** (hors traces d'audit RENAME).
+
+== Décisions
+
+. Vague 4 document exécutée en cross-borough depuis la session codebase
+  (pattern sessions dédiées ; ordre pilote 4 → 1 → 3).
+. Transfusion AVANT neutralisation (pattern S-255 US-0, « rien n'est perdu »).
+. Citations corpus `office/metiers` conservées (piège #18), fixtures
+  synthétiques neutralisées.
+. Échec `RichTocTest` documenté comme drift corpus préexistant (stash-proof),
+  hors périmètre RENAME.
+
+== Fichiers
+
+- `../../..` training : `TRANSFER_LEXIQUE_FORMATION.adoc` (§ 1bis + § 2).
+- document prod docs : `AGENT.adoc`, `BACKLOG.adoc`, `.agents/INDEX.adoc`,
+  `.agents/ARCHITECTURE_BOUNDARY.adoc`.
+- document src (14) : `BookValidatorTest`, `BookTocParserTest`,
+  `DocumentPluginTest`, `DocumentConverterTest`, `ContentBookAssemblyTest`,
+  `SubtreeI18nDeltaTest`, `ContentBookArtifactGenerationTest`,
+  `AssembleBookTaskContentTest`, `AssembleBookTaskContentRichTocTest`,
+  `BookPipelineN3ContentFunctionalTest`, `ocr_quality.feature`.
+
+== Suites
+
+- Prochain candidat document : DOC-FPA-PUBLISH-0 (STANDBY, attend convergence
+  corpus A1) ; publication 0.0.18 (accord pilote — distribue RENAME-8 +
+  Vague 4).
+- Ordre pilote session codebase : mission 1 (dogfood Newark A2) → mission 3
+  (publication codebase 0.0.16).

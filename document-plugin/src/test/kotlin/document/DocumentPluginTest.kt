@@ -70,12 +70,12 @@ class DocumentConfigTest {
     @Test
     fun `DocumentConfig outputFor genere le bon nom de fichier`() {
         val dir = tempDir()
-        val source = newSource(dir, "formation.adoc", "= Formation")
+        val source = newSource(dir, "document.adoc", "= Document")
         val config = DocumentConfig(source, dir)
 
-        assertEquals(File(dir, "formation.html"), config.outputFor(DocumentFormat.HTML))
-        assertEquals(File(dir, "formation.pdf"), config.outputFor(DocumentFormat.PDF))
-        assertEquals(File(dir, "formation.epub"), config.outputFor(DocumentFormat.EPUB))
+        assertEquals(File(dir, "document.html"), config.outputFor(DocumentFormat.HTML))
+        assertEquals(File(dir, "document.pdf"), config.outputFor(DocumentFormat.PDF))
+        assertEquals(File(dir, "document.epub"), config.outputFor(DocumentFormat.EPUB))
     }
 
     @Test

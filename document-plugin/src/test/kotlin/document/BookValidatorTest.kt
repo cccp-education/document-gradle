@@ -23,12 +23,12 @@ class BookValidatorTest {
         @Test
         fun `validator accepts a complete book with all pages present and non-empty`() {
             val pagesDir = tempDir()
-            page(pagesDir, "005-page.adoc", "== Devenir Formateur\n\nIntro content.")
+            page(pagesDir, "005-page.adoc", "== Introduction\n\nIntro content.")
             page(pagesDir, "006-page.adoc", "== Historique\n\nHistory content.")
             page(pagesDir, "014-page.adoc", "== Competences\n\nSkills content.")
 
             val toc = listOf(
-                BookSection("1.0.1", "Devenir Formateur", 5, "005.pdf"),
+                BookSection("1.0.1", "Introduction", 5, "005.pdf"),
                 BookSection("1.0.2", "Historique", 6, "006.pdf"),
                 BookSection("1.0.3", "Competences", 14, "014.pdf"),
             )
@@ -61,10 +61,10 @@ class BookValidatorTest {
         @Test
         fun `validator detects a page referenced in TOC but missing from pages dir`() {
             val pagesDir = tempDir()
-            page(pagesDir, "005-page.adoc", "== Devenir Formateur\n\nIntro.")
+            page(pagesDir, "005-page.adoc", "== Introduction\n\nIntro.")
 
             val toc = listOf(
-                BookSection("1.0.1", "Devenir Formateur", 5, "005.pdf"),
+                BookSection("1.0.1", "Introduction", 5, "005.pdf"),
                 BookSection("1.0.2", "Historique", 14, "014.pdf"),
             )
 

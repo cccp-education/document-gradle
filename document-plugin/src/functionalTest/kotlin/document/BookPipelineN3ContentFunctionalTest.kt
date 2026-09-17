@@ -75,7 +75,7 @@ class BookPipelineN3ContentFunctionalTest {
             document {
                 book {
                     pagesDir.set(layout.projectDirectory.dir("content/pages"))
-                    title.set("Devenir Formateur Professionnel d'Adultes - Tome II")
+                    title.set("Content Book")
                     author.set("CCCP Education")
                     tocFile.set(layout.projectDirectory.file("content/toc.adoc"))
                 }

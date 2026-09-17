@@ -6,6 +6,22 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-17 (session 257 — **RENAME Vague 4 ✅** —
+le cadrage RENAME révisé Vague 4 (2026-09-10, D5/D11 abrogées : le champ
+lexical métier *complet* sort, pas seulement les sigles) postdatait l'audit
+S-256. Exécution cross-borough depuis Queens (mission 4) : **transfusion
+d'abord** (`TRANSFER_LEXIQUE_FORMATION.adoc` § 1bis `ContentPageResolver`
+convention page scannée + 5 raisons `BookOcrFailureDetector` ; § 2 table
+complète) puis neutralisation lexicale docs courantes (AGENT/BACKLOG/INDEX/
+ARCHITECTURE_BOUNDARY : `SPG/SPD pedagogiques`→`plans de contenu`,
+`PDF stagiaire`→`PDF lecteur`, `formation`→`contenu`) + fixtures
+synthétiques (14 fichiers : `Devenir Formateur`→`Introduction`/`Content
+Book`, `formation.adoc`→`document.adoc`, `formations/`→`contents/`).
+Citations corpus `office/metiers` conservées (piège #18). Gate Vague 4
+`src/` = zéro + docs courantes = zéro (hors traces d'audit). 81 UT ciblés
+0 FAIL + `ocrQualityCucumberTest` 8/8 + 2 FT corpus PASSED. Échec
+`AssembleBookTaskContentRichTocTest` (page 73) stash-confirmé préexistant
+(drift corpus A1). Rapport : `.agents/sessions/257-rename-vague4-lexique-transfusion.adoc`.)
 |_Derniere mise a jour_ : 2026-09-07 (session 249 — **PUB 0.0.16 Maven Central ✅** —
 la 6e garde `pdfCheck` (S-247) est distribuée hors machine de dev. Chaîne
 cross-borough : MEMPHIS bump BOM+catalog **0.0.32** (document 0.0.16, gardes
@@ -221,7 +237,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
     ├─ enrichDocument (PlantUML via plantuml-gradle, images, includes, passthrough)
     ├─ applyTheme (theme.yml PDF, talaria.css HTML)
     ├─ convertDocumentToHtml → HTML5
-    ├─ convertDocumentToPdf  → PDF stagiaire
+    ├─ convertDocumentToPdf  → PDF lecteur
     └─ convertDocumentToEpub → EPUB3
             │
 [RUNNER N3] assembleCompositeContext → deploy gh-pages

@@ -54,7 +54,7 @@ class ContentBookArtifactGenerationTest {
         val assembled = BookAssembler.assemble(
             tree = tree,
             layout = BookLayout(),
-            title = "Devenir Formateur Professionnel d'Adultes - Tome II",
+            title = "Content Book",
             author = "CCCP Education",
             resolveContent = resolver,
         )
@@ -77,7 +77,7 @@ class ContentBookArtifactGenerationTest {
         assertTrue(pdf.exists() && pdf.length() > 0, "PDF must be non-empty")
         assertTrue(epub.exists() && epub.length() > 0, "EPUB must be non-empty")
 
-        assertTrue(htmlContent.contains("Devenir Formateur"), "HTML must contain the book title")
+        assertTrue(htmlContent.contains("Content Book"), "HTML must contain the book title")
         assertTrue(htmlContent.contains(" id=\""), "HTML must carry navigable anchors")
 
         assertTrue(
