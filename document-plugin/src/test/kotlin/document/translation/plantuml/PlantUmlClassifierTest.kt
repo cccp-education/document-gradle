@@ -181,6 +181,69 @@ usecase "S'inscrire" as UC1
     }
 
     @Test
+    fun `extract the title directive as a translatable label`() {
+        val block = PlantUmlBlock(
+            raw = """[plantuml]
+----
+@startuml
+title Évolution des Sessions — De la Session 1 à 150+
+class "Utilisateur"
+@enduml
+----"""
+        )
+        val labels = block.labels()
+        assertTrue("Évolution des Sessions — De la Session 1 à 150+" in labels, "labels=$labels")
+    }
+
+    @Test
+    fun `extract header and footer directives as translatable labels`() {
+        val block = PlantUmlBlock(
+            raw = """[plantuml]
+----
+@startuml
+header Architecture Eager/Lazy
+footer Document de référence
+class "Utilisateur"
+@enduml
+----"""
+        )
+        val labels = block.labels()
+        assertTrue("Architecture Eager/Lazy" in labels, "labels=$labels")
+        assertTrue("Document de référence" in labels, "labels=$labels")
+    }
+
+    @Test
+    fun `extract the caption directive as a translatable label`() {
+        val block = PlantUmlBlock(
+            raw = """[plantuml]
+----
+@startuml
+caption Schéma de gouvernance
+class "Utilisateur"
+@enduml
+----"""
+        )
+        val labels = block.labels()
+        assertTrue("Schéma de gouvernance" in labels, "labels=$labels")
+    }
+
+    @Test
+    fun `a bare title without any quoted label still yields TranslateLabels`() {
+        val block = PlantUmlBlock(
+            raw = """[plantuml]
+----
+@startuml
+title Convention de Nommage des Sessions
+class A
+class B
+A --> B
+@enduml
+----"""
+        )
+        assertEquals(PlantUmlStrategy.TranslateLabels, classifier.classify(block))
+    }
+
+    @Test
     fun `no labels returns PreserveTechnical`() {
         val block = PlantUmlBlock(
             raw = """[plantuml]

@@ -82,7 +82,17 @@ class PlantUmlTranslationAdapter(
         var translated = content
         for (label in labels.distinct()) {
             val replacement = doTranslate(label, sourceLanguage, targetLanguage) ?: continue
+            if (replacement == label) continue
+            // Quoted label (`class "Utilisateur"`) — replace the quoted form only.
             translated = translated.replace("\"$label\"", "\"$replacement\"")
+            // Unquoted directive value (`title Évolution…`, `header …`) — the
+            // label never appears quoted, so the replacement targets it verbatim
+            // on its directive line.
+            DIRECTIVE_LINE_PATTERN.replace(translated) { match ->
+                val directive = match.groupValues[1]
+                val value = match.groupValues[2]
+                if (value == label) "$directive $replacement" else match.value
+            }.let { translated = it }
         }
         if (preserveVocabulary) {
             for ((token, term) in placeholders) {
@@ -99,5 +109,15 @@ class PlantUmlTranslationAdapter(
             is TranslationResult.Success -> result.translatedText
             is TranslationResult.Failure -> null
         }
+    }
+
+    private companion object {
+        /**
+         * CHE-I18N-22 US-8 — matches an unquoted PlantUML directive line and
+         * captures its value, so `title Évolution…` can be rewritten without
+         * touching the quoted labels.
+         */
+        val DIRECTIVE_LINE_PATTERN =
+            Regex("""(?m)^(\s*(?:title|header|footer|caption))\s+(.+?)\s*$""")
     }
 }

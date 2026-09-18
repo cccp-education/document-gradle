@@ -26,6 +26,9 @@ class PlantUmlTranslationAdapterTest {
                 .replace("Demande", "Request")
                 .replace("Réponse", "Response")
                 .replace("S'inscrire", "Sign up")
+                .replace("Évolution des Sessions", "Session Evolution")
+                .replace("Architecture Eager/Lazy", "Eager/Lazy Architecture")
+                .replace("Document de référence", "Reference document")
             return TranslationResult.Success(translated)
         }
     }
@@ -88,6 +91,41 @@ class PlantUmlTranslationAdapterTest {
         assertThat(result.content).contains("@startuml")
         assertThat(result.content).contains("@enduml")
         assertThat(result.content).contains("class")
+    }
+
+    @Test
+    fun `TranslateLabels translates an unquoted title directive`() {
+        val adapter = PlantUmlTranslationAdapter(preservingOnlyLabelsTranslator())
+        val block = plantumlSource(
+            """
+            @startuml
+            title Évolution des Sessions
+            class "Utilisateur"
+            @enduml
+            """.trimIndent()
+        )
+        val result = adapter.translate(block, "fr", "en")
+        assertThat(result.content).contains("title Session Evolution")
+        assertThat(result.content).contains("\"User\"")
+    }
+
+    @Test
+    fun `TranslateLabels translates header and footer directives`() {
+        val adapter = PlantUmlTranslationAdapter(preservingOnlyLabelsTranslator())
+        val block = plantumlSource(
+            """
+            @startuml
+            header Architecture Eager/Lazy
+            footer Document de référence
+            class A
+            class B
+            A --> B
+            @enduml
+            """.trimIndent()
+        )
+        val result = adapter.translate(block, "fr", "en")
+        assertThat(result.content).contains("header Eager/Lazy Architecture")
+        assertThat(result.content).contains("footer Reference document")
     }
 
     @Test
