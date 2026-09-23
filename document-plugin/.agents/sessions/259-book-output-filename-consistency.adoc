@@ -1,0 +1,118 @@
+= Session 258-259 — Code review pipeline livre + correction B1/B2 (cohérence `outputFileName`)
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Type_ : code review (S-258) + feat/TDD (S-259) + gouvernance
+_Statut_ : ✅ TERMINÉ
+
+== Mission
+
+Demande pilote : « une code review et une analyse de l'état du borough, de son
+avancement et ce qu'il manque pour que le borough document gère la création
+d'un livre à partir des éléments textuels récupérés après OCR ». Puis :
+sauvegarder la review, mettre à jour vision/roadmap/backlog/prompt, corriger
+B1/B2.
+
+Préalable gouvernance : le dossier racine `.agents/` (niveau consommateur) a
+été **supprimé** — les 2 cadrages RENAME qu'il contenait ont été déplacés par
+`git mv` vers `document-plugin/.agents/` (renommages purs, historique préservé,
+homogénéité avec les 29 autres boroughs).
+
+== S-258 — Code review (lecture seule)
+
+Verdict : *le pipeline livre depuis OCR existe et fonctionne de bout en bout*
+(dogfooding FPA réel : `livre.adoc` 4689 lignes / 116 ancres / 6 niveaux).
+22 cadrages, 3822 UT / 130 FT / 19 runners Cucumber, 0.0.17 Central, zéro
+`TODO` dans `src/main`. 6 anomalies détectées :
+
+[cols="1,1,4", options="header"]
+|===
+| ID | Sév. | Constat
+| B1 | 🔴 | `book.adoc` régénéré (23/09) dégradé (147 lignes) — TOC d'entrée = stub 3 lignes
+| B2 | 🔴 | `assembleBook.outputFile`/`enrichDocument.outputFile` hardcodés → livre assemblé jamais indexé N3 sous un knob custom
+| B3 | 🟠 | `Matter` convention `0.x`/`9.x` inopérante sur la TOC FPA (racines {1,2,3,4})
+| B4 | 🟠 | `photosDir` ignoré en mode structuré (174 jpg non référencés)
+| B5 | 🟠 | 4 images OCR fantômes → 3 RSC-007 epubcheck
+| B6 | 🟡 | `BookNumbering` dérivation identité, `BookNavigation` sans consommateur
+|===
+
+Rapport complet : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`.
+
+3 EPICs cadrés : `DOC-BOOK-CONSISTENCY` (B1/B2, P1), `DOC-BOOK-IMAGES` (B4/B5,
+P2), `DOC-BOOK-MATTER` (B3, P2). INDEX roadmap + BACKLOG + PROMPT_REPRISE mis
+à jour.
+
+== S-259 — Correction B1/B2 (EPIC DOC-BOOK-CONSISTENCY, TDD strict)
+
+=== B2 — le knob `outputFileName` de bout en bout
+
+Baby-step TDD strict (RED → GREEN → REFACTOR), pattern S-235/S-236 :
+
+- *RED* : nouveau FT `BookOutputFileNameFunctionalTest` (4 tests) → 3 FAILED
+  (assembleBook renommé, enrichDocument renommé, collect indexe le livre
+  renommé), le test de non-régression (défaut `book.adoc`) PASSED.
+- *GREEN* : 2 dérivations du knob dans `DocumentPlugin.kt` —
+  `assembleBook.outputFile` = `docs/document/$outputFileName.adoc` (défaut
+  `book`) ; `enrichDocument.outputFile` = `docs/document/$outputFileName-enriched.adoc`
+  (défaut `document`). Les hardcodes `book.adoc` / `document-enriched.adoc`
+  disparaissent, `outputFileName` (déjà déclaré sur les deux tâches) devient
+  effectivement lu.
+- *REFACTOR* : n/a (2 lignes, économie d'encre).
+
+=== B1 — dogfooding réel avec la TOC riche
+
+Run dogfooding HEAD (mavenLocal, consumer transitoire `/tmp/opencode/doc-consumer-259`,
+Règle 2) : `bookPipeline validateDocumentEpub validateDocumentPdf fpaPublish`
+avec la **TOC riche** (116 sections, et non le stub `toc.adoc` 3 lignes) et
+`-Pdocument.outputFileName=livre`. Résultat : `livre.adoc` produit
+**directement** par le knob (plus de rename post-hoc du `book.adoc`),
+`collectDocumentRetrieve` indexe **5 artefacts** (dont `livre.adoc`), EPUB
+3 RSC-007 (images fantômes B5, connu), PDF VALID.
+
+== Gates
+
+- `compileKotlin` VERT.
+- FT `BookOutputFileNameFunctionalTest` **4/4 PASSED** (dont non-régression
+  défaut `book.adoc`).
+- Non-régression FT livre : `AssembleBookTaskFunctionalTest`,
+  `AssembleBookTaskContentTest`, `BookPipelineContentFunctionalTest`,
+  `BookPipelineN3ContentFunctionalTest`, `CollectDocumentRetrieveOutputFileNameFunctionalTest`,
+  `DocumentPluginFunctionalTest` 65/65 — **1 échec préexistant**
+  `AssembleBookTaskContentRichTocTest` (page 73) **stash-prouvé** indépendant
+  du fix (le corpus A1 n'a plus de `073.adoc`, drift connu S-257).
+- UT book + collector VERT (`AssembleBookTaskUnitTest`, `BookAssembler*`,
+  `BookDslTest`, `DocumentArtifactCollectorTest`, `BookTocParserTest`,
+  `BookValidatorTest`).
+- Cucumber dédiés VERT : `bookTreeCucumberTest`, `bookValidationCucumberTest`,
+  `crossBoroughCucumberTest`, `n3PipelineCucumberTest`.
+- Dogfooding réel : `livre.adoc` 4600 lignes / 249 Ko / **116 ancres** /
+  6 niveaux ; `fpaPublish` déplace `livre.{adoc,html,pdf,epub}` +
+  3 rapports ; aucun `book.adoc` transitoire.
+
+== Décisions
+
+. Le défaut `book` (assembleBook) et `document` (enrichDocument) préservent
+   les chemins canoniques — backward compat totale.
+. Le dogfooding B1 a utilisé la TOC riche (le stub `toc.adoc` racine était la
+   cause du `book.adoc` dégradé du 23/09).
+. B3/B4/B5 laissés cadrés (P2) — non bloquants pour le livre, bloquants pour
+   l'EPUB conforme et le livre illustré.
+. `.agents/` racine supprimé (gouvernance au niveau `document-plugin/`,
+   convention des 29 boroughs).
+
+== Fichiers
+
+- Créés : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`,
+  `src/functionalTest/kotlin/document/BookOutputFileNameFunctionalTest.kt`.
+- Modifiés : `src/main/kotlin/document/DocumentPlugin.kt` (2 dérivations knob),
+  `.agents/INDEX.adoc`, `.agents/PROMPT_REPRISE.adoc`, `BACKLOG.adoc`,
+  `.agents/SESSIONS_HISTORY.adoc`.
+- Déplacés : `.agents/CADRAGE_EPIC_RENAME{,_V3}.adoc` →
+  `document-plugin/.agents/` (git mv, historique préservé).
+
+== Suites
+
+- `DOC-BOOK-IMAGES` (B4/B5) et `DOC-BOOK-MATTER` (B3) : P2, sur demande pilote.
+- `DOC-FPA-PUBLISH-0` : STANDBY (itération humaine OCR côté Tombouctou A1).
+- Publication 0.0.18 : distribue B1/B2 + RENAME-8/Vague 4 + pins ws 0.0.43 —
+  accord pilote requis (Règle 2).

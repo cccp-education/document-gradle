@@ -1,0 +1,261 @@
+= Code Review — Borough Document (New Orleans 🟢) — Pipeline Livre depuis OCR
+:date: 2026-09-24
+:session: 258
+:type: Code review + analyse d'état du borough (lecture seule, zéro code)
+:auteur: Agent opencode (demande pilote)
+:scope: document-plugin (HEAD) + consommateur office/metiers/FPA
+
+== Objet
+
+Demande pilote : « une code review et une analyse de l'état du borough, de son
+avancement et ce qu'il manque pour que le borough document gère la création d'un
+livre à partir des éléments textuels récupérés après OCR ».
+
+Cette revue couvre : (1) l'état technique et l'avancement des EPICs, (2) le
+pipeline livre/OCR réel bout-en-bout, (3) les anomalies détectées, (4) les
+manques vers un livre « fini ».
+
+'''
+== 1. Verdict synthétique
+
+*Le borough document gère DÉJÀ la création d'un livre depuis de l'OCR*, de bout
+en bout, avec dogfooding réel sur le corpus FPA II (203 pages OCRisées) : il est
+mature, distribué (0.0.17 Central), auditable (6 gardes) et outillé pour
+l'itération humaine. Les manques restants ne sont *pas* d'ordre architectural :
+ce sont (a) deux incohérences de câblage du knob `outputFileName`, (b) la
+résolution des images OCR fantômes, (c) l'itération éditoriale OCR (bloquée
+côté Tombouctou A1).
+
+[cols="1,2,3", options="header"]
+|===
+| Axe | Note | Constat
+
+| Architecture / DDD
+| ✅ Excellent
+| Domaine « Book » pur (zéro I/O, zéro Gradle) : `BookTree`, `BookNode`,
+  `Matter`, `BookLayout`, `BookNumbering`, `BookNavigation`, `BookAssembler`.
+  Séparation nette parsing → arbre → layout → assemblage.
+
+| Qualité / tests
+| ✅ Excellent
+| 3822 UT / 0 FAIL, 130 FT / 130, 19 runners Cucumber dédiés (3068 scénarios /
+  0 fail), garde de publication 3/3. Zéro `TODO`/`FIXME` dans `src/main`.
+
+| Pipeline livre/OCR
+| 🟠 Fonctionnel mais 2 bugs de câblage
+| Chaîne complète prouvée (voir §3) ; `assembleBook.outputFile` hardcodé
+  `book.adoc` (B2) alors que `outputFileName` existe ; dernier run (23/09)
+  dégradé (B1).
+
+| Résolution des images
+| 🟠 Incomplète
+| `photosDir` ignoré en mode structuré (B4) ; 5 références `image::` sans
+  fichier → 3 erreurs epubcheck RSC-007 (B5).
+
+| Gouvernance / distribution
+| ✅ Excellent
+| 22 cadrages, INDEX/BACKLOG/PROMPT_REPRISE à jour, 0.0.17 Central, catalogue
+  ws 0.0.43.
+|===
+
+'''
+== 2. État d'avancement
+
+=== EPICs terminés
+
+- DOC-0 → DOC-15 : bootstrap, génération IA, conversions HTML/PDF/EPUB/DocBook/
+  ManPage, enrichissement PlantUML/images/HTML, thème, DSL unifié, release
+  notes, N3 runner, traduction, batch, templates.
+- *DOC-BOOK-DOMAIN* (6/6 US, S-211…S-215) : domaine « Book » structuré.
+- *DOC-BOOK-VALIDATE* (5/5 US, S-216) : validation TOC/page/PDF + strict/lenient.
+- *CROSS-DOC-BOOK* (cadrage S-210, US-1 🟡) : contrat filesystem N2↔N2
+  `%03d-%s.adoc`.
+- 6 gardes documentaires : includeGuard, xref, security, htmlLint, epubCheck,
+  pdfCheck.
+- *OCR-QUALITY* (S-251 + fix S-252) : 5 raisons de doute OCR + rapport JSON.
+- *RENAME* Vagues 3 & 4 : neutralisation du champ lexical métier privé.
+
+=== EPIC en attente
+
+[cols="2,3,1", options="header"]
+|===
+| EPIC | Description | Statut
+
+| DOC-FPA-PUBLISH-0
+| République multi-format du livre FPA après correction OCR (post A1
+  Tombouctou)
+| 🟡 STANDBY (1 pt)
+
+| CROSS-DOC-BOOK-1/2
+| BDD cross-borough `collectOcr → assembleBook`, KDoc contrat codex
+| 🟡 À FAIRE (~4 pts)
+|===
+
+'''
+== 3. Le pipeline livre depuis OCR — état réel
+
+=== Chaîne nominale (code)
+
+[source]
+----
+[codex N2] collectOcr        photo → OcrResult.structuredText → scans/NNN.adoc
+     │  (pont N2↔N2 = filesystem, aucune dépendance Gradle)
+     ▼
+[document N2] AssembleBookTask
+     ├─ BookTocParser.parse(tocFile)            → List<BookSection>
+     ├─ BookTreeBuilder.fromSections(sections)  → BookTree (hiérarchie par ref)
+     ├─ BookAssembler.assemble(tree, layout, …) → AsciiDoc structuré
+     │     (niveaux ==/===/====, ancres [[ref]], :toc: macro + toc::[])
+     ├─ BookOcrFailureDetector.detect(...)      → book-ocr-issues.json
+     └─ BookValidator.validateStructure + validate (LENIENT/STRICT)
+     ▼
+convertDocumentToHtml / Pdf / Epub   ← sourceFile = assembleBook.outputFile
+     ▼
+CollectDocumentRetrieveTask → composite-context.json + metadata.json (N3)
+----
+
+=== Preuve sur le corpus réel (office/metiers/FPA)
+
+Le répertoire `Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/`
+contient les artefacts d'un run réel :
+
+[cols="2,1,4", options="header"]
+|===
+| Artefact | Taille | Constat
+
+| `livre.adoc` (17/09)
+| 249 Ko / 4689 lignes
+| ✅ Livre structuré correct : 6 niveaux de titres, **116 ancres `[[ref]]`**,
+  TOC navigable. C'est le bon livrable.
+
+| `book.adoc` (23/09)
+| 8 Ko / 147 lignes
+| ⚠️ Dégradé (B1) — 3 ancres seulement, corps = TOC imprimée du PDF, pas le
+  contenu des pages.
+
+| `book-ocr-issues.json`
+| 4 Ko
+| ✅ 28 issues localisées (16 ILLISIBLE, 4 IMAGE_MISSING, 7 TABLE_SUSPECT,
+  1 STRUCT_SUSPECT) avec page + ref TOC + titre.
+
+| `rapport_generation.adoc`
+| 10 Ko
+| ✅ Audit éditorial complet (5 problèmes priorisés P0→P2), méthodologie,
+  commande canonique.
+|===
+
+=== Couverture par les gardes
+
+- `book-ocr-issues.json` : 28 échecs localisés (page 40/41/49/73…).
+- epubcheck : 3 erreurs RSC-007 (images manquantes) → EPUB non conforme.
+- pdfCheck : PDF VALID (texte extractible par page).
+- xref/htmlLint/includeGuard/security : VERTS en dogfooding N3.
+
+'''
+== 4. Anomalies détectées
+
+[cols="1,2,4,2", options="header"]
+|===
+| ID | Sévérité | Description | Preuve
+
+| B1
+| 🔴 Élevée
+| Le dernier run produit un `book.adoc` dégradé (147 lignes) : la TOC d'entrée
+  était le *stub* `toc.adoc` (3 lignes) et non la TOC riche (116 sections), et
+  le `book.adoc` régénéré (23/09) n'a pas été publié sous le bon nom.
+| `office/metiers/FPA/toc.adoc` (3 rows) vs
+  `…FPA_II.adoc` (116 rows) ; `book.adoc` 147 lignes vs `livre.adoc` 4689.
+
+| B2
+| 🔴 Élevée
+| `AssembleBookTask.outputFile` est **hardcodé** `build/docs/document/book.adoc`
+  (`DocumentPlugin.kt:368`) alors que le champ `outputFileName` est déclaré
+  (`AssembleBookTask.kt:60`) et **jamais lu dans l'action**. Or
+  `DocumentArtifactCollector.collect` cherche `<outputFileName>.adoc`
+  (`DocumentArtifactCollector.kt:46`). Résultat : avec
+  `-Pdocument.outputFileName=livre`, le livre assemblé (`book.adoc`) n'est
+  **jamais indexé** dans `composite-context.json` (seuls `livre.html/pdf/epub`
+  le sont). Même incohérence pour `enrichDocument`
+  (`DocumentPlugin.kt:298`, sortie `document-enriched.adoc` hardcodée).
+| `DocumentPlugin.kt:368` + `:298` ; `DocumentArtifactCollector.kt:46`.
+
+| B3
+| 🟠 Moyenne
+| `Matter` (FRONT/BODY/BACK) classe par convention `0.x`=FRONT / `9.x`=BACK,
+  mais la TOC FPA réelle n'a que les racines `1,2,3,4`. La règle S3 de
+  `BookValidator.validateStructure` (« au moins un FRONT et un BACK ») échoue
+  donc structurellement sur tout livre réel → faux positifs permanents. De
+  plus, `Matter` n'est consommé que par ce validateur : le front/body/back
+  n'est pas émis par `BookLayout`.
+| `Matter.kt:35` ; `BookValidator.kt:148-154` ; TOC FPA racines ∈ {1,2,3,4}.
+
+| B4
+| 🟠 Moyenne
+| `photosDir` (photos originales en illustration) est utilisé uniquement par le
+  mode *plat* `BookAssembler.assemble(pagesDir,…)`. Le mode *structuré*
+  `assemble(tree, layout, …)` ne reçoit pas `photosDir` et n'émet aucune
+  directive `image::`. Or le corpus réel a 174 `.jpg` jamais référencés.
+| `BookAssembler.kt:37-49` (plat, photos) vs `:106-134` (structuré, sans
+  photos) ; `AssembleBookTask.kt:102-108`.
+
+| B5
+| 🟠 Moyenne
+| 5 références `image::` n'ont pas de fichier correspondant (l'OCR a nommé la
+  légende, pas le fichier) → 3 erreurs epubcheck RSC-007 (EPUB non conforme).
+  Les scans existent mais nommés `NNN.jpg`, pas par légende.
+| `qr-code.png`, `cerveau_gauche_vs_cerveau_droit.jpg`, `arrow-curved-left`,
+  `triangle-gradient.png`, `image-placeholder.png`.
+
+| B6
+| 🟡 Faible
+| `BookNumbering.numbers()` retourne simplement le `ref` lui-même (dérivation
+  identité) — la numérotation calculée n'apporte rien de plus que la TOC
+  source ; `BookNavigation` (prev/next) est exposé mais aucun consommateur prod
+  ne l'utilise.
+| `BookNumbering.kt:33-41` ; seul `BookAssembler.kt:171` l'appelle.
+|===
+
+'''
+== 5. Ce qui manque pour un livre « fini »
+
+=== Manques de câblage (corrigeables en session, TDD)
+
+. *B2* — propager `outputFileName` à `assembleBook.outputFile` et
+  `enrichDocument.outputFile`, pour que le collecteur N3 indexe le livre
+  assemblé sous le bon nom. C'est la correction la plus rentable : cohérence
+  du knob de bout en bout.
+. *B1* — après B2, re-run dogfooding avec la *TOC riche* pour régénérer un
+  `livre.adoc` conforme.
+
+=== Manques fonctionnels (US à cadrer)
+
+. *B4* — référencer les photos originales en mode structuré (`photosDir` →
+  `image::`), pour que le livre PDF/EPUB soit illustré par les scans.
+. *B5* — résolution des images fantômes : mapper les légendes OCR vers
+  `scans/NNN.jpg` (page connue) ou générer des placeholders valides → EPUB
+  epubcheck-VALID.
+. *B3* — rendre `Matter` dérivable/configurable (pas de convention `0.x`/`9.x`
+  aveugle) et l'utiliser dans `BookLayout` (émission front/back matter réelle).
+
+=== Manque éditorial (hors périmètre document)
+
+. Itération humaine OCR : 16 pages `[ILLISIBLE]`, 13 tableaux tronqués,
+   4 « invalid part », 4 « out of sequence » — côté Tombouctou (A1), suivi par
+   `DOC-FPA-PUBLISH-0` (STANDBY).
+
+'''
+== 6. Décisions de suivi
+
+. B1/B2 sont traités en *session 259* (TDD, câblage `outputFileName`).
+. B3/B4/B5 sont cadrés en EPIC `DOC-BOOK-IMAGES` + `DOC-BOOK-MATTER` (voir
+   BACKLOG) — priorité P2 (non bloquant pour le livre, bloquant pour l'EPUB
+   conforme et le livre illustré).
+. B6 documenté en dette mineure (aucune action immédiate).
+. `CROSS-DOC-BOOK-1` (BDD) reste candidat P1 non bloquant.
+
+== Références
+
+- `AGENT.adoc`, `.agents/ARCHITECTURE_BOUNDARY.adoc`
+- `.agents/CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`, `.agents/CADRAGE_EPIC_CROSS_DOC_BOOK.adoc`
+- `.agents/CADRAGE_EPIC_DOC_FPA_PUBLISH.adoc`, `.agents/CADRAGE_EPIC_OCR_QUALITY.adoc`
+- `office/metiers/FPA/…/rapport_generation.adoc` (audit réel)

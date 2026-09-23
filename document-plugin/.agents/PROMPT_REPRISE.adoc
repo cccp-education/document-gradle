@@ -1,33 +1,53 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 258
+== Mission session 259
 
-S-257 (2026-09-17, cross-borough depuis Queens mission 4) a exécuté
-**RENAME Vague 4** : le cadrage révisé (2026-09-10, D5/D11 abrogées — le
-champ lexical métier *complet* sort, pas seulement les sigles) postdatait
-l'audit S-256. **Transfusion d'abord** (`training-gradle/.agents/
-TRANSFER_LEXIQUE_FORMATION.adoc` § 1bis document + § 2 complète), puis
-**neutralisation lexicale** : docs courantes (AGENT/BACKLOG/INDEX/
-ARCHITECTURE_BOUNDARY) + fixtures synthétiques (11 fichiers). Citations
-corpus `office/metiers` conservées (piège #18). Gate Vague 4 `src/` = zéro
-+ docs courantes = zéro (hors traces d'audit). 81 UT ciblés 0 FAIL,
-`ocrQualityCucumberTest` 8/8, 2 FT corpus PASSED. Échec
-`AssembleBookTaskContentRichTocTest` (page 73) **stash-confirmé
-préexistant** (drift corpus A1 : plus de `073.adoc` ILLISIBLE).
+S-258 (2026-09-24) a livré une **code review complète du borough** (lecture
+seule, zéro code), à la demande pilote : « ce qu'il manque pour que le borough
+gère la création d'un livre à partir des éléments textuels récupérés après
+OCR ». Verdict : *le pipeline livre/OCR existe et fonctionne de bout en bout*
+(dogfooding FPA réel : `livre.adoc` 4689 lignes / 116 ancres / 6 niveaux).
+6 anomalies détectées, doc `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc` :
+
+- **B1** — le dernier run (23/09) a produit un `book.adoc` dégradé (147 lignes,
+  3 ancres) : TOC d'entrée = *stub* `toc.adoc` (3 lignes) au lieu de la TOC
+  riche (116 sections).
+- **B2 (P1)** — `AssembleBookTask.outputFile` hardcodé `build/docs/document/
+  book.adoc` (`DocumentPlugin.kt:368`) + `enrichDocument` `document-enriched.adoc`
+  (`:298`), alors que `outputFileName` est déclaré (`AssembleBookTask.kt:60`)
+  mais **jamais lu**. Or `DocumentArtifactCollector.collect` cherche
+  `<outputFileName>.adoc` (`:46`) → avec `-Pdocument.outputFileName=livre`, le
+  livre assemblé n'est **jamais indexé** dans `composite-context.json`.
+- **B3** — `Matter` convention `0.x`/`9.x` inopérante sur la TOC FPA (racines
+  {1,2,3,4}) → faux positif permanent de la règle S3.
+- **B4** — `photosDir` ignoré en mode *structuré* (174 jpg non référencés).
+- **B5** — 4 images OCR fantômes → 3 erreurs epubcheck RSC-007.
+- **B6** — `BookNumbering` dérivation identité / `BookNavigation` sans
+  consommateur (dette mineure).
+
+**Mission S-259 : corriger B1/B2** (EPIC `DOC-BOOK-CONSISTENCY`, P1) en
+baby-step TDD strict — rendre `assembleBook.outputFile` et
+`enrichDocument.outputFile` dérivés du knob `outputFileName` (défauts
+`book`/`document-enriched` → backward-compat), puis re-run dogfooding FPA avec
+la TOC riche. Gates : `assembleBook` + `collectDocumentRetrieve` avec
+`-Pdocument.outputFileName=livre` → `livre.adoc` indexé ; défaut inchangé.
 
 *1. Rien d'urgent* — le borough est à jour (0.0.17 Central, catalogue ws
-0.0.43, garde publication 3/3, compileKotlin VERT). La Vague 4 (chaînes
-non-significatives + fixtures) sera distribuée au prochain bump. A1
-Tombouctou : DOC-FPA-PUBLISH-0 reste STANDBY (le corpus a évolué — le FT
-RichToc attend le corpus convergent).
+0.0.43, garde publication 3/3, compileKotlin VERT). B3/B4/B5 sont cadrés en
+EPICs `DOC-BOOK-MATTER` / `DOC-BOOK-IMAGES` (P2). A1 Tombouctou :
+DOC-FPA-PUBLISH-0 reste STANDBY (le corpus a évolué — le FT RichToc attend le
+corpus convergent).
 
 *2. Candidats prochaine session (sur demande pilote)* :
 
+- *DOC-BOOK-IMAGES (P2)* — livre illustré (`photosDir` structuré) + images
+  fantômes résolues → EPUB epubcheck-VALID.
+- *DOC-BOOK-MATTER (P2)* — Matter dérivable/configurable + émission layout.
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
   le corpus corrigé (convergence attendue : 0 ILLISIBLE).
 - *Publication 0.0.18* (accord pilote) : distribue RENAME-8
-  (borrowedVocabulary config injectée) + pins ws 0.0.37. Bump seulement
-  sur demande pilote — Règle 2.
+  (borrowedVocabulary config injectée) + pins ws 0.0.43 + B1/B2. Bump
+  seulement sur demande pilote — Règle 2.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
   vers la version Central. Vérifier `<latest>` avant tout pin (piège #21 :
@@ -40,15 +60,18 @@ RichToc attend le corpus convergent).
 - *POM future release (piège #17)* : toute nouvelle dep `implementation`
   passe par alias `libs.*` avec version explicite.
 
-== État du code (S-257)
+== État du code (S-259)
 
 - *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200. Le HEAD porte
-  RENAME-8 (S-253) + RENAME Vague 4 (S-257) + pins catalogue — distribué au
-  prochain bump (accord pilote).
+  RENAME-8 (S-253) + RENAME Vague 4 (S-257) + B1/B2 (S-259) + pins catalogue
+  — distribué au prochain bump (accord pilote).
 - *Catalogue ws* : **0.0.43** (aligné BKY-LANG-22, consumer compile VERT).
 - *Consumer racine* : `document = "0.0.17"` sans mavenLocal (Central pur).
 - *Gates document* : UT 3822/0, FT 130/130, 19 runners Cucumber dédiés
   (3068 scénarios / 0 fail), garde publication 3/3, `check` VERT.
+- *Pipeline livre* : `assembleBook.outputFile` + `enrichDocument.outputFile`
+  dérivés du knob `outputFileName` (S-259, B1/B2 corrigés) — le livre assemblé
+  est indexé N3 sous le bon nom.
 - *API translation* : `borrowedVocabulary` injectable sur PlantUmlBlock +
   PlantUmlTranslationAdapter (défaut vide = tout est traduit).
 - *EPIC RENAME Vague 3* : ✅ TERMINÉ 6/6 US (gate D16 transverse VERT 5
@@ -56,8 +79,11 @@ RichToc attend le corpus convergent).
 - *EPIC RENAME Vague 4 (document)* : ✅ TERMINÉ S-257 — champ lexical
   métier complet sorti (docs courantes + fixtures), transfusion training
   § 1bis/§ 2. Gate Vague 4 `src/` = zéro.
+- *EPIC DOC-BOOK-CONSISTENCY* : ✅ TERMINÉ S-259 (B1/B2).
+- *Code review pipeline livre* : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`
+  (verdict + 6 anomalies + EPICs de suivi).
 
-== Pièges Gradle à retenir (S-232..S-257)
+== Pièges Gradle à retenir (S-232..S-259)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -183,17 +209,19 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : `document-plugin` `<latest>` = 0.0.17 ; `workspace-catalog`
-   `<latest>` = 0.0.37 ; `workspace-bom` `<latest>` = 0.0.37 (vérifier
+   `<latest>` = 0.0.43 ; `workspace-bom` `<latest>` = 0.0.43 (vérifier
    `<latest>` avant tout pin, pièges #13/#21).
 5. Baseline : UT 3822/0, FT 130/130, `plantUmlValidationCucumberTest`
    10/10 PASSED, `pdfCheckCucumberTest` 4/4, `epubCheckCucumberTest` 4/4.
 
 == Vision « livre content SERVER »
 
-Verrous levés S-233..S-255 : statut N3 (`validationStatus=PASS`), knob
-`outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central (0.0.16 S-249 puis **0.0.17 S-252b sans
-mavenLocal**), 6 gardes documentaires
+Verrous levés S-233..S-259 : statut N3 (`validationStatus=PASS`), knob
+`outputFileName` de bout en bout (**S-259 clôt le dernier trou : le livre
+assemblé `assembleBook` et l'enrichi `enrichDocument` suivent le knob, fin
+des hardcodes `book.adoc`/`document-enriched.adoc`**), gems PDF/EPUB
+packagées, consommation externe prouvée depuis Central (0.0.16 S-249 puis
+**0.0.17 S-252b sans mavenLocal**), 6 gardes documentaires
 (includeGuard/xref/security/htmlLint/epubCheck/pdfCheck), rapport OCR
 exhaustif (S-251 : 4 raisons + detail) prouvé sur le corpus réel
 (16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT, PDF VALID),
@@ -202,4 +230,12 @@ borrowedVocabulary sorti du nommage public, config injectée D14 ; S-254 :
 clôture transverse Vague 3 — 5 boroughs CLEAN ; S-255 : pins ws 0.0.37).
 Le produit est servable, auditable, documenté et **distribué** de bout en
 bout (0.0.17 = RENAME-2 + OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8
-+ pins 0.0.37 en attente du prochain bump).
++ B1/B2 + pins 0.0.43 en attente du prochain bump).
+
+*Chemin résiduel vers un livre « fini »* (code review S-258) : EPICs cadrés
+`DOC-BOOK-IMAGES` (photos structurées + images fantômes → EPUB VALID, P2) et
+`DOC-BOOK-MATTER` (front/body/back dérivable, P2) ; itération humaine OCR
+(16 ILLISIBLE, 13 tableaux, 4 invalid part) côté Tombouctou A1 —
+`DOC-FPA-PUBLISH-0` STANDBY. Les images fantômes ne peuvent pas être
+*inventées* : elles se résolvent soit par mapping légende→scan, soit par
+placeholder assumé.

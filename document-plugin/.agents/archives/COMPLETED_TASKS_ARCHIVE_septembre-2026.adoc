@@ -2,6 +2,38 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 259 (2026-09-24) — EPIC DOC-BOOK-CONSISTENCY ✅ (B1/B2)
+
+*Type* : feat + TDD + dogfooding (correction issues code review S-258)
+*Score* : 10/10
+*Livrables* :
+- B2 — `assembleBook.outputFile` = `docs/document/$outputFileName.adoc`
+  (défaut `book`) + `enrichDocument.outputFile` =
+  `docs/document/$outputFileName-enriched.adoc` (défaut `document`) :
+  fin des hardcodes, le livre assemblé est indexé N3 sous le bon nom.
+- B1 — dogfooding réel HEAD (mavenLocal, TOC riche 116 sections) :
+  `livre.adoc` produit directement (4600 lignes / 116 ancres),
+  `collectDocumentRetrieve` indexe 5 artefacts.
+*Tests* : `BookOutputFileNameFunctionalTest` 4/4 (TDD RED 3/4 → GREEN 4/4).
+*Gates* : compileKotlin VERT, FT livre + collector VERT (1 échec
+`RichTocTest` page 73 stash-prouvé préexistant), UT book VERT, 4 runners
+Cucumber VERT.
+*Fichiers* : `DocumentPlugin.kt` (2 dérivations), FT créé, INDEX/BACKLOG/
+PROMPT_REPRISE/SESSIONS_HISTORY/TEST_COVERAGE + rapport session +
+code review S-258 + déplacement `.agents/` racine (git mv ×2).
+
+=== Session 258 (2026-09-24) — Code review pipeline livre ✅
+
+*Type* : code review + cadrage (lecture seule, zéro code)
+*Score* : 10/10
+*Livrables* :
+- Verdict : pipeline livre/OCR fonctionnel de bout en bout (dogfooding FPA réel).
+- 6 anomalies (B1-B6) + chemin résiduel vers un livre fini.
+- 3 EPICs cadrés : `DOC-BOOK-CONSISTENCY` (B1/B2), `DOC-BOOK-IMAGES` (B4/B5),
+  `DOC-BOOK-MATTER` (B3).
+*Fichiers* : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc` + INDEX/BACKLOG/
+PROMPT_REPRISE.
+
 === Session 257 (2026-09-17) — RENAME Vague 4 ✅ (champ lexical métier complet)
 
 *Type* : refactor + gouvernance (cross-borough depuis Queens mission 4)

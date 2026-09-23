@@ -295,7 +295,11 @@ class DocumentPlugin : Plugin<Project> {
             task.enrichPlantUml.set(cliProp(project, "enrichPlantUml").map { it.toBoolean() }.orElse(ext.enrichPlantUml))
             task.enrichPassthrough.set(cliProp(project, "enrichPassthrough").map { it.toBoolean() }.orElse(ext.enrichPassthrough))
             task.outputFileName.set(cliProp(project, "outputFileName").orElse("document"))
-            task.outputFile.set(project.layout.buildDirectory.file("docs/document/document-enriched.adoc"))
+            task.outputFile.set(
+                task.outputFileName.flatMap { name ->
+                    project.layout.buildDirectory.file("docs/document/$name-enriched.adoc")
+                },
+            )
         }
     }
 
@@ -365,7 +369,15 @@ class DocumentPlugin : Plugin<Project> {
             task.tocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it) }.orElse(ext.bookTocFile))
             task.pdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPdfsDir))
             task.validationMode.set(cliProp(project, "bookValidationMode").map { ValidationMode.valueOf(it) }.orElse(ext.bookValidationMode).orElse(ValidationMode.LENIENT))
-            task.outputFile.set(project.layout.buildDirectory.file("docs/document/book.adoc"))
+            // S-259 (code-review S-258 B2) — the assembled book follows the same
+            // `outputFileName` knob as the rest of the pipeline (S-235/S-236), so the
+            // N3 collector (`$outputFileName.adoc`) actually indexes it. Default `book`
+            // keeps the canonical `book.adoc` path — backward compatible.
+            task.outputFile.set(
+                task.outputFileName.flatMap { name ->
+                    project.layout.buildDirectory.file("docs/document/$name.adoc")
+                },
+            )
         }
     }
 

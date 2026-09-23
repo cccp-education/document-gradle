@@ -1,5 +1,47 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-09
+:date: 2026-09-24
+:session: 259
+
+== Session 259 — EPIC DOC-BOOK-CONSISTENCY (correction B1/B2)
+
+*Objectif* : rendre le knob `outputFileName` cohérent de bout en bout
+(code review S-258 B2) — `assembleBook.outputFile` et
+`enrichDocument.outputFile` dérivés du knob au lieu d'être hardcodés.
+
+*Tests créés* :
+
+- `BookOutputFileNameFunctionalTest` (FT TestKit, 4 tests) :
+  - `assembleBook writes the renamed book when the outputFileName knob is set`
+  - `assembleBook without the knob keeps the canonical book dot adoc name` (non-régression)
+  - `collect indexes the renamed assembled book when the knob is set`
+  - `enrichDocument writes the renamed enriched file when the outputFileName knob is set`
+
+*Baby-step TDD strict* : RED (3/4 FAILED — les 3 tests du knob, le test de
+non-régression PASSED) → GREEN (4/4 PASSED après les 2 dérivations dans
+`DocumentPlugin.kt`) → REFACTOR n/a (2 lignes, économie d'encre).
+
+*Non-régression* :
+
+- FT livre : `AssembleBookTaskFunctionalTest`, `AssembleBookTaskContentTest`,
+  `BookPipelineContentFunctionalTest`, `BookPipelineN3ContentFunctionalTest`,
+  `CollectDocumentRetrieveOutputFileNameFunctionalTest`,
+  `DocumentPluginFunctionalTest` 65/65 — **1 échec préexistant**
+  `AssembleBookTaskContentRichTocTest` (page 73) **stash-prouvé** indépendant
+  du fix (corpus A1 sans `073.adoc`, drift connu S-257).
+- UT : `AssembleBookTaskUnitTest`, `BookAssemblerStructuredTest`,
+  `BookAssemblerTest`, `BookDslTest`, `DocumentArtifactCollectorTest`,
+  `BookTocParserTest`, `BookValidatorTest` VERT.
+- Cucumber dédiés VERT : `bookTreeCucumberTest`, `bookValidationCucumberTest`,
+  `crossBoroughCucumberTest`, `n3PipelineCucumberTest`.
+- `compileKotlin` + `compileTestKotlin` VERT.
+
+*Dogfooding réel (B1)* : run HEAD via mavenLocal (consumer transitoire
+`/tmp/opencode/doc-consumer-259`) avec la TOC riche (116 sections) et
+`-Pdocument.outputFileName=livre` → `livre.adoc` produit directement
+(4600 lignes / 249 Ko / 116 ancres / 6 niveaux) ; `collectDocumentRetrieve`
+indexe 5 artefacts dont `livre.adoc`.
+
+:date: 2026-09-09 (sessions précédentes)
 :session: 255
 
 == Session 255 — Sync catalogue ws 0.0.37 (drift, zéro test modifié)

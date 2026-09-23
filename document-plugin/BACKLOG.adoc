@@ -1,14 +1,96 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-17 (session 257 — **RENAME Vague 4 ✅** — le
-cadrage révisé Vague 4 (2026-09-10, D5/D11 abrogées : champ lexical
-complet) postdatait l'audit S-256. Transfusion training § 1bis/§ 2 +
-neutralisation lexicale docs courantes + fixtures synthétiques. Gate
-Vague 4 `src/` = zéro. 81 UT 0 FAIL + ocrQuality 8/8 + 2 FT corpus. Échec
-RichToc page 73 stash-confirmé préexistant (drift corpus). Zéro bump.)
+_Date revision_ : 2026-09-24 (session 258 — **Code review pipeline livre ✅** —
+revue complète du borough (lecture seule, zéro code). Verdict : le pipeline
+livre depuis OCR existe et fonctionne de bout en bout (dogfooding FPA réel).
+6 anomalies détectées (B1/B2 câblage `outputFileName`, B3 `Matter`, B4
+`photosDir` structuré, B5 images fantômes, B6 numérotation). 3 EPICs cadrés :
+`DOC-BOOK-CONSISTENCY` (B1/B2, corrigé S-259), `DOC-BOOK-IMAGES` (B4/B5),
+`DOC-BOOK-MATTER` (B3). Rapport `CODE_REVIEW_BOOK_PIPELINE_S258.adoc`.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + RENAME
 Vague 4 + pins ws 0.0.43 en attente du prochain bump)
+
+'''
+== EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
+
+_Origine : code review S-258 (B1/B2). Le pipeline livre produit un `book.adoc`
+(tâche `assembleBook`) et un `document-enriched.adoc` (tâche `enrichDocument`)
+hardcodés, alors que le reste du pipeline suit le knob `outputFileName`
+(S-235/S-236). Conséquence : avec `-Pdocument.outputFileName=livre`, le livre
+assemblé n'est **jamais indexé** dans `composite-context.json`
+(`DocumentArtifactCollector` cherche `<outputFileName>.adoc`) et l'assemblage
+d'un run mal paramétré produit un artefact dégradé (B1)._
+
+|===
+| US | Description | Pts | Statut
+| DOC-BOOK-CONSISTENCY-1 | `AssembleBookTask.outputFile` dérivé du knob `outputFileName` (défaut `book` → `book.adoc`, backward-compat) + lecture effective dans l'action ; `BookAssemblyResult.writeTo` ciblé | 1.5 | ✅ TERMINÉ (S-259 — TDD)
+| DOC-BOOK-CONSISTENCY-2 | `EnrichDocumentTask.outputFile` dérivé du knob (`<name>-enriched.adoc`) + `DocumentArtifactCollector` aligné (indexation N3 du livre assemblé) | 1 | ✅ TERMINÉ (S-259 — TDD)
+| DOC-BOOK-CONSISTENCY-3 | Re-run dogfooding FPA avec la TOC riche (116 sections) → `livre.adoc` conforme (B1) | 0.5 | ✅ TERMINÉ (S-259)
+|===
+
+*Gate* : `assembleBook` puis `collectDocumentRetrieve` avec
+`-Pdocument.outputFileName=livre` → `livre.adoc` présent ET indexé dans
+`composite-context.json` ; défaut inchangé (`book.adoc`) → non-régression.
+*Débloque* : `DOC-FPA-PUBLISH-0` (republication propre).
+
+'''
+
+'''
+== EPIC DOC-BOOK-IMAGES — Livre illustré depuis OCR 🟡 CADRÉ (S-258)
+
+_Origine : code review S-258 (B4/B5). Le mode *structuré* de `BookAssembler`
+ignore `photosDir` (174 scans `.jpg` du corpus jamais référencés), et l'OCR a
+produit 4 directives `image::` dont le fichier n'existe pas (légende reconnue,
+fichier absent) → 3 erreurs epubcheck RSC-007 (EPUB non conforme)._
+
+|===
+| US | Description | Pts | Statut
+| DOC-BOOK-IMAGES-1 | Référencer les photos originales en mode structuré (`photosDir` → `image::` par page) | 3 | 🟡 À FAIRE
+| DOC-BOOK-IMAGES-2 | Résolution des images fantômes : mapper la légende OCR → `scans/NNN.jpg` (page connue) ou placeholder valide | 3 | 🟡 À FAIRE
+| DOC-BOOK-IMAGES-3 | Cucumber `@book-images` (photos référencées + images fantômes résolues) | 1 | 🟡 À FAIRE
+|===
+
+*Gate* : EPUB du livre FPA epubcheck-**VALID** (0 RSC-007) + livre PDF/EPUB
+illustré par les scans. *Priorité* P2 (non bloquant pour le livre, bloquant
+pour un EPUB conforme et un livre illustré).
+
+'''
+
+'''
+== EPIC DOC-BOOK-MATTER — Front/body/back matter réel 🟡 CADRÉ (S-258)
+
+_Origine : code review S-258 (B3). `Matter.classify` suppose `0.x`=FRONT /
+`9.x`=BACK, convention absente de la TOC FPA réelle (racines {1,2,3,4}) → la
+règle S3 de `BookValidator.validateStructure` (« au moins un FRONT et un
+BACK ») produit un faux positif permanent. De plus `Matter` n'est pas émis par
+`BookLayout` — le front/body/back n'existe que dans le validateur._
+
+|===
+| US | Description | Pts | Statut
+| DOC-BOOK-MATTER-1 | `Matter` dérivable/configurable (marqueur explicite TOC ou mapping de préfixes injecté ; fin de la convention aveugle `0.x`/`9.x`) | 3 | 🟡 À FAIRE
+| DOC-BOOK-MATTER-2 | `BookLayout` émet un `<<<` de séparation entre matters + page de titre dédiée | 2 | 🟡 À FAIRE
+| DOC-BOOK-MATTER-3 | Règle S3 ajustée (matter dérivé, plus de faux positif) + Cucumber `@book-matter` | 1 | 🟡 À FAIRE
+|===
+
+*Gate* : validation structurelle VERTE sur la TOC FPA réelle (sans faux
+positif matter). *Priorité* P2.
+
+'''
+
+'''
+== EPIC DOC-BOOK-CONSISTENCY-B6 — Numérotation & navigation (dette mineure) 🟡
+
+_Origine : code review S-258 (B6). `BookNumbering.numbers()` retourne le `ref`
+lui-même (dérivation identité) ; `BookNavigation` (prev/next) est exposé mais
+aucun consommateur prod ne l'utilise._
+
+|===
+| US | Description | Pts | Statut
+| DOC-BOOK-CONSISTENCY-B6 | Soit calculer une vraie numérotation (index 1-based par frères), soit documenter la dérivation identité comme le choix assumé ; brancher `BookNavigation` dans `BookLayout` (liens prev/next) ou le retirer | 1 | 🟡 À FAIRE (dette mineure)
+|===
+
+'''
 
 '''
 == EPIC RENAME Vague 4 — Champ lexical métier complet ✅ TERMINÉ (S-257, document)
@@ -117,6 +199,41 @@ titre, `:toc:`), (3) **logique** (numérotation hiérarchique, navigation
 précédent/suivant, ancres de reference croisée). Voir EPIC `DOC-BOOK-DOMAIN`
 (cadrage S-211, `CADRAGE_EPIC_DOC_BOOK_DOMAIN.adoc`). Consommateur pilote :
 `office/metiers/FPA` (livre FPA II scanné → livre PDF/EPUB navigable).
+
+=== Pipeline livre depuis OCR — état réel (code review S-258)
+
+*Le pipeline livre depuis de l'OCR est fonctionnel de bout en bout* (dogfooding
+FPA réel : `livre.adoc` 4689 lignes / 116 ancres / 6 niveaux de titres).
+Chaîne : `collectOcr` (codex) → `scans/NNN.adoc` → `assembleBook`
+(`BookTocParser` → `BookTreeBuilder` → `BookAssembler`) → `book.adoc` →
+`convertDocumentToHtml/Pdf/Epub` → `collectDocumentRetrieve`. Trois gardes
+transverses alimentent l'itération humaine : `book-ocr-issues.json` (28 échecs
+localisés), epubcheck (3 RSC-007), pdfCheck (VALID).
+
+*Chemin résiduel vers un livre « fini »* (voir EPICs de cohérence ci-dessus) :
+
+[cols="1,3,1", options="header"]
+|===
+| ID | Manque | EPIC
+
+| B1/B2
+| Câblage `outputFileName` (livre assemblé indexé N3, run non dégradé)
+| ✅ DOC-BOOK-CONSISTENCY (S-259)
+
+| B4/B5
+| Livre illustré (photos structurées) + images fantômes résolues (EPUB VALID)
+| 🟡 DOC-BOOK-IMAGES
+
+| B3
+| Front/body/back matter réel (Matter dérivable + émission layout)
+| 🟡 DOC-BOOK-MATTER
+
+| — 
+| Itération humaine OCR (16 ILLISIBLE, 13 tableaux, 4 invalid part)
+| 🟡 DOC-FPA-PUBLISH-0 (STANDBY, A1 Tombouctou)
+|===
+
+_Code review complète_ : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`.
 
 '''
 == Boundary Codex (Brooklyn)
