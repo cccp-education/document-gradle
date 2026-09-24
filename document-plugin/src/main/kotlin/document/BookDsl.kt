@@ -51,4 +51,13 @@ class BookDsl(
     val tocFile: RegularFileProperty,
     val pdfsDir: DirectoryProperty,
     val validationMode: Property<ValidationMode>,
+    /**
+     * DOC-BOOK-MATTER — how the front/back matter policy is resolved from the
+     * TOC. `DERIVED` (default) adopts the convention roots only when the TOC
+     * declares them (no permanent false positive on a body-only book);
+     * `LEGACY` keeps the historical `0`/`9` requirement.
+     */
+    val matterPolicy: Property<MatterPolicyMode>,
+    /** DOC-BOOK-MATTER — emit hard page breaks at matter transitions (opt-in). */
+    val matterBreaks: Property<Boolean>,
 )

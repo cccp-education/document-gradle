@@ -1,0 +1,139 @@
+= Session 261 — EPIC DOC-BOOK-MATTER : politique de matter dérivable (B3 soldé)
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Type_ : feat/DDD-TDD-BDD + dogfooding réel
+_Statut_ : ✅ TERMINÉ
+_EPIC_ : DOC-BOOK-MATTER 3/3 US
+
+== Mission
+
+Reprise sur demande pilote. Le prochain chaînon désigné par l'INDEX/BACKLOG
+est l'EPIC `DOC-BOOK-MATTER` (P2), issu de la code review S-258 (anomalie B3) :
+`Matter.classify` suppose `0.x` = FRONT / `9.x` = BACK, convention **absente**
+de la TOC FPA réelle (racines `{1,2,3,4}`) → la règle S3 de
+`BookValidator.validateStructure` (« au moins un FRONT et un BACK ») produit un
+faux positif **permanent**. De plus, `Matter` n'est pas émis par `BookLayout` —
+le front/body/back n'existe que dans le validateur.
+
+Méthode : baby-step DDD/TDD/BDD strict (UT domaine pur → FT TestKit → BDD
+runner dédié), puis dogfooding réel sur le corpus FPA.
+
+== Constat déclencheur (preuve sur le corpus réel)
+
+La TOC riche FPA (`Devenir_..._FPA_II.adoc`, 116 sections) n'a **aucune** racine
+`0` ni `9` — ses racines sont `1, 2, 3, 4`. En mode STRICT, toute validation
+d'un livre réel échouait donc structurellement sur la matter. La politique est
+désormais **dérivée** de la TOC : un livre n'exige un matter que si sa TOC le
+déclare.
+
+== Implémentation (3 US, TDD strict)
+
+=== US-1 — `MatterPolicy` + `MatterPolicyMode` (domaine pur)
+
+- `MatterPolicy` (data class) : mapping **explicite** front/back roots, invariant
+  d'intersection vide, `requiresFront`/`requiresBack` (la *demande* dérivée du
+  mapping), `classify(ref)` (segment racine = avant le premier point).
+  Factories `DEFAULT` (convention `0`/`9`, backward compatible), `NONE`
+  (tout BODY, rien requis), `of(...)`, `derive(sections)` (n'adopte les racines
+  de convention que si la TOC les déclare), `forMode(mode, sections)`.
+- `MatterPolicyMode` enum : `DERIVED` (défaut sensible) / `LEGACY` (convention
+  historique) / `NONE`.
+
+*Baby-step TDD* : RED (13 `Unresolved reference 'MatterPolicy'`) → GREEN 13/13
+→ second RED (`derive`, 4 tests) → GREEN 17/17.
+
+=== US-2 — `BookLayout` émet les séparateurs de matter
+
+- `BookLayout.emitMatterBreaks: Boolean = false` (opt-in, backward compatible)
+  et `BookLayout.matterPolicy: MatterPolicy = MatterPolicy.DEFAULT`.
+- `BookLayout.matterBreak()` : primitive AsciiDoc `<<<`, nommée pour l'intention.
+- `BookAssembler.buildStructuredBody` regroupe désormais les blocs en
+  `BodyBlock(level, matter, text)` et émet un `<<<` à chaque **transition** de
+  matter (FRONT→BODY, BODY→BACK), sans jamais doubler avec le page-break de
+  niveau (la matter break prime). La page de titre dédiée est fermée par un
+  `<<<` quand les breaks sont activés.
+
+*Baby-step TDD* : RED (champs + comportements, 8 tests) → GREEN.
+
+=== US-3 — Wiring + règle S3 opt-in + FT + Cucumber
+
+- `BookValidator.validateStructure(sections, matterPolicy = MatterPolicy.DEFAULT)` :
+  la règle S3 n'émet un finding que si la politique le **requiert** — le défaut
+  garde la convention historique, `derive` supprime le faux positif.
+- `AssembleBookTask` : nouveaux `@Input` `matterPolicyMode` (défaut `DERIVED`)
+  et `matterBreaks` (défaut `false`), résolus via `MatterPolicy.forMode` et
+  transmis aux deux `BookLayout` + à la validation.
+- DSL `book { matterPolicy.set(...); matterBreaks.set(true) }` + propriétés
+  plates `bookMatterPolicy`/`bookMatterBreaks` (miroir) + CLI
+  `-Pdocument.bookMatterPolicy` / `-Pdocument.bookMatterBreaks`.
+- Contrat N3 `document-config.json` : `BookConfig` porte `matterPolicy` +
+  `matterBreaks` (round-trip serializer complété).
+- FT `BookMatterFunctionalTest` 4/4 (STRICT body-only passe sous DERIVED ;
+  LEGACY échoue ; breaks on/off).
+- BDD `book_matter.feature` 8 scénarios `@book-matter` + `BookMatterSteps`
+  (préfixe `book-matter`) + 21e runner `bookMatterCucumberTest`.
+
+*Baby-step TDD/BDD* : RED (FT DSL + Cucumber undefined) → GREEN.
+
+== Dogfooding réel (corpus FPA, consumer transitoire /tmp, mavenLocal)
+
+TOC riche 116 sections (racines `{1,2,3,4}`) + 106 pages OCR copiées :
+
+- *DERIVED* (défaut) : `-Pdocument.bookValidationMode=STRICT` → **0 finding
+  matter** (`no FRONT section` / `no BACK section` absents). Les échecs
+  restants sont des anomalies **réelles et préexistantes** de la TOC (level
+  jumps `4.1.x` sans parent `4.1`, pages non copiées) — hors périmètre matter.
+- *LEGACY* : les **2 findings** historiques réapparaissent (`no FRONT section
+  (policy roots: [0])`, `no BACK section (policy roots: [9])`) — le faux positif
+  d'origine est **prouvé**.
+- Livre assemblé : 116 ancres, page de titre fermée par un `<<<`, 76 titres.
+
+== Décisions
+
+. `MatterPolicy` = objet pur `derive`-able (l'exigence d'un matter est *dérivée*
+   de la TOC, pas hardcodée).
+. `DERIVED` par défaut (le faux positif S3 disparaît sans configuration).
+. Matter breaks **opt-in** (zéro changement de layout par défaut — Économie
+   d'Encre, backward compat totale).
+. `NONE` disponible pour une TOC sans marqueur de matter.
+. `Matter` historique conservé (les tests legacy restent verts).
+
+== Fichiers
+
+- Créés : `src/main/kotlin/document/MatterPolicy.kt`,
+  `src/main/kotlin/document/MatterPolicyMode.kt`,
+  `src/test/kotlin/document/MatterPolicyTest.kt`,
+  `src/test/kotlin/document/bookmatter/{BookMatterSteps,BookMatterCucumberRunner}.kt`,
+  `src/test/resources/features/book_matter.feature`,
+  `src/functionalTest/kotlin/document/BookMatterFunctionalTest.kt`.
+- Modifiés : `AssembleBookTask.kt`, `BookAssembler.kt`, `BookLayout.kt`,
+  `BookValidator.kt`, `BookDsl.kt`, `DocumentExtension.kt`, `BookConfig.kt`,
+  `DocumentConfigSerializer.kt`, `SerializeDocumentConfigTask.kt`,
+  `DocumentPlugin.kt`, `build.gradle.kts` (21e CucumberTaskSpec),
+  `BookLayoutTest.kt`, `BookAssemblerStructuredTest.kt`,
+  `BookValidatorStructureTest.kt`, `BookDslTest.kt`,
+  `DocumentConfigSerializerTest.kt`, gouvernance.
+
+== Gates
+
+- `compileKotlin` VERT.
+- UT **4493 tests, 0 FAIL** (baseline S-260 4130 → +363 nets ; dont 17
+  `MatterPolicyTest`, +8 `BookAssemblerStructuredTest`/`BookLayoutTest`, +4
+  `BookValidatorStructureTest`, +1 `DocumentConfigSerializerTest`).
+- FT **142 tests, 1 échec préexistant** `AssembleBookTaskContentRichTocTest`
+  (page 73) — stash-confirmé S-257/S-260, indépendant de la matter (drift
+  corpus A1) ; `BookMatterFunctionalTest` 4/4 PASSED.
+- 21 runners Cucumber dédiés VERT (0 fail), dont `bookMatterCucumberTest`
+  8 scénarios PASSED.
+- `validatePlugins` VERT, `publishToMavenLocal` VERT, garde publication 3/3.
+- Zéro secret. Aucun artefact écrit dans `office/` (build `/tmp`).
+- `check` : le seul échec est le FT RichToc préexistant (hors périmètre).
+
+== Suites
+
+- *DOC-BOOK-CONSISTENCY-B6* : dette mineure numérotation/navigation (B6).
+- *DOC-FPA-PUBLISH-0* : STANDBY (A1, corpus en convergence).
+- *Publication 0.0.18* : distribue RENAME-8/Vague 4 + B1/B2 +
+  DOC-BOOK-IMAGES + **DOC-BOOK-MATTER** + pins ws 0.0.56 — accord pilote requis
+  (Règle 2).

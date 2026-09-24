@@ -107,6 +107,8 @@ class DocumentPlugin : Plugin<Project> {
                 tocFile = project.objects.fileProperty(),
                 pdfsDir = project.objects.directoryProperty(),
                 validationMode = project.objects.property(ValidationMode::class.java),
+                matterPolicy = project.objects.property(MatterPolicyMode::class.java),
+                matterBreaks = project.objects.property(Boolean::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -229,6 +231,8 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookTocFile.convention(ext.book.tocFile)
         ext.bookPdfsDir.convention(ext.book.pdfsDir)
         ext.bookValidationMode.convention(ext.book.validationMode)
+        ext.bookMatterPolicy.convention(ext.book.matterPolicy)
+        ext.bookMatterBreaks.convention(ext.book.matterBreaks)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
@@ -369,6 +373,18 @@ class DocumentPlugin : Plugin<Project> {
             task.tocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it) }.orElse(ext.bookTocFile))
             task.pdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPdfsDir))
             task.validationMode.set(cliProp(project, "bookValidationMode").map { ValidationMode.valueOf(it) }.orElse(ext.bookValidationMode).orElse(ValidationMode.LENIENT))
+            // DOC-BOOK-MATTER — matter policy resolution (default DERIVED) and
+            // opt-in matter breaks, driven by the `book { }` DSL or the CLI.
+            task.matterPolicyMode.set(
+                cliProp(project, "bookMatterPolicy").map { MatterPolicyMode.valueOf(it.uppercase()) }
+                    .orElse(ext.bookMatterPolicy)
+                    .orElse(MatterPolicyMode.DERIVED),
+            )
+            task.matterBreaks.set(
+                cliProp(project, "bookMatterBreaks").map { it.toBoolean() }
+                    .orElse(ext.bookMatterBreaks)
+                    .orElse(false),
+            )
             // S-259 (code-review S-258 B2) — the assembled book follows the same
             // `outputFileName` knob as the rest of the pipeline (S-235/S-236), so the
             // N3 collector (`$outputFileName.adoc`) actually indexes it. Default `book`
@@ -459,6 +475,8 @@ class DocumentPlugin : Plugin<Project> {
             task.bookTocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it).asFile.path }.orElse(ext.bookTocFile.asFile.map { it.path }))
             task.bookPdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPdfsDir.asFile.map { it.path }))
             task.bookValidationMode.set(cliProp(project, "bookValidationMode").orElse(ext.bookValidationMode.map { it.name }))
+            task.bookMatterPolicy.set(cliProp(project, "bookMatterPolicy").map { it.uppercase() }.orElse(ext.bookMatterPolicy.map { it.name }))
+            task.bookMatterBreaks.set(cliProp(project, "bookMatterBreaks").map { it.toBoolean() }.orElse(ext.bookMatterBreaks))
         }
     }
 

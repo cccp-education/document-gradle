@@ -23,6 +23,19 @@ data class BookLayout(
     val emitTableOfContents: Boolean = true,
     val pageBreakBetweenNodes: Boolean = true,
     val imagesDir: String? = null,
+    /**
+     * DOC-BOOK-MATTER — emit an AsciiDoc hard page break (`<<<`) at every
+     * *matter transition* (FRONT→BODY, BODY→BACK) and close the dedicated title
+     * page. Off by default (backward compatible): the assembled book keeps its
+     * exact previous layout.
+     */
+    val emitMatterBreaks: Boolean = false,
+    /**
+     * DOC-BOOK-MATTER — the policy that classifies a node's `ref` into a
+     * [Matter]. [MatterPolicy.DEFAULT] keeps the historical `0` / `9`
+     * convention; a real book may inject [MatterPolicy.derive] from its TOC.
+     */
+    val matterPolicy: MatterPolicy = MatterPolicy.DEFAULT,
 ) {
 
     /**
@@ -40,6 +53,13 @@ data class BookLayout(
      * Emits an AsciiDoc hard page break (`<<<` on its own line).
      */
     fun pageBreak(): String = "<<<"
+
+    /**
+     * DOC-BOOK-MATTER — emits the hard page break that separates two matters.
+     * Same AsciiDoc primitive as [pageBreak]; named for the domain intent so
+     * call sites read as "a matter boundary", not "an arbitrary break".
+     */
+    fun matterBreak(): String = "<<<"
 
     /**
      * Emits the AsciiDoc table-of-contents attribute as a *macro* (`:toc:

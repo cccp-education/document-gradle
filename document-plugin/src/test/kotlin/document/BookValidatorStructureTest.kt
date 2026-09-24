@@ -151,6 +151,74 @@ class BookValidatorStructureTest {
         )
     }
 
+    // --- DOC-BOOK-MATTER — derived matter policy (S3 no longer a blind 0/9) ---
+
+    @Test
+    fun `a body-only TOC is valid when the derived policy requires no matter`() {
+        val sections = listOf(
+            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "1.1", title = "Chapter 1", page = 2, pdfFile = "002.adoc"),
+            BookSection(ref = "2", title = "Part II", page = 3, pdfFile = "003.adoc"),
+            BookSection(ref = "2.1", title = "Chapter 2", page = 4, pdfFile = "004.adoc"),
+        )
+
+        val result = BookValidator.validateStructure(
+            sections,
+            matterPolicy = MatterPolicy.derive(sections),
+        )
+
+        assertTrue(
+            result is BookValidationResult.Valid,
+            "a body-only TOC must not be flagged for missing matter, got: $result",
+        )
+    }
+
+    @Test
+    fun `a policy that requires BACK still reports a missing BACK`() {
+        val sections = listOf(
+            BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+        )
+
+        val result = BookValidator.validateStructure(
+            sections,
+            matterPolicy = MatterPolicy(frontRoots = setOf("0"), backRoots = setOf("9")),
+        )
+
+        assertTrue(result is BookValidationResult.Invalid)
+        assertTrue(
+            (result as BookValidationResult.Invalid).reasons.any { it.contains("BACK", ignoreCase = true) },
+            "a required BACK must still be reported, got: ${result.reasons}",
+        )
+    }
+
+    @Test
+    fun `a NONE policy never reports a missing matter`() {
+        val sections = listOf(
+            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
+        )
+
+        val result = BookValidator.validateStructure(sections, matterPolicy = MatterPolicy.NONE)
+
+        assertTrue(
+            result is BookValidationResult.Valid,
+            "the NONE policy must not require any matter, got: $result",
+        )
+    }
+
+    @Test
+    fun `the default policy keeps the legacy 0_9 requirement`() {
+        val sections = listOf(
+            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
+        )
+
+        val result = BookValidator.validateStructure(sections)
+
+        assertTrue(result is BookValidationResult.Invalid, "the default policy must keep requiring FRONT/BACK")
+    }
+
     @Test
     fun `every finding is reported at once`() {
         val sections = listOf(

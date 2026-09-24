@@ -6,6 +6,17 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-24 (session 261 — **EPIC DOC-BOOK-MATTER
+TERMINÉ 3/3 US** — B3 de la code review S-258 soldé. `MatterPolicy` dérivable
+(le matter n'est exigé que si la TOC le déclare) + `MatterPolicyMode`
+(DERIVED/Legacy/NONE) + `BookLayout.emitMatterBreaks` opt-in + règle S3 opt-in
++ contrat N3 étendu. **Preuve dogfooding** : TOC FPA réelle (racines `{1,2,3,4}`,
+body-only) → DERIVED = 0 finding matter, LEGACY = 2 (faux positif historique
+prouvé). 17 UT `MatterPolicyTest` + FT `BookMatterFunctionalTest` 4/4 + BDD
+`@book-matter` 8/8 (21e runner). Gates : UT 4493/0, FT 142/1 (1 préexistant
+RichToc page 73), 21 runners 0 fail, validatePlugins VERT. Rapport :
+`.agents/sessions/261-book-matter-policy.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-24 (session 260 — **EPIC DOC-BOOK-IMAGES
 TERMINÉ 3/3 US** — B4/B5 de la code review S-258 soldés. B4 : `photosDir`
 consommé en mode *structuré* (le livre est illustré par les scans). B5 : les
@@ -135,17 +146,17 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 260 — **EPIC DOC-BOOK-IMAGES TERMINÉ 3/3 US**
-(B4/B5 de la code review S-258 soldés : livre illustré + ghosts réparés →
-EPUB epubcheck-VALID, prouvé STRICT sur le corpus FPA ; 20e runner Cucumber
-`bookImagesCucumberTest` 6/6 ; drift catalogue ws réaligné 0.0.56). Gates :
-UT 4130/0, FT 138/1 (1 préexistant RichToc page 73), 20 runners 0 fail,
-validatePlugins VERT.
-  _Prochaine session_ : DOC-BOOK-MATTER (B3, P2 — Matter dérivable +
-émission layout) OU DOC-BOOK-CONSISTENCY-B6 (dette mineure) OU
-DOC-FPA-PUBLISH-0 (si A1 converge — 10 ILLISIBLE au 2026-09-24), sur
-demande pilote. Publication 0.0.18 (RENAME-8 + Vague 4 + B1/B2 +
-DOC-BOOK-IMAGES + pins ws 0.0.56) sur accord pilote seulement.
+|_Derniere session terminee_ : 261 — **EPIC DOC-BOOK-MATTER TERMINÉ 3/3 US**
+(B3 de la code review S-258 soldé : `MatterPolicy` dérivable, `MatterPolicyMode`,
+matter breaks opt-in, règle S3 opt-in — le faux positif permanent sur une TOC
+body-only est supprimé, prouvé par dogfooding réel DERIVED=0 / LEGACY=2 ; 21e
+runner Cucumber `bookMatterCucumberTest` 8/8). Gates : UT 4493/0, FT 142/1
+(1 préexistant RichToc page 73), 21 runners 0 fail, validatePlugins VERT.
+  _Prochaine session_ : DOC-BOOK-CONSISTENCY-B6 (dette mineure numérotation/
+navigation — dernier item actionnable sans coût externe) OU DOC-FPA-PUBLISH-0
+(si A1 converge — 10 ILLISIBLE au 2026-09-24), sur demande pilote. Publication
+0.0.18 (RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + pins
+ws 0.0.56) sur accord pilote seulement.
 
 '''
 == REGLES ABSOLUES (resume)

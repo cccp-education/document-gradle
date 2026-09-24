@@ -1,14 +1,15 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-24 (session 260 — **EPIC DOC-BOOK-IMAGES ✅ TERMINÉ**
-— B4/B5 de la code review S-258 soldés : le livre est illustré par les scans et
-l'EPUB est epubcheck-VALID (0 RSC-007). Découverte : AsciidoctorJ n'embarque
-que les images DANS le répertoire source → copie des scans référencés dans
-`images/` + `:imagesdir:` relatif. 3 US, 11 UT + 6 UT + 3 UT + 4 FT + BDD 6/6
-(20e runner). Restent P2 : `DOC-BOOK-MATTER` (B3) + `DOC-BOOK-CONSISTENCY-B6`.)
+_Date revision_ : 2026-09-24 (session 261 — **EPIC DOC-BOOK-MATTER ✅ TERMINÉ**
+— B3 de la code review S-258 soldé : la politique de matter est *dérivée* de la
+TOC (un livre n'exige un FRONT/BACK que si sa TOC le déclare) → le faux positif
+permanent sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA) disparaît.
+Preuve dogfooding : DERIVED = 0 finding matter, LEGACY = 2. 3 US, 17 UT +
+FT 4/4 + BDD 8/8 (21e runner). Reste P3 : `DOC-BOOK-CONSISTENCY-B6`.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + RENAME
-Vague 4 + B1/B2 + DOC-BOOK-IMAGES + pins ws 0.0.56 en attente du prochain bump)
+Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + pins ws 0.0.56 en attente
+du prochain bump)
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
@@ -61,7 +62,7 @@ copie des scans *référencés* dans `images/` + `:imagesdir:` relatif (13 Mo, p
 '''
 
 '''
-== EPIC DOC-BOOK-MATTER — Front/body/back matter réel 🟡 CADRÉ (S-258)
+== EPIC DOC-BOOK-MATTER — Front/body/back matter réel ✅ TERMINÉ (S-261)
 
 _Origine : code review S-258 (B3). `Matter.classify` suppose `0.x`=FRONT /
 `9.x`=BACK, convention absente de la TOC FPA réelle (racines {1,2,3,4}) → la
@@ -71,13 +72,15 @@ BACK ») produit un faux positif permanent. De plus `Matter` n'est pas émis par
 
 |===
 | US | Description | Pts | Statut
-| DOC-BOOK-MATTER-1 | `Matter` dérivable/configurable (marqueur explicite TOC ou mapping de préfixes injecté ; fin de la convention aveugle `0.x`/`9.x`) | 3 | 🟡 À FAIRE
-| DOC-BOOK-MATTER-2 | `BookLayout` émet un `<<<` de séparation entre matters + page de titre dédiée | 2 | 🟡 À FAIRE
-| DOC-BOOK-MATTER-3 | Règle S3 ajustée (matter dérivé, plus de faux positif) + Cucumber `@book-matter` | 1 | 🟡 À FAIRE
+| DOC-BOOK-MATTER-1 | `Matter` dérivable/configurable (marqueur explicite TOC ou mapping de préfixes injecté ; fin de la convention aveugle `0.x`/`9.x`) | 3 | ✅ TERMINÉ (S-261 — `MatterPolicy` data class + `MatterPolicyMode` enum : `DEFAULT`/`NONE`/`of`/`derive(sections)`/`forMode(mode, sections)` ; `requiresFront`/`requiresBack` dérivés du mapping ; invariant d'intersection vide ; 17 UT `MatterPolicyTest`)
+| DOC-BOOK-MATTER-2 | `BookLayout` émet un `<<<` de séparation entre matters + page de titre dédiée | 2 | ✅ TERMINÉ (S-261 — `BookLayout.emitMatterBreaks` (défaut false, backward compat) + `matterPolicy` + `matterBreak()` ; `BookAssembler.buildStructuredBody` regroupe en `BodyBlock(level, matter, text)` et émet `<<<` aux transitions FRONT→BODY / BODY→BACK sans doublon avec le page-break de niveau ; page de titre fermée)
+| DOC-BOOK-MATTER-3 | Règle S3 ajustée (matter dérivé, plus de faux positif) + Cucumber `@book-matter` | 1 | ✅ TERMINÉ (S-261 — `validateStructure(sections, matterPolicy)` : S3 n'émet que si la politique le requiert ; wiring `AssembleBookTask` (`@Input matterPolicyMode` défaut DERIVED + `matterBreaks` défaut false) + DSL/CLI + contrat N3 `BookConfig` ; FT `BookMatterFunctionalTest` 4/4 ; BDD `@book-matter` 8/8 + 21e runner **`bookMatterCucumberTest`**)
 |===
 
-*Gate* : validation structurelle VERTE sur la TOC FPA réelle (sans faux
-positif matter). *Priorité* P2.
+*Gate atteint* : validation structurelle VERTE sur la TOC FPA réelle (sans faux
+positif matter — prouvé par dogfooding S-261 : DERIVED = 0 finding matter,
+LEGACY = 2 faux positifs historiques). Défaut `DERIVED`, `LEGACY` disponible.
+*Priorité* P2. Cadrage : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc` (B3).
 
 '''
 
@@ -229,7 +232,7 @@ localisés), epubcheck (3 RSC-007), pdfCheck (VALID).
 
 | B3
 | Front/body/back matter réel (Matter dérivable + émission layout)
-| 🟡 DOC-BOOK-MATTER
+| ✅ DOC-BOOK-MATTER (S-261)
 
 | — 
 | Itération humaine OCR (10 ILLISIBLE au 2026-09-24, 13 tableaux, 4 invalid part)

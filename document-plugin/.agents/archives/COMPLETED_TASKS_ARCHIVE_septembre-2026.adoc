@@ -2,6 +2,31 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 261 (2026-09-24) — EPIC DOC-BOOK-MATTER ✅ (B3)
+
+*Type* : feat DDD/TDD/BDD + dogfooding
+*Score* : 10/10
+*Livrables* :
+- US-1 — `MatterPolicy` dérivable + `MatterPolicyMode` (DERIVED/LEGACY/NONE) :
+  le matter n'est exigé que si la TOC le déclare ; `requiresFront`/`requiresBack`
+  dérivés du mapping. Domaine pur, 17 UT.
+- US-2 — `BookLayout.emitMatterBreaks` (opt-in) + `matterPolicy` + `matterBreak()` ;
+  `BookAssembler` émet `<<<` aux transitions FRONT→BODY / BODY→BACK, page de
+  titre fermée (jamais de doublon avec le page-break de niveau).
+- US-3 — règle S3 opt-in via `validateStructure(sections, matterPolicy)` ; wiring
+  `AssembleBookTask` + DSL `book { matterPolicy; matterBreaks }` + CLI + contrat
+  N3 `BookConfig` ; FT 4/4 ; BDD `@book-matter` 8/8 + 21e runner.
+- Preuve dogfooding (corpus FPA réel) : DERIVED = 0 finding matter, LEGACY = 2
+  (faux positif historique prouvé).
+*Tests* : 17 UT `MatterPolicyTest` + 8 UT layout/assembler/validator + 1 UT
+serializer + 4 FT `BookMatterFunctionalTest` + 8 BDD.
+*Gates* : UT 4493/0, FT 142/1 (1 préexistant RichToc page 73), 21 runners
+Cucumber 0 fail, validatePlugins VERT, publishToMavenLocal VERT, garde 3/3.
+*Fichiers* : 2 prod créés (`MatterPolicy`, `MatterPolicyMode`) + 2 BDD infra +
+FT + feature ; `AssembleBookTask`/`BookAssembler`/`BookLayout`/`BookValidator`/
+`BookDsl`/`DocumentExtension`/`BookConfig`/`DocumentConfigSerializer`/
+`SerializeDocumentConfigTask`/`DocumentPlugin`/`build.gradle.kts` modifiés.
+
 === Session 260 (2026-09-24) — EPIC DOC-BOOK-IMAGES ✅ (B4/B5)
 
 *Type* : feat DDD/TDD/BDD + dogfooding + maintenance cross-borough

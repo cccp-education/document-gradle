@@ -212,6 +212,12 @@ cucumberConventions {
             tags = listOf("@book-images"),
             runnerClass = "document.bookimages.BookImagesCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "bookMatterCucumberTest",
+            features = listOf("src/test/resources/features/book_matter.feature"),
+            tags = listOf("@book-matter"),
+            runnerClass = "document.bookmatter.BookMatterCucumberRunner",
+        ),
     )
 }
 

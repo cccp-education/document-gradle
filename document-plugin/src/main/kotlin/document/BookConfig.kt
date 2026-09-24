@@ -32,6 +32,10 @@ data class BookConfig(
     val tocFile: File? = null,
     val pdfsDir: File? = null,
     val validationMode: String? = null,
+    /** DOC-BOOK-MATTER — matter policy resolution mode (`DERIVED`/`LEGACY`/`NONE`). */
+    val matterPolicy: String? = null,
+    /** DOC-BOOK-MATTER — emit hard page breaks at matter transitions. */
+    val matterBreaks: Boolean? = null,
 ) {
 
     /**

@@ -1,6 +1,51 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-24
-:session: 260
+:session: 261
+
+== Session 261 — EPIC DOC-BOOK-MATTER (politique de matter dérivable)
+
+*Objectif* : solder B3 de la code review S-258 (`Matter.classify` suppose
+`0.x`/`9.x`, convention absente de la TOC FPA réelle → faux positif permanent
+de la règle S3 ; `Matter` non émis par `BookLayout`).
+
+*Tests créés (3 niveaux)* :
+
+- UT domaine pur `MatterPolicyTest` (17 tests) :
+  - `DEFAULT` : racine `0`→FRONT, `9`→BACK, autre→BODY, racine nue `0`/`9`/`1`,
+    ref vide→BODY ;
+  - mapping explicite (`of`) : racines déclarées, plusieurs racines par matter ;
+  - exigence dérivée : `DEFAULT` exige FRONT+BACK, `NONE` rien, policy sans
+    racine front n'exige pas FRONT, `NONE` classe tout BODY ;
+  - invariant : racines front/back sécantes rejetées ;
+  - `derive` : TOC déclarant les deux racines, TOC body-only (rien requis),
+    TOC front-only (back non requis), TOC vide → rien ;
+  - `forMode` : `DERIVED` adopte, `LEGACY`=DEFAULT, `NONE`=NONE.
+- UT layout + assembleur (`BookLayoutTest` +3, `BookAssemblerStructuredTest` +4) :
+  `matterBreak()` = `<<<`, breaks/page de titre off par défaut, injection d'une
+  policy, breaks aux transitions (3 = 1 titre + 2 transitions), pas de break
+  intra-matter, policy dérivée sur TOC body-only, page de titre séparée.
+- UT validator (`BookValidatorStructureTest` +4) : TOC body-only valide sous
+  policy dérivée, policy exigeant BACK reporte le manquant, `NONE` ne reporte
+  rien, `DEFAULT` garde l'exigence legacy.
+- UT serializer (`DocumentConfigSerializerTest` +1) : round-trip `matterPolicy`
+  + `matterBreaks` du bloc book.
+- FT TestKit `BookMatterFunctionalTest` (4 tests) : TOC body-only passe STRICT
+  sous DERIVED, LEGACY échoue STRICT, breaks émis entre matters, breaks off par
+  défaut.
+- BDD `book_matter.feature` 8 scénarios `@book-matter` (21e runner
+  `bookMatterCucumberTest`) : convention 0/9, body-only sans exigence, front-only,
+  validité dérivée, échec legacy, `NONE`, breaks front/back, pas de break sans
+  opt-in.
+
+*Baby-step strict* : RED (objets/API inexistants) → GREEN → second RED
+(`derive`) → GREEN → RED wiring (FT DSL + Cucumber) → GREEN.
+
+*Dogfooding réel* : corpus FPA (TOC body-only, racines `{1,2,3,4}`) →
+DERIVED 0 finding matter / LEGACY 2 (faux positif historique prouvé) ; livre
+116 ancres, page de titre fermée par break.
+
+*Bilan* : UT **4493/0**, FT **142/1** (1 préexistant `RichTocTest` page 73,
+hors périmètre), 21 runners Cucumber 0 fail.
 
 == Session 260 — EPIC DOC-BOOK-IMAGES (illustration + ghost repair)
 

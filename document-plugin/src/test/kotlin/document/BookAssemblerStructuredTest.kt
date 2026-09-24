@@ -3,6 +3,7 @@ package document
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertEquals
 import java.io.File
 import java.nio.file.Files
 
@@ -220,5 +221,85 @@ class BookAssemblerStructuredTest {
         ).content
 
         assertTrue(content.contains(":imagesdir: /tmp/scans"), "the imagesdir must be emitted in the header")
+    }
+
+    // --- DOC-BOOK-MATTER — matter separators & dedicated title page ---
+
+    @Test
+    fun `matter breaks are emitted at each matter transition when enabled`() {
+        val content = BookAssembler.assemble(
+            tree = treeWithFrontBodyBack(),
+            layout = BookLayout(emitMatterBreaks = true, pageBreakBetweenNodes = false),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = resolver(),
+        ).content
+
+        // one dedicated-title-page break + FRONT->BODY and BODY->BACK boundaries.
+        val breaks = Regex("(?m)^<<<$").findAll(content).count()
+        assertEquals(3, breaks, "one title-page break + two matter transitions expected, got $breaks:\n$content")
+    }
+
+    @Test
+    fun `matter breaks are not emitted between same-matter top-level nodes`() {
+        val sections = listOf(
+            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
+        )
+        val tree = BookTreeBuilder.fromSections(sections)
+        val content = BookAssembler.assemble(
+            tree = tree,
+            // isolate the matter-transition behaviour: no title page, no TOC,
+            // no level-based page break — the only possible source is a matter transition.
+            layout = BookLayout(
+                emitMatterBreaks = true,
+                pageBreakBetweenNodes = false,
+                emitTitlePage = false,
+                emitTableOfContents = false,
+            ),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = { section -> "Body of ${section.ref}" },
+        ).content
+
+        assertFalse(
+            Regex("(?m)^<<<$").containsMatchIn(content),
+            "no break must separate two BODY top-level nodes under a matter policy, got:\n$content",
+        )
+    }
+
+    @Test
+    fun `a matter policy can require nothing on a body-only TOC`() {
+        val sections = listOf(
+            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+            BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
+        )
+        val tree = BookTreeBuilder.fromSections(sections)
+        val content = BookAssembler.assemble(
+            tree = tree,
+            layout = BookLayout(matterPolicy = MatterPolicy.derive(sections)),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = { section -> "Body of ${section.ref}" },
+        ).content
+
+        assertTrue(content.contains("Body of 1"), "the body must still be emitted")
+    }
+
+    @Test
+    fun `a dedicated title page is separated from the body when matter breaks are enabled`() {
+        val content = BookAssembler.assemble(
+            tree = treeWithFrontBodyBack(),
+            layout = BookLayout(emitMatterBreaks = true),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = resolver(),
+        ).content
+
+        val titlePage = content.indexOf("= My Book")
+        val firstBreak = content.indexOf("<<<")
+        val firstBody = content.indexOf("Body of 0.1")
+        assertTrue(titlePage < firstBreak, "the title page must precede the first matter break")
+        assertTrue(firstBreak < firstBody, "the dedicated title page must be closed before the content")
     }
 }

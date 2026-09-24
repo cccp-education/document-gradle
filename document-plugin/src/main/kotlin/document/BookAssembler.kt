@@ -123,6 +123,12 @@ object BookAssembler {
         if (layout.emitTableOfContents) {
             sb.append("\n\n").append(layout.tableOfContentsBlock())
         }
+        // DOC-BOOK-MATTER — a dedicated title page is closed by a hard page
+        // break so the front matter starts on a fresh page (opt-in, backward
+        // compatible: no break by default).
+        if (layout.emitMatterBreaks && layout.emitTitlePage) {
+            sb.append("\n\n").append(layout.matterBreak())
+        }
 
         val body = buildStructuredBody(tree, layout, resolveContent)
         if (body.isNotBlank()) {
@@ -175,13 +181,19 @@ object BookAssembler {
         }
     }
 
+    /**
+     * A body block: its heading [level] (0 = top-level node), the [matter] it
+     * belongs to under the layout policy, and the emitted AsciiDoc [text].
+     */
+    private data class BodyBlock(val level: Int, val matter: Matter, val text: String)
+
     private fun buildStructuredBody(
         tree: BookTree,
         layout: BookLayout,
         resolve: (BookSection) -> String,
     ): String {
         val numbers = BookNumbering.numbers(tree)
-        val blocks = mutableListOf<Pair<Int, String>>()
+        val blocks = mutableListOf<BodyBlock>()
 
         fun emit(node: BookNode) {
             if (node.source != null) {
@@ -201,7 +213,7 @@ object BookAssembler {
                         append(content)
                     }
                 }
-                blocks.add(node.level to block)
+                blocks.add(BodyBlock(node.level, layout.matterPolicy.classify(node.ref), block))
             }
             node.children.forEach { emit(it) }
         }
@@ -209,11 +221,20 @@ object BookAssembler {
 
         if (blocks.isEmpty()) return ""
         val out = StringBuilder()
-        blocks.forEachIndexed { i, (level, text) ->
-            if (i > 0 && blocks[i - 1].first == 0 && layout.pageBreakBetweenNodes) {
-                out.append(layout.pageBreak()).append("\n\n")
+        blocks.forEachIndexed { i, block ->
+            if (i > 0) {
+                val previous = blocks[i - 1]
+                // DOC-BOOK-MATTER — a hard break closes a matter. When both the
+                // matter break and the level-based page break would fire at the
+                // same boundary, the matter break wins (never doubled).
+                when {
+                    layout.emitMatterBreaks && previous.matter != block.matter ->
+                        out.append(layout.matterBreak()).append("\n\n")
+                    previous.level == 0 && layout.pageBreakBetweenNodes ->
+                        out.append(layout.pageBreak()).append("\n\n")
+                }
             }
-            out.append(text)
+            out.append(block.text)
             if (i < blocks.lastIndex) out.append("\n\n")
         }
         return out.toString()

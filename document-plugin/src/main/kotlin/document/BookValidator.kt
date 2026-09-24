@@ -118,12 +118,25 @@ object BookValidator {
      * Ink Economy Law: the validation is a pure function of the sections —
      * no I/O, no Gradle dependency, fully deterministic and idempotent.
      *
+     * DOC-BOOK-MATTER (S-258 B3) — *matter completeness* is no longer a blind
+     * `0.x`/`9.x` requirement: the [matterPolicy] classifies each ref and the
+     * validator only reports a missing matter when the policy actually
+     * *requires* it ([MatterPolicy.requiresFront] / [MatterPolicy.requiresBack]).
+     * The default policy keeps the historical requirement (backward
+     * compatible); [MatterPolicy.derive] removes the permanent false positive
+     * on a body-only TOC.
+     *
      * @param sections the table-of-contents sections (document order)
+     * @param matterPolicy the classification/requirement policy (default:
+     *   the legacy `0`/`9` convention)
      * @return a [BookValidationResult] — [BookValidationResult.Valid] when
      *   the structure is coherent, [BookValidationResult.Invalid] with
      *   reasons otherwise
      */
-    fun validateStructure(sections: List<BookSection>): BookValidationResult {
+    fun validateStructure(
+        sections: List<BookSection>,
+        matterPolicy: MatterPolicy = MatterPolicy.DEFAULT,
+    ): BookValidationResult {
         val reasons = mutableListOf<String>()
 
         // Rule S1: ref continuity — no level jump, every parent ref exists
@@ -144,13 +157,15 @@ object BookValidator {
             reasons.add("duplicate section: ref '$ref' appears more than once for page $page")
         }
 
-        // Rule S3: matter completeness — at least one FRONT and one BACK section
-        val matters = sections.map { Matter.classify(it.ref) }.toSet()
-        if (Matter.FRONT !in matters) {
-            reasons.add("matter: no FRONT section (0.x ref) found in the TOC")
+        // Rule S3: matter completeness — only when the policy requires the
+        // matter (DOC-BOOK-MATTER: the policy is derived from the TOC, so a
+        // body-only book is not permanently flagged).
+        val matters = sections.map { matterPolicy.classify(it.ref) }.toSet()
+        if (matterPolicy.requiresFront && Matter.FRONT !in matters) {
+            reasons.add("matter: no FRONT section (policy roots: ${matterPolicy.frontRoots}) found in the TOC")
         }
-        if (Matter.BACK !in matters) {
-            reasons.add("matter: no BACK section (9.x ref) found in the TOC")
+        if (matterPolicy.requiresBack && Matter.BACK !in matters) {
+            reasons.add("matter: no BACK section (policy roots: ${matterPolicy.backRoots}) found in the TOC")
         }
 
         // Rule S4: page order monotonicity — physical pages never regress

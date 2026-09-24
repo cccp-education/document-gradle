@@ -72,12 +72,28 @@ abstract class AssembleBookTask : DefaultTask() {
     @get:Input
     abstract val validationMode: Property<ValidationMode>
 
+    /**
+     * DOC-BOOK-MATTER — how the matter policy is resolved from the TOC.
+     * [MatterPolicyMode.DERIVED] (default) adopts the convention roots only
+     * when the TOC declares them, removing the permanent S3 false positive on
+     * a body-only book; [MatterPolicyMode.LEGACY] keeps the historical `0`/`9`
+     * requirement.
+     */
+    @get:Input
+    abstract val matterPolicyMode: Property<MatterPolicyMode>
+
+    /** DOC-BOOK-MATTER — emit hard page breaks at matter transitions (opt-in). */
+    @get:Input
+    abstract val matterBreaks: Property<Boolean>
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
     init {
         group = "document"
         validationMode.convention(ValidationMode.LENIENT)
+        matterPolicyMode.convention(MatterPolicyMode.DERIVED)
+        matterBreaks.convention(false)
     }
 
     @TaskAction
@@ -96,6 +112,12 @@ abstract class AssembleBookTask : DefaultTask() {
         val tocPresent = toc != null && toc.exists()
         val sections = if (tocPresent) BookTocParser.parse(toc!!) else emptyList()
 
+        // DOC-BOOK-MATTER — resolve the matter policy against the real TOC.
+        // DERIVED (default) adopts the convention roots only when the TOC
+        // actually declares them, so a body-only book is not permanently
+        // flagged; LEGACY keeps the historical 0/9 requirement.
+        val matterPolicy = MatterPolicy.forMode(matterPolicyMode.get(), sections)
+
         val result = if (tocPresent && sections.isNotEmpty()) {
             // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree.
             // EPIC DOC-BOOK-IMAGES — photosDir enables the page-scan illustration
@@ -107,7 +129,11 @@ abstract class AssembleBookTask : DefaultTask() {
             // the container is rejected (RSC-026). Empirical proof: S-260.
             val tree = BookTreeBuilder.fromSections(sections)
             val resolveContent = BookAssembler.contentAwareResolver(pages, photos)
-            val assembled = BookAssembler.assemble(tree, BookLayout(), title.get(), author.get(), resolveContent)
+            val baseLayout = BookLayout(
+                emitMatterBreaks = matterBreaks.get(),
+                matterPolicy = matterPolicy,
+            )
+            val assembled = BookAssembler.assemble(tree, baseLayout, title.get(), author.get(), resolveContent)
             // The targets the assembled book actually references are the exact
             // (and only) scans to materialise — illustration, repaired ghosts and
             // pre-existing images alike (Ink Economy Law: never copy an
@@ -119,7 +145,11 @@ abstract class AssembleBookTask : DefaultTask() {
                 materialiseScans(referenced, output.parentFile)
                 BookAssembler.assemble(
                     tree = tree,
-                    layout = BookLayout(imagesDir = IMAGES_DIR),
+                    layout = BookLayout(
+                        imagesDir = IMAGES_DIR,
+                        emitMatterBreaks = matterBreaks.get(),
+                        matterPolicy = matterPolicy,
+                    ),
                     title = title.get(),
                     author = author.get(),
                     resolveContent = resolveContent,
@@ -152,7 +182,7 @@ abstract class AssembleBookTask : DefaultTask() {
             )
         }
 
-        validateIfConfigured(logger, pages, toc, sections)
+        validateIfConfigured(logger, pages, toc, sections, matterPolicy)
     }
 
     /**
@@ -197,6 +227,7 @@ abstract class AssembleBookTask : DefaultTask() {
         pages: File,
         toc: File?,
         sections: List<BookSection>,
+        matterPolicy: MatterPolicy,
     ) {
         val tocFile = toc ?: tocFile.orNull?.asFile ?: return
         if (!tocFile.exists()) {
@@ -209,7 +240,7 @@ abstract class AssembleBookTask : DefaultTask() {
         // DOC-BOOK-DOMAIN-6 — tree-level structural validation (ref continuity,
         // uniqueness, matter completeness, page order monotonicity), merged with
         // the file-level validation (DOC-BOOK-VALIDATE) into a single report.
-        val structural = BookValidator.validateStructure(sections)
+        val structural = BookValidator.validateStructure(sections, matterPolicy = matterPolicy)
         val fileBased = BookValidator.validate(pagesDir = pages, toc = sections, pdfsDir = pdfs)
         val reasons = buildList {
             if (structural is BookValidationResult.Invalid) {

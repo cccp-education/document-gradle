@@ -79,6 +79,11 @@ class DocumentConfigSerializer {
             book.put("photosDir", config.book.photosDir?.absolutePath)
             book.put("title", config.book.title)
             book.put("author", config.book.author)
+            book.put("tocFile", config.book.tocFile?.absolutePath)
+            book.put("pdfsDir", config.book.pdfsDir?.absolutePath)
+            book.put("validationMode", config.book.validationMode)
+            book.put("matterPolicy", config.book.matterPolicy)
+            config.book.matterBreaks?.let { book.put("matterBreaks", it) }
             root.set<ObjectNode>("book", book)
         }
 
@@ -147,6 +152,8 @@ class DocumentConfigSerializer {
                 tocFile = bookNode.get("tocFile")?.textValueOrNull()?.let { File(it) },
                 pdfsDir = bookNode.get("pdfsDir")?.textValueOrNull()?.let { File(it) },
                 validationMode = bookNode.get("validationMode")?.textValueOrNull(),
+                matterPolicy = bookNode.get("matterPolicy")?.textValueOrNull(),
+                matterBreaks = bookNode.get("matterBreaks")?.takeIf { !it.isNull }?.asBoolean(),
             )
         } else {
             BookConfig()

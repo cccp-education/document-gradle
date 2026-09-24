@@ -99,6 +99,12 @@ abstract class DocumentExtension {
     /** Book pipeline (DOC-BOOK-VALIDATE-2) — validation strictness for [assembleBook]. */
     abstract val bookValidationMode: Property<ValidationMode>
 
+    /** Book pipeline (DOC-BOOK-MATTER) — matter policy resolution mode for [assembleBook]. */
+    abstract val bookMatterPolicy: Property<MatterPolicyMode>
+
+    /** Book pipeline (DOC-BOOK-MATTER) — emit hard page breaks at matter transitions (opt-in). */
+    abstract val bookMatterBreaks: Property<Boolean>
+
     /**
      * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.

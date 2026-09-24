@@ -1,166 +1,97 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 258
+== Mission session 262 — sur demande pilote
 
-S-257 (2026-09-17, cross-borough depuis Queens mission 4) a exécuté
-**RENAME Vague 4** : le cadrage révisé (2026-09-10, D5/D11 abrogées — le
-champ lexical métier *complet* sort, pas seulement les sigles) postdatait
-l'audit S-256. **Transfusion d'abord** (`training-gradle/.agents/
-TRANSFER_LEXIQUE_FORMATION.adoc` § 1bis document + § 2 complète), puis
-**neutralisation lexicale** : docs courantes (AGENT/BACKLOG/INDEX/
-ARCHITECTURE_BOUNDARY) + fixtures synthétiques (11 fichiers). Citations
-corpus `office/metiers` conservées (piège #18). Gate Vague 4 `src/` = zéro
-+ docs courantes = zéro (hors traces d'audit). 81 UT ciblés 0 FAIL,
-`ocrQualityCucumberTest` 8/8, 2 FT corpus PASSED. Échec
-`AssembleBookTaskContentRichTocTest` (page 73) **stash-confirmé
-préexistant** (drift corpus A1 : plus de `073.adoc` ILLISIBLE).
+Le borough est à jour et **sain** : 0.0.17 publiée Central, catalogue ws
+**0.0.56** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT,
+UT 4493/0, 21 runners Cucumber 0 fail. Le pipeline livre depuis OCR est
+fonctionnel de bout en bout (dogfooding FPA réel).
 
-*1. Rien d'urgent* — le borough est à jour (0.0.17 Central, catalogue ws
-0.0.43, garde publication 3/3, compileKotlin VERT). La Vague 4 (chaînes
-non-significatives + fixtures) sera distribuée au prochain bump. A1
-Tombouctou : DOC-FPA-PUBLISH-0 reste STANDBY (le corpus a évolué — le FT
-RichToc attend le corpus convergent).
+*Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
 
-*2. Candidats prochaine session (sur demande pilote)* :
-
-- *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 livre
-  le corpus corrigé (convergence attendue : 0 ILLISIBLE).
-- *Publication 0.0.18* (accord pilote) : distribue RENAME-8
-  (borrowedVocabulary config injectée) + pins ws 0.0.37. Bump seulement
-  sur demande pilote — Règle 2.
+- *DOC-BOOK-CONSISTENCY-B6 (1 pt, P3)* — dette mineure : `BookNumbering.numbers()`
+  est une dérivation identité (retourne le `ref` lui-même) et `BookNavigation`
+  (prev/next) n'a aucun consommateur prod. Trancher : vraie numérotation
+  (index 1-based par frères) OU documenter la dérivation identité comme choix
+  assumé ; brancher `BookNavigation` dans `BookLayout` (liens prev/next) ou le
+  retirer. **Dernier item actionnable sans coût externe.**
+- *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
+  livre le corpus corrigé (convergence 10 ILLISIBLE au 2026-09-24). Le FT
+  `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant qu'A1
+  n'a pas convergé.
+- *Publication 0.0.18* (accord pilote) : distribue RENAME-8 + Vague 4 + B1/B2
+  (S-259) + DOC-BOOK-IMAGES (S-260) + **DOC-BOOK-MATTER (S-261)** + pins ws
+  0.0.56. Bump seulement sur demande pilote.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
-  `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources
-  vers la version Central. Vérifier `<latest>` avant tout pin (piège #21 :
-  déploiements concurrents, coordonner MEMPHIS avant tout bump).
-- *Rappel Vague 3/4 cross-borough (pré-requis réactivation A2)* : le
-  pipeline A2 produit l'enveloppe K-2 `type == "content"` (ex-"SPD") —
-  planner/hyperframes alignés à la réactivation. Vague 4 document ✅ S-257
-  (champ lexical complet sort — reste transverse : bakery → capsule →
-  plantuml → graphify/codex, chacune transfusion d'abord).
-- *POM future release (piège #17)* : toute nouvelle dep `implementation`
-  passe par alias `libs.*` avec version explicite.
+  `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources vers
+  la version Central. Vérifier `<latest>` avant tout pin (piège #21).
 
-== État du code (S-257)
+== État du code (S-261)
 
-- *0.0.17 PUBLIEE* Central — POM/JAR/plugin-marker HTTP 200. Le HEAD porte
-  RENAME-8 (S-253) + RENAME Vague 4 (S-257) + pins catalogue — distribué au
-  prochain bump (accord pilote).
-- *Catalogue ws* : **0.0.43** (aligné BKY-LANG-22, consumer compile VERT).
-- *Consumer racine* : `document = "0.0.17"` sans mavenLocal (Central pur).
-- *Gates document* : UT 3822/0, FT 130/130, 19 runners Cucumber dédiés
-  (3068 scénarios / 0 fail), garde publication 3/3, `check` VERT.
-- *API translation* : `borrowedVocabulary` injectable sur PlantUmlBlock +
-  PlantUmlTranslationAdapter (défaut vide = tout est traduit).
-- *EPIC RENAME Vague 3* : ✅ TERMINÉ 6/6 US (gate D16 transverse VERT 5
-  boroughs ; confirmation S-256 CADUQUE, zéro résidu document).
-- *EPIC RENAME Vague 4 (document)* : ✅ TERMINÉ S-257 — champ lexical
-  métier complet sorti (docs courantes + fixtures), transfusion training
-  § 1bis/§ 2. Gate Vague 4 `src/` = zéro.
+- *0.0.17 PUBLIÉE* Central — le HEAD porte RENAME-8 + Vague 4 + B1/B2 +
+  DOC-BOOK-IMAGES + **DOC-BOOK-MATTER** + pins catalogue, distribué au prochain
+  bump (accord pilote).
+- *Catalogue ws* : **0.0.56** (consumer compile VERT).
+- *Gates document* : UT 4493/0, FT 142/1 (1 préexistant RichToc page 73),
+  21 runners Cucumber dédiés (0 fail), garde publication 3/3, `check` VERT
+  hors FT préexistant.
+- *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261) — `MatterPolicy`
+  dérivable, `MatterPolicyMode` (DERIVED défaut / LEGACY / NONE), matter breaks
+  opt-in, règle S3 opt-in, contrat N3 étendu.
+- *EPIC DOC-BOOK-IMAGES* : ✅ TERMINÉ 3/3 US (S-260).
+- *EPIC DOC-BOOK-CONSISTENCY* (B1/B2) : ✅ TERMINÉ 3/3 US (S-259).
+- *EPIC RENAME Vague 3/4* : ✅ TERMINÉS.
 
-== Pièges Gradle à retenir (S-232..S-257)
+== Politique de matter (DOC-BOOK-MATTER, S-261)
 
-1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
-   (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
-2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent
-   un build.
+- `matterPolicy` (défaut `DERIVED`) : les racines de matter sont dérivées de la
+  TOC, un livre n'exige un FRONT/BACK que si sa TOC le déclare → le faux
+  positif permanent de la règle S3 sur une TOC body-only (racines `{1..4}` du
+  corpus FPA) est **supprimé**.
+- `matterBreaks` (défaut `false`) : `<<<` aux transitions de matter + page de
+  titre fermée — opt-in.
+- DSL `book { matterPolicy.set(MatterPolicyMode.LEGACY); matterBreaks.set(true) }`
+  + CLI `-Pdocument.bookMatterPolicy` / `-Pdocument.bookMatterBreaks`.
+- Preuve dogfooding S-261 : DERIVED → 0 finding matter ; LEGACY → 2 (faux
+  positif historique prouvé).
+
+== Pièges Gradle à retenir (S-232..S-261)
+
+1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
+2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
 3. *Chaîne N3 staged* : produce → validate → collect (3 builds).
 4. *Property DSL sans convention reste unset même derrière `.orElse(...)`*.
-5. *Dérivation knob sans dépendance de tâche* : jamais provider vers
-   `outputFile` du producteur, jamais `.get()` configuration-time.
-6. *`@InputFile` valide l'existence AVANT l'action* — porter les chemins
-   audités en `@Input @Optional Property<String>`.
-7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer côté
-   annotation du runner (`FEATURES_PROPERTY_NAME`).
-8. *Imports DSL consommateur* : les enums des gardes ne sont pas résolus
-   implicitement — importer explicitement côté `build.gradle.kts` tiers
-   (liste dans README.md).
+5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`.
+6. *`@InputFile` valide l'existence AVANT l'action* — auditer en `@Input @Optional Property<String>`.
+7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par annotation du runner.
+8. *Imports DSL consommateur* : les enums des gardes (ex `MatterPolicyMode`) ne sont pas résolus implicitement — `import document.MatterPolicyMode` explicite côté `build.gradle.kts` tiers.
 9. *epubcheck callback Java → null* : signature nullable obligatoire.
-10. *Preuve négative : corrompre la STRUCTURE, pas le contenu* (EPUB :
-    mimetype OCF ; PDF : les octets sont tolérés — texte extractible par
-    page).
-11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester aussi
-    le HTTP 200 du POM versionné.
-12. *Test bakery JBake native roundtrip périmé* : préexistant — à mettre à
-    jour côté bakery.
-13. *Drift catalogue ws* : MEMPHIS bump le catalogue en amont — la garde
-    `DocumentPluginPublicationTest` RED au prochain build. Fix : réaligner
-    les 3 sources vers la version publiée Central. *Réappliqué S-251
-    (0.0.34), S-254 côté plantuml (0.0.37 — la garde plantuml a
-    attrapé le drift au build, pattern généralisé) et S-255 (0.0.36→0.0.37
-    — 4e occurrence du cycle, garde = filet défensif prouvé).*
-14. *PDFBox 3.x lénient sur les octets* : le garde PDF est un garde
-    *texte extractible par page*. Preuve négative = pages sans texte.
-15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size
-    manquant, pas la résolution `PDType1Font(FontName)`.
-16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : `publishToMavenLocal`
-    met à jour l'artefact local sans changer la version — un consommateur
-    DOIT déclarer `pluginManagement { repositories { mavenLocal() } }` AVANT
-    le Plugin Portal pour tester le HEAD local.
-17. *Central exige une version explicite par dépendance POM* : alias
-    `libs.*` avec version.ref dans le catalogue local du borough.
-18. *Faux positif grep "fpa"* : `LeafPath` contient littéralement "fpa" —
-    exclusion documentée. Les chemins `office/metiers/FPA/..._FPA_II/...`
-    sont des citations légitimes du corpus privé — ne pas les renommer.
-    *S-253 : idem "REAC"* — `AssembleBookTaskContentRichTocTest:100` asserte
-    le corps OCR réel du corpus (citation légitime, hors RENAME).
-19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline
-    `image:f[]` — toute détection de références image doit couvrir les deux
-    (`image::?`).
-20. *Dogfooding HEAD via mavenLocal (S-252)* : republication
-    `publishToMavenLocal` + consumer racine résolvant mavenLocal en tête =
-    chaîne de dogfooding sans publication Central. Le rapport
-    `pdf-validation-report.json` doit être ajouté à la liste fpaPublish
-    sinon il est perdu au wipe /tmp.
-21. *Central immutable × deployment concurrent (S-252b)* : coordonner
-    MEMPHIS avant tout bump.
-22. *Pin POM BOM divergent = zéro impact si deps versionnées (S-252b)*.
-23. *Fake de test doit matcher le contrat sémantique (S-253)* : le test
-    « terme non configuré traduit par défaut » exige un fake qui traduit
-    TOUT (`fakeTranslator` préfixe universel) — un fake sélectif
-    (`preservingOnlyLabelsTranslator`) laisse les termes inconnus inchangés
-    et l'assertion `doesNotContain` devient infondée. Choisir le fake selon
-    le comportement LLM réel à prouver.
-24. *Paramètre additif fin de signature (S-253)* : `borrowedVocabulary`
-    ajouté en DERNIER paramètre du constructeur (défaut `emptySet()`) —
-    les consommateurs binaires (bakery 0.0.17 publié) compilent sans
-    changement. Toute extension d'API publique du plugin suit ce pattern.
-25. *Verrous RENAME sont des tests de comportement, pas des fixtures
-    nominales (S-254)* : quand une fixture porte le terme métier dans
-    SON NOM (`contains("AFNOR Referentiel")`), la substitution doit
-    migrer l'assertion aussi — sinon le verrou échoue (RED réel attrapé
-    en baby-step planner). Idem `RollbackStrategyExecutorTest` : le
-    message d'erreur contient la description de la step → substituer
-    les 2.
-26. *WIP parallèle dans le working tree (S-254)* : les boroughs multi-
-    sessions (codebase CB-FPA-RAG, planner toml) peuvent porter un
-    working tree sale d'une session concurrente — commit UNIQUEMENT ses
-    propres fichiers (git add sélectif), jamais `git add -A`.
-27. *Vague 4 = champ lexical complet, pas les sigles (S-257)* : le
-    cadrage RENAME révisé 2026-09-10 (D5/D11 abrogées) exige que
-    `formation|pédagog|formateur|stagiaire|apprenant|livret|...` sortent
-    aussi. Un audit « sigles seuls » (Vague 3) est insuffisant — la gate
-    Vague 4 est plus large. Vérifier la date de révision du cadrage vs
-    la date de l'audit.
-28. *Transfuser AVANT de neutraliser (S-257, pattern S-255)* : la logique
-    métier extraite (convention page scannée, raisons de doute OCR) est
-    reversée dans `training/.agents/TRANSFER_LEXIQUE_FORMATION.adoc` —
-    rien n'est perdu. Un RENAME sans transfusion perd le savoir métier.
-29. *Gate Vague 4 : faux positifs + citations corpus (S-257)* :
-    `information`/`transformation`/`plateforme` sont des faux positifs
-    (substring) ; les chemins `office/metiers/FPA` et l'assertion
-    `"enquête terrain"` sont des citations du corpus réel (piège #18) —
-    à conserver. Les fixtures synthétiques (titres arbitraires empruntés
-    au corpus) se neutralisent.
+10. *Preuve négative : corrompre la STRUCTURE, pas le contenu.*
+11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le HTTP 200 du POM versionné.
+12. *Test bakery JBake native roundtrip périmé* : préexistant — à mettre à jour côté bakery.
+13. *Drift catalogue ws* : MEMPHIS bump en amont → garde `DocumentPluginPublicationTest` RED. Fix : réaligner les 3 sources vers la version Central (5e occurrence S-260, 0.0.43→0.0.56).
+14. *PDFBox 3.x lénient sur les octets* : garde = texte extractible par page.
+15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size manquant.
+16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : consumer DOIT déclarer `mavenLocal()` AVANT le Plugin Portal.
+17. *Central exige une version explicite par dépendance POM* : alias `libs.*` avec version.ref.
+18. *Faux positif grep « fpa/REAC »* : `LeafPath` contient « fpa » ; les chemins `office/metiers/FPA` sont des citations corpus légitimes — ne pas renommer.
+19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline `image:f[]` → `image::?`.
+20. *Dogfooding HEAD via mavenLocal (S-252)* : `publishToMavenLocal` + consumer résolvant mavenLocal en tête. Le consumer `/tmp` **doit déclarer la version du plugin** (`id(...) version "0.0.17"`).
+21. *Central immutable × deployment concurrent (S-252b)* : coordonner MEMPHIS avant tout bump.
+22. *Fake de test doit matcher le contrat sémantique (S-253)*.
+23. *Paramètre additif fin de signature (S-253)* : toute extension d'API publique suit ce pattern.
+24. *Verrous RENAME = tests de comportement, pas fixtures nominales (S-254)*.
+25. *WIP parallèle dans le working tree (S-254)* : `git add` sélectif, jamais `-A`.
+26. *Vague 4 = champ lexical complet, pas les sigles (S-257)*.
+27. *Transfuser AVANT de neutraliser (S-257).*
+28. *Gate Vague 4 : faux positifs + citations corpus (S-257).*
+29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible pour rétro-compat.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
-Chaque feature a UN runner propriétaire. Le runner global (glue
-`document.scenarios`) ne découvre que `document.feature` +
-`release-notes.feature` + `frontmatter_retranslate.feature`. Toute
-nouvelle feature doit soit rejoindre un runner dédié (pattern : runner +
-glue + tag + CucumberTaskSpec dans build.gradle.kts), soit explicitement
-rejoindre le global avec ses steps dans `document.scenarios`.
-Le 19e runner dédié est `ocrQualityCucumberTest` (S-251, 8 scénarios).
+Chaque feature a UN runner propriétaire. Runner global (glue `document.scenarios`) :
+`document.feature` + `release-notes.feature` + `frontmatter_retranslate.feature`.
+Le 21e runner dédié est `bookMatterCucumberTest` (S-261, 8 scénarios `@book-matter`).
 
 == Méthode
 
@@ -172,9 +103,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord.
-- `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule
-  (boundary Codex READ / Document WRITE+PUBLISH).
+- Zéro secret. Git/commit/push autorisés (décision pilote 2026-09-17) en clôture.
+- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
 
 == À vérifier en ouverture
@@ -182,24 +112,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Central : `document-plugin` `<latest>` = 0.0.17 ; `workspace-catalog`
-   `<latest>` = 0.0.37 ; `workspace-bom` `<latest>` = 0.0.37 (vérifier
-   `<latest>` avant tout pin, pièges #13/#21).
-5. Baseline : UT 3822/0, FT 130/130, `plantUmlValidationCucumberTest`
-   10/10 PASSED, `pdfCheckCucumberTest` 4/4, `epubCheckCucumberTest` 4/4.
-
-== Vision « livre content SERVER »
-
-Verrous levés S-233..S-255 : statut N3 (`validationStatus=PASS`), knob
-`outputFileName` de bout en bout, gems PDF/EPUB packagées, consommation
-externe prouvée depuis Central (0.0.16 S-249 puis **0.0.17 S-252b sans
-mavenLocal**), 6 gardes documentaires
-(includeGuard/xref/security/htmlLint/epubCheck/pdfCheck), rapport OCR
-exhaustif (S-251 : 4 raisons + detail) prouvé sur le corpus réel
-(16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT, PDF VALID),
-neutralisation nommage métier privé (S-251 RENAME-2 + S-253 RENAME-8 :
-borrowedVocabulary sorti du nommage public, config injectée D14 ; S-254 :
-clôture transverse Vague 3 — 5 boroughs CLEAN ; S-255 : pins ws 0.0.37).
-Le produit est servable, auditable, documenté et **distribué** de bout en
-bout (0.0.17 = RENAME-2 + OCR-QUALITY-3 + fix inline ; HEAD = + RENAME-8
-+ pins 0.0.37 en attente du prochain bump).
+4. Central : vérifier `<latest>` (`document-plugin`, `workspace-catalog`,
+   `workspace-bom`) avant tout pin (pièges #13/#21).
+5. Baseline : UT 4493/0, FT 142/1 (1 préexistant RichToc page 73),
+   `bookMatterCucumberTest` 8/8, garde publication 3/3.

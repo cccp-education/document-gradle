@@ -93,4 +93,24 @@ class BookLayoutTest {
         val titlePage = BookLayout(imagesDir = "/tmp/scans").titlePage("Mon Livre", "Cheroliv")
         assertTrue(titlePage.contains(":imagesdir: /tmp/scans"), "the imagesdir must be emitted, got:\n$titlePage")
     }
+
+    // --- DOC-BOOK-MATTER — matter separators & dedicated title page ---
+
+    @Test
+    fun `matter break is emitted as an AsciiDoc hard page break`() {
+        assertEquals("<<<", BookLayout().matterBreak())
+    }
+
+    @Test
+    fun `matter breaks and a dedicated title page are off by default`() {
+        val layout = BookLayout()
+        assertFalse(layout.emitMatterBreaks, "matter breaks must be opt-in (non-regression)")
+        assertEquals(MatterPolicy.DEFAULT, layout.matterPolicy, "the default policy keeps the 0/9 convention")
+    }
+
+    @Test
+    fun `an explicit matter policy can be injected in the layout`() {
+        val layout = BookLayout(matterPolicy = MatterPolicy.NONE)
+        assertEquals(Matter.BODY, layout.matterPolicy.classify("0.1"))
+    }
 }
