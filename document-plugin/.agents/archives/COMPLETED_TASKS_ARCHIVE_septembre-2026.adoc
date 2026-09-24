@@ -2,6 +2,26 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 262 (2026-09-24) — DOC-BOOK-CONSISTENCY-B6 ✅ (dernière dette S-258)
+
+*Type* : feat DDD/TDD/BDD + dogfooding
+*Score* : 10/10
+*Livrables* :
+- Domaine — `BookNumbering.numbers()` documenté comme **dérivation identité
+  assumée** (le numéro imprimé = celui de la TOC source) ; `emittedNodes(tree)`
+  (sections distinctes) ; `navigation` court sur les sections *émises* → **bug
+  latent multi-pages corrigé**. `BookLayout.emitNavigation` (opt-in) +
+  `navigationLinks` (`<<ref,title>>`). 6 UT.
+- Assemblage — `BookAssembler` appende la ligne de navigation au pied de section
+  quand `emitNavigation`. 2 UT.
+- Wiring — `AssembleBookTask.navigation` + DSL `book { navigation }` + CLI
+  `-Pdocument.bookNavigation` + contrat N3 `BookConfig.navigation`. 2 FT.
+- BDD `@book-navigation` 5/5 + **22e runner `bookNavigationCucumberTest`**.
+- Preuve dogfooding (corpus FPA réel) : 239 liens, 116 cibles, **0 dangling**,
+  première section next-only.
+*Gates* : `test` 4785/0, FT 144/1 préexistant, 22 runners 0 fail, garde 3/3,
+validatePlugins VERT, publishToMavenLocal VERT, zéro secret.
+
 === Session 261 (2026-09-24) — EPIC DOC-BOOK-MATTER ✅ (B3)
 
 *Type* : feat DDD/TDD/BDD + dogfooding

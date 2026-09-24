@@ -1,61 +1,58 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 262 — sur demande pilote
+== Mission session 263 — sur demande pilote
 
 Le borough est à jour et **sain** : 0.0.17 publiée Central, catalogue ws
 **0.0.56** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT,
-UT 4493/0, 21 runners Cucumber 0 fail. Le pipeline livre depuis OCR est
-fonctionnel de bout en bout (dogfooding FPA réel).
+22 runners Cucumber 0 fail. Le pipeline livre depuis OCR est fonctionnel de
+bout en bout (dogfooding FPA réel) — **toutes les dettes B1→B6 de la code
+review S-258 sont soldées**.
 
 *Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
 
-- *DOC-BOOK-CONSISTENCY-B6 (1 pt, P3)* — dette mineure : `BookNumbering.numbers()`
-  est une dérivation identité (retourne le `ref` lui-même) et `BookNavigation`
-  (prev/next) n'a aucun consommateur prod. Trancher : vraie numérotation
-  (index 1-based par frères) OU documenter la dérivation identité comme choix
-  assumé ; brancher `BookNavigation` dans `BookLayout` (liens prev/next) ou le
-  retirer. **Dernier item actionnable sans coût externe.**
+- *Publication 0.0.18* (accord pilote) : distribue RENAME-8 + Vague 4 + B1/B2
+  (S-259) + DOC-BOOK-IMAGES (S-260) + DOC-BOOK-MATTER (S-261) +
+  **DOC-BOOK-CONSISTENCY-B6 (S-262)** + pins ws 0.0.56. Bump seulement sur
+  demande pilote.
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
   livre le corpus corrigé (convergence 10 ILLISIBLE au 2026-09-24). Le FT
   `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant qu'A1
   n'a pas convergé.
-- *Publication 0.0.18* (accord pilote) : distribue RENAME-8 + Vague 4 + B1/B2
-  (S-259) + DOC-BOOK-IMAGES (S-260) + **DOC-BOOK-MATTER (S-261)** + pins ws
-  0.0.56. Bump seulement sur demande pilote.
+- *CROSS-DOC-BOOK-1/2 (~4 pts, P1 non bloquant)* : BDD cross-borough
+  `collectOcr → assembleBook` + KDoc contrat codex — jamais exécuté.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources vers
   la version Central. Vérifier `<latest>` avant tout pin (piège #21).
 
-== État du code (S-261)
+== État du code (S-262)
 
 - *0.0.17 PUBLIÉE* Central — le HEAD porte RENAME-8 + Vague 4 + B1/B2 +
-  DOC-BOOK-IMAGES + **DOC-BOOK-MATTER** + pins catalogue, distribué au prochain
-  bump (accord pilote).
+  DOC-BOOK-IMAGES + DOC-BOOK-MATTER + **DOC-BOOK-CONSISTENCY-B6** + pins
+  catalogue, distribué au prochain bump (accord pilote).
 - *Catalogue ws* : **0.0.56** (consumer compile VERT).
-- *Gates document* : UT 4493/0, FT 142/1 (1 préexistant RichToc page 73),
-  21 runners Cucumber dédiés (0 fail), garde publication 3/3, `check` VERT
-  hors FT préexistant.
-- *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261) — `MatterPolicy`
-  dérivable, `MatterPolicyMode` (DERIVED défaut / LEGACY / NONE), matter breaks
-  opt-in, règle S3 opt-in, contrat N3 étendu.
+- *Gates document* : `test` 4785/0 (dont 915 UT non-Cucumber), FT 144/1 (1
+  préexistant RichToc page 73), 22 runners Cucumber dédiés (0 fail), garde
+  publication 3/3, `check` VERT hors FT préexistant.
+- *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262) — identité documentée +
+  navigation branchée en prod + bug latent multi-pages corrigé.
+- *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261).
 - *EPIC DOC-BOOK-IMAGES* : ✅ TERMINÉ 3/3 US (S-260).
 - *EPIC DOC-BOOK-CONSISTENCY* (B1/B2) : ✅ TERMINÉ 3/3 US (S-259).
-- *EPIC RENAME Vague 3/4* : ✅ TERMINÉS.
 
-== Politique de matter (DOC-BOOK-MATTER, S-261)
+== Navigation précédent/suivant (DOC-BOOK-CONSISTENCY-B6, S-262)
 
-- `matterPolicy` (défaut `DERIVED`) : les racines de matter sont dérivées de la
-  TOC, un livre n'exige un FRONT/BACK que si sa TOC le déclare → le faux
-  positif permanent de la règle S3 sur une TOC body-only (racines `{1..4}` du
-  corpus FPA) est **supprimé**.
-- `matterBreaks` (défaut `false`) : `<<<` aux transitions de matter + page de
-  titre fermée — opt-in.
-- DSL `book { matterPolicy.set(MatterPolicyMode.LEGACY); matterBreaks.set(true) }`
-  + CLI `-Pdocument.bookMatterPolicy` / `-Pdocument.bookMatterBreaks`.
-- Preuve dogfooding S-261 : DERIVED → 0 finding matter ; LEGACY → 2 (faux
-  positif historique prouvé).
+- `BookNumbering.numbers()` : dérivation **identité assumée** (le numéro
+  imprimé dans le livre = celui de la TOC source) — documentée en KDoc.
+- `BookNumbering.emittedNodes(tree)` : sections distinctes (une par `ref`,
+  première page gagne) — la navigation ne court plus sur les pages OCR.
+- `BookLayout.emitNavigation` (défaut `false`) + `BookLayout.navigationLinks` :
+  `<<ref,title>>` par voisin présent, `" | "`-joint.
+- `AssembleBookTask.navigation` + DSL `book { navigation.set(true) }` + CLI
+  `-Pdocument.bookNavigation=true` + contrat N3 `BookConfig.navigation`.
+- Preuve dogfooding S-262 : FPA réel → 239 liens, 116 cibles, **0 dangling**,
+  première section next-only.
 
-== Pièges Gradle à retenir (S-232..S-261)
+== Pièges Gradle à retenir (S-232..S-262)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -64,7 +61,7 @@ fonctionnel de bout en bout (dogfooding FPA réel).
 5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`.
 6. *`@InputFile` valide l'existence AVANT l'action* — auditer en `@Input @Optional Property<String>`.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par annotation du runner.
-8. *Imports DSL consommateur* : les enums des gardes (ex `MatterPolicyMode`) ne sont pas résolus implicitement — `import document.MatterPolicyMode` explicite côté `build.gradle.kts` tiers.
+8. *Imports DSL consommateur* : les enums des gardes ne sont pas résolus implicitement — `import document.*` explicite côté `build.gradle.kts` tiers.
 9. *epubcheck callback Java → null* : signature nullable obligatoire.
 10. *Preuve négative : corrompre la STRUCTURE, pas le contenu.*
 11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le HTTP 200 du POM versionné.
@@ -72,7 +69,7 @@ fonctionnel de bout en bout (dogfooding FPA réel).
 13. *Drift catalogue ws* : MEMPHIS bump en amont → garde `DocumentPluginPublicationTest` RED. Fix : réaligner les 3 sources vers la version Central (5e occurrence S-260, 0.0.43→0.0.56).
 14. *PDFBox 3.x lénient sur les octets* : garde = texte extractible par page.
 15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size manquant.
-16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : consumer DOIT déclarer `mavenLocal()` AVANT le Plugin Portal.
+16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : consumer DOIT déclarer `mavenLocal()` AVANT le Plugin Portal **dans `settings.gradle.kts → pluginManagement.repositories`** (S-262, dogfooding).
 17. *Central exige une version explicite par dépendance POM* : alias `libs.*` avec version.ref.
 18. *Faux positif grep « fpa/REAC »* : `LeafPath` contient « fpa » ; les chemins `office/metiers/FPA` sont des citations corpus légitimes — ne pas renommer.
 19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline `image:f[]` → `image::?`.
@@ -85,13 +82,15 @@ fonctionnel de bout en bout (dogfooding FPA réel).
 26. *Vague 4 = champ lexical complet, pas les sigles (S-257)*.
 27. *Transfuser AVANT de neutraliser (S-257).*
 28. *Gate Vague 4 : faux positifs + citations corpus (S-257).*
-29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible pour rétro-compat.
+29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible.
+30. *Navigation = sections émises, pas pages OCR (S-262)* : `BookNumbering.emittedNodes` (refs distincts) — sinon une ligne TOC multi-pages fait pointer « suivant » sur la même section logique.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Runner global (glue `document.scenarios`) :
 `document.feature` + `release-notes.feature` + `frontmatter_retranslate.feature`.
-Le 21e runner dédié est `bookMatterCucumberTest` (S-261, 8 scénarios `@book-matter`).
+Le 22e runner dédié est `bookNavigationCucumberTest` (S-262, 5 scénarios
+`@book-navigation`).
 
 == Méthode
 
@@ -114,5 +113,5 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : vérifier `<latest>` (`document-plugin`, `workspace-catalog`,
    `workspace-bom`) avant tout pin (pièges #13/#21).
-5. Baseline : UT 4493/0, FT 142/1 (1 préexistant RichToc page 73),
-   `bookMatterCucumberTest` 8/8, garde publication 3/3.
+5. Baseline : `test` 4785/0 (915 UT), FT 144/1 (1 préexistant RichToc page 73),
+   `bookNavigationCucumberTest` 5/5, garde publication 3/3.

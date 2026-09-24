@@ -105,6 +105,9 @@ abstract class DocumentExtension {
     /** Book pipeline (DOC-BOOK-MATTER) — emit hard page breaks at matter transitions (opt-in). */
     abstract val bookMatterBreaks: Property<Boolean>
 
+    /** Book pipeline (DOC-BOOK-CONSISTENCY-B6) — emit previous / next cross-references (opt-in). */
+    abstract val bookNavigation: Property<Boolean>
+
     /**
      * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.

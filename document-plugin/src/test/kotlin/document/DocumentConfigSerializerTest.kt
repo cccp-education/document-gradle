@@ -237,6 +237,7 @@ class DocumentConfigSerializerTest {
                 author = "Auteur",
                 matterPolicy = "LEGACY",
                 matterBreaks = true,
+                navigation = true,
             ),
         )
         val serializer = DocumentConfigSerializer()
@@ -246,7 +247,9 @@ class DocumentConfigSerializerTest {
 
         assertEquals("LEGACY", roundTripped.book.matterPolicy)
         assertEquals(true, roundTripped.book.matterBreaks)
+        assertEquals(true, roundTripped.book.navigation)
         assertTrue(file.readText().contains("LEGACY"), "the JSON must carry the matter policy")
+        assertTrue(file.readText().contains("navigation"), "the JSON must carry the navigation knob")
     }
 
     @Test

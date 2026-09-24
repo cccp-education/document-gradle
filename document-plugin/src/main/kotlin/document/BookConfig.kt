@@ -36,6 +36,8 @@ data class BookConfig(
     val matterPolicy: String? = null,
     /** DOC-BOOK-MATTER — emit hard page breaks at matter transitions. */
     val matterBreaks: Boolean? = null,
+    /** DOC-BOOK-CONSISTENCY-B6 — emit previous / next cross-references. */
+    val navigation: Boolean? = null,
 ) {
 
     /**

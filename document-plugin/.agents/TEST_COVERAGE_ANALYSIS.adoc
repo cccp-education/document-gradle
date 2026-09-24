@@ -1,6 +1,44 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-24
-:session: 261
+:session: 262
+
+== Session 262 — DOC-BOOK-CONSISTENCY-B6 (navigation précédent/suivant)
+
+*Objectif* : solder la dette B6 de la code review S-258 — `BookNumbering.numbers()`
+identité + `BookNavigation` sans consommateur prod.
+
+*Tests créés (3 niveaux)* :
+
+- UT domaine pur `BookNumberingNavigationTest` (6 tests) :
+  - navigation d'une section multi-pages pointe la **section distincte** suivante
+    (pas le même `ref`) ;
+  - la dernière section distincte n'a pas de « suivant » ;
+  - `emittedNodes` rend les refs distincts en ordre document ;
+  - `emitNavigation` off par défaut (non-régression) ;
+  - `navigationLinks` émet `<<ref,title>>` prev + next ;
+  - bornes : `next` seul au début, `""` pour une section standalone.
+- UT layout + assembleur (`BookLayoutTest` inchangé ; `BookAssemblerStructuredTest`
+  +2) : liens absents par défaut, liens de voisinage émis quand activé
+  (`<<0.1,Preface>> | <<1.1,Chapter 1>>`).
+- UT serializer (`DocumentConfigSerializerTest` +1 assertion) : round-trip
+  `navigation` du bloc book.
+- FT TestKit `BookNavigationFunctionalTest` (2 tests) : liens émis via
+  `assembleBook` quand `navigation.set(true)`, absents par défaut.
+- BDD `book_navigation.feature` 5 scénarios `@book-navigation` (22e runner
+  `bookNavigationCucumberTest`) : milieu → prev+next, première sans précédent,
+  dernière sans suivant, off par défaut, **section multi-pages → next distinct**.
+
+*Baby-step strict* : RED (API inexistante, 6 `Unresolved reference`) → GREEN →
+RED layout (`emitNavigation`/`navigationLinks`) → GREEN → RED assembleur →
+GREEN → RED wiring (FT DSL) → GREEN → RED BDD (steps non définis) → GREEN.
+
+*Dogfooding réel* : corpus FPA (TOC 116 sections, 201 pages) → livre 264 Ko,
+239 liens de navigation, **116 cibles distinctes, 0 dangling** (chaque cible
+résout une ancre émise — vérifié `comm`), première section next-only.
+
+*Bilan* : `test` **4785/0** (0 FAIL/0 ERROR, dont 915 UT non-Cucumber), FT
+**144/1** (1 préexistant `RichTocTest` page 73, hors périmètre), **22 runners
+Cucumber 0 fail**.
 
 == Session 261 — EPIC DOC-BOOK-MATTER (politique de matter dérivable)
 

@@ -112,6 +112,9 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Input
     @get:Optional
     abstract val bookMatterBreaks: Property<Boolean>
+    @get:Input
+    @get:Optional
+    abstract val bookNavigation: Property<Boolean>
 
     init {
         group = "document"
@@ -163,6 +166,7 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 validationMode = bookValidationMode.orNull,
                 matterPolicy = bookMatterPolicy.orNull,
                 matterBreaks = bookMatterBreaks.orNull,
+                navigation = bookNavigation.orNull,
             ),
         )
 

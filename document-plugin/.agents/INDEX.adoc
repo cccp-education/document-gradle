@@ -6,6 +6,23 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-24 (session 262 — **DOC-BOOK-CONSISTENCY-B6
+TERMINÉ** — dette mineure B6 de la code review S-258 soldée. `BookNumbering.numbers()`
+(identité) est désormais **documentée comme choix assumé** (le numéro imprimé dans
+le livre est celui de la TOC source) ; `BookNavigation` est **branchée en prod** —
+`BookLayout.emitNavigation` (opt-in, défaut false) + `BookLayout.navigationLinks`
+émettent `<<ref,title>>` en pied de section. **Bug latent corrigé** : la navigation
+courait sur les pages OCR (mêmes `ref` multi-pages) → elle court désormais sur
+`BookNumbering.emittedNodes` (refs distincts) → le « suivant » pointe toujours une
+section *distincte*. Wiring complet : `AssembleBookTask.navigation` + DSL
+`book { navigation }` + CLI `-Pdocument.bookNavigation` + contrat N3
+`BookConfig.navigation`. 6 UT + 2 FT + BDD `@book-navigation` 5/5 (22e runner
+`bookNavigationCucumberTest`). **Preuve dogfooding** : corpus FPA réel (TOC 116
+sections, 201 pages) → livre 264 Ko, **239 liens de navigation, 116 cibles,
+0 dangling**. Gates : `test` 4785/0, FT 144/1 (préexistant RichToc page 73),
+22 runners 0 fail, garde publication 3/3, validatePlugins VERT. Rapport :
+`.agents/sessions/262-book-navigation.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-24 (session 261 — **EPIC DOC-BOOK-MATTER
 TERMINÉ 3/3 US** — B3 de la code review S-258 soldé. `MatterPolicy` dérivable
 (le matter n'est exigé que si la TOC le déclare) + `MatterPolicyMode`

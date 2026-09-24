@@ -109,6 +109,7 @@ class DocumentPlugin : Plugin<Project> {
                 validationMode = project.objects.property(ValidationMode::class.java),
                 matterPolicy = project.objects.property(MatterPolicyMode::class.java),
                 matterBreaks = project.objects.property(Boolean::class.java),
+                navigation = project.objects.property(Boolean::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -233,6 +234,7 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookValidationMode.convention(ext.book.validationMode)
         ext.bookMatterPolicy.convention(ext.book.matterPolicy)
         ext.bookMatterBreaks.convention(ext.book.matterBreaks)
+        ext.bookNavigation.convention(ext.book.navigation)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
@@ -385,6 +387,12 @@ class DocumentPlugin : Plugin<Project> {
                     .orElse(ext.bookMatterBreaks)
                     .orElse(false),
             )
+            // DOC-BOOK-CONSISTENCY-B6 — opt-in previous / next navigation links.
+            task.navigation.set(
+                cliProp(project, "bookNavigation").map { it.toBoolean() }
+                    .orElse(ext.bookNavigation)
+                    .orElse(false),
+            )
             // S-259 (code-review S-258 B2) — the assembled book follows the same
             // `outputFileName` knob as the rest of the pipeline (S-235/S-236), so the
             // N3 collector (`$outputFileName.adoc`) actually indexes it. Default `book`
@@ -477,6 +485,7 @@ class DocumentPlugin : Plugin<Project> {
             task.bookValidationMode.set(cliProp(project, "bookValidationMode").orElse(ext.bookValidationMode.map { it.name }))
             task.bookMatterPolicy.set(cliProp(project, "bookMatterPolicy").map { it.uppercase() }.orElse(ext.bookMatterPolicy.map { it.name }))
             task.bookMatterBreaks.set(cliProp(project, "bookMatterBreaks").map { it.toBoolean() }.orElse(ext.bookMatterBreaks))
+            task.bookNavigation.set(cliProp(project, "bookNavigation").map { it.toBoolean() }.orElse(ext.bookNavigation))
         }
     }
 

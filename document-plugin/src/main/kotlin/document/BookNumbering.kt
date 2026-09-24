@@ -27,6 +27,13 @@ object BookNumbering {
      * map is built by walking the tree so that every (real or synthetic) node
      * is covered, independent of the digits that happen to appear in the ref.
      *
+     * DOC-BOOK-CONSISTENCY-B6 — this *identity derivation* is a deliberate,
+     * documented choice, not an unfinished stub: the number printed in the book
+     * is the number already printed in the source TOC, so recomputing a 1-based
+     * sibling index would *diverge* from the physical book the reader holds.
+     * The map still has value: it is the ref-keyed projection the assembler
+     * prefixes every heading with, covering synthetic ancestors as well.
+     *
      * @return a map from node `ref` to its hierarchical number (equal to the
      *   `ref`); the synthetic root is not present
      */
@@ -52,16 +59,32 @@ object BookNumbering {
     fun anchor(ref: String): String = "[[$ref]]"
 
     /**
-     * Returns the previous and next leaf [BookSection]s around the section with
-     * [ref], in [BookTree.leaves] (document) order. When [ref] is not a leaf,
-     * both sides are `null`.
+     * The sections a structured book actually *emits* — one per distinct `ref`,
+     * in document order.
+     *
+     * A multi-page TOC row (`| 1.0.1 | … | 5, 6, 7, 8 | …`) expands into several
+     * [BookSection]s sharing the same `ref` ([BookTocParser]); the assembler
+     * emits a single heading for that logical section. Navigation (DOC-BOOK-
+     * CONSISTENCY-B6) therefore runs over the distinct refs, not the raw pages,
+     * so a "next" link never points at the same logical section.
+     */
+    fun emittedNodes(tree: BookTree): List<BookSection> {
+        val byRef = LinkedHashMap<String, BookSection>()
+        tree.leaves.forEach { byRef.putIfAbsent(it.ref, it) }
+        return byRef.values.toList()
+    }
+
+    /**
+     * Returns the previous and next *distinct* [BookSection]s around the section
+     * with [ref], in document order (see [emittedNodes]). When [ref] is not an
+     * emitted section, both sides are `null`.
      */
     fun navigation(tree: BookTree, ref: String): BookNavigation {
-        val leaves = tree.leaves
-        val idx = leaves.indexOfFirst { it.ref == ref }
+        val emitted = emittedNodes(tree)
+        val idx = emitted.indexOfFirst { it.ref == ref }
         if (idx < 0) return BookNavigation(null, null)
-        val previous = if (idx > 0) leaves[idx - 1] else null
-        val next = if (idx < leaves.lastIndex) leaves[idx + 1] else null
+        val previous = if (idx > 0) emitted[idx - 1] else null
+        val next = if (idx < emitted.lastIndex) emitted[idx + 1] else null
         return BookNavigation(previous, next)
     }
 }

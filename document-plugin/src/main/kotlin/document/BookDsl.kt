@@ -60,4 +60,9 @@ class BookDsl(
     val matterPolicy: Property<MatterPolicyMode>,
     /** DOC-BOOK-MATTER — emit hard page breaks at matter transitions (opt-in). */
     val matterBreaks: Property<Boolean>,
+    /**
+     * DOC-BOOK-CONSISTENCY-B6 — emit a previous / next cross-reference at the
+     * foot of every emitted section. Off by default (backward compatible).
+     */
+    val navigation: Property<Boolean>,
 )

@@ -86,6 +86,10 @@ abstract class AssembleBookTask : DefaultTask() {
     @get:Input
     abstract val matterBreaks: Property<Boolean>
 
+    /** DOC-BOOK-CONSISTENCY-B6 — emit previous / next cross-references (opt-in). */
+    @get:Input
+    abstract val navigation: Property<Boolean>
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
@@ -94,6 +98,7 @@ abstract class AssembleBookTask : DefaultTask() {
         validationMode.convention(ValidationMode.LENIENT)
         matterPolicyMode.convention(MatterPolicyMode.DERIVED)
         matterBreaks.convention(false)
+        navigation.convention(false)
     }
 
     @TaskAction
@@ -132,6 +137,7 @@ abstract class AssembleBookTask : DefaultTask() {
             val baseLayout = BookLayout(
                 emitMatterBreaks = matterBreaks.get(),
                 matterPolicy = matterPolicy,
+                emitNavigation = navigation.get(),
             )
             val assembled = BookAssembler.assemble(tree, baseLayout, title.get(), author.get(), resolveContent)
             // The targets the assembled book actually references are the exact
@@ -149,6 +155,7 @@ abstract class AssembleBookTask : DefaultTask() {
                         imagesDir = IMAGES_DIR,
                         emitMatterBreaks = matterBreaks.get(),
                         matterPolicy = matterPolicy,
+                        emitNavigation = navigation.get(),
                     ),
                     title = title.get(),
                     author = author.get(),

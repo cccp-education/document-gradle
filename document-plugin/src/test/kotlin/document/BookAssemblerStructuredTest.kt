@@ -302,4 +302,38 @@ class BookAssemblerStructuredTest {
         assertTrue(titlePage < firstBreak, "the title page must precede the first matter break")
         assertTrue(firstBreak < firstBody, "the dedicated title page must be closed before the content")
     }
+
+    // --- DOC-BOOK-CONSISTENCY-B6 — previous / next navigation links ---
+
+    @Test
+    fun `navigation links are absent by default`() {
+        val content = BookAssembler.assemble(
+            tree = treeWithFrontBodyBack(),
+            layout = BookLayout(),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = resolver(),
+        ).content
+
+        assertFalse(content.contains("<<1."), "no navigation link must be emitted by default")
+    }
+
+    @Test
+    fun `navigation links connect each section to its neighbours when enabled`() {
+        val content = BookAssembler.assemble(
+            tree = treeWithFrontBodyBack(),
+            layout = BookLayout(emitNavigation = true, pageBreakBetweenNodes = false),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = resolver(),
+        ).content
+
+        // "1" is preceded by front matter 0.1 and followed by 1.1.
+        assertTrue(
+            content.contains("<<0.1,Preface>> | <<1.1,Chapter 1>>"),
+            "section 1 must link to its previous and next, got:\n$content",
+        )
+        // The first emitted section has no previous, only a next.
+        assertTrue(content.contains("<<1,Part I>>"), "the preface must link forward to the first body section")
+    }
 }

@@ -1,0 +1,124 @@
+= Session 262 — EPIC DOC-BOOK-CONSISTENCY-B6 : navigation précédent/suivant (B6 soldé)
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Type_ : feat/DDD-TDD-BDD + dogfooding réel
+_Statut_ : ✅ TERMINÉ
+_EPIC_ : DOC-BOOK-CONSISTENCY-B6 (dette mineure, P3)
+
+== Mission
+
+Reprise sur demande pilote. Le dernier item actionnable sans coût externe
+désigné par l'INDEX/BACKLOG est la dette `DOC-BOOK-CONSISTENCY-B6`, issue de la
+code review S-258 (anomalie B6) :
+
+- `BookNumbering.numbers()` retourne le `ref` lui-même (dérivation identité) ;
+- `BookNavigation` (prev/next) est exposé mais **aucun consommateur prod** ne
+  l'utilise.
+
+L'US demandait de trancher : soit une vraie numérotation indexée, soit
+**documenter** la dérivation identité comme le choix assumé ; et brancher
+`BookNavigation` dans `BookLayout` (liens prev/next) **ou le retirer**.
+
+Méthode : baby-step DDD/TDD/BDD strict (UT domaine pur → FT TestKit → BDD
+runner dédié), puis dogfooding réel sur le corpus FPA.
+
+== Décisions
+
+. *Numérotation identité = choix assumé, documenté.* Le numéro imprimé dans le
+   livre est celui déjà imprimé dans la TOC source (`1.0.2.6.4`) ; recalculer un
+   index 1-based par frères **divergerait** du livre physique que tient le
+   lecteur. Le KDoc de `BookNumbering.numbers()` documente désormais ce choix
+   (plus de lecture « stub inachevé »).
+. *Navigation branchée en prod* — l'alternative « retirer » est écartée : la
+   navigation est le chaînon manquant qui rend le livre **auto-navigable**
+   (liens `<<ref,title>>` en pied de section). Opt-in (`emitNavigation`,
+   défaut `false`) pour une backward compat totale.
+. *Bug latent corrigé* : la navigation courait sur les *pages OCR*
+   (`BookTree.leaves`), pas sur les sections *émises*. Une ligne TOC multi-pages
+   (`| 1.0.1 | … | 5, 6, 7, 8 | …`) produit plusieurs `BookSection` de même
+   `ref` → le lien « suivant » pointait sur la **même** section logique. La
+   navigation court désormais sur `BookNumbering.emittedNodes(tree)` (refs
+   distincts, ordre document) → le lien « suivant » est toujours une section
+   *distincte*.
+
+== Implémentation (3 couches, TDD/BDD strict)
+
+=== Domaine pur (UT)
+
+- `BookNumbering.emittedNodes(tree)` : sections distinctes en ordre document
+  (une par `ref`, première page gagne).
+- `BookNumbering.navigation(tree, ref)` : prev/next sur les sections *émises*
+  (fix bug latent multi-pages).
+- `BookNumbering.numbers()` : KDoc documentant la dérivation identité assumée.
+- `BookLayout.emitNavigation` (défaut `false`) + `BookLayout.navigationLinks(nav)`
+  : émet `<<ref,title>>` par voisin présent, `" | "`-joint, vide si standalone.
+
+=== Assemblage (UT)
+
+- `BookAssembler.buildStructuredBody` : quand `layout.emitNavigation`, appende
+  la ligne de navigation au pied du bloc de chaque section (après le contenu).
+
+=== Wiring Gradle (FT)
+
+- `AssembleBookTask.navigation: Property<Boolean>` (défaut `false`) → injecté
+  dans les deux `BookLayout` (base + imagesDir).
+- `BookDsl.navigation` + `DocumentExtension.bookNavigation` (mirror) +
+  convention plugin.
+- CLI `-Pdocument.bookNavigation=true` + DSL
+  `book { navigation.set(true) }`.
+- Contrat N3 : `BookConfig.navigation` + `DocumentConfigSerializer` (write/read)
+  + `SerializeDocumentConfigTask.bookNavigation`.
+
+== Fichiers
+
+- Créés : `src/test/kotlin/document/BookNumberingNavigationTest.kt` (6 UT),
+  `src/functionalTest/kotlin/document/BookNavigationFunctionalTest.kt` (2 FT),
+  `src/test/kotlin/document/booknavigation/{BookNavigationSteps,BookNavigationCucumberRunner}.kt`,
+  `src/test/resources/features/book_navigation.feature` (5 scénarios).
+- Modifiés : `BookNumbering.kt`, `BookLayout.kt`, `BookAssembler.kt`,
+  `AssembleBookTask.kt`, `BookDsl.kt`, `DocumentExtension.kt`, `BookConfig.kt`,
+  `DocumentConfigSerializer.kt`, `SerializeDocumentConfigTask.kt`,
+  `DocumentPlugin.kt`, `build.gradle.kts` (22e CucumberTaskSpec),
+  `BookAssemblerStructuredTest.kt` (+2), `BookDslTest.kt` (fixtures),
+  `DocumentConfigSerializerTest.kt` (+1 assertion), gouvernance.
+
+== Gates
+
+- `compileKotlin` VERT.
+- `test` **4785 cas, 0 FAIL / 0 ERROR** (somme `tests=` du task `test` ; le
+  total inclut les placeholders Cucumber *skipped* — 915 tests unitaires réels
+  non-Cucumber exécutés). Nouveaux : +6 (`BookNumberingNavigationTest`), +2
+  (`BookAssemblerStructuredTest`).
+- `functionalTest` **144 cas, 1 échec préexistant** `AssembleBookTaskContentRichTocTest`
+  (page 73, stash-confirmé S-257/S-260, drift corpus A1, hors périmètre) ;
+  `BookNavigationFunctionalTest` 2/2 PASSED.
+- 22 runners Cucumber dédiés (0 fail, 0 error) — dont `bookNavigationCucumberTest`
+  **5/5 scénarios** PASSED (nouveau 22e).
+- `validatePlugins` VERT, garde publication `DocumentPluginPublicationTest` 3/3,
+  `publishToMavenLocal` VERT.
+- Zéro secret.
+
+== Dogfooding réel (corpus FPA, consumer transitoire /tmp, mavenLocal)
+
+Consumer `/tmp/opencode/doc-nav-dogfood` : TOC riche 116 sections + 201 pages
+OCR copiées, `book { navigation.set(true) }`, `assembleBook`.
+
+- `assembleBook` BUILD SUCCESSFUL.
+- Livre assemblé (`book.adoc`, 264 Ko) : **239 liens de navigation**,
+  **116 cibles distinctes résolues, 0 dangling** (chaque `<<ref,title>>` pointe
+  une ancre `[[ref]]` réellement émise — vérifié `comm`).
+- Première section (`1.0.1`) : **link « suivant » seul** (pas de précédent) —
+  borne correcte.
+- Exemples réels : `<<1.0.1,…>> | <<1.0.2.1,Les compétences>>`,
+  `<<1.0.2.6,…>> | <<1.0.2.6.2,…>>`.
+
+== Suites
+
+- *DOC-FPA-PUBLISH-0* : STANDBY (A1 Tombouctou, corpus en convergence — 10
+  ILLISIBLE au 2026-09-24).
+- *Publication 0.0.18* : distribue RENAME-8/Vague 4 + B1/B2 + DOC-BOOK-IMAGES +
+  DOC-BOOK-MATTER + **DOC-BOOK-CONSISTENCY-B6** + pins ws 0.0.56 — accord pilote
+  requis (Règle 2).
+- *Drift catalogue ws* : si MEMPHIS bump, réaligner les 3 sources (piège #13).
+- `CROSS-DOC-BOOK-1/2` (P1 non bloquant) : candidat si demande pilote.

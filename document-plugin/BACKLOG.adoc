@@ -1,15 +1,21 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-24 (session 262 — **DOC-BOOK-CONSISTENCY-B6 ✅ TERMINÉ**.
+Le *dernier item actionnable sans coût externe* est soldé : la numérotation
+identité est documentée comme choix assumé, `BookNavigation` est branchée en prod
+(liens `<<ref,title>>` opt-in), et un bug latent multi-pages est corrigé. Preuve
+dogfooding FPA : 239 liens, 116 cibles, 0 dangling. Reste : `DOC-FPA-PUBLISH-0`
+STANDBY (A1) + publication 0.0.18 sur accord pilote.)
 _Date revision_ : 2026-09-24 (session 261 — **EPIC DOC-BOOK-MATTER ✅ TERMINÉ**
 — B3 de la code review S-258 soldé : la politique de matter est *dérivée* de la
 TOC (un livre n'exige un FRONT/BACK que si sa TOC le déclare) → le faux positif
 permanent sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA) disparaît.
 Preuve dogfooding : DERIVED = 0 finding matter, LEGACY = 2. 3 US, 17 UT +
-FT 4/4 + BDD 8/8 (21e runner). Reste P3 : `DOC-BOOK-CONSISTENCY-B6`.)
+FT 4/4 + BDD 8/8 (21e runner). Toutes les dettes B1→B6 soldées.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + RENAME
-Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + pins ws 0.0.56 en attente
-du prochain bump)
+Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6
++ pins ws 0.0.56 en attente du prochain bump)
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
@@ -85,7 +91,7 @@ LEGACY = 2 faux positifs historiques). Défaut `DERIVED`, `LEGACY` disponible.
 '''
 
 '''
-== EPIC DOC-BOOK-CONSISTENCY-B6 — Numérotation & navigation (dette mineure) 🟡
+== EPIC DOC-BOOK-CONSISTENCY-B6 — Numérotation & navigation (dette mineure) ✅ TERMINÉ (S-262)
 
 _Origine : code review S-258 (B6). `BookNumbering.numbers()` retourne le `ref`
 lui-même (dérivation identité) ; `BookNavigation` (prev/next) est exposé mais
@@ -93,7 +99,7 @@ aucun consommateur prod ne l'utilise._
 
 |===
 | US | Description | Pts | Statut
-| DOC-BOOK-CONSISTENCY-B6 | Soit calculer une vraie numérotation (index 1-based par frères), soit documenter la dérivation identité comme le choix assumé ; brancher `BookNavigation` dans `BookLayout` (liens prev/next) ou le retirer | 1 | 🟡 À FAIRE (dette mineure)
+| DOC-BOOK-CONSISTENCY-B6 | Soit calculer une vraie numérotation (index 1-based par frères), soit documenter la dérivation identité comme le choix assumé ; brancher `BookNavigation` dans `BookLayout` (liens prev/next) ou le retirer | 1 | ✅ TERMINÉ (S-262 — identité **documentée comme choix assumé** (le numéro imprimé = celui de la TOC source) ; `BookNavigation` **branchée en prod** : `BookLayout.emitNavigation` opt-in + `navigationLinks` (`<<ref,title>>`) ; **bug latent corrigé** (navigation sur `emittedNodes` refs distincts, plus sur les pages OCR multi-pages) ; wiring `AssembleBookTask` + DSL `book { navigation }` + CLI `-Pdocument.bookNavigation` + contrat N3 `BookConfig.navigation` ; 6 UT + 2 FT + BDD `@book-navigation` 5/5 (22e runner) ; dogfooding FPA : 239 liens, 116 cibles, 0 dangling)
 |===
 
 '''
@@ -233,6 +239,10 @@ localisés), epubcheck (3 RSC-007), pdfCheck (VALID).
 | B3
 | Front/body/back matter réel (Matter dérivable + émission layout)
 | ✅ DOC-BOOK-MATTER (S-261)
+
+| B6
+| Numérotation identité documentée + navigation branchée en prod
+| ✅ DOC-BOOK-CONSISTENCY-B6 (S-262)
 
 | — 
 | Itération humaine OCR (10 ILLISIBLE au 2026-09-24, 13 tableaux, 4 invalid part)

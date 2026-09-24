@@ -204,6 +204,14 @@ object BookAssembler {
                 val anchor = BookNumbering.anchor(node.ref)
                 val sections = tree.leaves.filter { it.ref == node.ref }
                 val content = sections.joinToString("\n\n") { resolve(it).trim() }.trim()
+                // DOC-BOOK-CONSISTENCY-B6 — opt-in previous / next cross-
+                // references at the foot of the section (the navigation runs
+                // over the emitted sections, not the raw pages).
+                val navigation = if (layout.emitNavigation) {
+                    layout.navigationLinks(BookNumbering.navigation(tree, node.ref))
+                } else {
+                    ""
+                }
                 val block = buildString {
                     append(anchor)
                     append("\n")
@@ -211,6 +219,10 @@ object BookAssembler {
                     if (content.isNotEmpty()) {
                         append("\n\n")
                         append(content)
+                    }
+                    if (navigation.isNotEmpty()) {
+                        append("\n\n")
+                        append(navigation)
                     }
                 }
                 blocks.add(BodyBlock(node.level, layout.matterPolicy.classify(node.ref), block))

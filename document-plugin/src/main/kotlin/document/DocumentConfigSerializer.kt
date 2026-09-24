@@ -84,6 +84,7 @@ class DocumentConfigSerializer {
             book.put("validationMode", config.book.validationMode)
             book.put("matterPolicy", config.book.matterPolicy)
             config.book.matterBreaks?.let { book.put("matterBreaks", it) }
+            config.book.navigation?.let { book.put("navigation", it) }
             root.set<ObjectNode>("book", book)
         }
 
@@ -154,6 +155,7 @@ class DocumentConfigSerializer {
                 validationMode = bookNode.get("validationMode")?.textValueOrNull(),
                 matterPolicy = bookNode.get("matterPolicy")?.textValueOrNull(),
                 matterBreaks = bookNode.get("matterBreaks")?.takeIf { !it.isNull }?.asBoolean(),
+                navigation = bookNode.get("navigation")?.takeIf { !it.isNull }?.asBoolean(),
             )
         } else {
             BookConfig()

@@ -6,7 +6,8 @@ package document
  * [BookLayout] is a pure value object describing *how* a [BookTree] is turned
  * into navigable AsciiDoc: which heading level corresponds to a node depth,
  * whether a page break is inserted between top-level nodes, whether a title
- * page and a table of contents are emitted. It contains no I/O and no Gradle
+ * page and a table of contents are emitted, whether previous / next
+ * cross-references are appended. It contains no I/O and no Gradle
  * dependency — every method returns the AsciiDoc `String` it would emit, so it
  * is fully unit-testable.
  *
@@ -36,6 +37,12 @@ data class BookLayout(
      * convention; a real book may inject [MatterPolicy.derive] from its TOC.
      */
     val matterPolicy: MatterPolicy = MatterPolicy.DEFAULT,
+    /**
+     * DOC-BOOK-CONSISTENCY-B6 — emit a previous / next cross-reference at the
+     * foot of every emitted section. Off by default (backward compatible): the
+     * assembled book keeps its exact previous layout.
+     */
+    val emitNavigation: Boolean = false,
 ) {
 
     /**
@@ -60,6 +67,20 @@ data class BookLayout(
      * call sites read as "a matter boundary", not "an arbitrary break".
      */
     fun matterBreak(): String = "<<<"
+
+    /**
+     * DOC-BOOK-CONSISTENCY-B6 — emits the AsciiDoc previous / next navigation
+     * line for [navigation] (`<<ref,title>>` cross-references). Either side may
+     * be absent at the boundaries of the book; a standalone section with no
+     * neighbour yields an empty string (nothing to emit).
+     */
+    fun navigationLinks(navigation: BookNavigation): String {
+        val links = buildList {
+            navigation.previous?.let { add("<<${it.ref},${it.title}>>") }
+            navigation.next?.let { add("<<${it.ref},${it.title}>>") }
+        }
+        return links.joinToString(" | ")
+    }
 
     /**
      * Emits the AsciiDoc table-of-contents attribute as a *macro* (`:toc:

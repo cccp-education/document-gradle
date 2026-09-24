@@ -25,6 +25,7 @@ class BookDslTest {
             validationMode = objects().property(ValidationMode::class.java),
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
+            navigation = objects().property(Boolean::class.java),
         )
         assertNotNull(dsl.pagesDir)
         assertNotNull(dsl.photosDir)
@@ -44,6 +45,7 @@ class BookDslTest {
             validationMode = objects().property(ValidationMode::class.java),
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
+            navigation = objects().property(Boolean::class.java),
         )
         assertFalse(dsl.title.isPresent)
         assertFalse(dsl.author.isPresent)
@@ -63,6 +65,7 @@ class BookDslTest {
             validationMode = objects().property(ValidationMode::class.java),
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
+            navigation = objects().property(Boolean::class.java),
         )
         dsl.title.convention("Untitled Book")
         dsl.author.convention("Unknown Author")
@@ -82,6 +85,7 @@ class BookDslTest {
             validationMode = objects().property(ValidationMode::class.java),
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
+            navigation = objects().property(Boolean::class.java),
         )
         dsl.title.set("Mon Livre")
         dsl.author.set("Auteur")
