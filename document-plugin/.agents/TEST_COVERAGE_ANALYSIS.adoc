@@ -1,6 +1,24 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-24
-:session: 263
+:date: 2026-09-25
+:session: 264
+
+== Session 264 — PUB 0.0.18 (aucun test de document modifié)
+
+*Périmètre* : publication cross-borough, zéro code de production document
+modifié, zéro test document modifié. Les tests exercés en baby-step TDD sont
+les **gardes d'hygiène de publication** (test-only, préexistantes) :
+
+- `DocumentPluginPublicationTest` (document) : RED 2 failures prouvé
+  (split-brain toml local `document 0.0.17` vs ws `0.0.18` + platform pin
+  0.0.56 vs BOM 0.0.57) → GREEN 3/3 après re-pin des 3 sources.
+- MEMPHIS `PlatformCatalogAlignmentTest` + `WorkspaceCatalogStructureTest` :
+  RED 2 failures prouvé (bom 0.0.56 vs 0.0.57 ; document 0.0.17 vs 0.0.18)
+  → GREEN après réalignement.
+
+*Baseline préservée* : `test` 3915 cas (3799 skipped runner-scoped), 0 failure.
+Aucun seuil de couverture modifié. Preuve de distribution côté **consommateur
+tiers** (`/tmp/opencode/doc-consumer-018`, Central sans mavenLocal) :
+`xrefValidation STRICT` VALID + preuve négative ancre morte → BUILD FAILED.
 
 == Session 263 — CROSS-DOC-BOOK-FIDELITY (le BDD teste le contrat réel)
 

@@ -6,6 +6,22 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-25 (session 264 — **PUB 0.0.18 Maven Central
+✅** — accord pilote (« commence par 1 »). Distribution hors machine de dev du
+HEAD cumulé depuis 0.0.17 : RENAME-8 + Vague 4 + DOC-BOOK-CONSISTENCY B1/B2 +
+DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+CROSS-DOC-BOOK-FIDELITY (test-only) + pins catalogue ws 0.0.57. Chaîne DAG
+N0→N2 MEMPHIS-first : bump BOM/catalog 0.0.57 + `document-plugin 0.0.18`,
+baby-step TDD strict (RED prouvé sur les 2 gardes MEMPHIS — 2 failed — puis
+sur la garde document — 2 failed) → GREEN → `test` VERT → bundles
+`3f912bf6` (MEMPHIS) + `aab4b880` (document) AUTOMATIC. Propagation POM/JAR/
+plugin-marker HTTP 200 (`<latest>` périmé ~15 min, piège #11 re-confirmé).
+Preuve consommateur tiers `/tmp/opencode/doc-consumer-018` (Central sans
+mavenLocal) : 0.0.18 résolu, HTML produit, `xrefValidation STRICT` fail-fast
+sur ancre morte (preuve négative). Gates : garde publication 3/3,
+`test` 3915/0 runner-scoped, `validatePlugins` VERT, zéro secret.
+Rapport : `.agents/sessions/264-pub-0.0.18-distribution.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-24 (session 263 — **CROSS-DOC-BOOK-FIDELITY
 TERMINÉ** — le BDD cross-borough `@book-pipeline` teste désormais le *contrat
 réel*, plus une fiction. Audit d'ouverture : le filet S-210 était vert mais

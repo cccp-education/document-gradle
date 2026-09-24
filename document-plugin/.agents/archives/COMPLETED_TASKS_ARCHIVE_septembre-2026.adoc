@@ -2,6 +2,29 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 264 (2026-09-25) — PUB 0.0.18 ✅ (distribution Central, cross-borough)
+
+*Type* : PUB cross-borough (accord pilote « commence par 1 »)
+*Score* : 10/10
+*Livrables* :
+- **MEMPHIS** : bump `workspace-bom 0.0.56→0.0.57` + `document-plugin
+  0.0.17→0.0.18` ; RED 2 failed (`PlatformCatalogAlignmentTest` +
+  `WorkspaceCatalogStructureTest`) → GREEN → `test` 0 FAIL → Central bundle
+  `3f912bf6` (AUTOMATIC), POM HTTP 200, catalog porte `document-plugin = "0.0.18"`.
+- **document** : re-pin 3 sources (settings D4 ws-catalog 0.0.57 + platform BOM
+  0.0.57 + toml local 0.0.18) ; RED 2 failed (`DocumentPluginPublicationTest`)
+  → GREEN 3/3 ; version dérivée **0.0.18** ; `publishToMavenLocal` VERT ;
+  Central bundle `aab4b880` (AUTOMATIC), POM/JAR/plugin-marker HTTP 200.
+- **Preuve consommateur tiers** `/tmp/opencode/doc-consumer-018` (Central sans
+  mavenLocal) : 0.0.18 résolu, HTML produit, `xrefValidation STRICT` VALID +
+  preuve négative ancre morte → BUILD FAILED.
+- Contenu distribué : RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES +
+  DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY + pins 0.0.57.
+- Pièges re-confirmés : #11 (`<latest>` périmé ~15 min), #13 (6e drift catalogue),
+  #26 (WIP concurrent MEMPHIS — commit sélectif).
+*Gates* : garde publication 3/3, `test` 3915/0 runner-scoped, `validatePlugins`
+VERT, secrets RAS.
+
 === Session 263 (2026-09-24) — CROSS-DOC-BOOK-FIDELITY ✅ (test-only)
 
 *Type* : test-only BDD + revue de fidélité

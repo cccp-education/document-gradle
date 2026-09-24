@@ -1,57 +1,59 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 264 — sur demande pilote
+== Mission session 265 — sur demande pilote
 
-Le borough est à jour et **sain** : 0.0.17 publiée Central, catalogue ws
-**0.0.56** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT,
-22 runners Cucumber 0 fail. Le pipeline livre depuis OCR est fonctionnel de
-bout en bout (dogfooding FPA réel) — **toutes les dettes B1→B6 de la code
-review S-258 sont soldées**, et le BDD cross-borough teste désormais le
-**contrat réel** (S-263, CROSS-DOC-BOOK-FIDELITY).
+S-264 (2026-09-25) a exécuté la **publication 0.0.18 Maven Central**
+(accord pilote, candidat #1 du prompt S-264) : distribution des dettes
+B1→B6 + DOC-BOOK-IMAGES/MATTER/CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY +
+pins catalogue ws 0.0.56. Chaîne DAG N0→N2 MEMPHIS-first, baby-step TDD
+strict (RED prouvé sur les 2 gardes MEMPHIS puis sur la garde document),
+preuve consommateur tiers depuis Central sans mavenLocal.
+
+Le borough est à jour et **sain** : **0.0.18 publiée Central**, catalogue ws
+**0.0.57** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT.
+**Toutes les dettes B1→B6 de la code review S-258 sont soldées et
+DISTRIBUÉES.**
 
 *Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
 
-- *Publication 0.0.18* (accord pilote) : distribue RENAME-8 + Vague 4 + B1/B2
-  (S-259) + DOC-BOOK-IMAGES (S-260) + DOC-BOOK-MATTER (S-261) +
-  DOC-BOOK-CONSISTENCY-B6 (S-262) + **CROSS-DOC-BOOK-FIDELITY (S-263,
-  test-only)** + pins ws 0.0.56. Bump seulement sur demande pilote.
+- *Bakery re-pin ws 0.0.57* (P2) : bakery pinne encore BOM 0.0.48 localement
+  et résout document 0.0.17 via transitives. Re-pin catalogue + platform =
+  session dédiée côté bakery (DAG document indépendant, zéro hardcode
+  MEM-CAT-3 D5).
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
   livre le corpus corrigé (convergence 10 ILLISIBLE au 2026-09-24). Le FT
   `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant qu'A1
   n'a pas convergé.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources vers
-  la version Central. Vérifier `<latest>` avant tout pin (piège #21).
+  la version Central. Vérifier le **POM versionné HTTP 200** avant tout pin
+  (piège #11 — `<latest>` peut rester périmé ~27 min).
 
-== État du code (S-263)
+== État du code (S-264)
 
-- *0.0.17 PUBLIÉE* Central — le HEAD porte RENAME-8 + Vague 4 + B1/B2 +
+- *0.0.18 PUBLIÉE* Central — distribue 0.0.17 + RENAME-8 + Vague 4 + B1/B2 +
   DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
-  CROSS-DOC-BOOK-FIDELITY + pins catalogue, distribué au prochain bump
-  (accord pilote).
-- *Catalogue ws* : **0.0.56** (consumer compile VERT).
-- *Gates document* : `test` 4827/0, FT 144/1 (1 préexistant RichToc page 73),
-  22 runners Cucumber dédiés (0 fail), garde publication 3/3,
-  `validatePlugins` VERT.
-- *EPIC CROSS-DOC-BOOK-FIDELITY* : ✅ TERMINÉ (S-263, test-only).
+  CROSS-DOC-BOOK-FIDELITY (test-only) + pins catalogue ws 0.0.57.
+- *Catalogue ws* : **0.0.57** (consumer compile VERT, platform pin 0.0.57).
+- *Gates document* : garde publication 3/3, `test` 3915/0 (runner-scoped),
+  `validatePlugins` VERT, `publishToMavenLocal` VERT (POM 20 deps toutes
+  versionnées).
+- *EPIC CROSS-DOC-BOOK-FIDELITY* : ✅ TERMINÉ (S-263, test-only, distribué).
 - *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262).
 - *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261).
 - *EPIC DOC-BOOK-IMAGES* : ✅ TERMINÉ 3/3 US (S-260).
 - *EPIC DOC-BOOK-CONSISTENCY* (B1/B2) : ✅ TERMINÉ 3/3 US (S-259).
 
-== CROSS-DOC-BOOK-FIDELITY (S-263) — contrat cross-borough fidèle
+== Publication 0.0.18 (S-264) — bundlerefs
 
-- Le BDD `@book-pipeline` (`cross_borough_book.feature`, glue
-  `document.crossborough`) teste le contrat N2↔N2 *réel* :
-  - pages codex **brutes** (sans en-tête — `CollectOcrTask:56`) ;
-  - chemin de production `TOC → BookTocParser → BookTreeBuilder →
-    assemble(tree, contentAwareResolver)` ;
-  - section multi-pages concaténée sous **un** en-tête ;
-  - dégradé sans échec (page TOC manquante) ; fichiers non-adoc ignorés.
-- 6 scénarios RED (`UndefinedStepException`) → GREEN 6/6.
-- Zéro code de production modifié (test-only).
+- MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog
+  0.0.57, AUTOMATIC).
+- document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18, AUTOMATIC).
+- Preuve : POM/JAR/plugin-marker HTTP 200 ; consommateur tiers
+  `/tmp/opencode/doc-consumer-018` résout 0.0.18 et prouve `xrefValidation
+  STRICT` fail-fast sur ancre morte.
 
-== Pièges Gradle à retenir (S-232..S-263)
+== Pièges Gradle à retenir (S-232..S-264)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -63,21 +65,21 @@ review S-258 sont soldées**, et le BDD cross-borough teste désormais le
 8. *Imports DSL consommateur* : les enums des gardes ne sont pas résolus implicitement — `import document.*` explicite côté `build.gradle.kts` tiers.
 9. *epubcheck callback Java → null* : signature nullable obligatoire.
 10. *Preuve négative : corrompre la STRUCTURE, pas le contenu.*
-11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le HTTP 200 du POM versionné.
+11. *Polling Central* : `<latest>` peut rester périmé ~27 min (re-confirmé S-264 ~15 min) — tester le **POM versionné HTTP 200**, jamais `<latest>` seul.
 12. *Test bakery JBake native roundtrip périmé* : préexistant — à mettre à jour côté bakery.
-13. *Drift catalogue ws* : MEMPHIS bump en amont → garde `DocumentPluginPublicationTest` RED. Fix : réaligner les 3 sources vers la version Central (5e occurrence S-260, 0.0.43→0.0.56).
+13. *Drift catalogue ws* : MEMPHIS bump en amont → garde `DocumentPluginPublicationTest` RED. Fix : réaligner les 3 sources (settings D4 + platform + toml local). 6e occurrence S-264 (0.0.56→0.0.57).
 14. *PDFBox 3.x lénient sur les octets* : garde = texte extractible par page.
 15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size manquant.
 16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : consumer DOIT déclarer `mavenLocal()` AVANT le Plugin Portal **dans `settings.gradle.kts → pluginManagement.repositories`** (S-262, dogfooding).
 17. *Central exige une version explicite par dépendance POM* : alias `libs.*` avec version.ref.
 18. *Faux positif grep « fpa/REAC »* : `LeafPath` contient « fpa » ; les chemins `office/metiers/FPA` sont des citations corpus légitimes — ne pas renommer.
 19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline `image:f[]` → `image::?`.
-20. *Dogfooding HEAD via mavenLocal (S-252)* : `publishToMavenLocal` + consumer résolvant mavenLocal en tête. Le consumer `/tmp` **doit déclarer la version du plugin** (`id(...) version "0.0.17"`).
+20. *Dogfooding HEAD via mavenLocal (S-252)* : `publishToMavenLocal` + consumer résolvant mavenLocal en tête. Le consumer `/tmp` **doit déclarer la version du plugin** (`id(...) version "0.0.18"`).
 21. *Central immutable × deployment concurrent (S-252b)* : coordonner MEMPHIS avant tout bump.
 22. *Fake de test doit matcher le contrat sémantique (S-253)*.
 23. *Paramètre additif fin de signature (S-253)* : toute extension d'API publique suit ce pattern.
 24. *Verrous RENAME = tests de comportement, pas fixtures nominales (S-254)*.
-25. *WIP parallèle dans le working tree (S-254)* : `git add` sélectif, jamais `-A`.
+25. *WIP parallèle dans le working tree (S-254)* : `git add` sélectif, jamais `-A` (re-confirmé S-264 côté MEMPHIS).
 26. *Vague 4 = champ lexical complet, pas les sigles (S-257).*
 27. *Transfuser AVANT de neutraliser (S-257).*
 28. *Gate Vague 4 : faux positifs + citations corpus (S-257).*
@@ -110,7 +112,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Central : vérifier `<latest>` (`document-plugin`, `workspace-catalog`,
-   `workspace-bom`) avant tout pin (pièges #13/#21).
-5. Baseline : `test` 4827/0 (dont 4827 XML), FT 144/1 (1 préexistant RichToc
-   page 73), `crossBoroughCucumberTest` 6/6, garde publication 3/3.
+4. Central : vérifier le **POM versionné HTTP 200** (`document-plugin` 0.0.18,
+   `workspace-catalog` 0.0.57, `workspace-bom` 0.0.57) avant tout pin
+   (pièges #11/#13).
+5. Baseline : garde publication 3/3, `test` (runner-scoped 0 failure),
+   FT 144/1 (1 préexistant RichToc page 73), 22 runners Cucumber dédiés VERT.

@@ -1,10 +1,15 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-25 (session 264 — **PUB 0.0.18 ✅ DISTRIBUÉE Central**
+sur accord pilote. Le HEAD cumulé depuis 0.0.17 (RENAME-8 + Vague 4 +
+B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57) est distribué hors machine de dev.
+Chaîne DAG MEMPHIS-first + preuve consommateur tiers. Reste :
+`DOC-FPA-PUBLISH-0` STANDBY (A1) + re-pin bakery ws 0.0.57 (session dédiée).)
 _Date revision_ : 2026-09-24 (session 263 — **CROSS-DOC-BOOK-FIDELITY ✅ TERMINÉ**.
 Le BDD cross-borough teste désormais le **contrat réel** (pages codex brutes +
-chemin de production TOC→tree→assemble), plus une fiction — test-only, zéro prod.
-Reste : `DOC-FPA-PUBLISH-0` STANDBY (A1) + publication 0.0.18 sur accord pilote.)
+chemin de production TOC→tree→assemble), plus une fiction — test-only, zéro prod.)
 _Date revision_ : 2026-09-24 (session 262 — **DOC-BOOK-CONSISTENCY-B6 ✅ TERMINÉ**.
 Le *dernier item actionnable sans coût externe* est soldé : la numérotation
 identité est documentée comme choix assumé, `BookNavigation` est branchée en prod
@@ -17,9 +22,9 @@ TOC (un livre n'exige un FRONT/BACK que si sa TOC le déclare) → le faux posit
 permanent sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA) disparaît.
 Preuve dogfooding : DERIVED = 0 finding matter, LEGACY = 2. 3 US, 17 UT +
 FT 4/4 + BDD 8/8 (21e runner). Toutes les dettes B1→B6 soldées.)
-_Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + RENAME
-Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6
-+ pins ws 0.0.56 en attente du prochain bump)
+_Version_ : 0.0.18 (publiée Maven Central — RENAME-8 + Vague 4 + B1/B2 +
+DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57 ; bundle `aab4b880`)
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
@@ -812,11 +817,14 @@ Projection conservatrice : 5 sessions, ~34 pts, méthodo baby step DDD/TDD/BDD.
 
 _Source : configuration/EPIC_PUB.adoc (Session 096)_
 
-_Note mise à jour (S-237) : document-gradle EST publié sur Maven Central —
+_Note mise à jour (S-264) : document-gradle EST publié sur Maven Central —
 `education.cccp:document-plugin` versions publiées : 0.0.1 (S-018, bundle
-4d15e522), 0.0.3 (S-207/S-043), 0.0.12 (2026-08-30), **0.0.14 (S-237,
-Option C — gems PDF/EPUB packagées runtimeOnly propagées aux consommateurs,
-propagation vérifiée polling metadata ~7 min)**. La 0.0.13 (jamais publiée)
+4d15e522), 0.0.3 (S-207/S-043), 0.0.12 (2026-08-30), 0.0.14 (S-237,
+Option C — gems PDF/EPUB packagées runtimeOnly), 0.0.15 (S-241, epubCheck),
+0.0.16 (S-249, pdfCheck), 0.0.17 (S-252b, RENAME-2 + OCR-QUALITY + fix inline),
+**0.0.18 (S-264, bundle `aab4b880` — RENAME-8 + Vague 4 + B1/B2 +
+DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57)**. La 0.0.13 (jamais publiée)
 est absorbée par 0.0.14 (contenu cumulé S-231..S-236).*
 
 === ✅ PUB-2.2 — Mettre a jour le commentaire relocation (TERMINÉ, commit d40d04f)

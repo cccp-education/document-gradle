@@ -1,0 +1,128 @@
+= Session 264 — PUB 0.0.18 : distribution des dettes B1→B6 + DOC-BOOK-* + cross-borough fidèle
+
+_Date_ : 2026-09-25
+_Boroughs_ : New Orleans 🟢 (document-gradle) + MEMPHIS 🎸 (workspace-bom)
+_Type_ : PUB cross-borough (accord pilote explicite — « commence par 1 »)
+_Score_ : 10/10
+
+== Mission
+
+Le pilote a demandé la publication 0.0.18 (candidat #1 du PROMPT_REPRISE S-264) :
+distribuer hors machine de dev le HEAD cumulé depuis 0.0.17 —
+RENAME-8 + RENAME Vague 4 + DOC-BOOK-CONSISTENCY B1/B2 + DOC-BOOK-IMAGES +
+DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY (test-only)
++ pins catalogue ws 0.0.56. Puis clôture 6 étapes avec commit/push.
+
+== Chaîne DAG N0→N2 exécutée (MEMPHIS-first)
+
+. *MEMPHIS* — bump toml `workspace-bom 0.0.56 → 0.0.57` +
+  `document-plugin 0.0.17 → 0.0.18`. Baby-step TDD : RED prouvé
+  (`WorkspaceCatalogStructureTest.document plugin version matches bakery
+  consumer pin` + `PlatformCatalogAlignmentTest.toml version workspace-bom
+  matches platform version`, 2 failed / 89 tests) → GREEN après réalignement
+  des 2 gardes → `test` complet 0 FAIL.
+  `publishToMavenLocal` VERT, `publishAggregationToCentralPortal` VERT
+  (bundle `3f912bf6-48f5-49c1-b36a-e970961d889d`, AUTOMATIC). Propagation
+  repo1 : `<latest>0.0.57</latest>` ×2 (BOM + catalog), BOM/catalog POM
+  HTTP 200, le catalog 0.0.57 porte `document-plugin = "0.0.18"`.
+. *New Orleans* — re-pin 3 sources : settings `from("...workspace-catalog:
+  0.0.57")` (D4) + platform `workspace-bom:0.0.57` + toml local
+  `document = "0.0.18"` (D5). Baby-step TDD : RED prouvé
+  (`DocumentPluginPublicationTest` 2 failures — split-brain toml local 0.0.17
+  vs ws 0.0.18, et platform pin 0.0.56 vs BOM 0.0.57) → GREEN 3/3.
+  Version dérivée = **0.0.18** (`./gradlew properties`). `publishToMavenLocal`
+  VERT — POM local 0.0.18 : 20 deps, **zéro dep sans `<version>`** (pattern
+  S-209 respecté), platform pin 0.0.57. `publishAggregationToCentralPortal`
+  VERT 30s (bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6`, AUTOMATIC).
+  Propagation repo1 : POM + JAR HTTP 200 (poll 10), plugin marker
+  `education.cccp.document.gradle.plugin-0.0.18` HTTP 200.
+
+== Preuve consommateur tiers (Central, sans mavenLocal)
+
+Projet tiers `/tmp/opencode/doc-consumer-018` (Gradle 9.7.1, JDK 25,
+`pluginManagement` SANS mavenLocal) :
+
+- `id("education.cccp.document") version "0.0.18"` résolu depuis le Gradle
+  Plugin Portal / Central (debug log : `Found locally available resource
+  with matching checksum: [https://plugins.gradle.org/m2/education/cccp/
+  document-plugin/0.0.18/document-plugin-0.0.18.pom, ...]`).
+- `convertDocumentToHtml` BUILD SUCCESSFUL → `document.html` (30 431 o).
+- `validateDocument` avec `xrefValidation = STRICT` → rapport
+  `document-validation-report.json` : `xref VALID`.
+- *Preuve négative discriminante* : ancre morte `<<ghost-anchor>>` →
+  STRICT BUILD FAILED `document validation failed (STRICT)` + rapport
+  `xref MISSING ["ghost-anchor"]`. La garde xref est distribuée hors machine
+  de dev et fail-fast correctement.
+
+== Constats
+
+- *Piège #11 re-confirmé (polling Central)* : `<latest>` est resté périmé
+  ~15 min (45 polls) après upload BOM/catalog ; la vérification fiable est
+  le HTTP 200 du **POM versionné** (`/0.0.57/workspace-bom-0.0.57.pom`)
+  — jamais `<latest>` seul.
+- *Piège #13 re-confirmé (drift catalogue)* : la garde
+  `DocumentPluginPublicationTest` a attrapé le split-brain toml local
+  immédiatement après le bump MEMPHIS — c'est son rôle (filet défensif
+  prouvé, 6e occurrence du cycle).
+- *Piège #26 (WIP concurrent)* : le working tree MEMPHIS porte des
+  modifications `.agents/` (newlines) + un `CADRAGE_EPIC_BUMP_KOOG_LANGCHAIN4J.adoc`
+  staged d'une session concurrente — commit sélectif uniquement.
+- *Piège #22 (POM BOM divergent)* : le pin MEMPHIS 0.0.48 dans bakery est
+  un pin *local* ; la résolution réelle remonte au BOM le plus haut exigé
+  par les transitives (0.0.56/0.0.57). Bakery résout encore 0.0.17 tant
+  qu'il n'est pas re-pinné — hors périmètre de cette publication (le DAG
+  document est indépendant de bakery).
+
+== Gates
+
+|===
+| Gate | Résultat
+
+| MEMPHIS gardes (`PlatformCatalogAlignmentTest` + `WorkspaceCatalogStructureTest`)
+| RED 2 failed (prouvé) → GREEN
+
+| MEMPHIS `test`
+| BUILD SUCCESSFUL 0 FAIL
+
+| MEMPHIS `publishToMavenLocal` / Central
+| VERT — bundle `3f912bf6`, propagation `<latest>0.0.57</latest>` ×2 + POM HTTP 200
+
+| document garde publication
+| 3/3 VERT (version dérivée 0.0.18 + D5 toml aligné + platform 0.0.57)
+
+| document `test --tests *DocumentPluginPublicationTest`
+| 3/3 PASSED (3915 tests, 3799 skipped runner-scoped, 0 failure)
+
+| document `publishToMavenLocal`
+| VERT — POM 0.0.18 toutes deps versionnées, platform 0.0.57
+
+| document Central 0.0.18
+| POM + JAR + plugin marker HTTP 200
+
+| Consommateur tiers (Central, sans mavenLocal)
+| 0.0.18 résolu ; HTML produit ; xref STRICT VALID + preuve négative FAILED
+
+| Secrets
+| RAS (grep 0 match)
+
+|===
+
+== Fichiers
+
+- *MEMPHIS* : `gradle/libs.versions.toml` (2 bumps) +
+  `agent-contracts/src/test/kotlin/contracts/catalog/PlatformCatalogAlignmentTest.kt`
+  (0.0.57) + `WorkspaceCatalogStructureTest.kt` (0.0.18).
+- *document* : `settings.gradle.kts` (pin 0.0.57) +
+  `build.gradle.kts` (platform 0.0.57) + `gradle/libs.versions.toml`
+  (document 0.0.18).
+- Projet tiers `/tmp/opencode/doc-consumer-018` (HORS repo).
+
+== Non réalisé / reporté
+
+- *Bakery propagation* : bakery pinne encore BOM 0.0.48 localement (résout
+  0.0.17 via transitives jusqu'à 0.0.56). Re-pin bakery = session dédiée
+  (le DAG document est indépendant ; pas de hardcode, MEM-CAT-3 D5).
+- *DOC-FPA-PUBLISH-0* : STANDBY (A1 Tombouctou, convergence OCR).
+- *FT RichToc page 73* : préexistant (drift corpus A1), hors périmètre.
+- Le `.agents/PROMPT_REPRISE.adoc` (périmé, S-260) n'est pas le canonique ;
+  la racine `PROMPT_REPRISE.adoc` fait foi (S-263).
