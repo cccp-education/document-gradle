@@ -6,6 +6,16 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-25 (session 265 — **Hygiène toml + garde
+renforcée** — l'entrée morte `workspace-bom = "0.0.43"` (résidu stale S-264,
+jamais référencée : le pin vivant est le littéral `0.0.57`) est supprimée et
+une **4e garde** `DocumentPluginPublicationTest` (`local toml workspace-bom
+entry must not drift from published catalog`) interdit désormais toute entrée
+locale divergente du catalogue publié. Baby-step TDD strict : RED 1 FAILED
+prouvé (0.0.43 ≠ 0.0.57) → GREEN 4/4. Gates : garde 4/4, `compileKotlin` VERT,
+`validatePlugins` VERT, zéro secret. Build/test-only, zéro publication.
+Rapport : `.agents/sessions/265-hygiene-toml-workspace-bom-entry.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-25 (session 264 — **PUB 0.0.18 Maven Central
 ✅** — accord pilote (« commence par 1 »). Distribution hors machine de dev du
 HEAD cumulé depuis 0.0.17 : RENAME-8 + Vague 4 + DOC-BOOK-CONSISTENCY B1/B2 +
@@ -194,20 +204,16 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 263 — **CROSS-DOC-BOOK-FIDELITY TERMINÉ**
-(test-only, P1 non bloquant) : le BDD cross-borough `@book-pipeline` teste le
-*contrat réel* et non plus une fiction — pages codex **brutes** (sans en-tête,
-`CollectOcrTask:56`), chemin de production `TOC → BookTocParser →
-BookTreeBuilder → assemble(tree, contentAwareResolver)`, section multi-pages
-concaténée sous un seul en-tête, dégradé sans échec, filtrage non-adoc. 6
-scénarios fidèles RED (`UndefinedStepException`) → GREEN 6/6. Zéro code de
-production modifié. Gates : `test` 4827/0, FT 144/1 (1 préexistant RichToc
-page 73), runners Cucumber voisins 0 fail, validatePlugins VERT, garde 3/3.
-  _Prochaine session_ : sur demande pilote. Publication 0.0.18 (RENAME-8 +
-Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
-CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.56) sur accord pilote seulement. OU
-DOC-FPA-PUBLISH-0 (STANDBY, si A1 converge — 10 ILLISIBLE au 2026-09-24). OU
-drift catalogue ws à réaligner si MEMPHIS bump (piège #13).
+|_Derniere session terminee_ : 265 — **Hygiène toml + garde renforcée**
+(maintenance, candidat #1 du prompt S-265) : l'entrée morte `workspace-bom =
+"0.0.43"` du toml local (résidu stale S-264, jamais référencée) est supprimée ;
+une **4e garde** `DocumentPluginPublicationTest` interdit toute entrée locale
+divergente du catalogue publié. Baby-step TDD strict RED (1 FAILED) → GREEN
+4/4. Gates : garde 4/4, `compileKotlin` VERT, `validatePlugins` VERT, secrets
+RAS. Zéro publication (build/test-only).
+  _Prochaine session_ : sur demande pilote. Re-pin bakery ws 0.0.57 (session
+dédiée). OU DOC-FPA-PUBLISH-0 (STANDBY, si A1 converge — 10 ILLISIBLE au
+2026-09-24). OU drift catalogue ws à réaligner si MEMPHIS bump (piège #13).
 
 '''
 == REGLES ABSOLUES (resume)
@@ -430,9 +436,11 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 261 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding | **EPIC DOC-BOOK-MATTER ✅ TERMINÉ 3/3 US** (B3) — la politique de matter est **dérivée de la TOC** : un livre n'exige un FRONT/BACK que si sa TOC le déclare, supprimant le faux positif permanent de la règle S3 sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA). `MatterPolicy` (mapping front/back, `derive`/`forMode`) + `MatterPolicyMode` (DERIVED/LEGACY/NONE) + `BookLayout.emitMatterBreaks` opt-in + règle S3 opt-in. **Preuve dogfooding** : DERIVED = 0 finding matter, LEGACY = 2 (faux positif historique prouvé). 17 UT + FT 4/4 + BDD `@book-matter` 8/8 (21e runner `bookMatterCucumberTest`). Gates : UT 4493/0, FT 142/1 (préexistant RichToc page 73), 21 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/261-book-matter-policy.adoc`. | ✅ TERMINE
 | 262 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding | **DOC-BOOK-CONSISTENCY-B6 ✅ TERMINÉ** (dernière dette B1→B6) — `BookNumbering.numbers()` documentée comme choix assumé (identité TOC source) ; `BookNavigation` branchée en prod (`BookLayout.emitNavigation` opt-in + `navigationLinks`) ; **bug latent corrigé** (navigation sur `emittedNodes` refs distincts, plus sur les pages OCR multi-pages). Wiring `AssembleBookTask` + DSL + CLI + contrat N3. 6 UT + 2 FT + BDD `@book-navigation` 5/5 (22e runner). Dogfooding FPA : 239 liens, 116 cibles, 0 dangling. Gates : `test` 4785/0, FT 144/1 (préexistant RichToc page 73), 22 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/262-book-navigation.adoc`. | ✅ TERMINE
 | 263 | 2026-09-24 | test-only BDD + revue fidélité | **CROSS-DOC-BOOK-FIDELITY ✅ TERMINÉ** — le BDD cross-borough `@book-pipeline` teste le *contrat réel*, plus une fiction. Audit : filet S-210 vert mais aveugle (fixtures à en-têtes `= Intro` que codex n'écrit jamais `CollectOcrTask:56`, assertion tautologique, seul le chemin blob-plat couvert alors que la prod emprunte `TOC → BookTreeBuilder → assemble(tree)`). Réécriture des 6 scénarios : pages codex **brutes**, chemin de production avec TOC, section multi-pages concaténée, dégradé sans échec, filtrage non-adoc, ordre prouvé sur le contenu. Baby-step BDD strict RED (6 `UndefinedStepException`) → GREEN 6/6. Zéro prod modifié. Gates : `test` 4827/0, FT 144/1 (préexistant RichToc page 73), runners Cucumber voisins 0 fail, validatePlugins VERT, garde 3/3. Rapport : `.agents/sessions/263-cross-borough-fidelity.adoc`. | ✅ TERMINE
+| 265 | 2026-09-25 | maintenance + TDD | **Hygiène toml + garde renforcée** — candidat #1 du prompt S-265. L'entrée morte `workspace-bom = "0.0.43"` du `gradle/libs.versions.toml` (résidu stale S-264, jamais référencée : le pin vivant est le littéral `0.0.57` dans `build.gradle.kts`) est supprimée. Baby-step TDD strict : nouvelle garde `local toml workspace-bom entry must not drift from published catalog` (helper `workspaceBomVersionFrom(): String?` — null = absent = OK, non-null = doit égaler le catalogue ws publié) RED prouvé (1 FAILED, 0.0.43 ≠ 0.0.57) → GREEN 4/4 (`DocumentPluginPublicationTest` passe de 3 à 4 gardes) → REFACTOR n/a. Ferme le trou d'une 4e source de vérité silencieuse non couverte par la garde. Gates : garde 4/4, `compileKotlin` VERT, `validatePlugins` VERT, `grep libs.versions.workspace` = zéro, secrets RAS. Zéro publication (build/test-only). Rapport : `.agents/sessions/265-hygiene-toml-workspace-bom-entry.adoc`. | ✅ TERMINE
 |===
 
 '''
+
 == Portefeuille — 26 Boroughs
 
 |===

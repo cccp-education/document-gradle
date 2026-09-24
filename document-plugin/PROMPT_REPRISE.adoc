@@ -1,18 +1,16 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 265 — sur demande pilote
+== Mission session 266 — sur demande pilote
 
-S-264 (2026-09-25) a exécuté la **publication 0.0.18 Maven Central**
-(accord pilote, candidat #1 du prompt S-264) : distribution des dettes
-B1→B6 + DOC-BOOK-IMAGES/MATTER/CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY +
-pins catalogue ws 0.0.56. Chaîne DAG N0→N2 MEMPHIS-first, baby-step TDD
-strict (RED prouvé sur les 2 gardes MEMPHIS puis sur la garde document),
-preuve consommateur tiers depuis Central sans mavenLocal.
+S-265 (2026-09-25) a soldé le candidat #1 : **hygiène toml** — l'entrée morte
+`workspace-bom = "0.0.43"` (résidu stale S-264, jamais référencée) est
+supprimée et une **4e garde** `DocumentPluginPublicationTest` interdit
+désormais qu'une entrée `workspace-bom` locale diverge du catalogue publié
+(baby-step TDD strict : RED 1 FAILED prouvé → GREEN 4/4).
 
 Le borough est à jour et **sain** : **0.0.18 publiée Central**, catalogue ws
-**0.0.57** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT.
-**Toutes les dettes B1→B6 de la code review S-258 sont soldées et
-DISTRIBUÉES.**
+**0.0.57** aligné (piège #13), garde publication 4/4, `compileKotlin` VERT,
+`validatePlugins` VERT. **Toutes les dettes B1→B6 sont soldées et distribuées.**
 
 *Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
 
@@ -29,15 +27,15 @@ DISTRIBUÉES.**
   la version Central. Vérifier le **POM versionné HTTP 200** avant tout pin
   (piège #11 — `<latest>` peut rester périmé ~27 min).
 
-== État du code (S-264)
+== État du code (S-265)
 
 - *0.0.18 PUBLIÉE* Central — distribue 0.0.17 + RENAME-8 + Vague 4 + B1/B2 +
   DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
   CROSS-DOC-BOOK-FIDELITY (test-only) + pins catalogue ws 0.0.57.
 - *Catalogue ws* : **0.0.57** (consumer compile VERT, platform pin 0.0.57).
-- *Gates document* : garde publication 3/3, `test` 3915/0 (runner-scoped),
-  `validatePlugins` VERT, `publishToMavenLocal` VERT (POM 20 deps toutes
-  versionnées).
+- *Toml local* : plus d'entrée `workspace-bom` morte (S-265) — garde 4/4.
+- *Gates document* : garde publication 4/4, `test` runner-scoped, `validatePlugins`
+  VERT, `publishToMavenLocal` VERT (POM 20 deps toutes versionnées).
 - *EPIC CROSS-DOC-BOOK-FIDELITY* : ✅ TERMINÉ (S-263, test-only, distribué).
 - *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262).
 - *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261).
@@ -53,7 +51,7 @@ DISTRIBUÉES.**
   `/tmp/opencode/doc-consumer-018` résout 0.0.18 et prouve `xrefValidation
   STRICT` fail-fast sur ancre morte.
 
-== Pièges Gradle à retenir (S-232..S-264)
+== Pièges Gradle à retenir (S-232..S-265)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -86,6 +84,7 @@ DISTRIBUÉES.**
 29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible.
 30. *Navigation = sections émises, pas pages OCR (S-262)* : `BookNumbering.emittedNodes` (refs distincts) — sinon une ligne TOC multi-pages fait pointer « suivant » sur la même section logique.
 31. *Un test vert n'est pas un test fidèle (S-263)* : vérifier que les fixtures reproduisent la sortie **réelle** du producteur (codex = pas d'en-tête) et que le chemin testé est celui de la **production** (TOC structurée), sinon le filet valide une fiction.
+32. *Entrée toml non référencée = piège (S-265)* : une version locale qui survit à un bump de pin (`workspace-bom = "0.0.43"`) ressemble à de la configuration mais n'est jamais lue. La garde `DocumentPluginPublicationTest` exige désormais l'absence OU l'accord.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -115,5 +114,5 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 4. Central : vérifier le **POM versionné HTTP 200** (`document-plugin` 0.0.18,
    `workspace-catalog` 0.0.57, `workspace-bom` 0.0.57) avant tout pin
    (pièges #11/#13).
-5. Baseline : garde publication 3/3, `test` (runner-scoped 0 failure),
+5. Baseline : garde publication 4/4, `test` (runner-scoped 0 failure),
    FT 144/1 (1 préexistant RichToc page 73), 22 runners Cucumber dédiés VERT.

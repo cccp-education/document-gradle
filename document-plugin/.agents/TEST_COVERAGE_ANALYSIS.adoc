@@ -1,6 +1,24 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-25
-:session: 264
+:session: 265
+
+== Session 265 — Hygiène toml + garde renforcée (1 garde ajoutée)
+
+*Périmètre* : maintenance build/test-only, zéro code de production modifié.
+Une garde d'hygiène préexistante est **étendue** (3 → 4 gardes).
+
+- `DocumentPluginPublicationTest` : nouvelle garde `local toml workspace-bom
+  entry must not drift from published catalog` + helper
+  `workspaceBomVersionFrom(content): String?`. Baby-step TDD strict RED prouvé
+  (**1 FAILED** — entrée morte `workspace-bom = "0.0.43"` ≠ catalogue ws
+  `0.0.57`) → GREEN **4/4** après suppression de l'entrée morte du toml local.
+  Les 3 gardes historiques (version dérivée, platform pin, group/id stables)
+  restent vertes. La garde est *tolérante* : entrée absente = succès, entrée
+  présente divergente = échec.
+
+*Baseline préservée* : `compileKotlin` VERT, `validatePlugins` VERT, aucun
+seuil de couverture modifié. `grep libs.versions.workspace|workspace-bom =` =
+zéro dans le borough (plus de source de vérité silencieuse).
 
 == Session 264 — PUB 0.0.18 (aucun test de document modifié)
 

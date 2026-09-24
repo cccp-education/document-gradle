@@ -54,6 +54,25 @@ class DocumentPluginPublicationTest {
     }
 
     /**
+     * Hygiene (D5) — the local toml must not carry a stale `[versions] workspace-bom`
+     * entry that diverges from the published catalog (a 4th source-of-truth drift,
+     * piège #13). A dead entry left behind after a pin bump is a trap: it looks like
+     * configuration but is never referenced. Either it is absent, or it agrees.
+     */
+    @Test
+    fun `local toml workspace-bom entry must not drift from published catalog`() {
+        val localBomVersion =
+            workspaceBomVersionFrom(pluginDir.resolve("gradle/libs.versions.toml").readText(UTF_8))
+        val wsBomVersion = bomVersionFrom(wsCatalogToml())
+
+        if (localBomVersion != null) {
+            assertThat(localBomVersion)
+                .withFailMessage("local toml workspace-bom ($localBomVersion) must match ws catalog BOM ($wsBomVersion)")
+                .isEqualTo(wsBomVersion)
+        }
+    }
+
+    /**
      * Reads the `ws` catalog toml resolved by Gradle (module cache) and extracts the
      * `document-plugin` version. Fallback: parse the local MEMPHIS repo toml (same
      * source file as the published catalog).
@@ -80,6 +99,14 @@ class DocumentPluginPublicationTest {
             .first { it.startsWith("workspace-bom =") }
             .substringAfter("\"")
             .substringBefore("\"")
+
+    private fun workspaceBomVersionFrom(content: String): String? =
+        content
+            .lineSequence()
+            .map { it.substringBefore('#').trim() }
+            .firstOrNull { it.startsWith("workspace-bom =") }
+            ?.substringAfter("\"")
+            ?.substringBefore("\"")
 
     @Test
     fun `plugin group and id are stable for publication`() {

@@ -1,0 +1,67 @@
+= Session 265 — Hygiène toml : entrée `workspace-bom` morte supprimée + garde d'hygiène renforcée
+
+_Date_ : 2026-09-25
+_Boroughs_ : New Orleans 🟢 (document-gradle)
+_Type_ : maintenance / hygiène (baby-step TDD strict)
+_Score_ : 10/10
+
+== Mission
+
+Le pilote a demandé le candidat #1 du PROMPT_REPRISE S-265 : *l'entrée toml
+morte `workspace-bom = "0.0.43"`* découverte à l'ouverture (résidu stale de la
+S-264) — jamais référencée par le build (le pin vivant est le littéral
+`0.0.57` dans `build.gradle.kts`, source de vérité = catalogue ws publié).
+
+== Constat d'ouverture
+
+- `gradle/libs.versions.toml:3` : `workspace-bom = "0.0.43"` — **jamais lue**
+  (`grep libs.versions.workspace` = zéro dans le borough, contrairement à
+  capsule qui la consomme).
+- `build.gradle.kts:15` : `implementation(platform("education.cccp:workspace-bom:0.0.57"))`
+  — littéral vivant, policé par la garde `DocumentPluginPublicationTest`.
+- Le catalogue ws publié (MEMPHIS, repo voisin) déclare `workspace-bom = "0.0.57"`.
+- **Risque** : une 4e source de vérité silencieuse (après settings D4, plateforme
+  littérale, toml local) — elle *ressemble* à de la configuration mais n'est jamais
+  référencée. Drift piège #13 non couvert par la garde existante.
+
+== Baby-step TDD strict (RED → GREEN → REFACTOR)
+
+. *RED* — nouvelle garde `local toml workspace-bom entry must not drift from
+  published catalog` : si l'entrée existe, elle doit égaler la version du
+  catalogue publié. Run ciblé : **1 FAILED** (0.0.43 ≠ 0.0.57) — preuve
+  discriminante, la garde détecte bien le drift.
+. *GREEN* — suppression de `workspace-bom = "0.0.43"` du toml local (zéro
+  référence vérifiée au préalable). Run ciblé : **4/4 PASSED**.
+. *REFACTOR* — n/a (économie d'encre).
+
+== Livrables
+
+- `gradle/libs.versions.toml` : entrée morte `workspace-bom` retirée (−1 ligne).
+- `src/test/kotlin/document/DocumentPluginPublicationTest.kt` : +1 garde d'hygiène
+  (`local toml workspace-bom entry must not drift from published catalog`) +
+  helper `workspaceBomVersionFrom(...): String?` (null = entrée absente = OK ;
+  non-null = doit égaler le catalogue ws). La classe passe de 3 à 4 gardes.
+
+== Gates
+
+- `DocumentPluginPublicationTest` **4/4 PASSED** (3 historiques préservées :
+  version dérivée, platform pin, group/id stables + la nouvelle).
+- `compileKotlin` VERT (aucune référence cassée par la suppression).
+- `validatePlugins` VERT.
+- `grep libs.versions.workspace|workspace-bom =` = zéro dans le borough.
+- Zéro secret.
+
+== Justification de la garde (défense en profondeur)
+
+La garde est *additive et tolérante* : une entrée absente est un succès (le toml
+n'a pas à porter une version qu'il ne consomme pas) ; une entrée présente qui
+diverge est un échec. Elle ferme le trou que l'entrée morte exploitait : une
+valeur périmée pouvait survivre à chaque bump de pin sans qu'aucune garde ne
+la voie. Pattern défensif du `DocumentPluginPublicationTest` (rôle prouvé
+S-246/S-251/S-255/S-264 contre les drifts catalogue).
+
+== Suite
+
+- `DOC-FPA-PUBLISH-0` 🟡 STANDBY (corpus A1 Tombouctou).
+- Re-pin bakery ws 0.0.57 (session dédiée côté bakery, DAG indépendant).
+- Aucune publication requise (changement build/test-only, zéro impact artefact).

@@ -2,6 +2,22 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 265 (2026-09-25) — Hygiène toml ✅ (garde renforcée)
+
+*Type* : maintenance / hygiène (baby-step TDD strict, build/test-only)
+*Score* : 10/10
+*Livrables* :
+- `gradle/libs.versions.toml` : entrée morte `workspace-bom = "0.0.43"`
+  supprimée (résidu stale S-264, jamais référencée — le pin vivant est le
+  littéral `0.0.57` dans `build.gradle.kts`).
+- `DocumentPluginPublicationTest` : +1 garde `local toml workspace-bom entry
+  must not drift from published catalog` + helper `workspaceBomVersionFrom()`.
+  3 → 4 gardes. RED 1 FAILED prouvé → GREEN 4/4.
+- Ferme le trou d'une 4e source de vérité silencieuse (entrée locale non
+  référencée pouvant diverger à chaque bump de pin).
+*Gates* : garde 4/4, `compileKotlin` VERT, `validatePlugins` VERT, secrets RAS.
+*Zéro publication*.
+
 === Session 264 (2026-09-25) — PUB 0.0.18 ✅ (distribution Central, cross-borough)
 
 *Type* : PUB cross-borough (accord pilote « commence par 1 »)
