@@ -2,6 +2,26 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 263 (2026-09-24) — CROSS-DOC-BOOK-FIDELITY ✅ (test-only)
+
+*Type* : test-only BDD + revue de fidélité
+*Score* : 10/10
+*Livrables* :
+- Constat : le BDD cross-borough S-210 était vert mais **aveugle** —
+  fixtures à en-têtes `= Intro` que codex n'écrit jamais (`CollectOcrTask:56`),
+  assertion tautologique sur les `= ` de la fixture, seul le chemin blob-plat
+  couvert alors que la prod emprunte le chemin structuré.
+- Réécriture `cross_borough_book.feature` (6 scénarios fidèles : pages codex
+  brutes, ordre sur le contenu, `TOC → structure`, section multi-pages,
+  dégradé sans échec, filtrage non-adoc) + `CrossBoroughSteps.kt`.
+- Cadrage `.agents/CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc` (6 constats,
+  8 décisions, 4 US).
+- Baby-step BDD strict RED (6 `UndefinedStepException`) → GREEN 6/6.
+- Zéro code de production modifié. Piège #31 (`un test vert n'est pas un test
+  fidèle`).
+*Gates* : `test` 4827/0, FT 144/1 (préexistant RichToc page 73), runners
+Cucumber voisins 0 fail, `validatePlugins` VERT, garde 3/3.
+
 === Session 262 (2026-09-24) — DOC-BOOK-CONSISTENCY-B6 ✅ (dernière dette S-258)
 
 *Type* : feat DDD/TDD/BDD + dogfooding

@@ -1,0 +1,149 @@
+= CADRAGE EPIC — CROSS-DOC-BOOK-FIDELITY : le BDD cross-borough teste le contrat réel
+:epic: CROSS-DOC-BOOK-FIDELITY
+:date: 2026-09-24
+:pattern: S-057/S-063 (gouvernance pure) + baby-step BDD strict
+
+== Contexte
+
+L'EPIC `CROSS-DOC-BOOK` (S-210) a livré un filet BDD cross-borough
+(`cross_borough_book.feature`, 4 scénarios, runner `CrossBoroughCucumberRunner`).
+Ces scénarios sont **verts** et référencés `✅ TERMINÉ` dans le BACKLOG.
+
+Une revue d'ouverture (S-263) révèle que ces scénarios **ne testent pas le
+contrat réel** : ils valident une *fiction* qui passerait même si le pont
+codex→document était cassé.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *Fixtures irréalistes* — les scénarios écrivent des pages avec un titre
+  `= Intro` alors que codex n'écrit **jamais** d'en-tête : `CollectOcrTask`
+  écrit `OcrResult.structuredText` brut, le titre est porté par le *nom de
+  fichier* et la TOC.
+| `CollectOcrTask.kt:56` : « the files contain only the structured OCR text
+  (no AsciiDoc headers) ». Fixture `cross_borough_book.feature:12` :
+  `= Intro\nThis is intro`.
+
+| 2
+| *Assertion tautologique* — « the assembled book should contain N page
+  headings » compte les `= ` **injectés par la fixture elle-même**, pas un
+  comportement de l'assembleur. Le test passe que l'assembleur ajoute ou non
+  des en-têtes.
+| `CrossBoroughSteps.kt:55-61` : `countOccurrences(r.content, "= ")` puis
+  `assertEquals(count + 1, ...)`.
+
+| 3
+| *Chemin blob-plat seulement* — le BDD n'exerce que
+  `BookAssembler.assemble(pagesDir, …)`. Or la **production** emprunte le
+  chemin *structuré* dès qu'une TOC existe : `BookTocParser` →
+  `BookTreeBuilder` → `assemble(tree, …)`.
+| `AssembleBookTask.kt:126-167`. Aucune feature Cucumber ne lit une TOC.
+
+| 4
+| *Le FT couvre le chemin structuré* — la couche fonctionnelle (TestKit)
+  teste bien la TOC + nommage codex (`001-introduction.adoc`), mais elle
+  injecte aussi des en-têtes `== Introduction` dans les pages.
+| `AssembleBookTaskFunctionalTest.kt:85`. Le BDD (spécification exécutable)
+  reste muet sur ce chemin.
+
+| 5
+| *Le nommage codex `%03d-*.adoc` est réaliste* — le défaut n'est pas le
+  nommage des fichiers mais le **contenu** (en-têtes) et le **chemin** testé.
+| `CollectOcrTask.kt:204` : `"%03d-%s.adoc".format(page, pageId)`.
+
+| 6
+| *Résolution de contenu en production* — `AssembleBookTask` utilise
+  `contentAwareResolver` (scans `NNN.adoc` d'abord, puis repli codex
+  `%03d-*.adoc`). Le BDD ne couvre ni l'un ni l'autre via une TOC.
+| `AssembleBookTask.kt:136`, `BookAssembler.kt:175-182`.
+|===
+
+== Décisions architecturales
+
+. *EPIC BDD-only* — aucun code de production modifié. Le pont filesystem
+  fonctionne ; la valeur est la **garantie contractuelle fidèle**.
+
+. *Fidélité producteur* — les fixtures reproduisent la sortie codex réelle :
+  pages `.adoc` **sans en-tête**, contenu brut. Une page dont le contenu
+  contient `=` ne doit pas fabriquer d'en-tête.
+
+. *Chemin de production couvert* — un scénario lit une TOC (format
+  `| Référence | Sujet / Titre | Page | Fichier`), la parse
+  (`BookTocParser`), construit l'arbre (`BookTreeBuilder`) et assemble via
+  `contentAwareResolver` — exactement le chemin de `AssembleBookTask`.
+
+. *Section multi-pages* — une ligne TOC `Page = 5, 6` + deux fichiers codex
+  `005-*.adoc, 006-*.adoc` produit **un** en-tête (section logique) et
+  **deux** contenus concaténés dans l'ordre.
+
+. *Assertions sur le contrat, pas sur la fixture* — compter/en vérifier les
+  en-têtes doit prouver un comportement de l'assembleur (en-tête dérivé de la
+  TOC), jamais une donnée injectée par la fixture.
+
+. *Runner/steps propriétaires conservés* — feature `cross_borough_book.feature`,
+  glue `document.crossborough`, runner `CrossBoroughCucumberRunner`, tâche
+  `crossBoroughCucumberTest`. Tag `@cross-borough @book-pipeline`.
+
+. *Pas de nouvelle feature/runner* — on étend le contrat existant
+  (économie d'encre, pas de duplication de glue).
+
+. *Baby-step BDD strict* — un scénario à la fois : RED
+  (`UndefinedStepException`) → GREEN (PASSED) → REFACTOR (`check` VERT).
+  English only.
+
+== Découpage US
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+
+| CROSS-DOC-BOOK-FIDELITY-0
+| Cadrage EPIC (gouvernance pure). Audit 6 constats, 8 décisions.
+| ✅ TERMINÉ (S-263)
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-1
+| Fidélité producteur — le scénario blob-plat écrit des pages codex **sans
+  en-tête** et prouve que l'assembleur n'en fabrique aucun ; l'ordre est
+  validé sur le contenu, pas sur des en-têtes injectés.
+| 🟡 À FAIRE
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-2
+| Chemin de production — scénario `TOC → BookTocParser → BookTreeBuilder →
+  assemble(tree, contentAwareResolver)` : en-tête **dérivé de la TOC**,
+  contenu OCR brut préservé, ancres `[[ref]]` émises.
+| 🟡 À FAIRE
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-3
+| Section multi-pages — ligne TOC `Page = 5, 6` + `005-*.adoc, 006-*.adoc`
+  → un seul en-tête, deux contenus dans l'ordre.
+| 🟡 À FAIRE
+| 1
+
+|===
+
+*Total* : ~4 pts (4 US).
+
+== Ordre d'exécution (baby-step)
+
+. US-0 : Cadrage ✅
+. US-1 : scénario blob-plat fidèle → RED → GREEN
+. US-2 : scénario TOC structuré → RED → GREEN
+. US-3 : scénario multi-pages → RED → GREEN
+. REFACTOR : `crossBoroughCucumberTest --rerun-tasks` + `check` ciblé
+
+== Gates et risques
+
+* *Gate* : `crossBoroughCucumberTest` VERT, scénarios fidèles PASS, aucune
+  régression des 22 runners Cucumber.
+* *Risque faible* : test-only. Si `BookAssembler` change de comportement
+  (en-tête dérivé de la TOC, concaténation multi-pages), le BDD casse — c'est
+  le but (regression guard fidèle).
+* *Non-régression* : zéro code de production modifié ; la feature existante
+  est corrigée, pas dupliquée.

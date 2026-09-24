@@ -1,6 +1,46 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-24
-:session: 262
+:session: 263
+
+== Session 263 — CROSS-DOC-BOOK-FIDELITY (le BDD teste le contrat réel)
+
+*Objectif* : le filet BDD cross-borough `@book-pipeline` (S-210) était vert mais
+**aveugle** — il validait une fiction. Réécrire les scénarios pour prouver le
+contrat N2↔N2 réel (codex → document), sans toucher au code de production.
+
+*Défauts corrigés* :
+
+- Fixtures à en-têtes `= Intro` que codex n'écrit **jamais**
+  (`CollectOcrTask:56` : « only the structured OCR text, no AsciiDoc headers »).
+- Assertion tautologique : « N page headings » comptait les `= ` **injectés par
+  la fixture**, pas un comportement de l'assembleur.
+- Seul le chemin blob-plat couvert alors que la production emprunte le chemin
+  structuré (`TOC → BookTocParser → BookTreeBuilder → assemble(tree)`).
+
+*Tests réécrits (BDD, runner/propriété conservés)* :
+
+- `cross_borough_book.feature` — 6 scénarios fidèles :
+  (a) pages codex brutes → blob-plat **sans** en-tête fabriqué ;
+  (b) ordre prouvé sur le **contenu** (plus sur des en-têtes injectés) ;
+  (c) `TOC → structure` : en-têtes **dérivés de la TOC** + ancres `[[ref]]`
+      + contenu OCR brut préservé ;
+  (d) section multi-pages (`Page = 1, 2` + `001/002-*.adoc`) → **un** en-tête,
+      contenus ordonnés ;
+  (e) page TOC manquante → dégradé sans échec ;
+  (f) fichiers non-adoc ignorés.
+- `CrossBoroughSteps.kt` réécrit : `BookTocParser` + `BookTreeBuilder` +
+  `contentAwareResolver`, TOC dans un répertoire temporaire dédié (jamais scanné
+  comme page), `sectionHeadings()` exclut le titre `=` (niveau 0).
+
+*Baby-step strict* : RED (6 `UndefinedStepException`) → GREEN **6/6 PASSED**
+(`crossBoroughCucumberTest`, XML `tests="6" failures="0"`).
+
+*Non-régression* : `test` **4827/0**, FT **144/1** (1 préexistant `RichTocTest`
+page 73), runners Cucumber voisins 0 failure (`cucumberTest` 3991, `bookTree`
+192, `bookValidation` 191, `bookMatter` 194, `bookImages` 192, `bookNavigation`
+191), `validatePlugins` VERT, garde publication 3/3.
+
+*Bilan* : test-only, zéro code de production modifié.
 
 == Session 262 — DOC-BOOK-CONSISTENCY-B6 (navigation précédent/suivant)
 

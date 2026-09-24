@@ -120,7 +120,9 @@ end-to-end qui valide la chaîne complète `collectOcr → assembleBook → conv
   Runner dédié `CrossBoroughCucumberRunner` + tâche
   `crossBoroughCucumberTest` + steps `CrossBoroughSteps`.
   Baby-step BDD strict RED → GREEN → REFACTOR.
-| 🟡 À FAIRE
+  *⚠️ Fidélité du filet remise en cause S-263 — voir
+  `CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc` (EPIC CROSS-DOC-BOOK-FIDELITY).*
+| ✅ TERMINÉ (S-210)
 | 3
 
 | CROSS-DOC-BOOK-2
@@ -128,7 +130,7 @@ end-to-end qui valide la chaîne complète `collectOcr → assembleBook → conv
   documenter le format `%03d-%s.adoc` comme contrat formel
   N2↔N2, ajouter `@see document.BookAssembler`. Zéro code
   modifié, zéro bump BOM.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-210)
 | 1
 
 |===

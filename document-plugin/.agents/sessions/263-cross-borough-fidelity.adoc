@@ -1,0 +1,113 @@
+= Session 263 — EPIC CROSS-DOC-BOOK-FIDELITY : le BDD cross-borough teste le contrat réel
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Type_ : test-only / DDD-TDD-BDD + revue de fidélité
+_Statut_ : ✅ TERMINÉ
+_EPIC_ : CROSS-DOC-BOOK-FIDELITY (P1 non bloquant)
+
+== Mission
+
+Reprise sur demande pilote, méthodo baby-step DDD/TDD/BDD. À l'ouverture,
+toutes les dettes B1→B6 de la code review S-258 sont soldées ; les candidats
+étaient la publication 0.0.18 (accord pilote requis — Règle 2),
+`DOC-FPA-PUBLISH-0` (STANDBY A1 Tombouctou) et `CROSS-DOC-BOOK-1/2` (P1 non
+bloquant, jamais exécuté).
+
+L'audit d'ouverture a montré que `CROSS-DOC-BOOK` est en réalité **déjà
+implémenté** (commit `b51fffe`, ancestor de HEAD, 4/4 scénarios PASS) et
+`✅ TERMINÉ` dans le BACKLOG/INDEX — mais que le PROMPT_REPRISE et le cadrage
+le marquaient encore `🟡 À FAIRE`, et surtout que **les scénarios ne testaient
+pas le contrat réel**.
+
+== Découverte : le filet BDD cross-borough valide une fiction
+
+[cols="1,4,3", options="header"]
+|===
+| # | Défaut | Preuve
+
+| F1
+| Les fixtures écrivent des pages avec un titre `= Intro` alors que codex
+  n'écrit **jamais** d'en-tête (le titre vit dans le nom de fichier et la TOC).
+| `CollectOcrTask.kt:56` ; fixture `cross_borough_book.feature:12`
+| F2
+| L'assertion « N page headings » comptait les `= ` **injectés par la
+  fixture**, pas un comportement de l'assembleur (tautologie).
+| `CrossBoroughSteps.kt:55-61`
+| F3
+| Le chemin testé était le blob-plat `assemble(pagesDir, …)` ; la production
+  emprunte le chemin *structuré* dès qu'une TOC existe.
+| `AssembleBookTask.kt:126-167` ; aucune feature ne lisait de TOC
+| F4
+| Le FT couvrait le chemin structuré mais avec des en-têtes dans les pages —
+  le BDD (spécification exécutable) restait muet.
+| `AssembleBookTaskFunctionalTest.kt:85`
+|===
+
+== Décisions
+
+. *EPIC test-only* — zéro code de production modifié. Le pont filesystem
+  fonctionne ; la valeur est la *garantie contractuelle fidèle*.
+. *Fidélité producteur* — les fixtures reproduisent la sortie codex réelle :
+  pages `.adoc` **sans en-tête**, contenu OCR brut.
+. *Chemin de production couvert* — scénario `TOC → BookTocParser →
+  BookTreeBuilder → assemble(tree, contentAwareResolver)`, exactement le
+  chemin de `AssembleBookTask`.
+. *Section multi-pages* — une ligne TOC `Page = 1, 2` + `001-*.adoc,
+  002-*.adoc` → **un** en-tête (section logique), **deux** contenus ordonnés.
+. *Assertions sur le contrat, jamais sur la fixture* — un en-tête doit être
+  prouvé *dérivé de la TOC*.
+. *Runner/steps/feature conservés* — pas de nouvelle feature ni de nouveau
+  runner (économie d'encre). Tag `@cross-borough @book-pipeline`, tâche
+  `crossBoroughCucumberTest`.
+
+== Implémentation (baby-step BDD strict)
+
+- `cross_borough_book.feature` réécrite : 6 scénarios fidèles
+  (a) pages codex brutes → blob-plat **sans** en-tête fabriqué ;
+  (b) ordre des pages prouvé sur le contenu ;
+  (c) `TOC → structure` : en-têtes **dérivés de la TOC** + ancres + contenu brut ;
+  (d) section multi-pages concaténée sous un seul en-tête ;
+  (e) page manquante → dégradé sans échec ;
+  (f) fichiers non-adoc ignorés.
+- `CrossBoroughSteps.kt` réécrit : `BookTocParser` + `BookTreeBuilder` +
+  `contentAwareResolver`, TOC dans un répertoire temporaire dédié (jamais
+  scanné comme page), `sectionHeadings()` exclut le titre `=` pour ne compter
+  que les vraies sections.
+- `CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc` créé (audit 6 constats,
+  8 décisions, 4 US).
+
+== RED → GREEN
+
+- RED : 6 scénarios `UndefinedStepException` (nouveaux steps).
+- GREEN : **6/6 PASSED** (XML `tests="6" failures="0"`), `--rerun-tasks`.
+
+== Fichiers
+
+- Créé : `.agents/CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc`.
+- Modifiés : `src/test/resources/features/cross_borough_book.feature` (6
+  scénarios fidèles), `src/test/kotlin/document/crossborough/CrossBoroughSteps.kt`
+  (steps fidèles), gouvernance (INDEX/BACKLOG/PROMPT_REPRISE/SESSIONS_HISTORY/
+  cadrage CROSS-DOC-BOOK marqueurs).
+
+== Gates
+
+- `compileKotlin` VERT.
+- `test` **4827 cas, 0 FAIL / 0 ERROR**.
+- `functionalTest` **144 cas, 1 échec préexistant** — `AssembleBookTaskContentRichTocTest`
+  (page 73, drift corpus A1, stash-confirmé S-257/S-260/S-261/S-262, hors périmètre).
+- `crossBoroughCucumberTest` **6/6** PASSED ; non-régression des runners voisins
+  (`cucumberTest` 3991, `bookTree` 192, `bookValidation` 191, `bookMatter` 194,
+  `bookImages` 192, `bookNavigation` 191) : **0 failure** partout.
+- `validatePlugins` VERT, garde publication `DocumentPluginPublicationTest` 3/3.
+- Zéro secret. Aucun artefact dans `office/`.
+
+== Suites
+
+- *Publication 0.0.18* : distribue RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES
+  + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 + **CROSS-DOC-BOOK-FIDELITY
+  (test-only)** + pins ws 0.0.56 — accord pilote requis (Règle 2).
+- *DOC-FPA-PUBLISH-0* : STANDBY (A1 Tombouctou, 10 ILLISIBLE au 2026-09-24).
+- *CROSS-DOC-BOOK-2* : KDoc codex déjà rédigé (`b51fffe`), `@see BookAssembler`
+  présent ; aucun travail restant.
+- *Drift catalogue ws* : si MEMPHIS bump, réaligner les 3 sources (piège #13).

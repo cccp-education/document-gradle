@@ -1,6 +1,10 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-24 (session 263 — **CROSS-DOC-BOOK-FIDELITY ✅ TERMINÉ**.
+Le BDD cross-borough teste désormais le **contrat réel** (pages codex brutes +
+chemin de production TOC→tree→assemble), plus une fiction — test-only, zéro prod.
+Reste : `DOC-FPA-PUBLISH-0` STANDBY (A1) + publication 0.0.18 sur accord pilote.)
 _Date revision_ : 2026-09-24 (session 262 — **DOC-BOOK-CONSISTENCY-B6 ✅ TERMINÉ**.
 Le *dernier item actionnable sans coût externe* est soldé : la numérotation
 identité est documentée comme choix assumé, `BookNavigation` est branchée en prod
@@ -1564,6 +1568,49 @@ la contractualité du flow `collectOcr → assembleBook`.
 |===
 
 *Total* : ~5 pts (3 US)
+
+'''
+== ✅ EPIC CROSS-DOC-BOOK-FIDELITY — le BDD cross-borough teste le contrat réel (TERMINÉ, S-263)
+
+_Source_ : revue d'ouverture S-263 (`.agents/CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc`).
+_Pattern_ : test-only + baby-step BDD strict.
+
+Le filet S-210 était vert mais **aveugle** : fixtures à en-têtes `= Intro` que
+codex n'écrit jamais (`CollectOcrTask:56`), assertion tautologique sur les `= `
+de la fixture, et seul le chemin blob-plat couvert alors que la production
+emprunte le chemin structuré (`TOC → BookTocParser → BookTreeBuilder →
+assemble(tree)`).
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+
+| CROSS-DOC-BOOK-FIDELITY-0
+| Cadrage EPIC (6 constats, 8 décisions).
+| ✅ TERMINÉ (S-263)
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-1
+| Fidélité producteur — pages codex **brutes** (sans en-tête), aucun en-tête
+  fabriqué ; ordre prouvé sur le contenu.
+| ✅ TERMINÉ (S-263)
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-2
+| Chemin de production — `TOC → BookTocParser → BookTreeBuilder →
+  assemble(tree, contentAwareResolver)` : en-têtes dérivés de la TOC + ancres.
+| ✅ TERMINÉ (S-263)
+| 1
+
+| CROSS-DOC-BOOK-FIDELITY-3
+| Section multi-pages (`Page = 1, 2`) → un en-tête, deux contenus ordonnés.
+| ✅ TERMINÉ (S-263)
+| 1
+
+|===
+
+*Total* : ~4 pts (4 US). *Gate atteint* : `crossBoroughCucumberTest` 6/6 PASS,
+test-only, zéro code de production modifié.
 
 '''
 == ✅ EPIC DOC-BOOK-DOMAIN — Domaine « Book » structuré (arbre, mise en page, logique)

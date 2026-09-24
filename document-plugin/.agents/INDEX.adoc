@@ -6,6 +6,21 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-24 (session 263 — **CROSS-DOC-BOOK-FIDELITY
+TERMINÉ** — le BDD cross-borough `@book-pipeline` teste désormais le *contrat
+réel*, plus une fiction. Audit d'ouverture : le filet S-210 était vert mais
+aveugle — fixtures à en-têtes `= Intro` que codex n'écrit jamais
+(`CollectOcrTask:56`), assertion tautologique sur les `= ` de la fixture, et
+seul le chemin blob-plat couvert alors que la production emprunte le chemin
+structuré (`TOC → BookTocParser → BookTreeBuilder → assemble(tree)`).
+Réécriture des 6 scénarios : pages codex **brutes** (sans en-tête), chemin de
+production avec TOC, section multi-pages concaténée, dégradé sans échec,
+filtrage non-adoc, ordre prouvé sur le contenu. Baby-step BDD strict RED
+(6 `UndefinedStepException`) → GREEN 6/6. Test-only, zéro prod modifié.
+Gates : `test` 4827/0, FT 144/1 (préexistant RichToc page 73), runners
+Cucumber voisins 0 fail, `validatePlugins` VERT, garde publication 3/3.
+Rapport : `.agents/sessions/263-cross-borough-fidelity.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-24 (session 262 — **DOC-BOOK-CONSISTENCY-B6
 TERMINÉ** — dette mineure B6 de la code review S-258 soldée. `BookNumbering.numbers()`
 (identité) est désormais **documentée comme choix assumé** (le numéro imprimé dans
@@ -163,17 +178,20 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 261 — **EPIC DOC-BOOK-MATTER TERMINÉ 3/3 US**
-(B3 de la code review S-258 soldé : `MatterPolicy` dérivable, `MatterPolicyMode`,
-matter breaks opt-in, règle S3 opt-in — le faux positif permanent sur une TOC
-body-only est supprimé, prouvé par dogfooding réel DERIVED=0 / LEGACY=2 ; 21e
-runner Cucumber `bookMatterCucumberTest` 8/8). Gates : UT 4493/0, FT 142/1
-(1 préexistant RichToc page 73), 21 runners 0 fail, validatePlugins VERT.
-  _Prochaine session_ : DOC-BOOK-CONSISTENCY-B6 (dette mineure numérotation/
-navigation — dernier item actionnable sans coût externe) OU DOC-FPA-PUBLISH-0
-(si A1 converge — 10 ILLISIBLE au 2026-09-24), sur demande pilote. Publication
-0.0.18 (RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + pins
-ws 0.0.56) sur accord pilote seulement.
+|_Derniere session terminee_ : 263 — **CROSS-DOC-BOOK-FIDELITY TERMINÉ**
+(test-only, P1 non bloquant) : le BDD cross-borough `@book-pipeline` teste le
+*contrat réel* et non plus une fiction — pages codex **brutes** (sans en-tête,
+`CollectOcrTask:56`), chemin de production `TOC → BookTocParser →
+BookTreeBuilder → assemble(tree, contentAwareResolver)`, section multi-pages
+concaténée sous un seul en-tête, dégradé sans échec, filtrage non-adoc. 6
+scénarios fidèles RED (`UndefinedStepException`) → GREEN 6/6. Zéro code de
+production modifié. Gates : `test` 4827/0, FT 144/1 (1 préexistant RichToc
+page 73), runners Cucumber voisins 0 fail, validatePlugins VERT, garde 3/3.
+  _Prochaine session_ : sur demande pilote. Publication 0.0.18 (RENAME-8 +
+Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.56) sur accord pilote seulement. OU
+DOC-FPA-PUBLISH-0 (STANDBY, si A1 converge — 10 ILLISIBLE au 2026-09-24). OU
+drift catalogue ws à réaligner si MEMPHIS bump (piège #13).
 
 '''
 == REGLES ABSOLUES (resume)
@@ -279,7 +297,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-PDF-CHECK | 6e garde — validation structurelle du PDF : domaine `document.pdf` (port `PdfValidator` + adapter `PdfBoxValidatorAdapter` sur `org.apache.pdfbox:pdfbox` 3.0.4 BOM), tâche `validateDocumentPdf` (rapport `pdf-validation-report.json`), DSL `converter { pdfCheck }` + CLI `-Pdocument.pdfCheck`, Cucumber `@pdf-check` + dogfooding `book.pdf` FPA (4 US, ~12 pts) | ✅ TERMINÉ (S-247 — 4/4 US, 1 session) | P1
 | EPIC DOC-BOOK-CONSISTENCY | Cohérence du knob `outputFileName` de bout en bout — `assembleBook.outputFile` + `enrichDocument.outputFile` dérivés du knob (fini les hardcodes `book.adoc`/`document-enriched.adoc` qui cassent l'indexation N3 du livre assemblé). Cadré S-258 (code review B1/B2), corrigé S-259 | ✅ TERMINÉ (S-259 — TDD, 3 US ~3 pts) | P1
 | EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
-| EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | 🟡 CADRÉ (S-258, code review B3) — à planifier | P2
+| EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
+| EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
 |===
 
 '''
@@ -392,6 +411,9 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 258 | 2026-09-24 | code review + cadrage | **Code review pipeline livre + 3 EPICs de cohérence cadrés** (lecture seule, zéro code). Audit complet du borough : verdict *le pipeline livre depuis OCR existe et fonctionne de bout en bout* (dogfooding FPA réel prouvé : `livre.adoc` 4689 lignes / 116 ancres / 6 niveaux ; 22 cadrages ; 3822 UT / 130 FT / 19 runners ; 0.0.17 Central). **6 anomalies détectées** : B1 (`book.adoc` régénéré 23/09 dégradé — TOC d'entrée = stub 3 lignes au lieu de la TOC riche 116 sections), B2 (`assembleBook.outputFile` hardcodé `book.adoc` + `enrichDocument` `document-enriched.adoc` → le livre assemblé n'est jamais indexé dans `composite-context.json` quand `outputFileName` est custom), B3 (`Matter` convention `0.x`/`9.x` inopérante sur la TOC FPA — racines {1,2,3,4} → règle S3 faux positif permanent), B4 (`photosDir` ignoré en mode structuré — 174 jpg non référencés), B5 (4 images OCR fantômes → 3 RSC-007 epubcheck), B6 (`BookNumbering` dérivation identité / `BookNavigation` sans consommateur). **Vision+roadmap+backlog+prompt de reprise mis à jour** ; 3 EPICs cadrés : `DOC-BOOK-CONSISTENCY` (B1/B2, P1), `DOC-BOOK-IMAGES` (B4/B5, P2), `DOC-BOOK-MATTER` (B3, P2). Rapport : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`. | 10/10
 | 259 | 2026-09-24 | feat + TDD | **EPIC DOC-BOOK-CONSISTENCY ✅ TERMINÉ 3/3 US** (B1/B2) — le knob `outputFileName` devient cohérent de bout en bout : `assembleBook.outputFile` (`$name.adoc`, défaut `book`) + `enrichDocument.outputFile` (`$name-enriched.adoc`, défaut `document`) dérivés du knob au lieu des hardcodes `book.adoc`/`document-enriched.adoc` ; le collecteur N3 indexe enfin le livre assemblé. Baby-step TDD strict RED (3/4 `BookOutputFileNameFunctionalTest` FAILED) → GREEN (2 dérivations `DocumentPlugin.kt`) → REFACTOR n/a. Dogfooding FPA réel (TOC riche, `-Pdocument.outputFileName=livre`) : `livre.adoc` 4600 lignes / 249 Ko / 116 ancres, `collectDocumentRetrieve` indexe 5 artefacts. `.agents/` racine supprimé (gouvernance au niveau `document-plugin/`). 1 échec préexistant `AssembleBookTaskContentRichTocTest` (page 73, drift corpus A1). Rapport : `.agents/sessions/259-book-output-filename-consistency.adoc`. | ✅ TERMINE
 | 260 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding + maintenance | **EPIC DOC-BOOK-IMAGES ✅ TERMINÉ 3/3 US** (B4/B5) — le livre est *illustré* par les scans et l'EPUB est **epubcheck-VALID**. Domaine pur : `BookImageResolver` (scan par préfixe numérique, 2 paddings + split), `BookImageRewriter` (ghost → scan de la page, ou supprimé), `BookPageRenderer` (rendu partagé 2 conventions). `ContentPageResolver(pagesDir, photosDir)` (illustration opt-in), `BookLayout.imagesDir`, `AssembleBookTask` (copie des scans *référencés* dans `images/` + `:imagesdir:` relatif). **Découverte** : AsciidoctorJ n'embarque que les images DANS le répertoire source (absolu → RSC-007 silencieux ; relatif sortant → RSC-026). 11 UT + 6 UT résolveur + 3 layout + 4 FT TestKit + BDD `@book-images` 6/6 (20e runner `bookImagesCucumberTest`). **Dogfooding réel** (TOC riche, `/tmp` consumer, mavenLocal) : `bookPipeline` 4m59s, `livre.adoc` `:imagesdir: images` + 4 ghosts substitués, `images/` = 4 scans (13 Mo, pas 525 Mo), `validateDocumentEpub -Pdocument.epubCheck=STRICT` → **VALID** (0 RSC-007). Maintenance : drift catalogue ws 0.0.43→0.0.56 réaligné (piège #13, 5e occurrence, stash-prouvé). Gates : UT 4130/0, FT 138/1 (préexistant RichToc), 20 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/260-book-images-illustration-ghost-repair.adoc`. | ✅ TERMINE
+| 261 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding | **EPIC DOC-BOOK-MATTER ✅ TERMINÉ 3/3 US** (B3) — la politique de matter est **dérivée de la TOC** : un livre n'exige un FRONT/BACK que si sa TOC le déclare, supprimant le faux positif permanent de la règle S3 sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA). `MatterPolicy` (mapping front/back, `derive`/`forMode`) + `MatterPolicyMode` (DERIVED/LEGACY/NONE) + `BookLayout.emitMatterBreaks` opt-in + règle S3 opt-in. **Preuve dogfooding** : DERIVED = 0 finding matter, LEGACY = 2 (faux positif historique prouvé). 17 UT + FT 4/4 + BDD `@book-matter` 8/8 (21e runner `bookMatterCucumberTest`). Gates : UT 4493/0, FT 142/1 (préexistant RichToc page 73), 21 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/261-book-matter-policy.adoc`. | ✅ TERMINE
+| 262 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding | **DOC-BOOK-CONSISTENCY-B6 ✅ TERMINÉ** (dernière dette B1→B6) — `BookNumbering.numbers()` documentée comme choix assumé (identité TOC source) ; `BookNavigation` branchée en prod (`BookLayout.emitNavigation` opt-in + `navigationLinks`) ; **bug latent corrigé** (navigation sur `emittedNodes` refs distincts, plus sur les pages OCR multi-pages). Wiring `AssembleBookTask` + DSL + CLI + contrat N3. 6 UT + 2 FT + BDD `@book-navigation` 5/5 (22e runner). Dogfooding FPA : 239 liens, 116 cibles, 0 dangling. Gates : `test` 4785/0, FT 144/1 (préexistant RichToc page 73), 22 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/262-book-navigation.adoc`. | ✅ TERMINE
+| 263 | 2026-09-24 | test-only BDD + revue fidélité | **CROSS-DOC-BOOK-FIDELITY ✅ TERMINÉ** — le BDD cross-borough `@book-pipeline` teste le *contrat réel*, plus une fiction. Audit : filet S-210 vert mais aveugle (fixtures à en-têtes `= Intro` que codex n'écrit jamais `CollectOcrTask:56`, assertion tautologique, seul le chemin blob-plat couvert alors que la prod emprunte `TOC → BookTreeBuilder → assemble(tree)`). Réécriture des 6 scénarios : pages codex **brutes**, chemin de production avec TOC, section multi-pages concaténée, dégradé sans échec, filtrage non-adoc, ordre prouvé sur le contenu. Baby-step BDD strict RED (6 `UndefinedStepException`) → GREEN 6/6. Zéro prod modifié. Gates : `test` 4827/0, FT 144/1 (préexistant RichToc page 73), runners Cucumber voisins 0 fail, validatePlugins VERT, garde 3/3. Rapport : `.agents/sessions/263-cross-borough-fidelity.adoc`. | ✅ TERMINE
 |===
 
 '''

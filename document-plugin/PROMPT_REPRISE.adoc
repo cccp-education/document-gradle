@@ -1,58 +1,57 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 263 — sur demande pilote
+== Mission session 264 — sur demande pilote
 
 Le borough est à jour et **sain** : 0.0.17 publiée Central, catalogue ws
 **0.0.56** aligné (piège #13), garde publication 3/3, `compileKotlin` VERT,
 22 runners Cucumber 0 fail. Le pipeline livre depuis OCR est fonctionnel de
 bout en bout (dogfooding FPA réel) — **toutes les dettes B1→B6 de la code
-review S-258 sont soldées**.
+review S-258 sont soldées**, et le BDD cross-borough teste désormais le
+**contrat réel** (S-263, CROSS-DOC-BOOK-FIDELITY).
 
 *Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
 
 - *Publication 0.0.18* (accord pilote) : distribue RENAME-8 + Vague 4 + B1/B2
   (S-259) + DOC-BOOK-IMAGES (S-260) + DOC-BOOK-MATTER (S-261) +
-  **DOC-BOOK-CONSISTENCY-B6 (S-262)** + pins ws 0.0.56. Bump seulement sur
-  demande pilote.
+  DOC-BOOK-CONSISTENCY-B6 (S-262) + **CROSS-DOC-BOOK-FIDELITY (S-263,
+  test-only)** + pins ws 0.0.56. Bump seulement sur demande pilote.
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
   livre le corpus corrigé (convergence 10 ILLISIBLE au 2026-09-24). Le FT
   `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant qu'A1
   n'a pas convergé.
-- *CROSS-DOC-BOOK-1/2 (~4 pts, P1 non bloquant)* : BDD cross-borough
-  `collectOcr → assembleBook` + KDoc contrat codex — jamais exécuté.
 - *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
   `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources vers
   la version Central. Vérifier `<latest>` avant tout pin (piège #21).
 
-== État du code (S-262)
+== État du code (S-263)
 
 - *0.0.17 PUBLIÉE* Central — le HEAD porte RENAME-8 + Vague 4 + B1/B2 +
-  DOC-BOOK-IMAGES + DOC-BOOK-MATTER + **DOC-BOOK-CONSISTENCY-B6** + pins
-  catalogue, distribué au prochain bump (accord pilote).
+  DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
+  CROSS-DOC-BOOK-FIDELITY + pins catalogue, distribué au prochain bump
+  (accord pilote).
 - *Catalogue ws* : **0.0.56** (consumer compile VERT).
-- *Gates document* : `test` 4785/0 (dont 915 UT non-Cucumber), FT 144/1 (1
-  préexistant RichToc page 73), 22 runners Cucumber dédiés (0 fail), garde
-  publication 3/3, `check` VERT hors FT préexistant.
-- *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262) — identité documentée +
-  navigation branchée en prod + bug latent multi-pages corrigé.
+- *Gates document* : `test` 4827/0, FT 144/1 (1 préexistant RichToc page 73),
+  22 runners Cucumber dédiés (0 fail), garde publication 3/3,
+  `validatePlugins` VERT.
+- *EPIC CROSS-DOC-BOOK-FIDELITY* : ✅ TERMINÉ (S-263, test-only).
+- *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262).
 - *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261).
 - *EPIC DOC-BOOK-IMAGES* : ✅ TERMINÉ 3/3 US (S-260).
 - *EPIC DOC-BOOK-CONSISTENCY* (B1/B2) : ✅ TERMINÉ 3/3 US (S-259).
 
-== Navigation précédent/suivant (DOC-BOOK-CONSISTENCY-B6, S-262)
+== CROSS-DOC-BOOK-FIDELITY (S-263) — contrat cross-borough fidèle
 
-- `BookNumbering.numbers()` : dérivation **identité assumée** (le numéro
-  imprimé dans le livre = celui de la TOC source) — documentée en KDoc.
-- `BookNumbering.emittedNodes(tree)` : sections distinctes (une par `ref`,
-  première page gagne) — la navigation ne court plus sur les pages OCR.
-- `BookLayout.emitNavigation` (défaut `false`) + `BookLayout.navigationLinks` :
-  `<<ref,title>>` par voisin présent, `" | "`-joint.
-- `AssembleBookTask.navigation` + DSL `book { navigation.set(true) }` + CLI
-  `-Pdocument.bookNavigation=true` + contrat N3 `BookConfig.navigation`.
-- Preuve dogfooding S-262 : FPA réel → 239 liens, 116 cibles, **0 dangling**,
-  première section next-only.
+- Le BDD `@book-pipeline` (`cross_borough_book.feature`, glue
+  `document.crossborough`) teste le contrat N2↔N2 *réel* :
+  - pages codex **brutes** (sans en-tête — `CollectOcrTask:56`) ;
+  - chemin de production `TOC → BookTocParser → BookTreeBuilder →
+    assemble(tree, contentAwareResolver)` ;
+  - section multi-pages concaténée sous **un** en-tête ;
+  - dégradé sans échec (page TOC manquante) ; fichiers non-adoc ignorés.
+- 6 scénarios RED (`UndefinedStepException`) → GREEN 6/6.
+- Zéro code de production modifié (test-only).
 
-== Pièges Gradle à retenir (S-232..S-262)
+== Pièges Gradle à retenir (S-232..S-263)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -79,18 +78,18 @@ review S-258 sont soldées**.
 23. *Paramètre additif fin de signature (S-253)* : toute extension d'API publique suit ce pattern.
 24. *Verrous RENAME = tests de comportement, pas fixtures nominales (S-254)*.
 25. *WIP parallèle dans le working tree (S-254)* : `git add` sélectif, jamais `-A`.
-26. *Vague 4 = champ lexical complet, pas les sigles (S-257)*.
+26. *Vague 4 = champ lexical complet, pas les sigles (S-257).*
 27. *Transfuser AVANT de neutraliser (S-257).*
 28. *Gate Vague 4 : faux positifs + citations corpus (S-257).*
 29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible.
 30. *Navigation = sections émises, pas pages OCR (S-262)* : `BookNumbering.emittedNodes` (refs distincts) — sinon une ligne TOC multi-pages fait pointer « suivant » sur la même section logique.
+31. *Un test vert n'est pas un test fidèle (S-263)* : vérifier que les fixtures reproduisent la sortie **réelle** du producteur (codex = pas d'en-tête) et que le chemin testé est celui de la **production** (TOC structurée), sinon le filet valide une fiction.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Runner global (glue `document.scenarios`) :
 `document.feature` + `release-notes.feature` + `frontmatter_retranslate.feature`.
-Le 22e runner dédié est `bookNavigationCucumberTest` (S-262, 5 scénarios
-`@book-navigation`).
+Les 22 runners dédiés sont listés dans `build.gradle.kts` (`cucumberConventions`).
 
 == Méthode
 
@@ -113,5 +112,5 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
 4. Central : vérifier `<latest>` (`document-plugin`, `workspace-catalog`,
    `workspace-bom`) avant tout pin (pièges #13/#21).
-5. Baseline : `test` 4785/0 (915 UT), FT 144/1 (1 préexistant RichToc page 73),
-   `bookNavigationCucumberTest` 5/5, garde publication 3/3.
+5. Baseline : `test` 4827/0 (dont 4827 XML), FT 144/1 (1 préexistant RichToc
+   page 73), `crossBoroughCucumberTest` 6/6, garde publication 3/3.
