@@ -137,10 +137,18 @@ object BookAssembler {
      * Builds a [File]-backed content resolver for [assemble]: each [BookSection]
      * is matched to the OCR page whose numeric file-name prefix equals its
      * physical [BookSection.page] (the `%03d-*.adoc` convention of codex-gradle).
+     *
+     * EPIC DOC-BOOK-IMAGES: [photosDir] enables the page-scan illustration and
+     * the ghost-image repair performed by [BookPageRenderer] (fixes S-258
+     * B4/B5). `null` keeps the previous behaviour exactly (non-regression).
      */
-    fun pageContentResolver(pagesDir: File): (BookSection) -> String {
+    fun pageContentResolver(pagesDir: File, photosDir: File? = null): (BookSection) -> String {
         val byOrder = loadPages(pagesDir, null).associateBy { it.order.value }
-        return { section -> byOrder[section.page]?.readText()?.trim() ?: "" }
+        val imageDir = photosDir ?: pagesDir
+        return { section ->
+            val page = byOrder[section.page]
+            if (page == null) "" else BookPageRenderer.render(page.file, imageDir, illustrate = photosDir != null)
+        }
     }
 
     /**
@@ -153,10 +161,14 @@ object BookAssembler {
      * The content resolver is tried first; only when it yields nothing do we
      * fall back to the legacy codex resolver, so the same [AssembleBookTask]
      * serves every consumer without a convention flag.
+     *
+     * EPIC DOC-BOOK-IMAGES: [photosDir] enables the page-scan illustration and
+     * the ghost-image repair performed by [ContentPageResolver] (fixes S-258
+     * B4/B5). `null` keeps the previous behaviour exactly (non-regression).
      */
-    fun contentAwareResolver(pagesDir: File): (BookSection) -> String {
-        val content = ContentPageResolver(pagesDir)
-        val legacy = pageContentResolver(pagesDir)
+    fun contentAwareResolver(pagesDir: File, photosDir: File? = null): (BookSection) -> String {
+        val content = ContentPageResolver(pagesDir, photosDir)
+        val legacy = pageContentResolver(pagesDir, photosDir)
         return { section ->
             val fromContent = content.content(section)
             if (fromContent.isNotEmpty()) fromContent else legacy(section)

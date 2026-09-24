@@ -6,6 +6,23 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-24 (session 260 — **EPIC DOC-BOOK-IMAGES
+TERMINÉ 3/3 US** — B4/B5 de la code review S-258 soldés. B4 : `photosDir`
+consommé en mode *structuré* (le livre est illustré par les scans). B5 : les
+4 ghosts `image::` OCR sont **réparés** (substitués par le scan de leur page,
+ou supprimés) → **EPUB epubcheck-VALID** (0 RSC-007, prouvé STRICT sur le
+corpus FPA). **Découverte majeure** : AsciidoctorJ n'embarque une image que
+dans le répertoire du `book.adoc` (absolu → silencieusement absent RSC-007 ;
+relatif sortant → RSC-026 « leaks outside the container ») → `assembleBook`
+copie seulement les scans *référencés* dans `images/` (4 scans ≈ 13 Mo, pas
+525 Mo) + `:imagesdir: images` relatif. Domaine pur : `BookImageResolver` +
+`BookImageRewriter` + `BookPageRenderer`. 11 UT + 6 UT résolveur + 3 layout +
+4 FT TestKit + BDD `@book-images` 6/6 (20e runner). Maintenance : drift
+catalogue ws 0.0.43 → **0.0.56** réaligné (piège #13, 5e occurrence,
+stash-prouvé préexistant). Gates : UT 4130/0, FT 138/1 (1 préexistant RichToc
+page 73), 20 runners Cucumber 0 fail, validatePlugins VERT. Rapport :
+`.agents/sessions/260-book-images-illustration-ghost-repair.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-24 (session 258 — **Code review pipeline
 livre + EPICs de cohérence** — revue complète du borough (lecture seule,
 zéro code) : verdict *le pipeline livre depuis OCR existe et fonctionne de
@@ -118,17 +135,17 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
-|_Derniere session terminee_ : 256 — Audit RENAME verdict ✅ CADUQUE
-(zéro résidu métier privé — gate D16 re-déroulée VERTE, 10 matches src/
-faux positifs piège #18 uniquement, sweep exhaustif = 0, docs
-gouvernance légitimes). Gouvernance pure, baseline S-255 préservée :
-UT 3822/0, FT 130/130, 19 runners 3068/0, garde 3/3.
-DOC-FPA-PUBLISH-0 STANDBY (re-déclenché par A1 — 16 ILLISIBLE au
-2026-09-09).
-  _Prochaine session_ : DOC-FPA-PUBLISH-0 (si A1 livre le corpus corrigé
-— convergence attendue 0 ILLISIBLE) OU maintenance/consommateur sur
-demande pilote. Publication 0.0.18 (RENAME-8 + pins ws 0.0.37) sur
-accord pilote seulement.
+|_Derniere session terminee_ : 260 — **EPIC DOC-BOOK-IMAGES TERMINÉ 3/3 US**
+(B4/B5 de la code review S-258 soldés : livre illustré + ghosts réparés →
+EPUB epubcheck-VALID, prouvé STRICT sur le corpus FPA ; 20e runner Cucumber
+`bookImagesCucumberTest` 6/6 ; drift catalogue ws réaligné 0.0.56). Gates :
+UT 4130/0, FT 138/1 (1 préexistant RichToc page 73), 20 runners 0 fail,
+validatePlugins VERT.
+  _Prochaine session_ : DOC-BOOK-MATTER (B3, P2 — Matter dérivable +
+émission layout) OU DOC-BOOK-CONSISTENCY-B6 (dette mineure) OU
+DOC-FPA-PUBLISH-0 (si A1 converge — 10 ILLISIBLE au 2026-09-24), sur
+demande pilote. Publication 0.0.18 (RENAME-8 + Vague 4 + B1/B2 +
+DOC-BOOK-IMAGES + pins ws 0.0.56) sur accord pilote seulement.
 
 '''
 == REGLES ABSOLUES (resume)
@@ -233,7 +250,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-EPUBCHECK | 5e garde — validation epubcheck de l'artefact EPUB : domaine `document.epub` (port `EpubCheckRunner` + adapter `LibEpubCheckAdapter` sur `org.w3c:epubcheck:5.2.1`), tâche `validateDocumentEpub` (rapport `epub-validation-report.json`), DSL `converter { epubCheck }` + CLI `-Pdocument.epubCheck`, Cucumber `@epub-check` (3 US, ~9 pts) | ✅ TERMINÉ (S-240 — 3/3 US, gap US-DOC-04 fermé) | P1
 | EPIC DOC-PDF-CHECK | 6e garde — validation structurelle du PDF : domaine `document.pdf` (port `PdfValidator` + adapter `PdfBoxValidatorAdapter` sur `org.apache.pdfbox:pdfbox` 3.0.4 BOM), tâche `validateDocumentPdf` (rapport `pdf-validation-report.json`), DSL `converter { pdfCheck }` + CLI `-Pdocument.pdfCheck`, Cucumber `@pdf-check` + dogfooding `book.pdf` FPA (4 US, ~12 pts) | ✅ TERMINÉ (S-247 — 4/4 US, 1 session) | P1
 | EPIC DOC-BOOK-CONSISTENCY | Cohérence du knob `outputFileName` de bout en bout — `assembleBook.outputFile` + `enrichDocument.outputFile` dérivés du knob (fini les hardcodes `book.adoc`/`document-enriched.adoc` qui cassent l'indexation N3 du livre assemblé). Cadré S-258 (code review B1/B2), corrigé S-259 | ✅ TERMINÉ (S-259 — TDD, 3 US ~3 pts) | P1
-| EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | 🟡 CADRÉ (S-258, code review B4/B5) — à planifier | P2
+| EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | 🟡 CADRÉ (S-258, code review B3) — à planifier | P2
 |===
 
@@ -345,6 +362,8 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 252b | 2026-09-08 | PUB cross-borough | **PUB 0.0.17 Maven Central ✅ — RENAME-2 + OCR-QUALITY + fix inline DISTRIBUÉS** — accord pilote explicite ("oui fait le de suite"). Chaîne DAG N0→N2 : (1) MEMPHIS bump toml `workspace-bom 0.0.35` + `document-plugin 0.0.17`, gardes réalignées (`PlatformCatalogAlignmentTest` 0.0.35 + `WorkspaceCatalogStructureTest` 0.0.17), `test` VERT, `publishAggregationToCentralPortal` — **collision cross-agent** : un déploiement MEMPHIS concurrent (15:28 UTC, bump 0.0.36/bakery 0.0.10/codebase 0.0.13) a publié le même `document-plugin:0.0.17` pendant mes polls (erreurs `already exists` ×N, `workspace-catalog 0.0.35` published via bundle `7da71b97` concurrent) — JAR Central byte-identique au local (sha256 `a005ff2e`, fix `image::?` prouvé `strings`), POM Central pinné bom 0.0.34 (zéro impact : toutes les deps document sont versionnées explicitement dans le POM — l'import BOM ne contraint rien d'utilisé) ; (2) document re-pin 3 sources vers ws **0.0.36** (toml MEMPHIS courant, attrapé par la garde `DocumentPluginPublicationTest` RED `platform pin must use the ws catalog BOM version (0.0.36)` → GREEN 3/3) ; (3) consommateur tiers `/tmp/opencode/doc-consumer-pdf` bumpé 0.0.17 **SANS mavenLocal** : résolution `Gradle Central Plugin Repository` prouvée debug log, STRICT VALID + preuve négative PDF textless (pattern S-248) → BUILD FAILED `page 1: no extractable text, page 2: no extractable text` + rapport INVALID ; (4) bakery pin ws 0.0.36 + platform 0.0.36 (agent concurrent MEMPHIS, commité `bbd5cde`) → `document-plugin -> 0.0.17` sans hardcode (D5 prouvé `dependencies`, compileKotlin VERT) ; (5) re-dogfooding livre FPA résolu **depuis Central SANS mavenLocal** (debug log `Using ... 0.0.17 from Maven repository 'Gradle Central Plugin Repository'`, BUILD SUCCESSFUL 3m52s, convergence 16 ILLISIBLE + 4 IMAGE_MISSING + 7 TABLE_SUSPECT + PDF VALID maintenue) — consumer racine mavenLocal retiré (Central = source). Pièges : Central immutable (jamais d'écrasement de version — même JAR = pas de bump nécessaire), collision deployment cross-agent = coordonner MEMPHIS avant bump BOM. Commits : document `8989a05` + `cbaf8d9`. Rapport : `.agents/sessions/252b-pub-0.0.17-distribution.adoc`. | ✅ TERMINE
 | 254 | 2026-09-09 | rename transverse | **RENAME Vague 3 CLÔTURÉE ✅ 6/6 US** — S-254 exécute les 4 US restantes (RENAME-9 bakery était déjà livré S-212 session parallèle — prompt périmé). RENAME-7 planner : prompts LLM `IntentionPlanner.kt:149,208` → génériques (`corpus documents — manuals, referentials` / `Content plan generated`) + 6 fixtures (MultiCanal verrou "codex corpus" → "corpus documents" — RED réel attrapé puis corrigé, StdoutFormatter, LLMTask, DecomposeIntention CLI, planner_verify.feature 5 scénarios, PlannerVerifySteps) — gates : grep = 0, `test` 144 VERT, `cucumberTest` 23 VERT. RENAME-10 codebase : `CodebasePlugin.kt:176` description → `corpus de formation` + 9 fixtures koog neutralisées (VibecodingPlan/Rollback/StepVerifier/TaskResultVerifier ×8/VibecodingGraphVerify/AgenticCompiler ×2/AgenticChunker/MetadataUnitTest SPG→CONTENT_PLAN/PublishExpertToOllama domainLabel) + exclusion D11 documentée (DeterministicOffTopicDetectorTest — AFNOR keyword de détection PUBLIC) — gate : grep = 0, `test` 10602 avec 4 échecs préexistants S-212, classes ciblées VERTES. RENAME-11 plantuml : KDoc loader + 5 fixtures registres publics (QUALIOPI/ISO/NFP, glue paramétrée) + docs courantes (AGENT/BACKLOG/PROMPT_REPRISE/strategie_orange_money 17 occurrences) + **drift ws 0.0.37 attrapé par la garde plantuml** → réaligné settings D4 + platform (pattern S-246/S-251) — gates : `test` 2531/0, compileKotlin VERT. RENAME-12 hyperframes : BACKLOG (×4) + doc/PILOTAGE (SPG/SPD→scénarios pédagogiques ×4, FPA→professionnel/formation) + doc/HYPERFRAMES_ARCHITECTURE + AGENT règle 9 — gate : grep = 0, compileKotlin VERT. Gate transverse D16 VERT 5 boroughs. Pièges #25 (verrou = comportement pas fixture nominale) + #26 (WIP parallèle working tree — commit sélectif, jamais git add -A) documentés PROMPT_REPRISE. Zéro publication — chaînes non-significatives aux prochains bumps. Rapport : `.agents/sessions/254-rename-v3-cloture-transverse.adoc`. | ✅ TERMINE
 | 258 | 2026-09-24 | code review + cadrage | **Code review pipeline livre + 3 EPICs de cohérence cadrés** (lecture seule, zéro code). Audit complet du borough : verdict *le pipeline livre depuis OCR existe et fonctionne de bout en bout* (dogfooding FPA réel prouvé : `livre.adoc` 4689 lignes / 116 ancres / 6 niveaux ; 22 cadrages ; 3822 UT / 130 FT / 19 runners ; 0.0.17 Central). **6 anomalies détectées** : B1 (`book.adoc` régénéré 23/09 dégradé — TOC d'entrée = stub 3 lignes au lieu de la TOC riche 116 sections), B2 (`assembleBook.outputFile` hardcodé `book.adoc` + `enrichDocument` `document-enriched.adoc` → le livre assemblé n'est jamais indexé dans `composite-context.json` quand `outputFileName` est custom), B3 (`Matter` convention `0.x`/`9.x` inopérante sur la TOC FPA — racines {1,2,3,4} → règle S3 faux positif permanent), B4 (`photosDir` ignoré en mode structuré — 174 jpg non référencés), B5 (4 images OCR fantômes → 3 RSC-007 epubcheck), B6 (`BookNumbering` dérivation identité / `BookNavigation` sans consommateur). **Vision+roadmap+backlog+prompt de reprise mis à jour** ; 3 EPICs cadrés : `DOC-BOOK-CONSISTENCY` (B1/B2, P1), `DOC-BOOK-IMAGES` (B4/B5, P2), `DOC-BOOK-MATTER` (B3, P2). Rapport : `.agents/CODE_REVIEW_BOOK_PIPELINE_S258.adoc`. | 10/10
+| 259 | 2026-09-24 | feat + TDD | **EPIC DOC-BOOK-CONSISTENCY ✅ TERMINÉ 3/3 US** (B1/B2) — le knob `outputFileName` devient cohérent de bout en bout : `assembleBook.outputFile` (`$name.adoc`, défaut `book`) + `enrichDocument.outputFile` (`$name-enriched.adoc`, défaut `document`) dérivés du knob au lieu des hardcodes `book.adoc`/`document-enriched.adoc` ; le collecteur N3 indexe enfin le livre assemblé. Baby-step TDD strict RED (3/4 `BookOutputFileNameFunctionalTest` FAILED) → GREEN (2 dérivations `DocumentPlugin.kt`) → REFACTOR n/a. Dogfooding FPA réel (TOC riche, `-Pdocument.outputFileName=livre`) : `livre.adoc` 4600 lignes / 249 Ko / 116 ancres, `collectDocumentRetrieve` indexe 5 artefacts. `.agents/` racine supprimé (gouvernance au niveau `document-plugin/`). 1 échec préexistant `AssembleBookTaskContentRichTocTest` (page 73, drift corpus A1). Rapport : `.agents/sessions/259-book-output-filename-consistency.adoc`. | ✅ TERMINE
+| 260 | 2026-09-24 | feat DDD/TDD/BDD + dogfooding + maintenance | **EPIC DOC-BOOK-IMAGES ✅ TERMINÉ 3/3 US** (B4/B5) — le livre est *illustré* par les scans et l'EPUB est **epubcheck-VALID**. Domaine pur : `BookImageResolver` (scan par préfixe numérique, 2 paddings + split), `BookImageRewriter` (ghost → scan de la page, ou supprimé), `BookPageRenderer` (rendu partagé 2 conventions). `ContentPageResolver(pagesDir, photosDir)` (illustration opt-in), `BookLayout.imagesDir`, `AssembleBookTask` (copie des scans *référencés* dans `images/` + `:imagesdir:` relatif). **Découverte** : AsciidoctorJ n'embarque que les images DANS le répertoire source (absolu → RSC-007 silencieux ; relatif sortant → RSC-026). 11 UT + 6 UT résolveur + 3 layout + 4 FT TestKit + BDD `@book-images` 6/6 (20e runner `bookImagesCucumberTest`). **Dogfooding réel** (TOC riche, `/tmp` consumer, mavenLocal) : `bookPipeline` 4m59s, `livre.adoc` `:imagesdir: images` + 4 ghosts substitués, `images/` = 4 scans (13 Mo, pas 525 Mo), `validateDocumentEpub -Pdocument.epubCheck=STRICT` → **VALID** (0 RSC-007). Maintenance : drift catalogue ws 0.0.43→0.0.56 réaligné (piège #13, 5e occurrence, stash-prouvé). Gates : UT 4130/0, FT 138/1 (préexistant RichToc), 20 runners 0 fail, validatePlugins VERT. Rapport : `.agents/sessions/260-book-images-illustration-ghost-repair.adoc`. | ✅ TERMINE
 |===
 
 '''

@@ -1,0 +1,153 @@
+= Session 260 — EPIC DOC-BOOK-IMAGES : livre illustré depuis OCR (B4/B5 soldés)
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Type_ : feat/DDD-TDD-BDD + dogfooding + maintenance cross-borough
+_Statut_ : ✅ TERMINÉ
+_EPIC_ : DOC-BOOK-IMAGES 3/3 US
+
+== Mission
+
+Reprise sur demande pilote : traiter l'EPIC `DOC-BOOK-IMAGES` (P2), désigné par
+la code review S-258 comme le prochain chaînon vers un livre « fini ». Deux
+anomalies à solder :
+
+- *B4* — `photosDir` ignoré en mode structuré (174 `.jpg` du corpus jamais
+  référencés, livre non illustré) ;
+- *B5* — 4 images fantômes OCR (`qr-code.png`, `cerveau_gauche_vs_cerveau_droit.jpg`,
+  `triangle-gradient.png`, `arrow-curved-left`) → 3 erreurs epubcheck RSC-007
+  (EPUB non conforme).
+
+Méthode : baby-step DDD/TDD/BDD strict (UT domaine pur → FT TestKit → BDD runner
+dédié), puis dogfooding réel sur le corpus FPA.
+
+== Découverte majeure — la mécanique d'embarquement des images (S-260)
+
+Sonde empirique (4 variantes, `DocumentConverter.convertToEpub`) : AsciidoctorJ
+* n'embarque **pas** une image référencée par un chemin **absolu** (cible
+  silencieusement absente → RSC-007) ;
+* **rejette** (`RSC-026`, *« leaks outside the container »*) un chemin relatif
+  qui **sort** du répertoire du `book.adoc` — l'EPUB est alors INVALID ;
+* n'embarque et ne rend conforme (`VALID`) que l'image **située dans le
+  répertoire source ou un de ses sous-répertoires**.
+
+Décision actée (cadrage `CADRAGE_EPIC_DOC_BOOK_IMAGES.adoc` D4) : `assembleBook`
+**copie** les scans réellement référencés dans `<outputDir>/images/` et émet
+`:imagesdir: images` (relatif) + des cibles nues. Le livre et ses dérivés sont
+auto-contenus et epubcheck-VALID. Coût maîtrisé : seuls les scans référencés
+sont copiés (jamais les 525 Mo du corpus).
+
+== Implémentation (3 US, TDD strict)
+
+=== US-2 — Résolution des ghosts (B5), le gate EPUB
+
+Domaine pur d'abord :
+- `BookImageResolver` — résout le scan d'une page par son préfixe numérique
+  (les deux conventions `61.adoc` / `001-introduction.adoc`), sonde les deux
+  paddings (`61.jpg` / `007.png`) et le suffixe de découpe (`83_1`) ;
+- `BookImageRewriter` — répare une directive `image::` fantôme : cible existante
+  → inchangée ; cible absente + scan de page → **substitué** (formes block ET
+  inline, légende et commentaire de fin préservés) ; cible absente sans scan →
+  **ligne supprimée** (EPUB conforme plutôt qu'une ressource manquante).
+
+Le doute reste *rapporté* sur la source par `BookOcrFailureDetector`
+(`book-ocr-issues.json`) — réparer ≠ signaler, deux responsabilités distinctes.
+
+*Baby-step TDD* : RED (les 2 objets inexistants, 11 tests `BookImagesTest`) →
+GREEN (2 fichiers prod) → REFACTOR (découverte TDD : la découpe `055_2` devait
+normaliser le zéro-padding vers `55_2`).
+
+=== US-1 — Illustration structurée (B4)
+
+- `BookPageRenderer` — rendu partagé des deux conventions (ghost repair +
+  illustration opt-in), pour que la logique image soit *convention-agnostique* ;
+- `ContentPageResolver(pagesDir, photosDir)` — illustration opt-in par page
+  (Économie d'Encre : jamais 525 Mo par défaut), ghost repair toujours actif ;
+- `BookPageRenderer` branché aussi sur `pageContentResolver` (codex `%03d-*`) ;
+- `BookLayout.imagesDir` — attribut `:imagesdir:` optionnel (défaut `null` →
+  zéro changement) ;
+- `AssembleBookTask` — détermine les cibles réellement référencées à partir du
+  contenu assemblé (`BookImageRewriter.targets`), copie ces scans dans
+  `images/`, et ré-assemble avec `:imagesdir: images`.
+
+*Baby-step TDD* : RED (`ContentPageResolverImagesTest` 6 tests + 2 `BookLayout`)
+→ GREEN → REFACTOR (extraction `BookPageRenderer`, découverte TDD : le codex
+`001-introduction.adoc` exige la résolution par préfixe numérique).
+
+=== US-3 — Cucumber BDD
+
+`book_images.feature` 6 scénarios `@book-images` + `BookImagesSteps` (préfixe
+`book-images`, anti-glue S-088) + 20e runner dédié `BookImagesCucumberRunner` +
+`CucumberTaskSpec("bookImagesCucumberTest")`. 6/6 PASSED.
+
+== Maintenance cross-borough — drift catalogue ws (piège #13, 5e occurrence)
+
+Le gate `check` était **ROUGE à HEAD** : MEMPHIS a bumpé le catalogue workspace
+0.0.43 → **0.0.56** (bakery 0.0.19, codex 0.0.11, capsule 0.0.1, slider 0.0.19,
+graphify 0.0.5, codebase 0.0.16 — toutes additives, document-plugin inchangé
+0.0.17). La garde `DocumentPluginPublicationTest` (`workspace bom platform pin
+matches ws catalog bom version`) était RED **indépendamment de la session**
+(stash-prouvé). Réalignement des 3 sources sur la version publiée Central
+(`workspace-catalog:0.0.56` + `workspace-bom:0.0.56`, POM/Central HTTP 200
+vérifiés) → garde 3/3 VERTE.
+
+== Gates
+
+- `compileKotlin` VERT.
+- UT **4130 tests, 0 FAIL** (baseline 3822 → +308 nets : 11 `BookImagesTest`,
+  6 `ContentPageResolverImagesTest`, 3 `BookLayoutTest`/`BookAssemblerStructuredTest`,
+  + les scénarios Cucumber comptés).
+- FT `BookImagesFunctionalTest` **4/4 PASSED** (illustration + `:imagesdir:`,
+  défaut inchangé, ghost réparé, **EPUB embarqué** prouvé par lecture du zip).
+- FT livre 138 tests — **1 échec préexistant** `AssembleBookTaskContentRichTocTest`
+  (page 73) **stash-confirmé** (corpus A1 : `73.adoc` n'a plus `[ILLISIBLE]`,
+  16→10 pages ; drift connu S-257, le FT attend la convergence A1).
+- 20 runners Cucumber dédiés VERT (0 fail), dont `bookImagesCucumberTest` 6/6.
+- `validatePlugins` VERT, `publishToMavenLocal` VERT, garde publication 3/3.
+- **Dogfooding réel** (TOC riche 116 sections, consumer transitoire
+  `/tmp/opencode/fpa-consumer-260`, mavenLocal, Règle 2) :
+  * `bookPipeline` BUILD SUCCESSFUL 4m59s ;
+  * `livre.adoc` porte `:imagesdir: images` et les 4 ghosts sont **substitués**
+    par le scan de leur page (`61.jpg`, `80_1.jpg`, `83_1.jpg`, `183.jpg`) ;
+  * `images/` contient **exactement 4 scans** (≈13 Mo, pas 525 Mo) ;
+  * `validateDocumentEpub -Pdocument.epubCheck=STRICT` → **epubcheck VALID**
+    (`epub-validation-report.json` = `{"status":"VALID"}`) — **0 RSC-007**.
+- Zéro secret. Aucun artefact écrit dans `office/` (build `/tmp`, `fpaPublish`
+  non exécuté) — `livre-navigable/` intouché par la session.
+
+== Décisions
+
+. `BookImageResolver`/`BookImageRewriter`/`BookPageRenderer` = objetspurs,
+   Gradle-free, unit-testables sans TestKit.
+. Ghost repair **toujours** actif (correctness EPUB) ; illustration **opt-in**
+   (`photosDir`) — Économie d'Encre.
+. Copies dans `images/` **relatif** (seule mécanique conforme prouvée).
+. `BookLayout.imagesDir = null` par défaut, `contentAwareResolver(pagesDir)`
+   sans `photosDir` = comportement identique hors ghost — backward compat totale.
+. Drift catalogue ws réaligné (maintenance, piège #13).
+
+== Fichiers
+
+- Créés : `.agents/CADRAGE_EPIC_DOC_BOOK_IMAGES.adoc`,
+  `src/main/kotlin/document/BookImageResolver.kt`,
+  `src/main/kotlin/document/BookImageRewriter.kt`,
+  `src/main/kotlin/document/BookPageRenderer.kt`,
+  `src/test/kotlin/document/BookImagesTest.kt`,
+  `src/test/kotlin/document/ContentPageResolverImagesTest.kt`,
+  `src/test/kotlin/document/bookimages/{BookImagesSteps,BookImagesCucumberRunner}.kt`,
+  `src/test/resources/features/book_images.feature`,
+  `src/functionalTest/kotlin/document/BookImagesFunctionalTest.kt`.
+- Modifiés : `AssembleBookTask.kt`, `BookAssembler.kt`, `BookLayout.kt`,
+  `ContentPageResolver.kt`, `build.gradle.kts` (20e CucumberTaskSpec),
+  `settings.gradle.kts` + `build.gradle.kts` (pin ws 0.0.56),
+  `BookAssemblerStructuredTest.kt`, `BookLayoutTest.kt`, gouvernance.
+
+== Suites
+
+- *DOC-BOOK-MATTER* (B3, P2) : `Matter` dérivable + émission layout.
+- *DOC-BOOK-CONSISTENCY-B6* : dette mineure numérotation/navigation.
+- *DOC-FPA-PUBLISH-0* : STANDBY (A1). Note : le FT RichToc page 73 reste
+  préexistant tant qu'A1 n'a pas convergé (16→10 ILLISIBLE — convergence en
+  cours).
+- *Publication 0.0.18* : distribue RENAME-8/Vague 4 + B1/B2 + **DOC-BOOK-IMAGES**
+  + pins ws 0.0.56 — accord pilote requis (Règle 2).

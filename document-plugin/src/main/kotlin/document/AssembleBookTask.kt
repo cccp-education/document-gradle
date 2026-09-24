@@ -97,15 +97,34 @@ abstract class AssembleBookTask : DefaultTask() {
         val sections = if (tocPresent) BookTocParser.parse(toc!!) else emptyList()
 
         val result = if (tocPresent && sections.isNotEmpty()) {
-            // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree
+            // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree.
+            // EPIC DOC-BOOK-IMAGES — photosDir enables the page-scan illustration
+            // and the ghost-image repair (S-258 B4/B5). The referenced scans are
+            // materialised in `images/` next to the assembled book and the header
+            // emits a *relative* `:imagesdir: images` — AsciidoctorJ only embeds
+            // (and epubcheck only accepts) images inside the source directory;
+            // an absolute path is silently dropped (RSC-007) and a path escaping
+            // the container is rejected (RSC-026). Empirical proof: S-260.
             val tree = BookTreeBuilder.fromSections(sections)
-            BookAssembler.assemble(
-                tree = tree,
-                layout = BookLayout(),
-                title = title.get(),
-                author = author.get(),
-                resolveContent = BookAssembler.contentAwareResolver(pages),
-            )
+            val resolveContent = BookAssembler.contentAwareResolver(pages, photos)
+            val assembled = BookAssembler.assemble(tree, BookLayout(), title.get(), author.get(), resolveContent)
+            // The targets the assembled book actually references are the exact
+            // (and only) scans to materialise — illustration, repaired ghosts and
+            // pre-existing images alike (Ink Economy Law: never copy an
+            // unreferenced scan, never risk a dangling target).
+            val referenced = resolveTargets(assembled.content, photos ?: pages)
+            if (referenced.isEmpty()) {
+                assembled
+            } else {
+                materialiseScans(referenced, output.parentFile)
+                BookAssembler.assemble(
+                    tree = tree,
+                    layout = BookLayout(imagesDir = IMAGES_DIR),
+                    title = title.get(),
+                    author = author.get(),
+                    resolveContent = resolveContent,
+                )
+            }
         } else {
             BookAssembler.assemble(pages, title.get(), author.get(), photos)
         }
@@ -134,6 +153,43 @@ abstract class AssembleBookTask : DefaultTask() {
         }
 
         validateIfConfigured(logger, pages, toc, sections)
+    }
+
+    /**
+     * EPIC DOC-BOOK-IMAGES — the scans the assembled book references, keyed by
+     * the base name they must be materialised under next to the book.
+     *
+     * Derived from the assembled content itself: every `image::` target that
+     * resolves to a real file in [imageDir] is a scan to copy (the illustration
+     * emits it, the ghost repair substitutes it, a pre-existing image already
+     * points at one). Only the referenced scans are returned — the whole scanned
+     * corpus (hundreds of megabytes) is never copied (Ink Economy Law).
+     */
+    private fun resolveTargets(bookContent: String, imageDir: File): Map<String, File> {
+        val scans = LinkedHashMap<String, File>()
+        BookImageRewriter.targets(bookContent).forEach { target ->
+            val source = imageDir.resolve(target)
+            if (source.isFile) scans[target] = source
+        }
+        return scans
+    }
+
+    /**
+     * Copies the referenced [scans] into a flat `images/` directory next to the
+     * assembled book, so the relative `image::` targets resolve and the EPUB
+     * embeds them (RSC-007-free). The scanned corpus stores scans in a flat
+     * directory, so a flat target keeps the emitted names stable.
+     */
+    private fun materialiseScans(scans: Map<String, File>, outputDir: File) {
+        if (scans.isEmpty()) return
+        val target = outputDir.resolve(IMAGES_DIR).apply { mkdirs() }
+        scans.forEach { (name, source) ->
+            if (!source.isFile) return@forEach
+            val destination = target.resolve(name)
+            if (source.absoluteFile != destination.absoluteFile) {
+                source.copyTo(destination, overwrite = true)
+            }
+        }
     }
 
     private fun validateIfConfigured(
@@ -176,5 +232,10 @@ abstract class AssembleBookTask : DefaultTask() {
                 ValidationMode.STRICT -> BookValidator.enforce(ValidationMode.STRICT, reasons)
             }
         }
+    }
+
+    private companion object {
+        /** Relative directory the referenced scans are materialised into (S-260). */
+        const val IMAGES_DIR = "images"
     }
 }

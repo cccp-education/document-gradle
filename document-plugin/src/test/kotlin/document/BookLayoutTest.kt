@@ -80,4 +80,17 @@ class BookLayoutTest {
         assertTrue(titlePage.contains(":doctype: book"))
         assertFalse(layout.heading(1, "x").contains("\n"))
     }
+
+    // --- DOC-BOOK-IMAGES — :imagesdir: emission ---
+
+    @Test
+    fun `title page emits no imagesdir attribute by default`() {
+        assertFalse(BookLayout().titlePage("Mon Livre", "Cheroliv").contains(":imagesdir:"))
+    }
+
+    @Test
+    fun `title page emits the imagesdir attribute when set`() {
+        val titlePage = BookLayout(imagesDir = "/tmp/scans").titlePage("Mon Livre", "Cheroliv")
+        assertTrue(titlePage.contains(":imagesdir: /tmp/scans"), "the imagesdir must be emitted, got:\n$titlePage")
+    }
 }

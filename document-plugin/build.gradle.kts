@@ -12,7 +12,7 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.43"))
+    implementation(platform("education.cccp:workspace-bom:0.0.56"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -205,6 +205,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/pdf_check.feature"),
             tags = listOf("@pdf-check"),
             runnerClass = "document.pdfcheck.PdfCheckCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "bookImagesCucumberTest",
+            features = listOf("src/test/resources/features/book_images.feature"),
+            tags = listOf("@book-images"),
+            runnerClass = "document.bookimages.BookImagesCucumberRunner",
         ),
     )
 }

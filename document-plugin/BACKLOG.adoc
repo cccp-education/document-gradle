@@ -1,15 +1,14 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
-_Date revision_ : 2026-09-24 (session 258 — **Code review pipeline livre ✅** —
-revue complète du borough (lecture seule, zéro code). Verdict : le pipeline
-livre depuis OCR existe et fonctionne de bout en bout (dogfooding FPA réel).
-6 anomalies détectées (B1/B2 câblage `outputFileName`, B3 `Matter`, B4
-`photosDir` structuré, B5 images fantômes, B6 numérotation). 3 EPICs cadrés :
-`DOC-BOOK-CONSISTENCY` (B1/B2, corrigé S-259), `DOC-BOOK-IMAGES` (B4/B5),
-`DOC-BOOK-MATTER` (B3). Rapport `CODE_REVIEW_BOOK_PIPELINE_S258.adoc`.)
+_Date revision_ : 2026-09-24 (session 260 — **EPIC DOC-BOOK-IMAGES ✅ TERMINÉ**
+— B4/B5 de la code review S-258 soldés : le livre est illustré par les scans et
+l'EPUB est epubcheck-VALID (0 RSC-007). Découverte : AsciidoctorJ n'embarque
+que les images DANS le répertoire source → copie des scans référencés dans
+`images/` + `:imagesdir:` relatif. 3 US, 11 UT + 6 UT + 3 UT + 4 FT + BDD 6/6
+(20e runner). Restent P2 : `DOC-BOOK-MATTER` (B3) + `DOC-BOOK-CONSISTENCY-B6`.)
 _Version_ : 0.0.17 (publié Maven Central — HEAD porte RENAME-8 + RENAME
-Vague 4 + pins ws 0.0.43 en attente du prochain bump)
+Vague 4 + B1/B2 + DOC-BOOK-IMAGES + pins ws 0.0.56 en attente du prochain bump)
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
@@ -37,23 +36,27 @@ d'un run mal paramétré produit un artefact dégradé (B1)._
 '''
 
 '''
-== EPIC DOC-BOOK-IMAGES — Livre illustré depuis OCR 🟡 CADRÉ (S-258)
+== EPIC DOC-BOOK-IMAGES — Livre illustré depuis OCR ✅ TERMINÉ (S-260)
 
 _Origine : code review S-258 (B4/B5). Le mode *structuré* de `BookAssembler`
-ignore `photosDir` (174 scans `.jpg` du corpus jamais référencés), et l'OCR a
+ignorait `photosDir` (174 scans `.jpg` du corpus jamais référencés), et l'OCR a
 produit 4 directives `image::` dont le fichier n'existe pas (légende reconnue,
 fichier absent) → 3 erreurs epubcheck RSC-007 (EPUB non conforme)._
 
 |===
 | US | Description | Pts | Statut
-| DOC-BOOK-IMAGES-1 | Référencer les photos originales en mode structuré (`photosDir` → `image::` par page) | 3 | 🟡 À FAIRE
-| DOC-BOOK-IMAGES-2 | Résolution des images fantômes : mapper la légende OCR → `scans/NNN.jpg` (page connue) ou placeholder valide | 3 | 🟡 À FAIRE
-| DOC-BOOK-IMAGES-3 | Cucumber `@book-images` (photos référencées + images fantômes résolues) | 1 | 🟡 À FAIRE
+| DOC-BOOK-IMAGES-1 | Référencer les photos originales en mode structuré (`photosDir` → `image::` par page) | 3 | ✅ TERMINÉ (S-260 — TDD : `ContentPageResolver(photosDir)` + `BookPageRenderer` + `BookLayout.imagesDir` + copie `images/`)
+| DOC-BOOK-IMAGES-2 | Résolution des images fantômes : mapper la légende OCR → `scans/NNN.jpg` (page connue) ou placeholder valide | 3 | ✅ TERMINÉ (S-260 — `BookImageResolver` + `BookImageRewriter` ; ghost → scan de la page, ou supprimé)
+| DOC-BOOK-IMAGES-3 | Cucumber `@book-images` (photos référencées + images fantômes résolues) | 1 | ✅ TERMINÉ (S-260 — 6 scénarios, 20e runner `bookImagesCucumberTest`)
 |===
 
-*Gate* : EPUB du livre FPA epubcheck-**VALID** (0 RSC-007) + livre PDF/EPUB
-illustré par les scans. *Priorité* P2 (non bloquant pour le livre, bloquant
-pour un EPUB conforme et un livre illustré).
+*Gate atteint* : EPUB du livre FPA **epubcheck-VALID** (0 RSC-007, prouvé
+`-Pdocument.epubCheck=STRICT` sur le corpus réel) + livre PDF/EPUB illustré par
+les scans quand `photosDir` est configuré (défaut inchangé).
+*Découverte* : AsciidoctorJ n'embarque une image que dans le répertoire du
+`book.adoc` (absolu → RSC-007 silencieux ; relatif sortant → RSC-026). Solution :
+copie des scans *référencés* dans `images/` + `:imagesdir:` relatif (13 Mo, pas
+525 Mo). Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_IMAGES.adoc`.
 
 '''
 
@@ -222,14 +225,14 @@ localisés), epubcheck (3 RSC-007), pdfCheck (VALID).
 
 | B4/B5
 | Livre illustré (photos structurées) + images fantômes résolues (EPUB VALID)
-| 🟡 DOC-BOOK-IMAGES
+| ✅ DOC-BOOK-IMAGES (S-260)
 
 | B3
 | Front/body/back matter réel (Matter dérivable + émission layout)
 | 🟡 DOC-BOOK-MATTER
 
 | — 
-| Itération humaine OCR (16 ILLISIBLE, 13 tableaux, 4 invalid part)
+| Itération humaine OCR (10 ILLISIBLE au 2026-09-24, 13 tableaux, 4 invalid part)
 | 🟡 DOC-FPA-PUBLISH-0 (STANDBY, A1 Tombouctou)
 |===
 

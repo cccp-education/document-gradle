@@ -2,6 +2,30 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 260 (2026-09-24) — EPIC DOC-BOOK-IMAGES ✅ (B4/B5)
+
+*Type* : feat DDD/TDD/BDD + dogfooding + maintenance cross-borough
+*Score* : 10/10
+*Livrables* :
+- US-1 — illustration structurée : `photosDir` consommé en mode structuré,
+  `:imagesdir:` émis, le livre est illustré par les scans.
+- US-2 — ghost repair : les 4 directives `image::` fantômes OCR sont
+  substituées par le scan de leur page (ou supprimées) → EPUB epubcheck-VALID.
+- US-3 — BDD `@book-images` 6 scénarios + 20e runner `bookImagesCucumberTest`.
+- Domaine pur : `BookImageResolver`, `BookImageRewriter`, `BookPageRenderer`.
+- Mécanique prouvée : AsciidoctorJ n'embarque que les images DANS le répertoire
+  source → copie des scans référencés dans `images/` + `:imagesdir:` relatif.
+- Maintenance : drift catalogue ws 0.0.43→0.0.56 réaligné (piège #13, 5e
+  occurrence, stash-prouvé préexistant).
+*Tests* : 11 UT `BookImagesTest` + 6 UT `ContentPageResolverImagesTest` + 3 UT
+layout/assembler + 4 FT TestKit + 6 BDD.
+*Gates* : UT 4130/0, FT 138/1 (1 préexistant RichToc page 73), 20 runners
+Cucumber 0 fail, validatePlugins VERT, publishToMavenLocal VERT, garde 3/3 ;
+dogfooding FPA : EPUB **VALID** (STRICT), 4 scans copiés (13 Mo / 525 Mo).
+*Fichiers* : 3 prod créés + 3 objets tests + BDD infra + FT + cadrage +
+gouvernance ; `AssembleBookTask`/`BookAssembler`/`BookLayout`/
+`ContentPageResolver`/`build.gradle.kts`/`settings.gradle.kts` modifiés.
+
 === Session 259 (2026-09-24) — EPIC DOC-BOOK-CONSISTENCY ✅ (B1/B2)
 
 *Type* : feat + TDD + dogfooding (correction issues code review S-258)

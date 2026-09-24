@@ -1,0 +1,94 @@
+= Cadrage EPIC DOC-BOOK-IMAGES — Livre illustré depuis OCR
+
+_Date_ : 2026-09-24
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : code review S-258 (anomalies B4/B5)
+_Statut_ : 🟡 EN COURS (S-260)
+
+== Contexte
+
+La code review S-258 a relevé deux manques du pipeline livre, tous deux liés
+aux **images** :
+
+* *B4* — `photosDir` (photos originales du corpus) n'est consommé que par le
+  mode *plat* `BookAssembler.assemble(pagesDir, title, author, photosDir)`.
+  Le mode *structuré* `assemble(tree, layout, title, author, resolveContent)`
+  ne reçoit jamais `photosDir` : les 174 `.jpg` du corpus FPA réel ne sont
+  jamais référencés, le livre n'est pas illustré.
+* *B5* — l'OCR a produit 4 directives `image::` dont le fichier cible n'existe
+  pas (la légende a été reconnue, pas le fichier) :
+  `qr-code.png` (p.157 et p.183), `cerveau_gauche_vs_cerveau_droit.jpg` (p.61),
+  `triangle-gradient.png` (p.80_1), `arrow-curved-left` (p.83_1).
+  Résultat : 3 erreurs epubcheck `RSC-007` → EPUB non conforme.
+
+== Faits établis sur le corpus réel (office/metiers/FPA/.../scans)
+
+[cols="1,3", options="header"]
+|===
+| Fait | Détail
+| Convention page → contenu | `ContentPageResolver` : `NNN.adoc` (zero-padded) + splits `NNN_N.adoc`
+| Convention page → photo | **unpadded** (`61.jpg`, `157.jpg`) ; splits `83_1.jpg` ; png possible (`17_tab.png`)
+| Coexistence | `.adoc` et `.jpg` vivent dans le **même** répertoire `scans/`
+| Ghosts | 4 directives sans fichier, chacune sur une page dont le **scan existe** (`61.jpg`, `80_1.jpg`, `83_1.jpg`, `157.jpg`)
+| Volume | 174 `.jpg` ≈ 525 Mo (photo téléphone 3088×3088) — embarquer *toutes* les pages est coûteux
+| Vérification | `epub-validation-report.json` : 3 RSC-007 ; PDF : VALID
+|===
+
+== Décisions architecturales
+
+. *D1 — Résolution des images par page, pas par nom de légende.* La source de
+  vérité est le **numéro de page** (`BookSection.page`), comme le contenu.
+  `BookImageResolver` est le pendant image de `ContentPageResolver`.
+. *D2 — Le ghost se résout par le scan de sa propre page* (B5). La directive
+  fantôme est **remplacée** par le scan de la page qui la porte
+  (`157.adoc` → `157.jpg`, `83_1.adoc` → `83_1.jpg`), et **supprimée** si aucun
+  scan n'existe. Décision : le doute est *réparé* à l'assemblage (EPUB conforme)
+  mais reste *rapporté* par `BookOcrFailureDetector` sur la source
+  (`book-ocr-issues.json`) pour l'itération humaine — deux responsabilités
+  distinctes (réparer vs signaler).
+. *D3 — L'illustration des pages est opt-in* (B4). Elle n'est émise que si
+  `photosDir` est configuré — Économie d'Encre : ne pas embarquer 525 Mo par
+  défaut. Le ghost-fix (D2) est *toujours* actif (correctness EPUB), il ne
+  dépend pas de `photosDir`.
+. *D4 — Copie des scans + `:imagesdir:` relatif.* AsciidoctorJ **n'embarque pas**
+  une image référencée par un chemin absolu, et rejette (epubcheck `RSC-026`,
+  *« leaks outside the container »*) un chemin relatif qui sort du répertoire
+  source. Sonde empirique (S-260, 4 variantes) : seule une image **située dans
+  le répertoire du `book.adoc` (ou un sous-répertoire)** est embarquée et
+  conforme. Décision : `assembleBook` **copie** les scans référencés dans
+  `<outputDir>/images/` et émet `:imagesdir: images` (relatif) + des cibles
+  nues (`image::157.jpg[]`). Le `book.adoc`/`book.html`/`book.pdf`/`book.epub`
+  sont alors auto-contenus et epubcheck-**VALID**. Coût maîtrisé : seuls les
+  scans *réellement référencés* sont copiés (opt-in illustration, ou ghosts
+  réparés) — jamais le corpus entier.
+. *D5 — Résolution par page, les deux conventions.* La page est le préfixe
+  numérique du nom de fichier (`61.adoc`, `001-introduction.adoc`), avec
+  suffixe de découpage `_N` optionnel (`83_1`). Les deux paddings sont sondés
+  (`61.jpg` / `007.png`).
+. *D6 — Domaine pur, Gradle-free.* `BookImageResolver` (lookup), 
+  `BookImageRewriter` (réparation texte) et `BookPageRenderer` (rendu partagé
+  des deux conventions) sont des objets purs, unit-testables sans TestKit. Le
+  wiring Gradle (copie, `imagesDir`) reste dans `AssembleBookTask`.
+. *D7 — Backward compat totale.* `BookLayout.imagesDir = null` par défaut ;
+  `contentAwareResolver(pagesDir)` (sans `photosDir`) garde le comportement
+  exact actuel hors ghost ; aucun ghost et aucune illustration ⇒ rewriter
+  no-op byte-identique, aucune copie.
+
+== US (3 US, ~7 pts)
+
+|===
+| US | Description | Pts | Statut
+| DOC-BOOK-IMAGES-1 | Illustration structurée : `photosDir` consommé en mode structuré (`image::` par page) + `:imagesdir:` émis par `BookLayout` | 3 | 🟡 À FAIRE
+| DOC-BOOK-IMAGES-2 | Résolution des ghosts : substituer le scan de la page (ou supprimer) → EPUB epubcheck-VALID | 3 | 🟡 À FAIRE
+| DOC-BOOK-IMAGES-3 | Cucumber `@book-images` (20e runner dédié) | 1 | 🟡 À FAIRE
+|===
+
+*Gate* : EPUB du livre FPA **epubcheck-VALID** (0 RSC-007) + livre illustré
+par les scans quand `photosDir` est configuré ; défaut inchangé
+(non-régression).
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR) :
+UT (domaine pur) → FT (TestKit) → BDD (runner dédié `@book-images`), puis
+dogfooding réel sur le corpus FPA.

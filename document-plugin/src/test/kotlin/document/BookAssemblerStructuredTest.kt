@@ -208,4 +208,17 @@ class BookAssemblerStructuredTest {
         assertTrue(content.contains("Chapter content."), "chapter page text must be resolved from disk")
         assertTrue(content.contains("[[1.1]]"), "chapter anchor must be emitted")
     }
+
+    @Test
+    fun `structured book emits the imagesdir attribute when the layout sets one`() {
+        val content = BookAssembler.assemble(
+            tree = treeWithFrontBodyBack(),
+            layout = BookLayout(imagesDir = "/tmp/scans"),
+            title = "My Book",
+            author = "Cheroliv",
+            resolveContent = resolver(),
+        ).content
+
+        assertTrue(content.contains(":imagesdir: /tmp/scans"), "the imagesdir must be emitted in the header")
+    }
 }

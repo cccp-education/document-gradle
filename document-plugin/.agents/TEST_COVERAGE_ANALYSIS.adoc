@@ -1,6 +1,47 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-24
-:session: 259
+:session: 260
+
+== Session 260 — EPIC DOC-BOOK-IMAGES (illustration + ghost repair)
+
+*Objectif* : solder B4 (`photosDir` ignoré en mode structuré) + B5 (4 images
+fantômes OCR → 3 RSC-007 epubcheck) de la code review S-258.
+
+*Tests créés (3 niveaux)* :
+
+- UT domaine pur `BookImagesTest` (11 tests) :
+  - `BookImageResolver` : unpadded `61.jpg`, zero-padded `007.png`, split
+    `83_1.jpg`, absence → `null`, split exact, fallback page depuis split.
+  - `BookImageRewriter` : cible existante conservée, ghost block substitué,
+    ghost inline substitué, ghost supprimé sans scan, ghost + commentaire
+    supprimé, no-op sans directive, `targets` distincts ordonnés, `targets` vide.
+- UT intégration résolveur `ContentPageResolverImagesTest` (6 tests) :
+  - non-régression sans `photosDir` (aucune illustration) ;
+  - illustration opt-in avec `photosDir` (`image::014.jpg[]`) ;
+  - ghost réparé sans `photosDir` (correctness toujours active) ;
+  - ghost supprimé quand la page n'a pas de scan ;
+  - pas de doublon quand le ghost réparé pointe sur le même fichier ;
+  - découpe `55` + `55_2` : chaque scan découpé référencé.
+- UT layout `BookLayoutTest` (+2) : `:imagesdir:` absent par défaut, présent
+  quand `imagesDir` est set. `BookAssemblerStructuredTest` (+1) : émission dans
+  l'arbre structuré.
+- FT TestKit `BookImagesFunctionalTest` (4 tests) : illustration +
+  `:imagesdir:`, défaut inchangé (non-régression), ghost réparé, **EPUB
+  embarque le scan** (lecture du zip).
+- BDD `book_images.feature` 6 scénarios `@book-images` (20e runner
+  `bookImagesCucumberTest`) : résolution 2 paddings, ghost block réparé, ghost
+  supprimé, image existante préservée, livre structuré illustré, sans photos
+  inchangé.
+
+*Baby-step strict* : RED (objets/API inexistants) → GREEN → REFACTOR (2
+découvertes TDD : normalisation zéro-padding des splits `055_2`→`55_2` ;
+résolution par préfixe numérique pour le codex `001-introduction.adoc`).
+
+*Bilan* : UT **4130/0**, FT **138/1** (1 préexistant `RichTocTest` page 73,
+corpus A1), 20 runners Cucumber 0 fail. `validatePlugins` VERT.
+
+*Dogfooding réel* : EPUB FPA epubcheck **VALID** (STRICT), 0 RSC-007 ; 4 scans
+embarqués (13 Mo) sur 525 Mo de corpus (Économie d'Encre).
 
 == Session 259 — EPIC DOC-BOOK-CONSISTENCY (correction B1/B2)
 

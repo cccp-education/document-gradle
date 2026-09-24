@@ -22,6 +22,7 @@ data class BookLayout(
     val emitTitlePage: Boolean = true,
     val emitTableOfContents: Boolean = true,
     val pageBreakBetweenNodes: Boolean = true,
+    val imagesDir: String? = null,
 ) {
 
     /**
@@ -56,12 +57,18 @@ data class BookLayout(
 
     /**
      * Emits the book title page header (`= Title` + `:author:` + `:doctype: book`).
+     *
+     * When [imagesDir] is set, an `:imagesdir:` attribute is emitted too: it
+     * tells Asciidoctor where to resolve the relative `image::` targets emitted
+     * by the assembler, so the HTML/PDF/EPUB outputs actually *embed* the page
+     * scans instead of referencing missing resources (RSC-007 otherwise).
      */
     fun titlePage(title: String, author: String): String {
         val sb = StringBuilder()
         sb.append("= ").append(title).append("\n")
         sb.append(":author: ").append(author).append("\n")
         sb.append(":doctype: book")
+        imagesDir?.let { sb.append("\n").append(":imagesdir: ").append(it) }
         return sb.toString()
     }
 }
