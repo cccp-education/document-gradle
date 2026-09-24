@@ -1,0 +1,69 @@
+= Session 266 — Réparation dérive de gouvernance (PROMPT_REPRISE + tables sessions)
+
+_Date_ : 2026-09-25
+_Borough_ : New Orleans 🟢 (document-gradle)
+_Type_ : gouvernance pure (zéro code)
+_Score_ : 10/10
+
+== Mission
+
+Demande pilote : « Reprenons document avec son prompt de reprise et son backlog »,
+puis choix de l'option 2 — **réparation de la gouvernance**.
+
+== Constat d'ouverture (audit)
+
+Le hook d'ouverture a révélé une **dérive de gouvernance** documentaire :
+
+. *`PROMPT_REPRISE.adoc` figé à S-261* — le fichier annonçait « Mission session
+  261 » alors que les sessions S-261→S-265 étaient toutes **committées et
+  clôturées** (dernier commit `e0ca613`). 5 sessions de retard.
+. *Table `SESSIONS_HISTORY.adoc` incomplète* — 13 entrées manquantes :
+  `041, 212, 219, 220, 228, 229, 230, 233, 234, 235, 238, 244, 247`.
+. *Table `INDEX.adoc` incomplète* — 14 entrées manquantes :
+  `226, 228, 229, 230, 241, 242, 243, 244, 245, 253, 255, 256, 257, 264`.
+. *Item obsolète* dans les prompts S-263→S-265 : « re-pin bakery ws 0.0.57
+  (session dédiée) » — vérification : **déjà fait** (bakery pinne ws 0.0.57 +
+  platform 0.0.57, `document-plugin` sans version via constraint BOM → 0.0.18).
+
+Méthode de diagnostic : comparaison croisée `git log`, listage des rapports
+`.agents/sessions/*.adoc`, et greps d'appartenance à chaque table. Zéro Python
+(contrainte globale respectée).
+
+== Correctifs
+
+. *`PROMPT_REPRISE.adoc` régénéré* (S-267) — mission, état réel du code
+   (0.0.18 Central, ws 0.0.57, dettes B1→B6 soldées), candidats réels,
+   item re-pin bakery corrigé, pièges #13 occurrences complétées (jusqu'à
+   S-264), rappel de la règle delta-source (ne pas rejouer les suites
+   inchangées).
+. *`SESSIONS_HISTORY.adoc`* — 13 lignes synthétiques insérées à leur position
+   décroissante (résumés fidèles des rapports de session sources).
+   + ligne 266.
+. *`INDEX.adoc`* — 14 lignes synthétiques insérées + ligne 266 + bloc
+   « Derniere mise a jour » S-266.
+
+== Gates
+
+- `compileKotlin` VERT (environnement sain).
+- `DocumentPluginPublicationTest` garde publication **4/4** (3 historiques +
+  la garde toml S-265).
+- Central vérifié : `document-plugin` `<latest>` = **0.0.18** ;
+  `workspace-catalog` + `workspace-bom` `<latest>` = **0.0.57**.
+- Zéro secret (grep TOKEN/SECRET/PASSWORD/API_KEY).
+- **Zéro code de production modifié** — réparation documentaire pure.
+
+== Pièges confirmés / ajoutés
+
+- *Dérive de prompt ≠ dérive de table* : les sessions 261-265 ont mis à jour
+  l'INDEX (partiellement) mais **jamais** le PROMPT_REPRISE — c'est le fichier
+  EAGER le plus consulté à l'ouverture, donc le plus coûteux en faux positif.
+  La clôture doit traiter le prompt comme un artefact de première classe.
+- *Audit des tables par grep d'appartenance* : `grep -cE "^\| NNN \|"` sur
+  chaque rapport de session est la méthode fiable (ne pas se fier à l'ordre
+  visuel — la table est groupée thématiquement, pas strictement triée).
+
+== Suite
+
+- `DOC-FPA-PUBLISH-0` 🟡 STANDBY (corpus A1 : 16 ILLISIBLE au 2026-09-17).
+- Re-pin bakery ws 0.0.57 : ✅ déjà fait — item CADUQUE.
+- Aucune publication requise (aucun changement d'artefact).

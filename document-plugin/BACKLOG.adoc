@@ -1,6 +1,11 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-25 (session 266 — **réparation dérive de
+gouvernance** : `PROMPT_REPRISE` régénéré (était figé à S-261) + tables
+`SESSIONS_HISTORY`/`INDEX` complétées. Item « re-pin bakery ws 0.0.57 »
+vérifié **✅ DÉJÀ FAIT** (bakery pinne ws 0.0.57). Zéro code, zéro publication.
+Reste inchangé : `DOC-FPA-PUBLISH-0` STANDBY (A1).)
 _Date revision_ : 2026-09-25 (session 265 — **hygiène toml** : entrée morte
 `workspace-bom = "0.0.43"` supprimée + 4e garde `DocumentPluginPublicationTest`
 (une entrée locale divergente du catalogue ws est interdite). Build/test-only,

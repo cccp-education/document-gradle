@@ -2,6 +2,24 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 266 (2026-09-25) — Réparation dérive de gouvernance ✅
+
+*Type* : gouvernance pure (zéro code)
+*Score* : 10/10
+*Constat* : `PROMPT_REPRISE.adoc` figé à la mission S-261 (S-261→S-265
+clôturées non reflétées) + tables `SESSIONS_HISTORY` (13 entrées manquantes)
+et `INDEX` (14 entrées manquantes) incomplètes + item « re-pin bakery »
+obsolète (déjà fait).
+*Livrables* :
+- `PROMPT_REPRISE.adoc` régénéré (mission S-267, état 0.0.18/ws 0.0.57,
+  item bakery CADUQUE, pièges #13 occurrences complétées).
+- `SESSIONS_HISTORY.adoc` : 13 lignes insérées (041, 212, 219, 220,
+  228-230, 233-235, 238, 244, 247) + ligne 266.
+- `INDEX.adoc` : 14 lignes insérées (226, 228-230, 241-245, 253, 255-257,
+  264) + ligne 266 + bloc date.
+*Gates* : `compileKotlin` VERT, garde publication 4/4, secrets RAS.
+*Aucune publication, zéro code modifié.*
+
 === Session 265 (2026-09-25) — Hygiène toml ✅ (garde renforcée)
 
 *Type* : maintenance / hygiène (baby-step TDD strict, build/test-only)
