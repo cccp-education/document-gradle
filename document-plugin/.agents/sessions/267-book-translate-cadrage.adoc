@@ -1,0 +1,119 @@
+= Session 267 — Cadrage EPIC DOC-BOOK-TRANSLATE
+
+_Borough_ : New Orleans (document-gradle)
+_Date_ : 2026-09-26
+_Type_ : cadrage (gouvernance pure, zéro code)
+_Pattern_ : S-057/S-063
+_Score_ : 10/10
+
+== Origine
+
+Question pilote à l'ouverture de session :
+
+> « on en est où avec le backlog de document, est-ce que document décortique
+> bien un fichier asciidoc en un arbre AST asciidoc et intègre bien le livre
+> avec le toc avec la traduction ? »
+
+Après audit : non. Le présent rapport documente le constat et le cadrage qui en
+découle.
+
+== Audit d'ouverture (état du borough)
+
+* `git status` propre, branche `main` à jour, HEAD `df7f93a` (bump wrapper
+  9.7.1 → 9.8.0).
+* `compileKotlin` VERT (JDK 25.0.4-tem, Gradle 9.8.0) — 1m59s.
+* Borough **entièrement clôturé** : 0.0.18 publiée Central (S-264), toutes les
+  dettes B1→B6 soldées, garde publication 4/4. Seul item ouvert :
+  `DOC-FPA-PUBLISH-0` STANDBY (bloqué corpus A1).
+
+== Constat — trois réponses à la question pilote
+
+. *« Décortique-t-il un AsciiDoc en AST ? »* — **non, pas au sens AsciidoctorJ.**
+  Le plugin a un parseur maison (`AsciiDocParser` → `PivotBlock`/`PivotInline`) ;
+  `AsciidoctorHolder` n'utilise `Asciidoctor` que pour `convertFile()` — jamais
+  `asciidoctor.load()` / `org.asciidoctor.ast.*` (grep = 0 dans `src/main`).
+  Le pivot est de plus **lossy** sur les constructions de livre.
+
+. *« Intègre-t-il le livre avec la TOC ? »* — **oui.** Le domaine Book
+  (`BookTocParser` → `BookTreeBuilder` → `BookAssembler`) est mature : arbre,
+  matter, layout, numbering, navigation, images, EPUB VALID.
+
+. *« … avec la traduction ? »* — **non.** Les deux chaînes sont deux silos
+  étanches. Le livre n'est pas traduit, et aucun cadrage n'existait.
+
+== Preuve empirique du caractère lossy du pivot (S-267)
+
+Test jetable (supprimé après mesure) sur les primitives réelles d'un livre
+assemblé — `:doctype:`, `toc::[]`, ancres `[[1.0.1]]`, xref `<<1.0.2,…>>`, `<<<` :
+
+[cols="2,3,2", options="header"]
+|===
+| Construction | Devenir après `parse` → `render` | Verdict
+| `[[1.0.1]]` (ancre) | disparaît complètement | ❌
+| `:doctype: book` | avalé dans le frontmatter, non ré-émis en `:doctype:` | ❌
+| `toc::[]` | parsé `DescriptionList` → ré-émis `toc:: []` (espace) | ❌
+| `<<1.0.2,Chapter Two>>` (xref) | conservé mais `translatable=true` | ⚠️
+| `<<<` (page break) | conservé | ✅
+| `== Chapter` (heading) | conservé | ✅
+|===
+
+Conclusion : brancher `translateDocument` sur `livre.adoc` **détruirait la
+structure** que DOC-BOOK-CONSISTENCY-B6 vient de stabiliser.
+
+== Décision architecturale — A vs B
+
+* *Option A écartée* — étendre le `PivotModel` (partagé avec bakery) aux
+  constructions de livre. Risque de régression large sur le consommateur
+  bakery ; coût/bénéfice défavorable pour un besoin book-scoped.
+* *Option B retenue* — **traduire au niveau du domaine Book** : traduire les
+  entrées (titres de nœuds + corps de page), puis laisser `BookAssembler`
+  **régénérer** la structure à l'identique. Ancres, doctype, TOC, navigation et
+  refs sont *générés*, donc préservés par construction.
+
+Justification clé (constat #4) : la structure du livre est **produite** par
+`BookAssembler` à partir de `BookTree` + `BookLayout`. On ne la préserve pas en
+la re-parsant, on la préserve en la **régénérant** depuis un arbre dont seuls
+les textes ont changé.
+
+== Livrables (gouvernance pure)
+
+* `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc` — 8 constats, 13 décisions
+  (D1→D13), décision A/B tracée, 6 US ~12 pts, gates et risques.
+* `PROMPT_REPRISE.adoc` (racine) — **dérive découverte à l'ouverture** : il
+  existait un doublon racine figé à S-265 face au canonique `.agents/` (S-267).
+  Aligné sur le pattern capsule (pointeur vers le fichier canonique, plus mis à
+  jour). Le doublon est désormais explicite au lieu d'être silencieusement
+  périmé.
+* `BACKLOG.adoc` — date de révision + section `EPIC DOC-BOOK-TRANSLATE` (table
+  6 US, gate structurel, non-goals).
+* `.agents/INDEX.adoc` — bloc date S-267 + ligne roadmap + bloc « dernière
+  session terminée » (prochaine = US-1).
+* `.agents/PROMPT_REPRISE.adoc` — mission S-268 (US-1 `BookTranslator`), état
+  du code S-267, pièges #33/#34.
+* `.agents/SESSIONS_HISTORY.adoc` — ligne 267.
+* `.agents/archives/COMPLETED_TASKS_ARCHIVE_septembre-2026.adoc` — bloc 267.
+
+== Découpage US (rappel)
+
+[cols="1,5,1", options="header"]
+|===
+| US | Description | Pts
+| DOC-BOOK-TRANSLATE-0 | Cadrage EPIC | ✅ 1
+| DOC-BOOK-TRANSLATE-1 | Domaine pur `BookTranslator` (titres + corps, refs intactes) + UT fake | 🟡 3
+| DOC-BOOK-TRANSLATE-2 | Tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + `skipExisting` + FT | 🟡 3
+| DOC-BOOK-TRANSLATE-3 | Insertion `bookPipeline` (langue → convertisseurs consomment `book-<lang>.adoc`) + FT | 🟡 2
+| DOC-BOOK-TRANSLATE-4 | BDD `@book-translate` (23e runner) — structure préservée | 🟡 2
+| DOC-BOOK-TRANSLATE-5 | Dogfooding corpus réel + gate 0 ancre dangling ; multi-langue si confirmé | 🟡 1
+|===
+
+== Gates
+
+* `compileKotlin` VERT.
+* Garde publication `DocumentPluginPublicationTest` 4/4.
+* Zéro secret.
+* Zéro code de production modifié (session de gouvernance pure).
+
+== Suite
+
+Session 268 : **US-1 `BookTranslator`** — domaine pur, baby-step TDD strict
+(fake `TranslationService`), RED → GREEN → REFACTOR. Puis US-2 → US-5.

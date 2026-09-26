@@ -1,6 +1,19 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
+:borough: New Orleans
+:session: 267
+:session_precedente: 266 — Réparation dérive de gouvernance
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-267). Ce fichier
+racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
+ne pas s'y fier pour la mission courante.
 
-== Mission session 266 — sur demande pilote
+== Mission session 267 — Cadrage EPIC DOC-BOOK-TRANSLATE
+Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant (mission S-268,
+US-1 `BookTranslator`). Résumé : le livre n'était pas traduit (deux silos
+étanches) ; EPIC DOC-BOOK-TRANSLATE cadré (décision B — traduire le domaine
+Book, `BookAssembler` régénère la structure). Cadrage :
+`.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
+
+== Contexte hérité (session 266 — sur demande pilote)
 
 S-265 (2026-09-25) a soldé le candidat #1 : **hygiène toml** — l'entrée morte
 `workspace-bom = "0.0.43"` (résidu stale S-264, jamais référencée) est

@@ -6,6 +6,18 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-26 (session 267 — **Cadrage EPIC
+DOC-BOOK-TRANSLATE** — demande pilote « document intègre-t-il bien le livre avec
+la TOC avec la traduction ? » : réponse auditée **non** — deux silos étanches.
+Le livre n'est pas traduit ; le brancher sur `translateDocument` détruirait la
+structure (parser pivot *lossy* : ancres `[[ref]]` perdues, `:doctype: book`
+avalé, `toc::[]` malformé, xref envoyés au LLM — **caractérisation empirique
+S-267**). Décision **B retenue** (traduire le domaine Book, `BookAssembler`
+régénère la structure) vs A écartée (étendre le pivot partagé avec bakery).
+6 US ~12 pts. Gouvernance pure, zéro code. Doc
+`.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`. Rapport :
+`.agents/sessions/267-book-translate-cadrage.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-25 (session 266 — **Réparation dérive de
 gouvernance** — le `PROMPT_REPRISE.adoc` était figé à la mission S-261 (5 sessions
 de retard) et les tables sessions de `SESSIONS_HISTORY.adoc` (13 entrées) et
@@ -212,6 +224,17 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 267 — **Cadrage EPIC DOC-BOOK-TRANSLATE**
+(gouvernance pure, zéro code) : la traduction et le domaine Book étaient deux
+silos étanches (aucune référence croisée). Le livre n'était pas traduit, et le
+brancher sur `translateDocument` détruisait la structure (parser pivot *lossy*
+prouvé empiriquement sur ancres/doctype/toc/xref). Décision **B** (traduire le
+domaine Book, régénérer la structure) vs option A écartée (étendre le pivot
+partagé avec bakery). 8 constats, 13 décisions, 6 US ~12 pts. Doc
+`.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`. Gates : `compileKotlin` VERT,
+garde publication 4/4.
+  _Prochaine session_ : US-1 `BookTranslator` (domaine pur, TDD + fake LLM) —
+  ou DOC-FPA-PUBLISH-0 si A1 converge / drift catalogue ws si MEMPHIS bump.
 |_Derniere session terminee_ : 266 — **Réparation dérive de gouvernance**
 (gouvernance pure, zéro code) : `PROMPT_REPRISE.adoc` était figé à la mission
 S-261 (5 sessions de retard) + tables `SESSIONS_HISTORY` (13 entrées) et
@@ -338,6 +361,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
+| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 CADRÉ (S-267 — gouvernance pure, US-1→5 à faire) | P1
 |===
 
 '''

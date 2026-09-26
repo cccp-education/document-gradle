@@ -2,6 +2,31 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 267 (2026-09-26) — Cadrage EPIC DOC-BOOK-TRANSLATE ✅
+
+*Type* : cadrage (gouvernance pure, zéro code)
+*Score* : 10/10
+*Origine* : demande pilote — « document intègre-t-il bien le livre avec la TOC
+avec la traduction ? ».
+*Constat* : le livre est structuré/navigué/illustré/publié, et la traduction
+d'AsciiDoc existe — mais les deux chaînes sont **étanches**. Le livre n'est pas
+traduit, et le brancher sur `translateDocument` **détruirait la structure** : le
+parser pivot est *lossy* sur les constructions de livre (ancres `[[ref]]`
+perdues, `:doctype:` avalé, `toc::[]` malformé, xref envoyés au LLM) — prouvé
+par caractérisation empirique.
+*Décision* : **B retenue** (traduire le domaine Book, `BookAssembler` régénère
+la structure) vs A écartée (étendre le pivot partagé avec bakery).
+*Livrables* :
+- `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc` (8 constats, 13 décisions,
+  décision A/B, 6 US ~12 pts).
+- `BACKLOG.adoc` (date + section EPIC DOC-BOOK-TRANSLATE).
+- `.agents/INDEX.adoc` (bloc date + roadmap + prochaine session).
+- `.agents/PROMPT_REPRISE.adoc` (mission S-268, état S-267, pièges #33/#34).
+- `.agents/SESSIONS_HISTORY.adoc` (ligne 267).
+- `.agents/sessions/267-book-translate-cadrage.adoc`.
+*Gates* : `compileKotlin` VERT, garde publication 4/4, secrets RAS.
+*Zéro code de production modifié, zéro publication, zéro bump BOM.*
+
 === Session 266 (2026-09-25) — Réparation dérive de gouvernance ✅
 
 *Type* : gouvernance pure (zéro code)

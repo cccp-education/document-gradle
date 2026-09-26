@@ -1,0 +1,299 @@
+= Cadrage EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré
+
+_Date_ : 2026-09-26
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : demande pilote — « est-ce que document intègre bien le livre avec la TOC avec la traduction ? »
+_Statut_ : 🟡 EN COURS (S-267, cadrage)
+_Pattern_ : S-057/S-063 (gouvernance pure) + baby-step DDD/TDD/BDD strict
+
+== Contexte
+
+Le borough sait **assembler** un livre structuré (`BookTocParser` →
+`BookTreeBuilder` → `BookAssembler`, EPIC DOC-BOOK-DOMAIN), l'**illustrer**
+(DOC-BOOK-IMAGES), le **paginer** (DOC-BOOK-MATTER), le **naviguer**
+(DOC-BOOK-CONSISTENCY-B6) et le **publier** dans 6 formats. Il sait aussi
+**traduire** de l'AsciiDoc (EPIC DOC-TRANSLATE, `AsciiDocParser` →
+`DocumentTranslator`/`TreeTranslationAdapter`).
+
+Mais les deux chaînes sont **étanches** : aucune référence croisée entre
+`document/translation/` et le domaine `document` « Book », dans un sens comme
+dans l'autre. Le livre n'est **pas traduit**, et le brancher naïvement sur la
+chaîne existante **détruirait la structure** que DOC-BOOK-CONSISTENCY-B6 vient
+de stabiliser.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *Deux silos étanches* — `document/translation/` et le domaine Book ne se
+  connaissent pas. `BookConfig` (contrat N3) n'a aucun champ de langue ;
+  `bookPipeline` n'a aucune étape de traduction.
+| `grep -rn "BookTree\|BookNode" src/main/kotlin/document/translation/` = 0 —
+  et réciproquement. `DocumentPlugin.kt:409` (`bookPipeline` =
+  assemble → enrich → HTML/PDF/EPUB → collect).
+
+| 2
+| *Le parser pivot est lossy sur les constructions de livre* — sondé
+  empiriquement (test jetable, S-267) sur les primitives réelles d'un livre :
+  les ancres `[[1.0.1]]` **disparaissent**, `:doctype: book` est avalé dans le
+  frontmatter sans être ré-émis, `toc::[]` est parsé en `DescriptionList` et
+  ré-émis malformé (`toc:: []`), les xref `<<ref,title>>` sont marqués
+  `translatable=true` (risque de mangle LLM).
+| `AsciiDocParser.kt` (aucune règle `[[…]]`, `toc::`, `<<<`, `:doctype:`),
+  `AsciiDocRenderer.kt:40`. Caractérisation S-267 : ancres `false`, doctype
+  `false`, toc `false` après round-trip.
+
+| 3
+| *`AsciidoctorJ` n'est pas utilisé en mode AST* — aucune référence
+  `asciidoctor.load()` / `org.asciidoctor.ast.*` dans `src/main`. La conversion
+  est un `convertFile()` opaque ; le parsing est un modèle maison
+  (`PivotBlock`/`PivotInline`).
+| `AsciidoctorHolder.kt` (seul usage `Asciidoctor`), `grep` AST = 0.
+
+| 4
+| *La structure du livre est GÉNÉRÉE, pas parsée* — `BookAssembler` produit
+  l'AsciiDoc (page de titre, `:toc: macro`, `toc::[]`, ancres `[[ref]]`,
+  headings `==`/`===`, `<<<`, navigation `<<ref,title>>`, `:imagesdir:`) de
+  façon déterministe à partir de `BookTree` + `BookLayout`. Elle est donc
+  **régénérable** — inutile de la parser pour la préserver.
+| `BookAssembler.kt:106-140` + `buildStructuredBody:190-253`, `BookLayout.kt`.
+
+| 5
+| *Les corps de page OCR sont des fragments sans construction de livre* — une
+  page (`NNN.adoc`) contient du paragraphe, liste, tableau, `image::` — jamais
+  d'ancre, `:doctype:`, `toc::[]` ni navigation (ceux-ci sont ajoutés par
+  l'assembleur). Le pivot est donc **suffisant** pour un corps de page.
+| `ContentPageResolver.kt:37-53`, `BookPageRenderer.kt:30-38` (le seul ajout
+  possible est `image::`, `PivotBlock.BlockMacro`, non traduit).
+
+| 6
+| *La chaîne de traduction est déjà complète et testée* — `TranslationService`
+  (N0 `i18n-contracts`), `DocumentTranslator`, `TreeTranslationAdapter`,
+  `PlantUmlTranslationAdapter`, validation tableaux/PlantUML, `PooledOllama…`,
+  `Fake…`. Consommateur réel : bakery (articles JBake).
+| `ContentTranslationService.kt`, `TranslateDocumentTask.kt`,
+  `TranslateDocumentBatchTask.kt`.
+
+| 7
+| *La navigation et les xref sont dérivées des titres de l'arbre* —
+  `BookNumbering.navigation(tree, ref)` et `BookLayout.navigationLinks` lisent
+  `BookSection.title` ; les `ref` sont des identifiants structurels, pas du
+  texte. Traduire les titres traduit donc navigation et labels **par
+  construction**, sans toucher aux refs.
+| `BookNumbering.kt:82-89`, `BookLayout.kt:77-83`, `BookAssembler.kt:210-213`.
+
+| 8
+| *`bookPipeline` sait déjà rediriger les convertisseurs* — le graphe
+  réécrit `convertDocumentTo*.sourceFile` sur la sortie de `assembleBook`
+  quand `bookPipeline` est dans le graphe. Un étage de traduction s'insère au
+  même point, sans toucher aux convertisseurs.
+| `DocumentPlugin.kt:441-448` (`taskGraph.whenReady`, `hasTask(bookPipeline)`).
+|===
+
+== Décisions architecturales
+
+. *D1 — Traduire AU NIVEAU DU DOMAINE BOOK, pas en étendant le pivot*
+  (option B retenue, option A écartée). La structure du livre est *générée* par
+  `BookAssembler` à partir de l'arbre (constat #4) : traduire l'AsciiDoc
+  assemblé puis le re-parser avec le pivot lossy (constat #2) reviendrait à
+  détruire ancres/doctype/TOC. On traduit les **entrées** (titres + corps), puis
+  `BookAssembler` **régénère** la structure à l'identique.
+
+. *D2 — Unité de traduction = titre de nœud + corps de page*. Les titres
+  viennent de `BookSection.title`/`BookNode.title` ; les corps de la résolution
+  existante (`ContentPageResolver`/`BookPageRenderer`). Chaque corps est un
+  fragment sans construction de livre (constat #5) → le pivot existant suffit.
+
+. *D3 — Réutiliser intégralement la chaîne de traduction existante*
+  (`TranslationService` N0, `DocumentTranslator`/`TreeTranslationAdapter` pour
+  les corps, `PlantUmlTranslationAdapter`, validation tableaux/PlantUML). Zéro
+  nouveau bridge LLM, zéro nouveau contrat N0, zéro bump BOM.
+
+. *D4 — Réutiliser `BookAssembler` pour le ré-assemblage*. Aucun nouvel
+  assembleur : le `BookLayout` (matter, navigation, images, toc) est réappliqué
+  à l'identique. Les ancres `[[ref]]` et les refs ne sont **jamais** traduits
+  (identifiants structurels, pas du texte).
+
+. *D5 — Le domaine porte un service `BookTranslator` pur* (Gradle-free) :
+  `translate(tree, resolveContent, srcLang, tgtLang)` → `TranslatedBook`
+  (arbre aux titres traduits + résolveur de corps traduits). Unit-testable sans
+  TestKit, avec un `TranslationService` fake. Le wiring Gradle reste dans la
+  tâche.
+
+. *D6 — Nouvelle tâche `translateBook`* produisant `book-<lang>.adoc`
+  (miroir du nommage multi-langue de capsule). Inputs `pagesDir`, `tocFile`,
+  `photosDir`, `sourceLanguage`, `targetLanguage`, `llmMode` ; `@Input @Optional`
+  pour les chemins (piège S-232 #3), `@DisableCachingByDefault` (LLM
+  non-déterministe — non-incrémentable).
+
+. *D7 — Navigation, xref et TOC traduits par construction*. La traduction des
+  titres suffit : `toc::[]` rend les headings traduits, `navigationLinks` et
+  labels `<<ref,title>>` lisent `BookSection.title` traduit, les refs restent
+  valides (constat #7). Le gate dogfooding vérifie : 0 ancre dangling, N cibles
+  == N ancres.
+
+. *D8 — Économie d'Encre : traduction metered*. `translateBook` est opt-in et
+  `skipExisting` (la sortie `book-<lang>.adoc` existante n'est pas retraduite).
+  Le delta fin par bloc (`BlockDelta`, déjà existant) est un EPIC ultérieur —
+  hors périmètre de cet EPIC (constat : un livre est traduit une fois, pas
+  retouché bloc à bloc aussi souvent qu'un article).
+
+. *D9 — Multi-langue additif*. Le premier jet traduit UNE langue cible
+  (property `targetLanguage`). L'extension N langues (`translateToAll` dérivé de
+  `LanguageCatalog` N0, pattern `capsule.multilang`) est une US ultérieure.
+
+. *D10 — Backward compat totale*. `book { targetLanguage }` défaut vide = pas
+  de traduction ; `bookPipeline` sans langue = pipeline actuel inchangé ;
+  aucun convertisseur, aucun contrat N3, aucune tâche existante modifiés.
+
+. *D11 — Boundary respectée*. Règle 7 (jamais muter les scans source — lecture
+  seule, sortie sous `build/`), Règle 8 (Document = WRITE + PUBLISH ; Codex =
+  READ). Aucune dépendance codex.
+
+. *D12 — Méthode baby-step DDD/TDD/BDD stricte* : UT (domaine pur, fake) → FT
+  (TestKit) → BDD (runner dédié `@book-translate`, 23e) → dogfooding réel sur le
+  corpus. English only.
+
+. *D13 — Non-goals explicites* : (a) pas d'extension du pivot aux constructions
+  de livre (option A rejetée, D1) ; (b) on ne touche pas au pivot consommé par
+  bakery (risque de régression) ; (c) pas de delta bloc-à-bloc dans cet EPIC
+  (D8) ; (d) pas de traduction côté codex/RAG.
+
+== Décision A vs B (tracée)
+
+[cols="1,4,4", options="header"]
+|===
+| Option | Principe | Verdict
+
+| A — étendre le pivot
+| Ajouter `Anchor`, `AttributeLine`, `TocMacro` au `PivotModel` + parser +
+  renderers, puis traduire tout le livre assemblé en un passage.
+| ❌ *Écartée*. Touche un modèle partagé avec bakery, risque de régression
+  large, et reste vulnérable aux micro-perturbations de ré-émission d'un
+  artefact délicat. Coût/bénéfice défavorable pour un besoin book-scoped.
+
+| B — traduire le domaine Book
+| Traduire titres + corps, laisser `BookAssembler` régénérer la structure.
+| ✅ *Retenue*. Structure préservée par construction, surface LLM minimale,
+  DDD-consistent, réutilise assembleur + chaîne de traduction, zéro régression
+  bakery.
+|===
+
+== Faits établis (corpus réel FPA)
+
+[cols="1,3", options="header"]
+|===
+| Fait | Détail
+
+| TOC source | table AsciiDoc `\| Référence \| Sujet / Titre \| Page \| Fichier` (116 sections)
+| Corps OCR | `scans/NNN.adoc` (+ splits `NNN_N.adoc`), fragments sans construction de livre
+| Structure assemblée | `livre.adoc` 116 ancres `[[ref]]`, `:doctype: book`, `:toc: macro` + `toc::[]`, `<<<`, 239 liens de navigation (S-262)
+| Traduction existante | articles JBake/bakery ; `AsciiDocParser` lossy sur ancres/doctype/toc (S-267)
+| Volume | traduire un livre ≈ traduire ~200 pages de contenu + 116 titres (metered)
+|===
+
+== US (6 US, ~12 pts)
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+
+| DOC-BOOK-TRANSLATE-0
+| Cadrage EPIC (gouvernance pure). Audit 8 constats, 13 décisions, décision A vs B tracée.
+| ✅ TERMINÉ (S-267)
+| 1
+
+| DOC-BOOK-TRANSLATE-1
+| Domaine `BookTranslator` pur : `translate(tree, resolveContent, srcLang, tgtLang)`
+  → `TranslatedBook` (titres traduits + résolveur de corps traduits), via la
+  chaîne de traduction existante. UT (fake) : titres, corps, refs intacts,
+  non-régression vide.
+| 🟡 À FAIRE
+| 3
+
+| DOC-BOOK-TRANSLATE-2
+| Tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage;
+  targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`.
+  FT TestKit (fake LLM) : sortie produite, ancres/TOC/navigation présentes,
+  défaut vide = pas de tâche active.
+| 🟡 À FAIRE
+| 3
+
+| DOC-BOOK-TRANSLATE-3
+| Insertion dans `bookPipeline` (pattern constat #8) : quand une langue cible
+  est configurée, les convertisseurs consomment `book-<lang>.adoc` au lieu de
+  `book.adoc`. FT TestKit.
+| 🟡 À FAIRE
+| 2
+
+| DOC-BOOK-TRANSLATE-4
+| BDD `book_translate.feature` `@book-translate` (23e runner dédié) : structure
+  préservée (ancres, `:doctype:`, `toc::[]`, navigation) + contenu traduit
+  (fake LLM). Preuve anti-régression de la décision D1.
+| 🟡 À FAIRE
+| 2
+
+| DOC-BOOK-TRANSLATE-5
+| Dogfooding sur le corpus FPA réel (ou fixture réduite) : livre traduit
+  FR→EN/…, gate 0 ancre dangling, N cibles == N ancres, EPUB/PDF produits.
+  Extension multi-langue (`translateToAll`) si le besoin est confirmé.
+| 🟡 À FAIRE
+| 1
+
+|===
+
+*Total* : ~12 pts (6 US).
+
+== Ordre d'exécution (baby-step)
+
+. US-0 : Cadrage ✅ (cette session)
+. US-1 : `BookTranslator` (domaine pur) → RED UT (fake) → GREEN
+. US-2 : tâche `translateBook` + DSL/CLI + FT → RED TestKit → GREEN
+. US-3 : insertion `bookPipeline` + FT
+. US-4 : BDD `@book-translate` + runner dédié
+. US-5 : dogfooding réel + gate structurel
+. REFACTOR : `check` ciblé + non-régression des 22 runners existants
+
+== DSL proposé (surface publique)
+
+[source,kotlin]
+----
+document {
+    book {
+        pagesDir.set(file("src/book/pages"))
+        tocFile.set(file("src/book/toc.adoc"))
+        sourceLanguage.set("fr")     // Property<String>, défaut "fr"
+        targetLanguage.set("en")     // Property<String>, défaut "" = pas de traduction
+    }
+}
+----
+
+*Précédence* : CLI `-Pdocument.bookTargetLanguage` > DSL `book { targetLanguage }`
+> défaut vide (pas de traduction).
+
+== Gates et risques
+
+* *Gate structurel* (le cœur de l'EPIC) : le livre traduit porte le **même
+  nombre d'ancres** `[[ref]]` que la source, `:doctype: book`, `toc::[]`, et
+  **0 ancre dangling** — preuve exécutable que D1 (traduire le domaine, pas le
+  texte assemblé) préserve la structure.
+* *Gate non-régression* : les 22 runners Cucumber existants restent verts, la
+  baseline UT/FT est préservée, `bookPipeline` sans langue est byte-identique.
+* *Risque #1 (LLM metered)* : un livre ≈ 200 pages → coût réel. Mitigation :
+  opt-in, `skipExisting`, dogfooding sur fixture réduite d'abord.
+* *Risque #2 (fidélité OCR)* : les marqueurs `[ILLISIBLE]` du corpus pourraient
+  être traduits. Mitigation : les marqueurs OCR vivent sur la **source**
+  (`book-ocr-issues.json`, non traduit) ; la fidélité du marqueur dans le livre
+  traduit est un point de test (classifier non-traduisible si nécessaire).
+* *Risque #3 (continuité multi-pages)* : une phrase à cheval sur deux scans est
+  traduite par fragment. Accepté (miroir du comportement batch) ; documenté.
+* *Risque #4 (couplage format)* : nul — D1 évite tout parsing du livre assemblé.
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+English only dans le code/tests/features (gouvernance `.adoc` en français).
+Zéro Python — outputs analysés avec Read/Grep/xmllint/rapports Gradle natifs.

@@ -1,14 +1,29 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 267
+== Mission session 268
 
-S-266 (2026-09-25) a réparé la **dérive de gouvernance** : le PROMPT_REPRISE
-était figé à la mission S-261 alors que S-261→S-265 étaient clôturées, et les
-tables sessions de `SESSIONS_HISTORY.adoc` (13 entrées) et `INDEX.adoc`
-(14 entrées) étaient incomplètes. Aucun code modifié — réparation documentaire
-pure.
+S-267 (2026-09-26) a **cadré l'EPIC DOC-BOOK-TRANSLATE** (gouvernance pure,
+zéro code). Demande pilote : « document intègre-t-il bien le livre avec la TOC
+avec la traduction ? ». Réponse auditée : **non** — la traduction et le domaine
+Book sont deux silos étanches ; le livre n'est pas traduit, et le brancher sur
+`translateDocument` **détruirait la structure** (parser pivot *lossy* : ancres
+`[[ref]]` perdues, `:doctype: book` avalé, `toc::[]` malformé, xref envoyés au
+LLM — caractérisation empirique par test jetable). **Décision B retenue** :
+traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la
+structure → préservation par construction. Option A (étendre le pivot partagé
+avec bakery) écartée (risque de régression large). 8 constats, 13 décisions,
+6 US ~12 pts. Doc `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
 
-*1. Rien d'urgent* — le borough est à jour et entièrement clôturé :
+*1. Mission de la session 268 (première US à coder)* :
+- **US-1 `BookTranslator`** (domaine pur `document`, Gradle-free) —
+  `translate(tree, resolveContent, srcLang, tgtLang): TranslatedBook` (titres de
+  nœuds + corps de page traduits via la chaîne existante `TranslationService`/
+  `DocumentTranslator` ; refs jamais traduites). Baby-step TDD strict :
+  UT avec `TranslationService` fake (titres traduits, corps traduits, refs
+  intacts, vide = no-op). Puis US-2 tâche `translateBook`, US-3 `bookPipeline`,
+  US-4 BDD `@book-translate`, US-5 dogfooding.
+
+*2. Rien d'urgent par ailleurs* — le borough est à jour :
 - **0.0.18 publiée Central** (S-264, bundle `aab4b880`), catalogue ws **0.0.57**.
 - Toutes les dettes B1→B6 de la code review S-258 sont **soldées**
   (CONSISTENCY B1/B2 S-259, IMAGES B4/B5 S-260, MATTER B3 S-261,
@@ -17,7 +32,7 @@ pure.
 - Baseline de référence : UT ~4827/0, FT 144/1 (1 préexistant RichToc page 73),
   22 runners Cucumber dédiés 0 fail.
 
-*2. Candidats prochaine session (sur demande pilote)* :
+*3. Candidats alternatifs (sur demande pilote)* :
 
 - *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : republication multi-format du livre
   FPA après convergence du corpus A1 (Tombouctou). **Bloqué** : le corpus porte
@@ -26,16 +41,11 @@ pure.
 - *Drift catalogue ws* : **6e occurrence résolue S-264** (0.0.56→0.0.57). Si
   MEMPHIS bump de nouveau, la garde `DocumentPluginPublicationTest` RED au build
   (fix : réaligner les 3 sources settings/platform/toml sur la version publiée).
-- *Re-pin bakery ws 0.0.57* : **✅ DÉJÀ FAIT** (2026-09-25) — `bakery-plugin`
-  pinne le catalogue ws 0.0.57 + platform 0.0.57, `document-plugin` sans
-  version (constraint BOM → 0.0.18). Cet item des prompts S-263→S-265 est
-  **CADUQUE**.
 - *FT RichToc page 73* : **préexistant** (stash-confirmé S-257/S-259/S-260/S-262/
   S-263), drift corpus A1. Ne PAS « corriger » le test avant que le corpus
   converge (le test asserte le corps OCR réel).
-- *Nouveau cadrage EPIC* : aucun EPIC ouvert. Sur demande pilote uniquement.
 
-== État du code (S-265)
+== État du code (S-267)
 
 - *0.0.18 PUBLIÉE* Central — POM/JAR/plugin-marker HTTP 200. Le HEAD porte
   RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER +
@@ -51,11 +61,17 @@ pure.
   (`<<ref,title>>` opt-in), matter dérivable (`MatterPolicyMode.DERIVED`),
   **EPUB epubcheck-VALID** prouvé STRICT sur le corpus FPA.
 - *EPICs* : DOC-BOOK-CONSISTENCY ✅, DOC-BOOK-IMAGES ✅, DOC-BOOK-MATTER ✅,
-  DOC-BOOK-CONSISTENCY-B6 ✅, CROSS-DOC-BOOK-FIDELITY ✅, DOC-PUB ✅ 0.0.18.
+  DOC-BOOK-CONSISTENCY-B6 ✅, CROSS-DOC-BOOK-FIDELITY ✅, DOC-PUB ✅ 0.0.18,
+  DOC-BOOK-TRANSLATE 🟡 CADRÉ (S-267).
 - *Cadrages* : `CODE_REVIEW_BOOK_PIPELINE_S258.adoc`,
-  `CADRAGE_EPIC_DOC_BOOK_IMAGES.adoc`, `CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc`.
+  `CADRAGE_EPIC_DOC_BOOK_IMAGES.adoc`, `CADRAGE_EPIC_CROSS_DOC_BOOK_FIDELITY.adoc`,
+  `CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
+- *Silos traduction/book* : `document/translation/` et le domaine Book ne se
+  connaissent pas. Le parser pivot est *lossy* sur les constructions de livre
+  (ancres, doctype, toc, xref) — **ne jamais traduire le livre assemblé**,
+  traduire le domaine (EPIC DOC-BOOK-TRANSLATE, décision B).
 
-== Pièges Gradle à retenir (S-232..S-265)
+== Pièges Gradle à retenir (S-232..S-267)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution
    (`outputs.upToDateWhen { false }`) — pas de `@InputFile` du rapport.
@@ -115,6 +131,14 @@ pure.
 31. *Résolution image par PRÉFIXE numérique, pas par nom complet* (corpus FPA
     mêle `61.adoc` et `001-introduction.adoc`).
 32. *Ne copier que les scans RÉFÉRENCÉS* (Économie d'Encre : 13 Mo, pas 525 Mo).
+33. *Le parser pivot est LOSSY sur les constructions de livre* (ancres `[[ref]]`,
+    `:doctype:`, `toc::[]`, page-break, xref) — prouvé empiriquement S-267.
+    Ne jamais traduire le livre assemblé : traduire le domaine Book, laisser
+    `BookAssembler` régénérer la structure (EPIC DOC-BOOK-TRANSLATE, décision B).
+34. *Le domaine Book GÉNÈRE sa structure, il ne la parse pas* — `assemble(tree,
+    layout)` produit page de titre, `:toc: macro`, `toc::[]`, `[[ref]]`,
+    headings, `<<<`, navigation. Toute préservation structurelle passe par la
+    régénération, pas par un round-trip.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -136,7 +160,7 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-266).
+- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-267).
 - `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule
   (boundary Codex READ / Document WRITE+PUBLISH).
 - Ne jamais lancer `./gradlew test` complet sans permission.
@@ -151,6 +175,8 @@ analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
    `<latest>` avant tout pin, pièges #13/#21).
 5. Baseline : garde publication 4/4 ; si besoin de rejouer, UT ~4827/0, FT
    144/1 (1 préexistant RichToc page 73), 22 runners Cucumber dédiés VERT.
+6. EPIC à coder : `DOC-BOOK-TRANSLATE` — démarrer US-1 (`BookTranslator`,
+   domaine pur, TDD + fake LLM). Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
 
 == Vision « livre content SERVER »
 
@@ -161,6 +187,9 @@ documentaires, rapport OCR exhaustif, neutralisation nommage métier privé, liv
 illustré par les scans et **EPUB epubcheck-VALID**. Le produit est servable,
 auditable, documenté, illustré et **distribué** de bout en bout.
 
-*Chemin résiduel vers un livre « fini »* : itération humaine OCR (16 → 0
+*Chemin résiduel vers un livre « fini »* : (1) itération humaine OCR (16 → 0
 ILLISIBLE, 13 tableaux, 4 invalid part) côté Tombouctou A1 — `DOC-FPA-PUBLISH-0`
-STANDBY.
+STANDBY ; (2) **traduction du livre** — le livre n'est aujourd'hui publié que
+dans sa langue source (FR). L'EPIC `DOC-BOOK-TRANSLATE` (S-267) ouvre le
+multi-langue : traduire le domaine Book, régénérer la structure, produire
+`book-<lang>.adoc` puis HTML/PDF/EPUB par langue.
