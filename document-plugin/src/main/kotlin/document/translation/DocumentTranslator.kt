@@ -43,24 +43,45 @@ class DocumentTranslator(
         targetLanguage: String
     ): PivotArticle {
         val translatedFrontmatter = translateFrontmatter(article.frontmatter, sourceLanguage, targetLanguage)
+        val translatedBlocks = translateBlocks(article.blocks, sourceLanguage, targetLanguage, article.frontmatter.title)
+        return PivotArticle(translatedFrontmatter, translatedBlocks)
+    }
+
+    /**
+     * Translates a raw list of pivot blocks, preserving non-translatable content
+     * (source code, HR, block macros, backtick spans) and keeping the table /
+     * PlantUML validation indices consistent with [translateArticle].
+     *
+     * EPIC DOC-BOOK-TRANSLATE — US-1 exposes this entry point for a *body
+     * fragment* (a book page has no frontmatter): [document.BookTranslator]
+     * parses the fragment with [AsciiDocParser.parseBody] and feeds the blocks
+     * here, so the leading paragraph is never mistaken for a header.
+     *
+     * @param articleTitle the owning title, used only for validation messages
+     */
+    fun translateBlocks(
+        blocks: List<PivotBlock>,
+        sourceLanguage: String,
+        targetLanguage: String,
+        articleTitle: String = "",
+    ): List<PivotBlock> {
         var tableIndex = 0
         var plantUmlIndex = 0
-        val translatedBlocks = article.blocks.map { block ->
+        return blocks.map { block ->
             when {
                 block is PivotBlock.Table -> {
-                    val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, tableIndex)
+                    val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, tableIndex)
                     tableIndex++
                     result
                 }
                 block is PivotBlock.Source && block.language == "plantuml" -> {
-                    val result = translateBlock(block, sourceLanguage, targetLanguage, article.frontmatter.title, plantUmlIndex = plantUmlIndex)
+                    val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex = plantUmlIndex)
                     plantUmlIndex++
                     result
                 }
                 else -> translateBlock(block, sourceLanguage, targetLanguage)
             }
         }
-        return PivotArticle(translatedFrontmatter, translatedBlocks)
     }
 
     internal fun translateArticleWithDelta(
@@ -275,4 +296,15 @@ class DocumentTranslator(
             is TranslationResult.Failure -> text
         }
     }
+
+    /**
+     * Translates a single text field (a title, a label) through the same
+     * service the block translation uses, returning the original on failure or
+     * blank input.
+     *
+     * EPIC DOC-BOOK-TRANSLATE — US-1: [document.BookTranslator] reuses this to
+     * translate node / section titles without duplicating the fallback policy.
+     */
+    fun translateField(text: String, sourceLanguage: String, targetLanguage: String): String =
+        doTranslate(text, sourceLanguage, targetLanguage)
 }

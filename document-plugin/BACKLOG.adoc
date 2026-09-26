@@ -191,7 +191,7 @@ BDD `@inline-image` 8/8). Convergence : 4/4 IMAGE_MISSING localisées.
 '''
 
 '''
-== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré 🟡 CADRÉ (S-267)
+== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré 🟡 EN COURS (S-267 cadrage, S-268 US-1)
 
 _Origine : demande pilote 2026-09-26 — « est-ce que document intègre bien le
 livre avec la TOC avec la traduction ? ». Constat : non — deux silos étanches._
@@ -219,7 +219,7 @@ envoyés au LLM). Preuve par caractérisation empirique S-267.
 |===
 | US | Description | Statut | Pts
 | DOC-BOOK-TRANSLATE-0 | Cadrage EPIC (gouvernance pure) — 8 constats, 13 décisions, décision A/B tracée | ✅ TERMINÉ (S-267) | 1
-| DOC-BOOK-TRANSLATE-1 | Domaine pur `BookTranslator.translate(tree, resolveContent, src, tgt)` → `TranslatedBook` (titres + corps traduits, refs intactes) via la chaîne existante. UT (fake) | 🟡 À FAIRE | 3
+| DOC-BOOK-TRANSLATE-1 | Domaine pur `BookTranslator.translate(tree, resolveContent, src, tgt)` → `TranslatedBook` (titres + corps traduits, refs intactes) via la chaîne existante. UT (fake) | ✅ TERMINÉ (S-268) | 3
 | DOC-BOOK-TRANSLATE-2 | Tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage; targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`. FT TestKit | 🟡 À FAIRE | 3
 | DOC-BOOK-TRANSLATE-3 | Insertion dans `bookPipeline` : langue configurée → les convertisseurs consomment `book-<lang>.adoc`. FT TestKit | 🟡 À FAIRE | 2
 | DOC-BOOK-TRANSLATE-4 | BDD `@book-translate` (23e runner) : structure préservée (ancres, doctype, toc, navigation) + contenu traduit | 🟡 À FAIRE | 2
@@ -232,6 +232,14 @@ et `toc::[]`, avec **0 ancre dangling**. *Non-goals* : pas d'extension du pivot
 (bakery-safe), pas de delta bloc-à-bloc, pas de traduction codex/RAG.
 *Backward compat* : `targetLanguage` vide = pipeline actuel inchangé,
 byte-identique.
+
+*Avancement S-268 (US-1 ✅)* : `BookTranslator` (domaine pur, 10 UT) +
+`TranslatedBook` (arbre traduit + `bodyResolver`). **Découverte** : un corps de
+page OCR est un *fragment sans en-tête* ; routé dans `AsciiDocParser.parse`, il
+perdait son 1er paragraphe (`parseJbakeHeader` avale jusqu'à la 1re ligne vide).
+3 points d'extension **additifs** : `parseBody`/`renderBlocks`/`translateBlocks`
++ `translateField`. No-op strict si `tgt` vide/identique ; cache de titres.
+Piège #35 documenté PROMPT_REPRISE.
 
 '''
 

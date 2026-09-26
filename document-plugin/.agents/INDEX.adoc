@@ -6,6 +6,20 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+|_Derniere mise a jour_ : 2026-09-27 (session 268 — **DOC-BOOK-TRANSLATE
+US-1 `BookTranslator`** — implémentation, baby-step DDD/TDD strict, 10 UT. Le
+domaine pur traduit les **entrées** du livre (titres de nœuds + corps de page),
+`BookAssembler` régénère la structure (refs/ancres/doctype/toc/navigation) —
+décision D5. **Découverte** : un corps de page OCR est un *fragment sans
+en-tête* ; routé dans `AsciiDocParser.parse`, `parseJbakeHeader` **avale son
+1er paragraphe**. 3 points d'extension **additifs** : `parseBody`
+(`AsciiDocParser`), `renderBlocks` (`AsciiDocRenderer`), `translateBlocks` +
+`translateField` (`DocumentTranslator`). No-op strict si `tgt` vide/identique ;
+cache de titres (Économie d'Encre). Gates : `BookTranslatorTest` 10/0,
+`document.translation.*` + Book assembler/layout 794 tests 0 fail, 4 runners
+Book + 3 runners translation 0 fail, `validatePlugins` VERT. Zéro bump BOM,
+zéro secret. Rapport : `.agents/sessions/268-book-translate-us1-booktranslator.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-26 (session 267 — **Cadrage EPIC
 DOC-BOOK-TRANSLATE** — demande pilote « document intègre-t-il bien le livre avec
 la TOC avec la traduction ? » : réponse auditée **non** — deux silos étanches.
@@ -224,6 +238,23 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 268 — **DOC-BOOK-TRANSLATE US-1
+`BookTranslator`** (implémentation, domaine pur, baby-step DDD/TDD strict) : le
+domaine traduit les **entrées** du livre — titres de nœuds/feuilles (refs
+intacts) + corps de page — puis `BookAssembler` régénère la structure
+(refs/ancres/doctype/toc/navigation), préservée par construction. **Découverte
+clé** : un corps de page OCR est un *fragment sans en-tête* ; routé dans
+`AsciiDocParser.parse`, `parseJbakeHeader` **avale son 1er paragraphe**. Trois
+points d'extension **additifs** : `AsciiDocParser.parseBody`,
+`AsciiDocRenderer.renderBlocks`, `DocumentTranslator.translateBlocks` +
+`translateField`. `TranslatedBook` = arbre traduit + `bodyResolver`. No-op
+strict si `tgt` vide/identique/arbre vide ; cache de titres. 10 UT
+`BookTranslatorTest` RED (11 erreurs de compilation) → GREEN → REFACTOR. Gates :
+`document.translation.*` + Book assembler/layout 794 tests 0 fail, 4 runners
+Book + 3 runners translation 0 fail, `validatePlugins` VERT, zéro secret.
+Rapport : `.agents/sessions/268-book-translate-us1-booktranslator.adoc`.
+  _Prochaine session_ : US-2 tâche `translateBook` + DSL/CLI + FT TestKit —
+  ou DOC-FPA-PUBLISH-0 si A1 converge / drift catalogue ws si MEMPHIS bump.
 |_Derniere session terminee_ : 267 — **Cadrage EPIC DOC-BOOK-TRANSLATE**
 (gouvernance pure, zéro code) : la traduction et le domaine Book étaient deux
 silos étanches (aucune référence croisée). Le livre n'était pas traduit, et le
@@ -361,7 +392,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
-| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 CADRÉ (S-267 — gouvernance pure, US-1→5 à faire) | P1
+| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 EN COURS (S-267 cadrage ✅, **S-268 US-1 `BookTranslator` ✅**, US-2→5 à faire) | P1
 |===
 
 '''

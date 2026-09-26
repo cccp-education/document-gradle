@@ -1,6 +1,40 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-25
-:session: 265
+:date: 2026-09-27
+:session: 268
+
+== Session 268 — DOC-BOOK-TRANSLATE US-1 `BookTranslator` (10 UT ajoutés)
+
+*Périmètre* : nouveau domaine pur `BookTranslator` + `TranslatedBook`, plus 3
+points d'extension **additifs** au pivot (`AsciiDocParser.parseBody`,
+`AsciiDocRenderer.renderBlocks`, `DocumentTranslator.translateBlocks` /
+`translateField`). Aucun comportement des appels existants modifié.
+
+*Nouveau test* : `document.BookTranslatorTest` — **10 UT** avec
+`FakeTranslationService` (déterministe, sans réseau/clé API) :
+
+- titres de nœuds traduits + `ref`/`page`/`pdfFile` préservés ;
+- corps de page traduits via la chaîne existante ;
+- **le 1er paragraphe d'un fragment de page n'est jamais perdu** (correctif
+  `parseBody` — piège #35) ;
+- table traduite sans perdre les délimiteurs `|===` ;
+- refs/pages/fichiers préservés sur chaque feuille ;
+- titres synthétiques (ancêtres sans source) restent vides ;
+- `targetLanguage` vide = no-op strict (aucun appel LLM) ;
+- `sourceLanguage == targetLanguage` = no-op ;
+- ancres/`:doctype:`/`toc::[]` survivent à la régénération (`BookAssembler`),
+  même nombre d'ancres, ref jamais traduit ;
+- navigation suit les titres traduits (`<<1.1,Chapter One [EN]>>`).
+
+*Baby-step* : RED prouvé (11 erreurs de compilation `Unresolved reference
+'BookTranslator'`) → GREEN 10/10 → REFACTOR (cache de titres, racine
+synthétique non traduite) → GREEN 10/10.
+
+*Non-régression (pivot partagé)* : `document.translation.*` + Book
+assembler/layout — **794 tests, 0 fail, 0 error** (358 skipped Cucumber global) ;
+4 runners Book (executed 12/12/16/10) + 3 runners translation (16/12/12) 0 fail.
+
+*Baseline préservée* : `compileKotlin`/`compileTestKotlin` VERT, `validatePlugins`
+VERT, aucun seuil de couverture modifié. Zéro bump BOM, zéro publication.
 
 == Session 265 — Hygiène toml + garde renforcée (1 garde ajoutée)
 

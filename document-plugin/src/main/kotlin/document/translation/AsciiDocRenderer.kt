@@ -16,6 +16,23 @@ class AsciiDocRenderer : ArticleRenderer {
         return sb.toString()
     }
 
+    /**
+     * Renders a *body fragment* — pivot blocks with no document header — as
+     * AsciiDoc. Unlike [render], no frontmatter is emitted and no leading blank
+     * line is produced, so a book page body round-trips cleanly.
+     *
+     * EPIC DOC-BOOK-TRANSLATE — US-1: [document.BookTranslator] translates a
+     * page body and needs the fragment back, not a full article.
+     */
+    fun renderBlocks(blocks: List<PivotBlock>): String {
+        val sb = StringBuilder()
+        blocks.forEachIndexed { i, block ->
+            if (i > 0) sb.appendLine()
+            renderBlock(block, sb)
+        }
+        return sb.toString().trimEnd()
+    }
+
     private fun renderFrontmatter(fm: PivotFrontmatter, sb: StringBuilder) {
         sb.appendLine("title=${fm.title}")
         sb.appendLine("date=${fm.date}")

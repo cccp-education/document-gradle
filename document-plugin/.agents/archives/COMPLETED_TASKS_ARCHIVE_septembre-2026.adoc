@@ -2,6 +2,32 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 268 (2026-09-27) — DOC-BOOK-TRANSLATE US-1 `BookTranslator` ✅
+
+*Type* : implémentation (domaine pur, baby-step DDD/TDD strict)
+*Score* : 10/10
+*Mission* : première US de code de l'EPIC DOC-BOOK-TRANSLATE — traduire le
+domaine Book (titres + corps), `BookAssembler` régénère la structure.
+*Découverte* : un corps de page OCR est un *fragment sans en-tête* ; routé dans
+`AsciiDocParser.parse`, `parseJbakeHeader` **avale son 1er paragraphe**. Trois
+points d'extension **additifs** ajoutés au pivot (`parseBody`, `renderBlocks`,
+`translateBlocks`, `translateField`).
+*Livrables* :
+- `document/BookTranslator.kt` (service pur, no-op strict, cache de titres).
+- `document/TranslatedBook.kt` (arbre traduit + `bodyResolver`).
+- `document/translation/AsciiDocParser.kt` (`parseBody`).
+- `document/translation/AsciiDocRenderer.kt` (`renderBlocks`).
+- `document/translation/DocumentTranslator.kt` (`translateBlocks`,
+  `translateField`, extraction).
+- `src/test/kotlin/document/BookTranslatorTest.kt` (10 UT).
+- `.agents/sessions/268-book-translate-us1-booktranslator.adoc`.
+*Gates* : `BookTranslatorTest` 10/0 ; `document.translation.*` + Book
+assembler/layout 794 tests 0 fail ; 4 runners Book + 3 runners translation 0
+fail ; `compileKotlin`/`compileTestKotlin` VERT ; `validatePlugins` VERT ;
+secrets RAS.
+*Zéro bump BOM, zéro publication, zéro dépendance nouvelle, aucun contrat N3
+modifié.*
+
 === Session 267 (2026-09-26) — Cadrage EPIC DOC-BOOK-TRANSLATE ✅
 
 *Type* : cadrage (gouvernance pure, zéro code)

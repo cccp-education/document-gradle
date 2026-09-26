@@ -1,0 +1,121 @@
+= Session 268 — DOC-BOOK-TRANSLATE US-1 `BookTranslator`
+
+_Borough_ : New Orleans (document-gradle)
+_Date_ : 2026-09-27
+_Type_ : implémentation (baby-step DDD/TDD/BDD strict)
+_Score_ : 10/10
+
+== Origine
+
+Reprise sur mission du `PROMPT_REPRISE.adoc` (S-267) : première US à coder de
+l'EPIC `DOC-BOOK-TRANSLATE` — le domaine pur `BookTranslator`.
+
+== Audit d'ouverture
+
+* `git status` propre, branche `main` à jour, HEAD `df7f93a`.
+* `compileKotlin` VERT (JDK 25.0.4-tem, Gradle 9.8.0).
+* 0.0.18 publiée Central ; catalogue ws 0.0.57 ; garde publication 4/4.
+* Dernier item ouvert : `DOC-FPA-PUBLISH-0` STANDBY (bloqué corpus A1).
+
+== Mission — US-1 `BookTranslator` (domaine pur, 3 pts)
+
+Décision D5 du cadrage : le domaine porte un service **pur** (Gradle-free)
+`translate(tree, resolveContent, srcLang, tgtLang) → TranslatedBook` (arbre aux
+titres traduits + résolveur de corps traduits), unit-testable avec un
+`TranslationService` fake. Le wiring Gradle reste dans la tâche (US-2).
+
+=== Contrat réalisé
+
+* `TranslatedBook` — l'arbre traduit + un `bodyResolver: (BookSection) -> String`.
+  Aucun élément structurel (ref, page, pdfFile, ancres, doctype, toc, navigation)
+  n'y figure : `BookAssembler` les **régénère** depuis l'arbre (D1/D4).
+* `BookTranslator` — traduit les **titres** de tous les nœuds/feuilles (refs
+  intacts) et les **corps** de page via la chaîne existante.
+
+=== Découverte — le pivot consomme le 1er paragraphe d'un fragment
+
+Un corps de page OCR est un **fragment sans en-tête** ni séparateur `~~~~~~`.
+Routé tel quel dans `AsciiDocParser.parse`, `parseJbakeHeader` interprète ses
+premières lignes comme un en-tête de document et les **avale** jusqu'à la
+première ligne vide — le paragraphe d'ouverture de la page était perdu.
+
+Correctif additif (aucun changement de comportement des appels existants) :
+
+. `AsciiDocParser.parseBody(adoc)` — parse **chaque** ligne comme un bloc
+  (`parseBlocks`), sans en-tête.
+. `AsciiDocRenderer.renderBlocks(blocks)` — rend un fragment (pas de frontmatter,
+  pas de ligne vide initiale).
+. `DocumentTranslator.translateBlocks(...)` — traduction d'une liste de blocs
+  (le corps de `translateArticle` en est extrait, comportement identique).
+. `DocumentTranslator.translateField(...)` — traduction d'un champ texte unitaire
+  (titre), même politique de fallback.
+
+=== Économie d'Encre
+
+* `targetLanguage` vide **ou** identique à `sourceLanguage` **ou** arbre sans
+  feuille → **no-op strict** (aucun appel LLM, arbre et résolveur d'origine).
+* Cache de titres par valeur : un titre partagé nœud/feuille n'est traduit
+  qu'une fois.
+* Corps de page court-circuités s'ils sont vides (pas d'appel LLM).
+
+== Baby-step DDD/TDD/BDD strict
+
+. *RED* — `BookTranslatorTest` (10 UT) : échec de compilation prouvé
+   (`Unresolved reference 'BookTranslator'`, 11 erreurs).
+. *GREEN* — `TranslatedBook` + `BookTranslator` + 4 points d'extension additifs
+   au pivot → **10/10 PASSED**.
+. *REFACTOR* — cache de titres, racine synthétique non traduite (jamais rendue),
+   extraction `translateBlocks`/`translateField` → **10/10 PASSED** (2e run).
+
+=== Tests (10 UT créés)
+
+[cols="3,1", options="header"]
+|===
+| Test | Vérifie
+| node titles traduits + ref préservé | titre `[EN]`, `ref`/`page`/`pdfFile` intacts
+| page bodies traduits | corps `[EN]` via la chaîne existante
+| 1er paragraphe d'un fragment jamais perdu | correctif `parseBody`
+| table traduite sans perdre le markup | `\|===` préservé, cellules traduites
+| refs/pages/fichiers préservés sur chaque feuille | intégrité structurelle
+| titres synthétiques restent vides | ancêtre sans source non traduit
+| targetLanguage vide = no-op strict | aucun appel LLM
+| source == cible = no-op | aucun appel LLM
+| ancres/doctype/toc survivent à la régénération | même nombre d'ancres, ref jamais traduit
+| navigation suit les titres traduits | `<<1.1,Chapter One [EN]>>`
+|===
+
+== Gates
+
+[cols="3,1"]
+|===
+| Gate | Résultat
+| `BookTranslatorTest` | 10/10 PASSED
+| `document.translation.*` + Book assembler/layout | 794 tests, 0 fail, 0 error (358 skipped Cucumber global)
+| `bookTreeCucumberTest` etc. (4 runners Book) | executed 12/12/16/10, 0 fail
+| `tableTranslationCucumberTest` `frontmatterRetranslateCucumberTest` `tableValidationCucumberTest` | executed 16/12/12, 0 fail
+| `compileKotlin` + `compileTestKotlin` | VERT
+| `validatePlugins` | VERT
+| grep secret sur le delta | clean
+|===
+
+== Non-régression
+
+* Les 4 points d'extension du pivot sont **additifs** : `parse`/`render`/
+  `translateArticle` conservent exactement leur comportement (extraction pure).
+* Aucun contrat N3 modifié, aucun bump BOM, aucune publication, zéro secret.
+* Zéro dépendance nouvelle.
+
+== Fichiers
+
+* Créés (3) : `document/BookTranslator.kt`, `document/TranslatedBook.kt`,
+  `src/test/kotlin/document/BookTranslatorTest.kt`.
+* Modifiés (3) : `document/translation/AsciiDocParser.kt` (`parseBody`),
+  `document/translation/AsciiDocRenderer.kt` (`renderBlocks`),
+  `document/translation/DocumentTranslator.kt` (`translateBlocks`,
+  `translateField`, extraction).
+
+== Prochaine session (269)
+
+US-2 : tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage;
+targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting` +
+FT TestKit (fake LLM).
