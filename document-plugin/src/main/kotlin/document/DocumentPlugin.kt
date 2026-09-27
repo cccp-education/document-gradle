@@ -112,6 +112,8 @@ class DocumentPlugin : Plugin<Project> {
                 navigation = project.objects.property(Boolean::class.java),
                 sourceLanguage = project.objects.property(String::class.java),
                 targetLanguage = project.objects.property(String::class.java),
+                translateToAll = project.objects.property(Boolean::class.java),
+                targetLanguages = project.objects.listProperty(String::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -185,6 +187,9 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-BOOK-TRANSLATE — source `fr`, target blank (= no translation, opt-in)
         ext.book.sourceLanguage.convention("fr")
         ext.book.targetLanguage.convention("")
+        // DOC-BOOK-MULTILANG — opt-in multi-language knobs (default off / empty)
+        ext.book.translateToAll.convention(false)
+        ext.book.targetLanguages.convention(emptyList())
         // DOC-13 — template DSL conventions
         ext.template.failOnMissingVariable.convention(true)
         ext.template.outputFileName.convention("document")
@@ -242,6 +247,8 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookNavigation.convention(ext.book.navigation)
         ext.bookSourceLanguage.convention(ext.book.sourceLanguage)
         ext.bookTargetLanguage.convention(ext.book.targetLanguage)
+        ext.bookTranslateToAll.convention(ext.book.translateToAll)
+        ext.bookTargetLanguages.convention(ext.book.targetLanguages)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
@@ -264,6 +271,7 @@ class DocumentPlugin : Plugin<Project> {
         registerCollectDocumentRetrieve(project, ext)
         registerAssembleBook(project, ext)
         registerTranslateBook(project, ext)
+        registerTranslateBookAllLanguages(project, ext)
         registerBookPipeline(project, ext)
         registerSerializeDocumentConfig(project, ext)
         registerDeserializeDocumentConfig(project, ext)
@@ -456,6 +464,67 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
+    private fun registerTranslateBookAllLanguages(project: Project, ext: DocumentExtension) {
+        project.tasks.register("translateBookAllLanguages", TranslateBookAllLanguagesTask::class.java) { task ->
+            task.description = "Translates the structured scanned book into several target languages (domain-level; structure regenerated). — DOC-BOOK-MULTILANG"
+            task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
+            task.photosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPhotosDir))
+            task.title.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
+            task.author.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
+            task.tocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it) }.orElse(ext.bookTocFile))
+            task.sourceLanguage.set(cliProp(project, "bookSourceLanguage").orElse(ext.bookSourceLanguage))
+            // DOC-BOOK-MULTILANG — explicit subset (CLI comma-separated) takes precedence
+            // over `translateToAll` (decision D4).
+            task.targetLanguages.set(
+                cliProp(project, "bookTargetLanguages")
+                    .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
+                    .orElse(ext.bookTargetLanguages),
+            )
+            task.translateToAll.set(
+                cliProp(project, "bookTranslateToAll").map { it.toBoolean() }
+                    .orElse(ext.bookTranslateToAll)
+                    .orElse(false),
+            )
+            task.llmMode.set(cliProp(project, "translateLlmMode").orElse(ext.translation.llmMode))
+            task.skipExisting.set(
+                cliProp(project, "bookTranslateSkipExisting").map { it.toBoolean() }.orElse(false),
+            )
+            // Output follows the `outputFileName` knob: `book-<lang>.adoc` in the
+            // docs/document dir (same convention as `translateBook`). The output
+            // files are declared dynamically through `@OutputFiles` (one per plan
+            // entry), so no overlapping-output claim on the shared directory.
+            val baseName = cliProp(project, "outputFileName").orElse("book")
+            val outputDir = project.layout.buildDirectory.dir("docs/document")
+            task.outputFileName.set(baseName)
+            task.outputDir.set(outputDir)
+            task.outputFiles.from(
+                project.provider {
+                    val base = baseName.get()
+                    BookLanguagePlanner.plan(
+                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                        requested = task.targetLanguages.getOrElse(emptyList()),
+                        translateToAll = task.translateToAll.getOrElse(false),
+                    ).map { target -> project.layout.buildDirectory.file("docs/document/${target.fileName(base)}") }
+                },
+            )
+            task.matterPolicyMode.set(
+                cliProp(project, "bookMatterPolicy").map { MatterPolicyMode.valueOf(it.uppercase()) }
+                    .orElse(ext.bookMatterPolicy)
+                    .orElse(MatterPolicyMode.DERIVED),
+            )
+            task.matterBreaks.set(
+                cliProp(project, "bookMatterBreaks").map { it.toBoolean() }
+                    .orElse(ext.bookMatterBreaks)
+                    .orElse(false),
+            )
+            task.navigation.set(
+                cliProp(project, "bookNavigation").map { it.toBoolean() }
+                    .orElse(ext.bookNavigation)
+                    .orElse(false),
+            )
+        }
+    }
+
     private fun registerBookPipeline(project: Project, ext: DocumentExtension) {
         project.tasks.register("bookPipeline") { task ->
             task.group = "document"
@@ -563,6 +632,12 @@ class DocumentPlugin : Plugin<Project> {
             task.bookNavigation.set(cliProp(project, "bookNavigation").map { it.toBoolean() }.orElse(ext.bookNavigation))
             task.bookSourceLanguage.set(cliProp(project, "bookSourceLanguage").orElse(ext.bookSourceLanguage))
             task.bookTargetLanguage.set(cliProp(project, "bookTargetLanguage").orElse(ext.bookTargetLanguage))
+            task.bookTranslateToAll.set(cliProp(project, "bookTranslateToAll").map { it.toBoolean() }.orElse(ext.bookTranslateToAll))
+            task.bookTargetLanguages.set(
+                cliProp(project, "bookTargetLanguages")
+                    .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
+                    .orElse(ext.bookTargetLanguages),
+            )
         }
     }
 

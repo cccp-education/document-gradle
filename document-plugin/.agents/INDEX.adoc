@@ -268,6 +268,26 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 271 — **DOC-BOOK-MULTILANG (4/4 US + cadrage) —
+  EPIC TERMINÉ** (décision pilote, preuves **offline** fake LLM) : le livre
+  structuré se traduit en plusieurs langues en un run. Domaine pur
+  `BookLanguagePlanner` + `BookLanguageTarget` (plan dérivé de `LanguageCatalog`
+  N0 : sous-ensemble explicite prioritaire, sinon `translateToAll` = catalogue
+  moins la source ; ordre déterministe, dédoublonnage, code inconnu ignoré, RTL)
+  + extraction DRY `BookTranslationRunner` (partagé `translateBook` /
+  `translateBookAllLanguages`) + tâche `translateBookAllLanguages`
+  (`@OutputFiles` dynamique, `skipExisting` par langue) + DSL
+  `book { translateToAll; targetLanguages }` (+ mirror flat + CLI CSV) + N3
+  `BookConfig` additif (round-trip). Preuves : 10 UT planner + 5 FT TestKit +
+  7 BDD `@book-multilang` (24e runner) + 1 FT dogfooding corpus réel offline
+  (2 langues `en`/`de`, refs TOC D1 préservées, `book.adoc` jamais produit).
+  Pièges #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out) + #41
+  (fake suffixé par langue cible, pas source). Gates : `test` 5506/0,
+  `functionalTest` 158/1 (préexistant `AssembleBookTaskContentRichTocTest`
+  A1), `validatePlugins` VERT, zéro secret. Rapport :
+  `.agents/sessions/271-book-multilang.adoc`.
+  _Prochaine session_ : DOC-FPA-PUBLISH-0 (STANDBY, A1) — ou run metered
+  (accord pilote) / fan-out publication / drift ws si MEMPHIS bump.
 |_Derniere session terminee_ : 270 — **DOC-BOOK-TRANSLATE US-6 + EPIC TERMINÉ
 6/6 US** (option 2 pilote, dogfooding end-to-end offline, test-only) : nouveau FT
 `BookPipelineTranslateContentFunctionalTest` (corpus réel réduit, fake LLM,
@@ -456,6 +476,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
 | EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | ✅ TERMINÉ (S-267 cadrage, S-268 US-1 `BookTranslator`, S-269 US-2→US-5, S-270 US-6 dogfooding end-to-end fake) | P1
+| EPIC DOC-BOOK-MULTILANG | Traduction **multi-langue** du livre structuré — plan dérivé de `LanguageCatalog` N0 (`BookLanguagePlanner`), extraction DRY `BookTranslationRunner`, tâche `translateBookAllLanguages` (`book-<lang>.adoc` par langue, `@OutputFiles` dynamique, `skipExisting`), DSL `book { translateToAll; targetLanguages }` + N3 `BookConfig` additif, BDD `@book-multilang` (4 US + cadrage, ~13 pts) | ✅ TERMINÉ (S-271 — 4/4 US, preuves offline fake LLM) | P1
 |===
 
 '''

@@ -1,55 +1,54 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 271
+== Mission session 272
 
-S-270 (2026-09-27) a **clos l'EPIC DOC-BOOK-TRANSLATE** : l'US-6 a été livrée
-en mode `fake` (accord pilote, option 2) — une preuve **end-to-end offline**
-(`BookPipelineTranslateContentFunctionalTest`, corpus réel réduit, LLM
-déterministe) que `bookPipeline` avec `targetLanguage` **publie** le livre
-traduit (HTML/PDF/EPUB) en préservant la structure (D1), sans coût metered.
+S-271 (2026-09-27) a livré l'**EPIC DOC-BOOK-MULTILANG** (4 US + cadrage) :
+le livre structuré se traduit désormais en **plusieurs langues** en un seul run
+(`translateBookAllLanguages`), la structure restant régénérée par construction
+(D1). Décision pilote S-271 : **aucune traduction réelle** — tout est prouvé
+**offline** (fake LLM déterministe).
 
-**EPIC DOC-BOOK-TRANSLATE = 6/6 US TERMINÉ.** Le run LLM *metered* (livre
-FR→EN réel, extension `translateToAll`) n'est plus un bloquant d'EPIC : c'est
-une US ultérieure optionnelle, sur accord pilote.
+**EPIC DOC-BOOK-MULTILANG = 4/4 US TERMINÉ.** Le run LLM *metered* (réel, N
+langues) reste une décision pilote ultérieure.
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : republication multi-format du livre
-  FPA après convergence du corpus A1 (Tombouctou). **Bloqué** (16 pages
-  `[ILLISIBLE]`). Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste
-  préexistant tant qu'A1 n'a pas convergé.
-* *US ultérieure optionnelle* — dogfooding **LLM réel metered** du livre
-  FR→EN + extension multi-langue (`translateToAll` dérivé de
-  `LanguageCatalog` N0, pattern `capsule.multilang`). Accord pilote requis.
+  FPA après convergence du corpus A1 (Tombouctou). **Bloqué** (`[ILLISIBLE]`).
+  Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant
+  qu'A1 n'a pas convergé.
+* *Run LLM réel metered* — livre FR→EN (ou N langues) avec le vrai LLM. Coût
+  tokens → accord pilote explicite requis (interdit S-271).
+* *Publication fan-out multi-format* — convertir les N `book-<lang>.adoc` en N
+  formats exige N tâches de conversion (EPIC de *publication* distinct, non
+  ouvert — décision D1 du cadrage MULTILANG).
 * *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
   Vérifier le POM versionné HTTP 200 avant tout pin (piège #11).
 
-== État du code (S-270)
+== État du code (S-271)
 
-- *0.0.18 PUBLIÉE* Central. Le HEAD porte l'EPIC DOC-BOOK-TRANSLATE complet
-  (US-2→US-5 câblage + US-6 preuve end-to-end fake), non publié.
+- *0.0.18 PUBLIÉE* Central. Le HEAD porte DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG,
+  non publié.
 - *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18 ; réaligné S-269).
-- *Tâche `translateBook`* : traduit le **domaine** Book (titres + corps) puis
-  `BookAssembler` régénère la structure (D1). Sortie `book-<lang>.adoc`
-  (knob `outputFileName`), `skipExisting`, no-op si `targetLanguage`
-  vide/identique.
-- *DSL* : `book { sourceLanguage; targetLanguage }` (défauts `fr`/`""`) +
-  flat `bookSourceLanguage`/`bookTargetLanguage` + CLI
-  `-Pdocument.bookTargetLanguage`. Contrat N3 `BookConfig` étendu (additif).
-- *`bookPipeline`* : dépend de `translateBook` ; langue cible configurée →
-  convertisseurs sur `book-<lang>.adoc`. Ordre fixé au **configuration time**
-  (piège #36 — `whenReady` est trop tard).
-- *Preuves* : US-5 `BookTranslateContentTest` (structure domaine plein
-  échelle, 0 dangling) + **US-6 `BookPipelineTranslateContentFunctionalTest`**
-  (end-to-end publication traduite, corpus réel réduit, fake LLM).
-- *Bug parser corrigé (S-269)* : `isHeading`/`HEADING_PATTERN` (ligne `=` non
-  titre : flèches OCR `=>`, `=*`, `====`).
-- *EPICs* : DOC-BOOK-CONSISTENCY ✅, DOC-BOOK-IMAGES ✅, DOC-BOOK-MATTER ✅,
-  DOC-BOOK-CONSISTENCY-B6 ✅, CROSS-DOC-BOOK-FIDELITY ✅, DOC-PUB ✅ 0.0.18,
-  **DOC-BOOK-TRANSLATE ✅ TERMINÉ 6/6 US**.
-- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
+- *Tâche `translateBook`* (mono) : traduit le domaine Book, sortie
+  `book-<lang>.adoc`. Refactorée S-271 pour déléguer à `BookTranslationRunner`
+  (DRY) — comportement inchangé.
+- *Tâche `translateBookAllLanguages`* (multi, S-271) : plan dérivé de
+  `LanguageCatalog` N0 par `BookLanguagePlanner` ; produit `book-<lang>.adoc`
+  par langue ; `skipExisting` par langue ; `@OutputFiles` dynamique.
+- *DSL (S-271, additif)* : `book { translateToAll }` (défaut `false`) +
+  `book { targetLanguages }` (liste, prioritaire) + mirror flat + CLI
+  `-Pdocument.bookTargetLanguages=en,de` / `-Pdocument.bookTranslateToAll=true`.
+  Contrat N3 `BookConfig` étendu (additif, round-trip idempotent).
+- *Domaine pur* : `BookLanguagePlanner` / `BookLanguageTarget`
+  (`document/BookLanguagePlanner.kt`) + `BookTranslationRunner`
+  (`document/BookTranslationRunner.kt`).
+- *Preuves* : 10 UT planner + 5 FT TestKit + 7 BDD `@book-multilang`
+  (24e runner) + 1 FT dogfooding corpus réel offline.
+- *EPICs* : DOC-BOOK-TRANSLATE ✅, `DOC-BOOK-MULTILANG ✅ TERMINÉ 4/4 US`.
+- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc`.
 
-== Pièges Gradle à retenir (S-232..S-270)
+== Pièges Gradle à retenir (S-232..S-271)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -107,15 +106,22 @@ une US ultérieure optionnelle, sur accord pilote.
 39. *Le corps OCR peut porter une ancre in-band* (S-270) : une page peut
     commencer par `[[page-N]]` (artefact, non structurel). Le pivot est lossy
     dessus ; le gate D1 porte sur les **refs structurelles de la TOC**, jamais
-    sur une égalité byte-à-byte du jeu d'ancres (l'ancre in-band du source peut
-    légitimement disparaître dans le livre traduit).
+    sur une égalité byte-à-byte du jeu d'ancres.
+40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271) : le
+    répertoire `docs/document/` est partagé par plusieurs tâches ; revendiquer
+    un `@OutputDirectory` dessus crée un conflit de sorties. Une collection
+    `@OutputFiles` peuplée par un provider reflète le plan exact (une sortie
+    par entrée).
+41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271) : le
+    service de traduction est construit **par langue cible** (factory), sinon
+    tous les livres produits seraient identiques.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. Le **23e runner dédié** est
-`bookTranslateCucumberTest` (S-269).
++ `frontmatter_retranslate.feature`. Le **24e runner dédié** est
+`bookMultilangCucumberTest` (S-271).
 
 == Méthode
 
@@ -127,7 +133,7 @@ rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-270).
+- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-271).
 - `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule.
 - Ne jamais lancer `./gradlew test` complet sans permission.
 
@@ -136,13 +142,14 @@ rapports Gradle natifs uniquement.
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Décision pilote — `DOC-FPA-PUBLISH-0` (STANDBY) ou US metered optionnelle.
+4. Décision pilote — `DOC-FPA-PUBLISH-0` (STANDBY), run metered, ou fan-out.
 
 == Vision « livre content SERVER »
 
-Le produit est servable, auditable, documenté, illustré et distribué de bout en
-bout. L'EPIC `DOC-BOOK-TRANSLATE` a ouvert le multi-langue : traduire le domaine
-Book, régénérer la structure, produire `book-<lang>.adoc` puis HTML/PDF/EPUB par
-langue. **US-0→US-6 livrées — EPIC TERMINÉ.** Le run LLM réel metered et
-l'extension N langues restent optionnels (accord pilote).
+Le produit est servable, auditable, documenté, illustré, distribué et désormais
+**multi-langue** de bout en bout. `DOC-BOOK-TRANSLATE` a ouvert la traduction
+mono-langue ; **`DOC-BOOK-MULTILANG` la généralise au catalogue N0 entier
+(22 langues)** — toutes les preuves sont offline (fake LLM), le run réel
+metered reste une décision pilote.
+
 

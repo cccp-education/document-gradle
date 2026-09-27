@@ -114,6 +114,12 @@ abstract class DocumentExtension {
     /** Book pipeline (DOC-BOOK-TRANSLATE) — language `translateBook` produces (blank = no translation). */
     abstract val bookTargetLanguage: Property<String>
 
+    /** Book pipeline (DOC-BOOK-MULTILANG) — expand the plan to the whole LanguageCatalog minus the source. */
+    abstract val bookTranslateToAll: Property<Boolean>
+
+    /** Book pipeline (DOC-BOOK-MULTILANG) — explicit target-language subset (takes precedence). */
+    abstract val bookTargetLanguages: ListProperty<String>
+
     /**
      * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.

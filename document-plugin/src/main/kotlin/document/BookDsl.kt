@@ -2,6 +2,7 @@ package document
 
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -55,6 +56,17 @@ import org.gradle.api.provider.Property
  *     }
  * }
  * ```
+ *
+ * DOC-BOOK-MULTILANG adds the multi-language knobs:
+ *
+ * ```
+ * document {
+ *     book {
+ *         translateToAll.set(true)                 // the whole LanguageCatalog − source
+ *         targetLanguages.set(listOf("en", "de"))  // explicit subset (takes precedence)
+ *     }
+ * }
+ * ```
  */
 class BookDsl(
     val pagesDir: DirectoryProperty,
@@ -88,4 +100,16 @@ class BookDsl(
      * Blank (default) means "no translation": the task stays inactive.
      */
     val targetLanguage: Property<String>,
+    /**
+     * DOC-BOOK-MULTILANG — expand the multi-language plan to the whole
+     * `LanguageCatalog` (N0) minus [sourceLanguage]. Off by default; used only
+     * by `translateBookAllLanguages`.
+     */
+    val translateToAll: Property<Boolean>,
+    /**
+     * DOC-BOOK-MULTILANG — an explicit target-language subset for
+     * `translateBookAllLanguages` (takes precedence over [translateToAll]).
+     * Empty by default.
+     */
+    val targetLanguages: ListProperty<String>,
 )

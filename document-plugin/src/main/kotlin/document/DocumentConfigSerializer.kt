@@ -87,6 +87,11 @@ class DocumentConfigSerializer {
             config.book.navigation?.let { book.put("navigation", it) }
             config.book.sourceLanguage?.let { book.put("sourceLanguage", it) }
             config.book.targetLanguage?.let { book.put("targetLanguage", it) }
+            config.book.translateToAll?.let { book.put("translateToAll", it) }
+            config.book.targetLanguages?.takeIf { it.isNotEmpty() }?.let { langs ->
+                val array = book.putArray("targetLanguages")
+                langs.forEach { array.add(it) }
+            }
             root.set<ObjectNode>("book", book)
         }
 
@@ -160,6 +165,12 @@ class DocumentConfigSerializer {
                 navigation = bookNode.get("navigation")?.takeIf { !it.isNull }?.asBoolean(),
                 sourceLanguage = bookNode.get("sourceLanguage")?.textValueOrNull(),
                 targetLanguage = bookNode.get("targetLanguage")?.textValueOrNull(),
+                translateToAll = bookNode.get("translateToAll")?.takeIf { !it.isNull }?.asBoolean(),
+                targetLanguages = bookNode.get("targetLanguages")
+                    ?.takeIf { it.isArray }
+                    ?.map { it.textValueOrNull() }
+                    ?.filterNotNull()
+                    ?.takeIf { it.isNotEmpty() },
             )
         } else {
             BookConfig()

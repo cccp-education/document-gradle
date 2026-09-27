@@ -1,32 +1,32 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:borough: New Orleans
-:session: 271
-:session_precedente: 270 — DOC-BOOK-TRANSLATE US-6 (dogfooding end-to-end fake) + clôture EPIC
-_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-270). Ce fichier
+
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-271). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 271 — sur décision pilote
+== Mission session 272 — sur décision pilote
 
-S-270 (2026-09-27) a **clos l'EPIC DOC-BOOK-TRANSLATE** (6/6 US) : l'US-6 a été
-livrée en mode `fake` (accord pilote, option 2) — un FT end-to-end offline
-(`BookPipelineTranslateContentFunctionalTest`, corpus réel réduit, LLM
-déterministe) prouvant que `bookPipeline` avec `targetLanguage` publie le livre
-traduit (HTML/PDF/EPUB) en préservant la structure (D1).
+S-271 (2026-09-27) a livré l'**EPIC DOC-BOOK-MULTILANG** (4/4 US + cadrage) : le
+livre structuré se traduit désormais en **plusieurs langues** en un run
+(`translateBookAllLanguages`, plan dérivé de `LanguageCatalog` N0). Décision
+pilote S-271 : **aucune traduction réelle** — toutes les preuves sont offline
+(fake LLM déterministe).
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
-- US metered optionnelle (livre FR→EN réel + extension `translateToAll`) — accord pilote.
+- Run LLM *metered* réel (N langues) — accord pilote requis (interdit S-271).
+- Fan-out publication multi-format (N livres × N formats) — EPIC distinct.
 - Drift catalogue ws (piège #13) si MEMPHIS bump.
 
 == Méthode (rappel)
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-CONTRAINTE GLOBALE : *Zéro Python*. English only code/tests.
+CONTRAINTE GLOBALE : *Zéro Python*. English only code/tests/features.
 
 == Publication 0.0.18 (S-264) — rappel
 
 - MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog 0.0.57).
 - document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18).
-- Un futur bump (0.0.19) inclura l'EPIC DOC-BOOK-TRANSLATE — sur accord pilote.
+- Un futur bump (0.0.19) inclura DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG — sur
+  accord pilote.

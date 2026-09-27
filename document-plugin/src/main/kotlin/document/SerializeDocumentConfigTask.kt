@@ -3,6 +3,7 @@ package document
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -121,6 +122,12 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Input
     @get:Optional
     abstract val bookTargetLanguage: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookTranslateToAll: Property<Boolean>
+    @get:Input
+    @get:Optional
+    abstract val bookTargetLanguages: ListProperty<String>
 
     init {
         group = "document"
@@ -175,6 +182,8 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 navigation = bookNavigation.orNull,
                 sourceLanguage = bookSourceLanguage.orNull,
                 targetLanguage = bookTargetLanguage.orNull,
+                translateToAll = bookTranslateToAll.orNull,
+                targetLanguages = bookTargetLanguages.orNull,
             ),
         )
 

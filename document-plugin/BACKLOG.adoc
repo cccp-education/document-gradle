@@ -1,6 +1,15 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-27 (session 271 — **DOC-BOOK-MULTILANG ✅ TERMINÉ
+4/4 US + cadrage** — décision pilote : implémenter l'extension multi-langue
+`translateToAll`, **preuves offline uniquement** (fake LLM, aucune traduction
+réelle). Le livre structuré se traduit en plusieurs langues en un run. Domaine
+pur `BookLanguagePlanner` (plan dérivé de `LanguageCatalog` N0) + extraction
+DRY `BookTranslationRunner` + tâche `translateBookAllLanguages` + DSL
+`book { translateToAll; targetLanguages }` + N3 `BookConfig` additif. 10 UT +
+5 FT + 7 BDD `@book-multilang` (24e runner) + 1 FT dogfooding corpus réel
+offline. Le fan-out publication (N livres × N formats) reste un EPIC distinct.)
 _Date revision_ : 2026-09-27 (session 270 — **DOC-BOOK-TRANSLATE US-6 ✅ +
 EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding **end-to-end offline**
 (fake LLM, corpus réel réduit, Règle 7). Nouveau FT
@@ -281,6 +290,57 @@ un scan OCR peut porter une ancre **in-band** (`[[page-10]]`) non structurelle,
 légitimement perdue par le pivot (lossy) — le gate D1 porte sur les refs de la
 TOC, jamais sur une égalité byte-à-byte d'ancres (piège #39). Discrimination
 prouvée par sabotage one-shot. Test-only, zéro prod modifié.
+
+'''
+
+'''
+== EPIC DOC-BOOK-MULTILANG — Traduction multi-langue du livre structuré ✅ TERMINÉ (S-271)
+
+_Origine : décision pilote S-271 — implémenter l'extension multi-langue
+`translateToAll` dérivée de `LanguageCatalog` N0 (pattern `capsule.multilang`).
+Contrainte explicite : **ne lancer aucune traduction réelle** (fake LLM offline)._
+_Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc` (5 constats, 10 décisions)._
+
+*Constat* : l'EPIC `DOC-BOOK-TRANSLATE` a livré la traduction **mono-langue** du
+livre (DSL `book { targetLanguage }` = un `String`). L'extension N langues
+était explicitement différée. Le catalogue N0 (`LanguageCatalog`, 22 langues)
+existe déjà : le multi-langue est une **itération** du même moteur, pas une
+nouvelle chaîne.
+
+*Décision* : plan **dérivé** de `LanguageCatalog` (source de vérité unique, zéro
+split-brain) ; sous-ensemble explicite prioritaire sur `translateToAll` ; la
+publication fan-out (N livres × N formats) est **hors périmètre** (EPIC distinct).
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+| DOC-BOOK-MULTILANG-0 | Cadrage EPIC (gouvernance pure) — 5 constats, 10 décisions | ✅ TERMINÉ (S-271) | 1
+| DOC-BOOK-MULTILANG-1 | Domaine pur `BookLanguagePlanner` + `BookLanguageTarget` (plan dérivé du catalogue N0) | ✅ TERMINÉ (S-271 — 10 UT) | 3
+| DOC-BOOK-MULTILANG-2 | Extraction DRY `BookTranslationRunner` + tâche `translateBookAllLanguages` + DSL/CLI + N3 `BookConfig` | ✅ TERMINÉ (S-271 — 5 FT) | 4
+| DOC-BOOK-MULTILANG-3 | BDD `@book-multilang` (24e runner `bookMultilangCucumberTest`) | ✅ TERMINÉ (S-271 — 7/7) | 3
+| DOC-BOOK-MULTILANG-4 | Dogfooding end-to-end offline (fake LLM, corpus réel réduit, Règle 7) | ✅ TERMINÉ (S-271) | 2
+|===
+
+*Total* : ~13 pts + cadrage. **EPIC TERMINÉ 4/4 US.**
+
+*Gate structurel* (cœur) : pour **chaque** langue du plan, le `book-<lang>.adoc`
+porte les mêmes **refs structurelles de la TOC** que la source (`[[ref]]`), plus
+`:doctype: book` et `toc::[]`. *Non-goals* : pas de fan-out publication, pas de
+run LLM metered, pas de rendu RTL.
+
+*Backward compat* : sans les nouveaux knobs, `translateBook` mono-langue et
+`bookPipeline` sont byte-identiques (défauts `translateToAll=false` /
+`targetLanguages=[]`).
+
+*Extraction DRY* : `BookTranslationRunner` (domaine Gradle-free) partage la
+chaîne translate→assemble→materialise→write entre la tâche mono et la tâche
+multi — zéro duplication.
+
+*Preuves offline* (contrainte pilote) : 10 UT planner + 5 FT TestKit + 7 BDD +
+1 FT dogfooding corpus réel (2 langues `en`/`de`) — **aucun appel LLM réel**.
+
+*Pièges* : #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out) + #41
+(fake suffixé par langue cible, pas source).
 
 '''
 

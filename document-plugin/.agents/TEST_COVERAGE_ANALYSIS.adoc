@@ -1,6 +1,35 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-27
-:session: 270
+:session: 271
+
+== Session 271 — DOC-BOOK-MULTILANG (10 UT + 5 FT + 7 BDD + 1 FT dogfooding)
+
+*Périmètre* : traduction **multi-langue** du livre structuré (EPIC
+DOC-BOOK-MULTILANG, 4/4 US). Preuves **offline** (fake LLM, contrainte pilote).
+
+*Nouveaux tests* :
+
+- `document.BookLanguagePlannerTest` — **10 UT** (domaine pur) : sous-ensemble
+  explicite verbatim, exclusion source, `translateToAll` = catalogue moins la
+  source, précédence du sous-ensemble, dédoublonnage, code inconnu ignoré,
+  no-op vide, métadonnées + `fileName(base)`, RTL, catalogue N0 réel.
+- `document.BookMultilangFunctionalTest` — **5 FT** (TestKit) : sous-ensemble
+  explicite (n livres), `translateToAll`, no-op sans knob, CLI prioritaire,
+  `outputFileName` honoré + `book.adoc` jamais muté.
+- `document.bookmultilang` — **7 BDD** (`@book-multilang`, 24e runner) : plan
+  explicite, expansion catalogue, précédence, no-op, naming, code inconnu, RTL.
+- `document.BookMultilangContentFunctionalTest` — **1 FT** dogfooding corpus
+  réel réduit (fake LLM, Règle 7) : `book-en.adoc` + `book-de.adoc` D1 intacts.
+- `document.BookDslTest` — +1 UT (knobs multi-langue) ;
+  `document.DocumentConfigSerializerTest` — +1 UT (round-trip N3 multi-langue).
+
+*Non-régression* : `TranslateBookTaskUnitTest` + `BookTranslatorTest` +
+`BookTranslateContentTest` + `DocumentPluginPublicationTest` (4/4) VERTS après
+l'extraction DRY `BookTranslationRunner`.
+
+*Gates* : `test` 5506/0, `functionalTest` 158/1 (1 préexistant
+`AssembleBookTaskContentRichTocTest` page 73, drift corpus A1), `check` VERT
+sauf ce préexistant, `bookMultilangCucumberTest` 7/7, `validatePlugins` VERT.
 
 == Session 270 — DOC-BOOK-TRANSLATE US-6 (1 FT ajouté, clôture EPIC)
 

@@ -1,0 +1,110 @@
+= Session 271 — DOC-BOOK-MULTILANG (traduction multi-langue du livre, offline)
+
+:date: 2026-09-27
+:borough: New Orleans (document-gradle)
+:epic: DOC-BOOK-MULTILANG
+:session_precedente: 270 — DOC-BOOK-TRANSLATE US-6 + clôture EPIC
+
+== Mission (décision pilote)
+
+À l'ouverture, les seuls items actionnables étaient : `DOC-FPA-PUBLISH-0`
+(STANDBY, bloqué par A1), le run LLM *metered* (coût), et l'extension
+`translateToAll` (marquée « accord pilote »). Le pilote a choisi cette dernière
+avec une contrainte explicite : **« attaque mais tu ne te lances pas dans les
+traductions »** — l'implémentation se fait **offline** (fake LLM déterministe),
+aucun run metered.
+
+== Livré (EPIC DOC-BOOK-MULTILANG, 4 US + cadrage)
+
+Le livre structuré se traduit désormais en **plusieurs langues** en un seul run,
+la structure étant régénérée par construction (D1 de DOC-BOOK-TRANSLATE).
+
+* **US-0 cadrage** — `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc` : audit 5
+  constats, 10 décisions. Le catalogue N0 (`LanguageCatalog`, 22 langues)
+  existe déjà ; le multi-langue est une **itération** du moteur mono-langue,
+  pas une nouvelle chaîne. La publication fan-out (N livres × N formats) est
+  explicitement **hors périmètre** (EPIC distinct).
+* **US-1 domaine pur** — `BookLanguagePlanner` + `BookLanguageTarget` :
+  plan **dérivé** de `LanguageCatalog` (sous-ensemble explicite prioritaire,
+  sinon `translateToAll` = catalogue moins la source), ordre déterministe,
+  dédoublonnage, code inconnu ignoré, RTL porté. 10 UT.
+* **US-2 tâche + DSL + N3** — tâche `translateBookAllLanguages` (`@OutputFiles`
+  dynamique, `skipExisting` par langue) ; **extraction DRY** du moteur en
+  `BookTranslationRunner` partagé par `translateBook` et la nouvelle tâche ;
+  DSL `book { translateToAll }` + `book { targetLanguages }` (+ mirror flat,
+  CLI `-Pdocument.bookTargetLanguages` CSV) ; contrat N3 `BookConfig`
+  additif + round-trip. 5 FT TestKit.
+* **US-3 BDD** — `book_multilang.feature` 7 scénarios + 24e runner dédié
+  `bookMultilangCucumberTest`. 7/7 PASSED.
+* **US-4 dogfooding offline** — `BookMultilangContentFunctionalTest` : le
+  corpus réel réduit (2 langues `en`/`de`, fake LLM) produit `book-en.adoc` +
+  `book-de.adoc` structurellement intacts (refs TOC D1), `book.adoc` jamais
+  produit. PASSED.
+
+== Baby-step DDD/TDD/BDD (RED → GREEN → REFACTOR)
+
+. **US-1 RED** : `BookLanguagePlannerTest` → `Unresolved reference
+  'BookLanguagePlanner'` (compile fail) → **GREEN** 10/10.
+. **US-2** : FT écrit → PASSED (implémentation déjà présente après refactor
+  DRY) → **discrimination par sabotage one-shot** (`if (true) return` en tête
+  d'action) → 4/5 FT FAILED, le scénario no-op restant PASSED → production
+  restaurée.
+. **US-3 RED** : glue volontairement cassée (`document.bookmultilang.nonexistent`)
+  → 7 `UndefinedStepException` (le runner découvre bien la feature) → **GREEN**
+  7/7 avec la glue correcte.
+. **US-4** : dogfooding corpus réel, fake LLM → PASSED.
+
+== Découvertes / pièges
+
+* *Le catalogue N0 est la source de vérité* — aucun catalogue local à créer ;
+  `LanguageCatalog.ALL` porte les 22 langues (+ 3 RTL `ar`/`ur`/`fa`). Le
+  split-brain est évité par construction (D2).
+* *Le moteur mono-langue était dupliquable* — sans l'extraction
+  `BookTranslationRunner`, la nouvelle tâche aurait recopié la chaîne
+  translate→assemble→materialise→write. L'extraction prouve la non-régression
+  par les tests existants (`TranslateBookTaskUnitTest` vert).
+* *`@OutputFiles` pour un fan-out dynamique* — un `@OutputDirectory` aurait
+  revendiqué le répertoire partagé `docs/document/` (conflit de tâches) ; la
+  collection `@OutputFiles` peuplée par un provider reflète le plan exact.
+* *Suffixe fake par langue cible* — le fake mono-langue suffixe la cible ; le
+  multi doit suffixer **chaque** cible, sinon tous les livres seraient
+  identiques (bug attrapé par la conception du factory).
+
+== Gates
+
+[cols="1,3"]
+|===
+| Gate | Résultat
+
+| `compileKotlin` / `compileTestKotlin` | **VERT**
+| `test` | **5506 tests, 0 failure** (1071 actifs + skips Cucumber globaux)
+| `functionalTest` | **158 tests, 1 failure** — `AssembleBookTaskContentRichTocTest` (page 73, **préexistant** drift corpus A1, S-269 notait 151/1)
+| `bookMultilangCucumberTest` | **7/7 PASSED** (24e runner)
+| `bookTranslateCucumberTest` | non-régression VERT
+| `validatePlugins` | **VERT**
+| Dogfooding offline | `book-en.adoc` + `book-de.adoc` structurellement intacts (fake LLM, corpus réduit, Règle 7)
+| Secrets | **RAS** (grep dédié)
+| Production | 3 fichiers prod créés + 1 refactor DRY + wiring DSL/N3
+|===
+
+== Fichiers
+
+* Créés : `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc`,
+  `BookLanguagePlanner.kt`, `BookTranslationRunner.kt`,
+  `TranslateBookAllLanguagesTask.kt`, `BookLanguagePlannerTest.kt`,
+  `BookMultilangFunctionalTest.kt`, `BookMultilangContentFunctionalTest.kt`,
+  `bookmultilang/BookMultilangCucumberRunner.kt`,
+  `bookmultilang/BookMultilangSteps.kt`, `book_multilang.feature`.
+* Modifiés : `TranslateBookTask.kt` (refactor runner), `BookDsl.kt`,
+  `BookConfig.kt`, `DocumentConfigSerializer.kt`, `DocumentExtension.kt`,
+  `SerializeDocumentConfigTask.kt`, `DocumentPlugin.kt`, `build.gradle.kts`,
+  `BookDslTest.kt`, `DocumentConfigSerializerTest.kt`.
+
+== Prochaine session
+
+* `DOC-FPA-PUBLISH-0` (STANDBY — attend la convergence A1 Tombouctou).
+* Run LLM *metered* (livre FR→EN réel, ou N langues) — **sur accord pilote
+  uniquement** (contrainte S-271 : aucune traduction réelle cette session).
+* Publication fan-out multi-format (N livres × N formats) — EPIC distinct, non
+  ouvert.
+* Drift catalogue ws (piège #13) si MEMPHIS bump.

@@ -1,0 +1,239 @@
+= Cadrage EPIC DOC-BOOK-MULTILANG — Traduction multi-langue du livre structuré
+
+_Date_ : 2026-09-27
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : décision pilote S-271 — « implémenter l'extension `translateToAll`
+dérivée de `LanguageCatalog` N0 (pattern `capsule.multilang`) ». Contrainte
+explicite : **ne lancer aucune traduction réelle** (fake LLM offline).
+_Statut_ : ✅ TERMINÉ (S-271 — cadrage + 4 US, preuves offline)
+_Pattern_ : gouvernance pure S-057/S-063 + baby-step DDD/TDD/BDD strict
+
+== Contexte
+
+L'EPIC `DOC-BOOK-TRANSLATE` (S-267→S-270, ✅ TERMINÉ 6/6 US) a livré la
+traduction **mono-langue** du livre structuré : traduire le *domaine* Book
+(titres + corps), puis laisser `BookAssembler` **régénérer** la structure
+(ancres `[[ref]]`, `:doctype: book`, `toc::[]`, navigation). La contrainte D1
+(le parser pivot est *lossy* sur les constructions de livre) est prouvée.
+
+Le DSL expose un unique `book { targetLanguage }` (un `String`), donc **un
+seul** livre traduit `book-<lang>.adoc` est produit par run. L'extension
+N langues était explicitement différée : « extension multi-langue
+(`translateToAll` dérivé de `LanguageCatalog` N0, pattern `capsule.multilang`)
+— US ultérieure optionnelle, sur accord pilote ».
+
+La demande pilote S-271 ouvre cette US.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *Le catalogue N0 porte déjà les 22 langues* — `LanguageCatalog.ALL` (et
+  `supportedCodes()`) expose code / name / nativeName / rtl / localeTag, avec
+  `fr` et `en` présents et 3 langues RTL (`ar`, `ur`, `fa`). Aucun split-brain
+  de catalogue à créer : la source de vérité existe.
+| `i18n-contracts/src/main/kotlin/contracts/i18n/LanguageCatalog.kt` (22 entrées).
+
+| 2
+| *La brique mono-langue est réutilisable telle quelle* — `BookTranslator`
+  (domaine pur, `translate(tree, resolver, src, tgt)`) + `BookAssembler`
+  régénèrent un livre traduit structurellement intact. Rien à réinventer : le
+  multi-langue est une **itération** du même moteur.
+| `BookTranslator.kt`, `TranslateBookTask.kt:139-189`.
+
+| 3
+| *Le pattern capsule est le précédent cross-borough* — `capsule.multilang`
+  dérive ses locales de `LanguageCatalog.supportedCodes()`, bâtit un plan pur
+  (`CapsuleVideoPlanner`) puis un runner pur applique l'Économie d'Encre
+  (skip si artefact valide), le tout derrière une tâche thin.
+| `capsule-gradle/.../multilang/*` (S-082 → S-217).
+
+| 4
+| *Aucun knob multi-langue n'existe* — `BookDsl` n'a que `targetLanguage`
+  (singulier), `BookConfig` (contrat N3) non plus. Le `bookPipeline` alimente
+  les convertisseurs depuis un unique `sourceFile` (`translateBook.outputFile`).
+| `BookDsl.kt:90`, `BookConfig.kt:44`, `DocumentPlugin.kt:507-523`.
+
+| 5
+| *Le fan-out de publication est un problème distinct* — convertir N livres
+  en N formats exige N tâches de conversion (une par langue), ce que la
+  structure Gradle actuelle (5 tâches `convertDocumentTo*` mono-source) ne
+  permet pas sans enregistrer des tâches dynamiques. C'est un EPIC de
+  *publication*, pas de *traduction*.
+| `registerConvertTasks` (5 tâches statiques), `sourceFile: RegularFileProperty`.
+
+|===
+
+== Décisions
+
+[cols="1,4", options="header"]
+|===
+| # | Décision
+
+| D1
+| *Périmètre = traduction multi-langue* (produire N `book-<lang>.adoc`), pas la
+  publication fan-out multi-format (déférée, EPIC distinct). Le livrable de cet
+  EPIC est le corpus multi-langue du livre, structurellement intact.
+
+| D2
+| *Source de vérité = `LanguageCatalog` N0* (constat #1) — zéro nouveau
+  catalogue, zéro split-brain. La sélection est *dérivée*, jamais recopiée.
+
+| D3
+| *Le plan est un domaine pur* (`BookLanguagePlanner` + `BookLanguageTarget`,
+  Gradle-free, N0 injectable) : ordre déterministe, dédoublonnage, exclusion
+  de la langue source, codes inconnus ignorés. Testable en UT pur.
+
+| D4
+| *Deux knobs additifs* : `book { translateToAll }` (défaut `false` → toutes les
+  langues du catalogue) et `book { targetLanguages }` (sous-ensemble explicite).
+  Précédence : `targetLanguages` (si non vide) > `translateToAll` > no-op.
+  Rétro-compatibilité totale : `translateBook` mono-langue et les défauts
+  existants sont intacts.
+
+| D5
+| *Extraction du moteur mono-langue en runner pur* (`BookTranslationRunner`,
+  Gradle-free) partagé par `TranslateBookTask` et la nouvelle tâche — DRY,
+  zéro duplication de la chaîne translate→assemble→materialise→write.
+
+| D6
+| *Tâche thin `translateBookAllLanguages`* : résout le plan, construit **une**
+  fabrique de service de traduction, itère le runner. `@OutputFiles` (collection
+  dynamique) pour déclarer les N sorties ; `@DisableCachingByDefault` (LLM non
+  déterministe). Économie d'Encre : `skipExisting` par langue.
+
+| D7
+| *N3 contract additif* : `BookConfig.translateToAll` / `targetLanguages`
+  (nullables, omis quand absents). Round-trip idempotent préservé.
+
+| D8
+| *RTL informatif, pas rendu* : le plan porte `rtl` ; le rendu RTL du livre
+  (`:lang:`, direction) est un suivi distinct (non requis pour produire le
+  corpus traduit).
+
+| D9
+| *Zéro traduction réelle* : toutes les preuves (UT/FT/BDD/dogfooding) utilisent
+  `llmMode=fake`, déterministe et offline (Règle 2 + contrainte pilote). Le run
+  LLM metered reste une décision pilote ultérieure.
+
+| D10
+| *Baby-step DDD/TDD/BDD strict* : US-1 domaine pur (UT) → US-2 tâche + DSL + N3
+  (FT TestKit) → US-3 BDD `@book-multilang` runner dédié → US-4 dogfooding
+  end-to-end offline (corpus réduit, Règle 7).
+
+|===
+
+== User Stories
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-BOOK-MULTILANG-0
+| Cadrage EPIC (gouvernance pure) — audit 5 constats, 10 décisions.
+| — (gouvernance)
+| 1
+| ✅ TERMINÉ (S-271)
+
+| DOC-BOOK-MULTILANG-1
+| Domaine pur `BookLanguagePlanner` + `BookLanguageTarget` : plan dérivé de
+  `LanguageCatalog` (N0), `translateToAll` / `requested`, exclusion source,
+  dédoublonnage, ordre déterministe, code inconnu ignoré, `fileName(base)`.
+| UT (`BookLanguagePlannerTest`, 10)
+| 3
+| ✅ TERMINÉ (S-271)
+
+| DOC-BOOK-MULTILANG-2
+| Extraction `BookTranslationRunner` (DRY) + tâche `translateBookAllLanguages`
+  + DSL `translateToAll`/`targetLanguages` (+ mirror flat + CLI) + N3 `BookConfig`
+  additif. FT TestKit (fake LLM).
+| UT runner + FT (`BookMultilangFunctionalTest`, 5)
+| 4
+| ✅ TERMINÉ (S-271)
+
+| DOC-BOOK-MULTILANG-3
+| BDD `@book-multilang` — scénarios : plan plein catalogue, sous-ensemble
+  explicite, source exclue, no-op si aucun knob, structure D1 préservée par
+  langue. Runner dédié `bookMultilangCucumberTest`.
+| BDD 7 scénarios
+| 3
+| ✅ TERMINÉ (S-271)
+
+| DOC-BOOK-MULTILANG-4
+| Dogfooding end-to-end **offline** (fake LLM, corpus réel réduit, Règle 7) :
+  `translateBookAllLanguages` produit `book-<lang>.adoc` pour chaque langue du
+  plan, structure D1 préservée (refs TOC), `book.adoc` jamais muté.
+| FT dogfooding (`BookMultilangContentFunctionalTest`, 1)
+| 2
+| ✅ TERMINÉ (S-271)
+
+|===
+
+_Total_ : ~13 pts, 4 US + cadrage. **EPIC TERMINÉ 4/4 US (S-271).**
+
+== Dépendances (DAG)
+
+----
+MULTILANG-0 (cadrage) ─→ MULTILANG-1 (planner pur) ─→ MULTILANG-2 (runner + tâche + DSL + N3)
+                                                              │
+                                                              ├─→ MULTILANG-3 (BDD)
+                                                              └─→ MULTILANG-4 (dogfooding offline)
+----
+
+== DSL proposé (surface publique)
+
+[source,kotlin]
+----
+document {
+    book {
+        pagesDir.set(file("src/book/pages"))
+        tocFile.set(file("src/book/toc.adoc"))
+        sourceLanguage.set("fr")          // défaut "fr"
+        translateToAll.set(true)          // dérive LanguageCatalog N0 moins la source
+        // OU un sous-ensemble explicite (prioritaire) :
+        targetLanguages.set(listOf("en", "de", "es"))
+    }
+}
+----
+
+*Précédence* : CLI `-Pdocument.bookTargetLanguages=en,de` /
+`-Pdocument.bookTranslateToAll=true` > DSL > défaut vide (no-op).
+
+== Gates
+
+* *Gate structurel (cœur)* : pour **chaque** langue du plan, le
+  `book-<lang>.adoc` porte les **mêmes refs structurelles de la TOC** que la
+  source (`[[ref]]`), plus `:doctype: book` et `toc::[]`, avec 0 ref dangling.
+* *Gate plan* : `fr` source exclue ; 22 langues catalogue → 21 cibles ; ordre
+  déterministe ; dédoublonnage ; code inconnu ignoré.
+* *Gate non-régression* : `bookPipeline` / `translateBook` mono-langue
+  byte-identiques sans les nouveaux knobs ; baseline UT/FT/BDD préservée ;
+  23 runners Cucumber existants verts.
+* *Gate Économie d'Encre* : `skipExisting` par langue ; aucun knob → aucune
+  tâche active.
+* *Gate dogfooding offline* : zéro appel LLM réel (`llmMode=fake`), corpus
+  privé en lecture seule.
+
+== Risques
+
+* *Risque #1 (coût LLM)* : 21 langues × livre ≈ 200 pages = coût metered réel.
+  Mitigation : opt-in, `skipExisting`, preuves offline (D9). Le run réel reste
+  une décision pilote.
+* *Risque #2 (fidélité OCR)* : marqueurs `[ILLISIBLE]` — hors périmètre
+  (la fidélité du marqueur est un point du cadrage DOC-BOOK-TRANSLATE, non
+  rouvert).
+* *Risque #3 (fan-out publication)* : non traité (D1) — documenté comme EPIC de
+  publication distinct.
+* *Risque #4 (naming)* : collision `book-<lang>.adoc` entre `translateBook`
+  (mono) et `translateBookAllLanguages` (multi) quand la même langue est
+  configurée. Mitigation : même convention de nom = même fichier voulu ; les
+  deux tâches convergent, `skipExisting` rend l'écriture idempotente.
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+English only dans le code/tests/features (gouvernance `.adoc` en français).
+Zéro Python — outputs analysés avec Read/Grep/xmllint/rapports Gradle natifs.

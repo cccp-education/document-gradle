@@ -142,51 +142,28 @@ abstract class TranslateBookTask : DefaultTask() {
             return
         }
 
-        val photos = photosDir.orNull?.asFile
-        val tree = BookTreeBuilder.fromSections(sections)
-        val resolveContent = BookAssembler.contentAwareResolver(pages, photos)
+        val translationService = resolveTranslationService(llmMode.getOrElse("ollama"), target)
 
-        val translationService: TranslationService = when (llmMode.getOrElse("ollama").lowercase()) {
-            "fake" -> FakeTranslationService(" [${target.uppercase()}]")
-            "ollama" -> PooledOllamaTranslationAdapter.create()
-            else -> throw IllegalArgumentException("Unknown llmMode: '${llmMode.get()}' — expected 'ollama' or 'fake'")
-        }
-
-        val translator = BookTranslator(translationService, documentTranslator = DocumentTranslator(translationService))
-        val translated = translator.translate(tree, resolveContent, source, target)
-
-        // Mirror `assembleBook`: same matter policy and navigation knobs, and
-        // when photos are configured the translated book is illustrated by the
-        // referenced scans (materialised next to the book with a relative
-        // `:imagesdir:`, EPIC DOC-BOOK-IMAGES).
-        val matterPolicy = MatterPolicy.forMode(matterPolicyMode.get(), sections)
-        val baseLayout = BookLayout(
-            emitMatterBreaks = matterBreaks.get(),
-            matterPolicy = matterPolicy,
-            emitNavigation = navigation.get(),
+        val runner = BookTranslationRunner(
+            BookTranslator(translationService, documentTranslator = DocumentTranslator(translationService)),
         )
-        val assembled = BookAssembler.assemble(
-            tree = translated.tree,
-            layout = baseLayout,
-            title = title.get(),
-            author = author.get(),
-            resolveContent = translated.bodyResolver,
-        )
-        val referenced = BookImageMaterializer.resolveTargets(assembled.content, photos ?: pages)
-        val result = if (referenced.isEmpty()) {
-            assembled
-        } else {
-            BookImageMaterializer.materialise(referenced, output.parentFile)
-            BookAssembler.assemble(
-                tree = translated.tree,
-                layout = baseLayout.copy(imagesDir = BookImageMaterializer.IMAGES_DIR),
+        runner.translateAndPublish(
+            BookTranslationRequest(
+                tree = BookTreeBuilder.fromSections(sections),
+                resolveContent = BookAssembler.contentAwareResolver(pages, photosDir.orNull?.asFile),
+                pagesDir = pages,
+                photosDir = photosDir.orNull?.asFile,
                 title = title.get(),
                 author = author.get(),
-                resolveContent = translated.bodyResolver,
-            )
-        }
+                sourceLanguage = source,
+                targetLanguage = target,
+                matterPolicy = MatterPolicy.forMode(matterPolicyMode.get(), sections),
+                matterBreaks = matterBreaks.get(),
+                navigation = navigation.get(),
+                outputFile = output,
+            ),
+        )
 
-        result.writeTo(output)
         logger.info(
             "{} — translated book ({} → {}) -> {} ({} bytes)",
             name,
@@ -196,4 +173,11 @@ abstract class TranslateBookTask : DefaultTask() {
             output.length(),
         )
     }
+
+    private fun resolveTranslationService(mode: String, target: String): TranslationService =
+        when (mode.lowercase()) {
+            "fake" -> FakeTranslationService(" [${target.uppercase()}]")
+            "ollama" -> PooledOllamaTranslationAdapter.create()
+            else -> throw IllegalArgumentException("Unknown llmMode: '${mode}' — expected 'ollama' or 'fake'")
+        }
 }

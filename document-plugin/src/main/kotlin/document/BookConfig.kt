@@ -42,6 +42,10 @@ data class BookConfig(
     val sourceLanguage: String? = null,
     /** DOC-BOOK-TRANSLATE — target language (blank/absent = no translation). */
     val targetLanguage: String? = null,
+    /** DOC-BOOK-MULTILANG — expand the plan to the whole LanguageCatalog minus the source. */
+    val translateToAll: Boolean? = null,
+    /** DOC-BOOK-MULTILANG — explicit target-language subset (takes precedence). */
+    val targetLanguages: List<String>? = null,
 ) {
 
     /**

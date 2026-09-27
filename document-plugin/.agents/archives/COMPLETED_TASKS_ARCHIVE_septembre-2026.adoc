@@ -2,6 +2,35 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 271 (2026-09-27) — DOC-BOOK-MULTILANG ✅ TERMINÉ 4/4 US + cadrage
+
+*Type* : feat DDD/TDD/BDD + gouvernance (preuves **offline**, fake LLM)
+*Score* : 10/10
+*Mission* : décision pilote — implémenter l'extension multi-langue
+`translateToAll` (dérivée de `LanguageCatalog` N0), avec la contrainte explicite
+« tu ne te lances pas dans les traductions » → aucune traduction réelle.
+*Audit (5 constats)* : le catalogue N0 porte déjà les 22 langues ; la brique
+mono-langue est réutilisable ; le pattern `capsule.multilang` est le précédent ;
+aucun knob multi-langue n'existe ; le fan-out publication est distinct.
+*Livrables* :
+- `BookLanguagePlanner.kt` (domaine pur : plan dérivé du catalogue N0) +
+  `BookLanguageTarget`.
+- `BookTranslationRunner.kt` (extraction DRY : translate→assemble→materialise→
+  write, partagée mono/multi).
+- `TranslateBookAllLanguagesTask.kt` (`@OutputFiles` dynamique, `skipExisting`).
+- Wiring DSL `book { translateToAll; targetLanguages }` + mirror flat + CLI
+  CSV + N3 `BookConfig` additif (round-trip).
+- `book_multilang.feature` + 24e runner `BookMultilangCucumberRunner` + steps.
+- 10 UT planner + 5 FT TestKit + 7 BDD + 1 FT dogfooding corpus réel.
+*Discrimination* : refactor mono non-régressé (`TranslateBookTaskUnitTest` vert) ;
+FT multi saboté one-shot (`if (true) return` → 4/5 FAILED) ; BDD RED par glue
+cassée (7 `UndefinedStepException`).
+*Gates* : `test` 5506/0 ; `functionalTest` 158/1 (préexistant A1) ; `check`
+VERT sauf préexistant ; `bookMultilangCucumberTest` 7/7 ; `validatePlugins`
+VERT ; zéro secret ; zéro bump ; zéro publication.
+*Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc`.
+*Rapport* : `.agents/sessions/271-book-multilang.adoc`.
+
 === Session 270 (2026-09-27) — DOC-BOOK-TRANSLATE US-6 ✅ + clôture EPIC
 
 *Type* : test-only FT + dogfooding end-to-end offline (baby-step DDD/TDD/BDD)

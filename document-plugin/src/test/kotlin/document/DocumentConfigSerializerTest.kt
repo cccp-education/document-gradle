@@ -225,8 +225,33 @@ class DocumentConfigSerializerTest {
     }
 
     @Test
-    fun `deserialize reads back the matter policy and breaks of the book block`() {
+    fun `deserialize reads back the multi-language knobs of the book block`() {
         val dir = tempDir()
+        val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
+        val pagesDir = File(dir, "pages").apply { mkdirs() }
+        val original = DocumentPipelineConfig(
+            source = DocumentSource(sourceFile),
+            book = BookConfig(
+                pagesDir = pagesDir,
+                title = "Mon Livre",
+                author = "Auteur",
+                sourceLanguage = "fr",
+                translateToAll = true,
+                targetLanguages = listOf("en", "de"),
+            ),
+        )
+        val serializer = DocumentConfigSerializer()
+        val file = serializer.serialize(dir, original)
+
+        val roundTripped = serializer.deserialize(file, baseDir = dir)
+
+        assertEquals(true, roundTripped.book.translateToAll)
+        assertEquals(listOf("en", "de"), roundTripped.book.targetLanguages)
+        assertEquals("fr", roundTripped.book.sourceLanguage)
+    }
+
+    @Test
+    fun `deserialize reads back the matter policy and breaks of the book block`() {        val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
         val original = DocumentPipelineConfig(
