@@ -1,22 +1,21 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-271). Ce fichier
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-272). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 272 — sur décision pilote
+== Mission session 273 — sur décision pilote
 
-S-271 (2026-09-27) a livré l'**EPIC DOC-BOOK-MULTILANG** (4/4 US + cadrage) : le
-livre structuré se traduit désormais en **plusieurs langues** en un run
-(`translateBookAllLanguages`, plan dérivé de `LanguageCatalog` N0). Décision
-pilote S-271 : **aucune traduction réelle** — toutes les preuves sont offline
-(fake LLM déterministe).
+S-272 (2026-09-27) a livré l'**EPIC DOC-BOOK-PUBLISH** (4/4 US + cadrage) : le
+corpus multi-langue du livre se **publie** dans chaque format demandé
+(`publishBookAllLanguages`, `book-<lang>.<ext>`). Preuves offline (fake LLM).
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
+- `DOC-BOOK-PUBLISH` US-5 optionnelle (composite `bookPipeline` / `includeSource`).
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
-- Run LLM *metered* réel (N langues) — accord pilote requis (interdit S-271).
-- Fan-out publication multi-format (N livres × N formats) — EPIC distinct.
+- Run LLM *metered* réel — accord pilote requis.
+- Publication document-plugin 0.0.19 — sur accord pilote.
 - Drift catalogue ws (piège #13) si MEMPHIS bump.
 
 == Méthode (rappel)

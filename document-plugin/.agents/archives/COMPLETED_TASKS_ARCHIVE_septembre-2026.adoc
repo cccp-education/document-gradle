@@ -2,6 +2,32 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 272 (2026-09-27) — DOC-BOOK-PUBLISH ✅ TERMINÉ 4/4 US + cadrage
+
+*Type* : feat DDD/TDD/BDD + dogfooding offline (fake LLM)
+*Score* : 10/10
+*Mission* : décision pilote #1 — fan-out de publication (seul candidat
+actionnable sans coût LLM externe ; `DOC-FPA-PUBLISH-0` STANDBY/bloqué A1, run
+metered/coût, drift ws/aucun bump).
+*Audit (6 constats)* : fan-out de langues existant, convertisseurs mono-source,
+moteur `DocumentConverter` réutilisable, `@OutputFiles` éprouvé, `DocumentFormat`
+catalogue, DSL/N3 muets sur la publication.
+*Livrables* :
+- `BookPublicationPlanner.kt` (domaine pur : produit cartésien langues ×
+  formats) + `BookPublicationTarget`.
+- `PublishBookAllLanguagesTask.kt` (`@OutputFiles` dynamique, `skipExisting`,
+  `dependsOn translateBookAllLanguages`, conversion `DocumentConverter` DRY).
+- Wiring DSL `book { publishFormats }` + mirror flat + CLI CSV + N3 `BookConfig`
+  additif (round-trip).
+- `book_publish.feature` + 25e runner `BookPublishCucumberRunner` + steps.
+- 10 UT planner + 5 FT TestKit + 8 BDD + 1 FT dogfooding corpus réel.
+*Décisions notables* : D10 — `bookPipeline` non modifié (fan-out autonome) ;
+D6 — réutilisation `DocumentConverter` (DRY) ; piège #40 (`@OutputFiles`).
+*Gates (Local = Build, Tests = CI)* : `compileKotlin`/`compileTestKotlin`/
+`compileFunctionalTestKotlin` VERT ; `validatePlugins` VERT ; `assemble` VERT ;
+graphe `--dry-run` consommateur /tmp OK ; tests délégués CI ; zéro secret ;
+zéro bump ; zéro publication.
+
 === Session 271 (2026-09-27) — DOC-BOOK-MULTILANG ✅ TERMINÉ 4/4 US + cadrage
 
 *Type* : feat DDD/TDD/BDD + gouvernance (preuves **offline**, fake LLM)

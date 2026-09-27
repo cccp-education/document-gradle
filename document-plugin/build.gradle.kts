@@ -236,6 +236,12 @@ cucumberConventions {
             tags = listOf("@book-multilang"),
             runnerClass = "document.bookmultilang.BookMultilangCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "bookPublishCucumberTest",
+            features = listOf("src/test/resources/features/book_publish.feature"),
+            tags = listOf("@book-publish"),
+            runnerClass = "document.bookpublish.BookPublishCucumberRunner",
+        ),
     )
 }
 

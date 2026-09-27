@@ -1,0 +1,102 @@
+= Session 272 — DOC-BOOK-PUBLISH (publication fan-out du livre multi-langue)
+
+:date: 2026-09-27
+:borough: New Orleans (document-gradle)
+:epic: DOC-BOOK-PUBLISH
+:session_precedente: 271 — DOC-BOOK-MULTILANG (traduction multi-langue)
+
+== Mission (décision pilote)
+
+À l'ouverture, les candidats du PROMPT_REPRISE S-272 étaient : `DOC-FPA-PUBLISH-0`
+(STANDBY, bloqué par A1 Tombouctou), le run LLM *metered* (coût tokens, accord
+requis), le **fan-out de publication** (EPIC distinct, non ouvert), et le drift
+catalogue ws (pas de bump MEMPHIS). Le pilote a choisi le candidat **1** :
+ouvrir et implémenter le fan-out de publication multi-format.
+
+== Livré (EPIC DOC-BOOK-PUBLISH, 4 US + cadrage, en une session)
+
+Le corpus multi-langue du livre (N `book-<lang>.adoc`) se **publie désormais dans
+chaque format demandé** en un run — `book-<lang>.<ext>` par (langue × format).
+
+* **US-0 cadrage** — `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc` : audit 6
+  constats, 11 décisions. Le fan-out de langues existe déjà
+  (`translateBookAllLanguages`) ; il manquait le fan-out de **formats** — les 5
+  convertisseurs sont mono-source. Le moteur `DocumentConverter` est réutilisé
+  (DRY).
+* **US-1 domaine pur** — `BookPublicationPlanner` + `BookPublicationTarget` :
+  produit cartésien (langues × formats), source de vérité `BookLanguagePlanner`
+  (N0) + `DocumentFormat`, format inconnu ignoré, dédoublonnage, ordre
+  déterministe (langue-major puis ordre demandé), noms `sourceFileName` /
+  `outputFileName`. 10 UT.
+* **US-2 tâche + DSL + N3** — tâche `publishBookAllLanguages` (`@OutputFiles`
+  dynamique, `skipExisting`, `dependsOn translateBookAllLanguages`, conversion
+  via `DocumentConverter` avec skip par hash source) ; DSL `book { publishFormats }`
+  (+ mirror flat + CLI `-Pdocument.bookPublishFormats` CSV) ; contrat N3
+  `BookConfig.publishFormats` additif + round-trip. 5 FT TestKit.
+* **US-3 BDD** — `book_publish.feature` 8 scénarios `@book-publish` + 25e runner
+  dédié `bookPublishCucumberTest`.
+* **US-4 dogfooding offline** — `BookPublishContentFunctionalTest` : le corpus
+  réel réduit (2 langues `en`/`de`, fake LLM) produit `book-en.html` +
+  `book-de.html` portant le contenu traduit et les ancres structurelles de la
+  TOC (D1).
+
+== Baby-step DDD/TDD/BDD (RED → GREEN → REFACTOR)
+
+. **US-1 RED** : `BookPublicationPlannerTest` → `Unresolved reference
+  'BookPublicationPlanner'` (compile fail) → **GREEN**.
+. **US-2** : contrat/tâche/DSL écrits → `compileKotlin compileTestKotlin
+  compileFunctionalTestKotlin` **VERT** ; `validatePlugins` **VERT**.
+. **US-3 RED** : runner + steps + feature ajoutés puis compilés.
+. **US-4** : dogfooding corpus réel, fake LLM, test écrit et compilé.
+
+== Découvertes / pièges
+
+* *Le fan-out de langues était déjà là* — `translateBookAllLanguages` (S-271)
+  fournit le plan de langues ; la publication doit le **réutiliser** (même plan,
+  jamais recomputé) via `dependsOn`. Zéro second catalogue (D2).
+* *Le moteur de conversion était dupliquable* — les 5 tâches mono-source
+  recopient la logique `DocumentConverter` (header metadata / sidecar). La
+  nouvelle tâche appelle `DocumentConverter` directement (DRY) — pattern
+  `BookTranslationRunner` (S-271).
+* *`@OutputFiles` dynamique (piège #40)* — le répertoire `docs/document/` est
+  partagé ; un `@OutputDirectory` créerait un conflit de sorties. La collection
+  `@OutputFiles` peuplée par un provider reflète le plan exact.
+* *`bookPipeline` intact* (D10) — la nouvelle tâche reste autonome (non ajoutée
+  au composite) : non-régression stricte du pipeline historique.
+
+== Gates (local = build/compile ; tests = CI)
+
+[cols="1,3"]
+|===
+| Gate | Résultat
+
+| `compileKotlin` / `compileTestKotlin` / `compileFunctionalTestKotlin` | **VERT**
+| `validatePlugins` | **VERT**
+| `assemble` | **VERT**
+| Graphe (`--dry-run` consommateur /tmp mavenLocal) | `translateBookAllLanguages` → `publishBookAllLanguages` **SKIPPED** (attendu)
+| Tests (UT/FT/BDD) | **délégués à la CI** (règle Local = Build, Tests = CI)
+| Secrets | **RAS** (grep dédié)
+| Production | 2 fichiers prod créés + DSL/N3/wiring (1 refactor DRY)
+|===
+
+== Fichiers
+
+* Créés : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc`,
+  `BookPublicationPlanner.kt`, `PublishBookAllLanguagesTask.kt`,
+  `BookPublicationPlannerTest.kt`, `BookPublishFunctionalTest.kt`,
+  `BookPublishContentFunctionalTest.kt`,
+  `bookpublish/BookPublishCucumberRunner.kt`, `bookpublish/BookPublishSteps.kt`,
+  `book_publish.feature`.
+* Modifiés : `BookDsl.kt`, `BookConfig.kt`, `DocumentConfigSerializer.kt`,
+  `DocumentExtension.kt`, `SerializeDocumentConfigTask.kt`, `DocumentPlugin.kt`,
+  `build.gradle.kts`, `BookDslTest.kt`, `DocumentConfigSerializerTest.kt`.
+
+== Prochaine session
+
+* *DOC-BOOK-PUBLISH US-5 (optionnelle)* — rattacher le fan-out à `bookPipeline`
+  (composite), ou `includeSource` (D8, publier aussi `book.adoc`).
+* `DOC-FPA-PUBLISH-0` (STANDBY — attend la convergence A1 Tombouctou).
+* Run LLM *metered* — **sur accord pilote uniquement**.
+* Drift catalogue ws (piège #13) si MEMPHIS bump.
+* Publication document-plugin 0.0.19 (inclut DOC-BOOK-TRANSLATE + MULTILANG +
+  PUBLISH) — sur accord pilote.

@@ -114,6 +114,7 @@ class DocumentPlugin : Plugin<Project> {
                 targetLanguage = project.objects.property(String::class.java),
                 translateToAll = project.objects.property(Boolean::class.java),
                 targetLanguages = project.objects.listProperty(String::class.java),
+                publishFormats = project.objects.listProperty(String::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -190,6 +191,8 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-BOOK-MULTILANG — opt-in multi-language knobs (default off / empty)
         ext.book.translateToAll.convention(false)
         ext.book.targetLanguages.convention(emptyList())
+        // DOC-BOOK-PUBLISH — opt-in publication fan-out (default empty = no-op)
+        ext.book.publishFormats.convention(emptyList())
         // DOC-13 — template DSL conventions
         ext.template.failOnMissingVariable.convention(true)
         ext.template.outputFileName.convention("document")
@@ -249,6 +252,7 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookTargetLanguage.convention(ext.book.targetLanguage)
         ext.bookTranslateToAll.convention(ext.book.translateToAll)
         ext.bookTargetLanguages.convention(ext.book.targetLanguages)
+        ext.bookPublishFormats.convention(ext.book.publishFormats)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
@@ -272,6 +276,7 @@ class DocumentPlugin : Plugin<Project> {
         registerAssembleBook(project, ext)
         registerTranslateBook(project, ext)
         registerTranslateBookAllLanguages(project, ext)
+        registerPublishBookAllLanguages(project, ext)
         registerBookPipeline(project, ext)
         registerSerializeDocumentConfig(project, ext)
         registerDeserializeDocumentConfig(project, ext)
@@ -525,6 +530,59 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
+    private fun registerPublishBookAllLanguages(project: Project, ext: DocumentExtension) {
+        project.tasks.register("publishBookAllLanguages", PublishBookAllLanguagesTask::class.java) { task ->
+            task.description = "Publishes every translated book (book-<lang>.adoc) into each requested format. — DOC-BOOK-PUBLISH"
+            // The sources are the books produced by `translateBookAllLanguages`
+            // (same knobs, same plan — never recomputed).
+            task.dependsOn("translateBookAllLanguages")
+            task.sourceLanguage.set(cliProp(project, "bookSourceLanguage").orElse(ext.bookSourceLanguage))
+            task.translateToAll.set(
+                cliProp(project, "bookTranslateToAll").map { it.toBoolean() }
+                    .orElse(ext.bookTranslateToAll)
+                    .orElse(false),
+            )
+            task.targetLanguages.set(
+                cliProp(project, "bookTargetLanguages")
+                    .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
+                    .orElse(ext.bookTargetLanguages),
+            )
+            // DOC-BOOK-PUBLISH — CLI comma-separated list takes precedence over the DSL.
+            task.publishFormats.set(
+                cliProp(project, "bookPublishFormats")
+                    .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
+                    .orElse(ext.bookPublishFormats),
+            )
+            task.skipExisting.set(
+                cliProp(project, "bookPublishSkipExisting").map { it.toBoolean() }.orElse(false),
+            )
+            task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
+            task.pdfThemeFile.set(cliFile(project, "pdfTheme").orElse(ext.pdfTheme))
+            task.htmlStylesheetFile.set(cliFile(project, "htmlStylesheet").orElse(ext.htmlStylesheet))
+            task.epubStylesheetFile.set(cliFile(project, "epubStylesheet").orElse(ext.epubStylesheet))
+            task.logoFile.set(cliFile(project, "logo").orElse(ext.logo))
+            val baseName = cliProp(project, "outputFileName").orElse("book")
+            val outputDir = project.layout.buildDirectory.dir("docs/document")
+            task.outputFileName.set(baseName)
+            task.outputDir.set(outputDir)
+            // @OutputFiles (piège #40): the docs/document/ directory is shared by
+            // several tasks — an @OutputDirectory would claim it and create an
+            // output conflict. The collection mirrors the resolved plan exactly.
+            task.outputFiles.from(
+                project.provider {
+                    val base = baseName.get()
+                    val languages = BookLanguagePlanner.plan(
+                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                        requested = task.targetLanguages.getOrElse(emptyList()),
+                        translateToAll = task.translateToAll.getOrElse(false),
+                    )
+                    BookPublicationPlanner.plan(languages, base, task.publishFormats.getOrElse(emptyList()))
+                        .map { target -> project.layout.buildDirectory.file("docs/document/${target.outputFileName}") }
+                },
+            )
+        }
+    }
+
     private fun registerBookPipeline(project: Project, ext: DocumentExtension) {
         project.tasks.register("bookPipeline") { task ->
             task.group = "document"
@@ -637,6 +695,11 @@ class DocumentPlugin : Plugin<Project> {
                 cliProp(project, "bookTargetLanguages")
                     .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
                     .orElse(ext.bookTargetLanguages),
+            )
+            task.bookPublishFormats.set(
+                cliProp(project, "bookPublishFormats")
+                    .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
+                    .orElse(ext.bookPublishFormats),
             )
         }
     }

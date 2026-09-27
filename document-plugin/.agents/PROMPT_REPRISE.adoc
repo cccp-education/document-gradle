@@ -1,155 +1,83 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 272
+== Mission session 273
 
-S-271 (2026-09-27) a livré l'**EPIC DOC-BOOK-MULTILANG** (4 US + cadrage) :
-le livre structuré se traduit désormais en **plusieurs langues** en un seul run
-(`translateBookAllLanguages`), la structure restant régénérée par construction
-(D1). Décision pilote S-271 : **aucune traduction réelle** — tout est prouvé
-**offline** (fake LLM déterministe).
-
-**EPIC DOC-BOOK-MULTILANG = 4/4 US TERMINÉ.** Le run LLM *metered* (réel, N
-langues) reste une décision pilote ultérieure.
+S-272 (2026-09-27) a livré l'**EPIC DOC-BOOK-PUBLISH** (4 US + cadrage) : le
+corpus multi-langue du livre (N `book-<lang>.adoc`) se **publie désormais dans
+chaque format demandé** en un run (`publishBookAllLanguages`) —
+`book-<lang>.<ext>` par (langue × format). Décision pilote S-272 : candidat #1
+(fan-out de publication, seul actionnable sans coût LLM externe). Preuves
+**offline** (fake LLM). **EPIC TERMINÉ 4/4 US.**
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : republication multi-format du livre
-  FPA après convergence du corpus A1 (Tombouctou). **Bloqué** (`[ILLISIBLE]`).
-  Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant
-  qu'A1 n'a pas convergé.
-* *Run LLM réel metered* — livre FR→EN (ou N langues) avec le vrai LLM. Coût
-  tokens → accord pilote explicite requis (interdit S-271).
-* *Publication fan-out multi-format* — convertir les N `book-<lang>.adoc` en N
-  formats exige N tâches de conversion (EPIC de *publication* distinct, non
-  ouvert — décision D1 du cadrage MULTILANG).
+* *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
+  `bookPipeline`, ou `includeSource` (D8, publier aussi `book.adoc`).
+* *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
+  Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant.
+* *Run LLM metered* (FR→EN ou N langues) — accord pilote explicite requis.
+* *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH).
 * *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
-  Vérifier le POM versionné HTTP 200 avant tout pin (piège #11).
 
-== État du code (S-271)
+== État du code (S-272)
 
-- *0.0.18 PUBLIÉE* Central. Le HEAD porte DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG,
-  non publié.
-- *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18 ; réaligné S-269).
-- *Tâche `translateBook`* (mono) : traduit le domaine Book, sortie
-  `book-<lang>.adoc`. Refactorée S-271 pour déléguer à `BookTranslationRunner`
-  (DRY) — comportement inchangé.
-- *Tâche `translateBookAllLanguages`* (multi, S-271) : plan dérivé de
-  `LanguageCatalog` N0 par `BookLanguagePlanner` ; produit `book-<lang>.adoc`
-  par langue ; `skipExisting` par langue ; `@OutputFiles` dynamique.
-- *DSL (S-271, additif)* : `book { translateToAll }` (défaut `false`) +
-  `book { targetLanguages }` (liste, prioritaire) + mirror flat + CLI
-  `-Pdocument.bookTargetLanguages=en,de` / `-Pdocument.bookTranslateToAll=true`.
-  Contrat N3 `BookConfig` étendu (additif, round-trip idempotent).
-- *Domaine pur* : `BookLanguagePlanner` / `BookLanguageTarget`
-  (`document/BookLanguagePlanner.kt`) + `BookTranslationRunner`
-  (`document/BookTranslationRunner.kt`).
-- *Preuves* : 10 UT planner + 5 FT TestKit + 7 BDD `@book-multilang`
-  (24e runner) + 1 FT dogfooding corpus réel offline.
-- *EPICs* : DOC-BOOK-TRANSLATE ✅, `DOC-BOOK-MULTILANG ✅ TERMINÉ 4/4 US`.
-- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_MULTILANG.adoc`.
+- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH, non publié.
+- *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18).
+- *`translateBookAllLanguages`* : plan dérivé de `LanguageCatalog` N0
+  (`BookLanguagePlanner`), `book-<lang>.adoc` par langue.
+- *`publishBookAllLanguages`* (S-272) : plan de langues → plan de publication
+  (`BookPublicationPlanner`) → convertit chaque `book-<lang>.adoc` via
+  `DocumentConverter` (DRY) en `book-<lang>.<ext>`. `@OutputFiles` dynamique,
+  `skipExisting`, `dependsOn translateBookAllLanguages`.
+- *DSL (S-272, additif)* : `book { publishFormats }` (vide par défaut) + mirror
+  flat + CLI `-Pdocument.bookPublishFormats=html,pdf`. Contrat N3
+  `BookConfig.publishFormats` (additif, round-trip idempotent).
+- *Domaine pur* : `BookPublicationPlanner` / `BookPublicationTarget`.
+- *Preuves* : 10 UT planner + 5 FT TestKit + 8 BDD `@book-publish` (25e runner)
+  + 1 FT dogfooding corpus réel offline.
+- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc`.
 
-== Pièges Gradle à retenir (S-232..S-271)
+== Pièges Gradle à retenir (S-232..S-272)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
 3. *Chaîne N3 staged* : produce → validate → collect (3 builds).
 4. *Property DSL sans convention reste unset même derrière `.orElse(...)`*.
-5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`
-   du producteur, jamais `.get()` configuration-time.
+5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en
    `@Input @Optional Property<String>`.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
-8. *Imports DSL consommateur* : les enums des gardes ne sont pas résolus
-   implicitement — importer explicitement (liste dans README.md).
-9. *epubcheck callback Java → null* : signature nullable obligatoire.
-10. *Preuve négative : corrompre la STRUCTURE, pas le contenu.*
-11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM versionné.
-12. *Test bakery JBake native roundtrip périmé* : préexistant — côté bakery.
-13. *Drift catalogue ws* : MEMPHIS bump en amont → garde RED. Fix : réaligner les
-    3 sources. Occurrences : S-244 (0.0.30), S-246 (0.0.31), S-251 (0.0.34),
-    S-255 (0.0.37), S-260 (0.0.56), S-264 (0.0.57), S-269 (0.0.58).
-14. *PDFBox 3.x lénient sur les octets* : garde = texte extractible par page.
-15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size manquant.
-16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : `pluginManagement {
-    repositories { mavenLocal() } }` AVANT le Plugin Portal.
-17. *Central exige une version explicite par dépendance POM*.
-18. *Faux positif grep "fpa"* : `LeafPath` contient littéralement "fpa".
-19. *Macro image AsciiDoc 2 formes* : block `image::f[]` ET inline `image:f[]`.
-20. *Dogfooding HEAD via mavenLocal* : `publishToMavenLocal` + consumer mavenLocal.
-21. *Central immutable × deployment concurrent* : coordonner MEMPHIS avant bump.
-22. *Pin POM BOM divergent = zéro impact si deps versionnées*.
-23. *Fake de test doit matcher le contrat sémantique*.
-24. *Paramètre additif fin de signature* : extension d'API publique backward-compat.
-25. *Verrous RENAME = comportement, pas fixtures nominales*.
-26. *WIP parallèle* : `git add` sélectif, jamais `git add -A`.
-27. *Vague 4 = champ lexical complet, pas les sigles*.
-28. *Transfuser AVANT de neutraliser* (RENAME).
-29. *Gate Vague 4 : faux positifs + citations corpus*.
-30. *AsciidoctorJ n'embarque que les images DANS le répertoire source*.
-31. *Résolution image par PRÉFIXE numérique, pas par nom complet*.
-32. *Ne copier que les scans RÉFÉRENCÉS* (Économie d'Encre).
-33. *Le parser pivot est LOSSY sur les constructions de livre* — ne jamais
-    traduire le livre assemblé : traduire le domaine (EPIC DOC-BOOK-TRANSLATE, D1).
-34. *Le domaine Book GÉNÈRE sa structure, il ne la parse pas*.
-35. *Un corps de page est un FRAGMENT sans en-tête* : router un fragment dans
-    `AsciiDocParser.parse` **avale son 1er paragraphe**. Utiliser `parseBody`/
-    `renderBlocks`/`translateBlocks` (additifs S-268).
-36. *`mustRunAfter` dans `taskGraph.whenReady` est TROP TARD* (S-269) : l'ordre
-    du graphe est déjà calculé. Fixer l'ordre des convertisseurs au
-    configuration time, la redirection du `sourceFile` dans `whenReady`.
-37. *Un titre AsciiDoc commence par `=` SUIVI DE TEXTE* (S-269) : garder
-    `parseHeading` par `isHeading(line)` (et la garde d'arrêt de `parseParagraph`)
-    — les flèches OCR (`=> …`) et marqueurs `=*`/`====` ne sont PAS des titres.
-38. *Gate structurel = objets du domaine, pas regex sur la prose* (S-269) : la
-    prose OCR contient des `<<` légitimes (guillemets «) — vérifier les ancres
-    via `BookNumbering`, jamais par regex de contenu.
-39. *Le corps OCR peut porter une ancre in-band* (S-270) : une page peut
-    commencer par `[[page-N]]` (artefact, non structurel). Le pivot est lossy
-    dessus ; le gate D1 porte sur les **refs structurelles de la TOC**, jamais
-    sur une égalité byte-à-byte du jeu d'ancres.
-40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271) : le
-    répertoire `docs/document/` est partagé par plusieurs tâches ; revendiquer
-    un `@OutputDirectory` dessus crée un conflit de sorties. Une collection
-    `@OutputFiles` peuplée par un provider reflète le plan exact (une sortie
-    par entrée).
-41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271) : le
-    service de traduction est construit **par langue cible** (factory), sinon
-    tous les livres produits seraient identiques.
+11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM.
+13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
+33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
+36. *`mustRunAfter` dans `taskGraph.whenReady` est TROP TARD* — ordre au config.
+39. *Le corps OCR peut porter une ancre in-band* — gate D1 sur les refs de la TOC.
+40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271/S-272).
+41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. Le **24e runner dédié** est
-`bookMultilangCucumberTest` (S-271).
++ `frontmatter_retranslate.feature`. Le **25e runner dédié** est
+`bookPublishCucumberTest` (S-272).
 
 == Méthode
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-CONTRAINTE GLOBALE : *Zéro Python* — outputs analysés avec Read/Grep/xmllint/
-rapports Gradle natifs uniquement.
-
-== Règles absolues (AGENT.adoc)
-
-- English only dans le code/commentaires/tests (gouvernance .adoc en français).
-- Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-271).
-- `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule.
-- Ne jamais lancer `./gradlew test` complet sans permission.
+CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build, Tests = CI* (GitHub Actions).
+English only code/tests/features (gouvernance .adoc en français).
+Zéro secret, zéro commit/push sans accord (accord pilote donné S-272).
+`bookPipeline` non modifié (D10) — le fan-out reste autonome.
 
 == À vérifier en ouverture
 
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Décision pilote — `DOC-FPA-PUBLISH-0` (STANDBY), run metered, ou fan-out.
+4. Décision pilote — PUBLISH US-5, FPA-PUBLISH-0, run metered, ou publication.
 
 == Vision « livre content SERVER »
 
-Le produit est servable, auditable, documenté, illustré, distribué et désormais
-**multi-langue** de bout en bout. `DOC-BOOK-TRANSLATE` a ouvert la traduction
-mono-langue ; **`DOC-BOOK-MULTILANG` la généralise au catalogue N0 entier
-(22 langues)** — toutes les preuves sont offline (fake LLM), le run réel
-metered reste une décision pilote.
-
-
+Le produit est servable, auditable, documenté, illustré, distribué, multi-langue
+et désormais **multi-format** de bout en bout (fan-out langues × formats).

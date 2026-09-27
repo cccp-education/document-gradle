@@ -6,7 +6,28 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-09-27 (session 270 — **DOC-BOOK-TRANSLATE US-6 ✅
+_Derniere mise a jour_ : 2026-09-27 (session 272 — **DOC-BOOK-PUBLISH 4/4 US +
+cadrage TERMINÉ** — décision pilote S-272 : candidat #1 (fan-out de publication,
+seul actionnable sans coût LLM). Le corpus multi-langue (`book-<lang>.adoc`) se
+**publie** dans chaque format demandé : `publishBookAllLanguages` produit
+`book-<lang>.<ext>` par (langue × format). **US-0 cadrage** (6 constats, 11
+décisions, `CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc`) ; **US-1** domaine pur
+`BookPublicationPlanner` + `BookPublicationTarget` (produit cartésien langues ×
+formats, source de vérité `BookLanguagePlanner` N0 + `DocumentFormat`, format
+inconnu ignoré, dédoublonnage, ordre déterministe, 10 UT) ; **US-2** tâche
+`publishBookAllLanguages` (`@OutputFiles` dynamique piège #40, `skipExisting`,
+`dependsOn translateBookAllLanguages`, conversion via `DocumentConverter` DRY) +
+DSL `book { publishFormats }` (+ mirror flat + CLI CSV) + N3 `BookConfig`
+additif + round-trip, 5 FT TestKit ; **US-3** BDD `@book-publish` 8 scénarios +
+25e runner `bookPublishCucumberTest` ; **US-4** dogfooding end-to-end offline
+(corpus réel réduit, fake LLM, `book-<lang>.html` + ancres TOC D1). `bookPipeline`
+non modifié (D10). Gates : `compileKotlin`/`compileTestKotlin`/
+`compileFunctionalTestKotlin` VERT, `validatePlugins` VERT, `assemble` VERT,
+graphe `--dry-run` consommateur /tmp OK, zéro secret. Tests délégués à la CI
+(Local = Build, Tests = CI). Rapport :
+`.agents/sessions/272-book-publish.adoc`.)
+
+|_Derniere mise a jour_ : 2026-09-27 (session 270 — **DOC-BOOK-TRANSLATE US-6 ✅
 + EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding **end-to-end offline**
 (fake LLM, corpus réel réduit, Règle 7). Nouveau FT
 `BookPipelineTranslateContentFunctionalTest` : `bookPipeline` avec
@@ -268,6 +289,23 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 272 — **DOC-BOOK-PUBLISH (4/4 US + cadrage) —
+  EPIC TERMINÉ** (décision pilote, preuves **offline** fake LLM) : le corpus
+  multi-langue se publie dans chaque format demandé. Domaine pur
+  `BookPublicationPlanner` + `BookPublicationTarget` (produit cartésien langues ×
+  formats, source de vérité `BookLanguagePlanner` N0 + `DocumentFormat`, format
+  inconnu ignoré, dédoublonnage, ordre déterministe langue-major) + tâche
+  `publishBookAllLanguages` (`@OutputFiles` dynamique, `skipExisting`,
+  `dependsOn translateBookAllLanguages`, conversion via `DocumentConverter` DRY)
+  + DSL `book { publishFormats }` (+ mirror flat + CLI CSV) + N3 `BookConfig`
+  additif (round-trip). Preuves : 10 UT planner + 5 FT TestKit + 8 BDD
+  `@book-publish` (25e runner) + 1 FT dogfooding corpus réel offline (2 langues
+  `en`/`de`, HTML + ancres TOC D1). Piège #40 (`@OutputFiles`). Gates :
+  `compileKotlin`/`compileTestKotlin`/`compileFunctionalTestKotlin` VERT,
+  `validatePlugins` VERT, `assemble` VERT, graphe `--dry-run` OK, zéro secret.
+  Rapport : `.agents/sessions/272-book-publish.adoc`.
+  _Prochaine session_ : PUBLISH US-5 (composite/`includeSource`) — ou
+  DOC-FPA-PUBLISH-0 (STANDBY, A1) / run metered / publication 0.0.19 / drift ws.
 |_Derniere session terminee_ : 271 — **DOC-BOOK-MULTILANG (4/4 US + cadrage) —
   EPIC TERMINÉ** (décision pilote, preuves **offline** fake LLM) : le livre
   structuré se traduit en plusieurs langues en un run. Domaine pur
@@ -477,6 +515,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
 | EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | ✅ TERMINÉ (S-267 cadrage, S-268 US-1 `BookTranslator`, S-269 US-2→US-5, S-270 US-6 dogfooding end-to-end fake) | P1
 | EPIC DOC-BOOK-MULTILANG | Traduction **multi-langue** du livre structuré — plan dérivé de `LanguageCatalog` N0 (`BookLanguagePlanner`), extraction DRY `BookTranslationRunner`, tâche `translateBookAllLanguages` (`book-<lang>.adoc` par langue, `@OutputFiles` dynamique, `skipExisting`), DSL `book { translateToAll; targetLanguages }` + N3 `BookConfig` additif, BDD `@book-multilang` (4 US + cadrage, ~13 pts) | ✅ TERMINÉ (S-271 — 4/4 US, preuves offline fake LLM) | P1
+| EPIC DOC-BOOK-PUBLISH | **Publication fan-out** du livre multi-langue — plan (langue × format) dérivé de `BookLanguagePlanner` + `DocumentFormat` (`BookPublicationPlanner`/`BookPublicationTarget`), tâche `publishBookAllLanguages` (`book-<lang>.<ext>` par format, `@OutputFiles` dynamique, `skipExisting`, conversion `DocumentConverter` DRY), DSL `book { publishFormats }` + N3 `BookConfig` additif, BDD `@book-publish` (4 US + cadrage, ~13 pts) | ✅ TERMINÉ (S-272 — 4/4 US, preuves offline fake LLM) | P1
 |===
 
 '''
@@ -611,6 +650,9 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 267 | 2026-09-26 | cadrage | **Cadrage EPIC DOC-BOOK-TRANSLATE (gouvernance pure, zéro code)** — audit 8 constats (deux silos étanches traduction ↔ domaine Book ; parser pivot *lossy* sur les constructions de livre — caractérisation empirique ancres `[[ref]]`/`:doctype:`/`toc::[]` ; structure du livre **générée** donc régénérable ; corps de page = fragments ; chaîne de traduction complète ; navigation/TOC dérivés des titres ; `bookPipeline` sait déjà rediriger les convertisseurs). **Décision B retenue** (traduire le domaine Book, `BookAssembler` régénère la structure) vs A écartée (étendre le pivot partagé avec bakery). 13 décisions, 6 US ~12 pts. Doc `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`. Zéro code. Rapport : `.agents/sessions/267-book-translate-cadrage.adoc`. | 10/10
 | 268 | 2026-09-27 | feat DDD/TDD (domaine pur) | **DOC-BOOK-TRANSLATE US-1 `BookTranslator` ✅** — domaine pur traduisant les **entrées** du livre (titres + corps), `BookAssembler` régénère la structure (D1). **Découverte** : un corps de page OCR est un *fragment sans en-tête* → 3 points d'extension additifs `parseBody`/`renderBlocks`/`translateBlocks` + `translateField`. No-op strict si `tgt` vide/identique ; cache de titres. 10 UT `BookTranslatorTest` RED (11 erreurs) → GREEN. Gates : 794 tests 0 fail, 4 runners Book + 3 runners translation 0 fail, validatePlugins VERT. Piège #35. Rapport : `.agents/sessions/268-book-translate-us1-booktranslator.adoc`. | 10/10
 | 269 | 2026-09-27 | feat DDD/TDD/BDD + dogfooding | **DOC-BOOK-TRANSLATE US-2→US-5 ✅** — câblage Gradle complet de l'EPIC. **US-2** tâche `translateBook` (`book-<lang>.adoc`, `skipExisting`, no-op si langue vide/identique ; DSL `book { sourceLanguage; targetLanguage }` + CLI + contrat N3 additif) ; **US-3** insertion `bookPipeline` (langue cible → convertisseurs sur `book-<lang>.adoc`, ordre fixé au configuration time — piège #36) ; **US-4** BDD `book_translate.feature` 5/5 + 23e runner `bookTranslateCucumberTest` ; **US-5** dogfooding structurel corpus FPA réel (fake LLM, **0 cible dangling** via `BookNumbering`) + **bug P0 parser corrigé** (`parseHeading` NPE sur ligne `=` non-titre → `isHeading`/`HEADING_PATTERN`, piège #37). Refactor `BookImageMaterializer` partagé. Drift piège #13 réaligné (ws 0.0.57→**0.0.58**, MEMPHIS S-240 parallèle). Gates : `test` 5142/0, FT 151/1 (préexistant RichToc page 73), 23 runners 0 fail, `validatePlugins` + `publishToMavenLocal` VERT, garde 4/4. Zéro bump, zéro secret. Rapport : `.agents/sessions/269-book-translate-us2-us5-wiring-bdd.adoc`. | 10/10
+| 270 | 2026-09-27 | test-only (dogfooding fake) | **DOC-BOOK-TRANSLATE US-6 ✅ + EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding end-to-end **offline** (fake LLM, corpus réel réduit, Règle 7). Nouveau FT `BookPipelineTranslateContentFunctionalTest` : `bookPipeline` `targetLanguage=en` publie le livre traduit (`book-en.adoc` → HTML `[EN]`/PDF/EPUB), `book.adoc` jamais muté, structure régénérée (D1). **Découverte** : ancre OCR **in-band** (`[[page-10]]`) légitimement perdue par le pivot → gate D1 sur les refs de la TOC (piège #39). Test-only, zéro prod. Rapport : `.agents/sessions/270-book-translate-us6-dogfooding-fake.adoc`. | 10/10
+| 271 | 2026-09-27 | feat DDD/TDD/BDD + offline | **DOC-BOOK-MULTILANG 4/4 US + cadrage — EPIC TERMINÉ** (décision pilote, preuves offline fake LLM) : livre traduit en plusieurs langues en un run. Domaine `BookLanguagePlanner` + `BookLanguageTarget` (plan dérivé de `LanguageCatalog` N0) + extraction DRY `BookTranslationRunner` + tâche `translateBookAllLanguages` (`@OutputFiles` dynamique, `skipExisting`) + DSL `book { translateToAll; targetLanguages }` + N3 `BookConfig` additif. 10 UT + 5 FT + 7 BDD `@book-multilang` (24e runner) + 1 FT dogfooding offline. Pièges #40/#41. Rapport : `.agents/sessions/271-book-multilang.adoc`. | 10/10
+| 272 | 2026-09-27 | feat DDD/TDD/BDD + offline | **DOC-BOOK-PUBLISH 4/4 US + cadrage — EPIC TERMINÉ** (décision pilote #1). Le corpus multi-langue se publie dans chaque format : `publishBookAllLanguages` → `book-<lang>.<ext>` par (langue × format). Domaine `BookPublicationPlanner` + `BookPublicationTarget` (produit cartésien langues × formats) + tâche (`@OutputFiles` dynamique, `skipExisting`, `dependsOn translateBookAllLanguages`, conversion `DocumentConverter` DRY) + DSL `book { publishFormats }` + N3 `BookConfig` additif. 10 UT + 5 FT + 8 BDD `@book-publish` (25e runner) + 1 FT dogfooding offline. `bookPipeline` non modifié (D10). Gates : compiles VERT, `validatePlugins` VERT, `assemble` VERT, graphe `--dry-run` OK. Tests délégués à la CI. Rapport : `.agents/sessions/272-book-publish.adoc`. | 10/10
 |===
 
 '''

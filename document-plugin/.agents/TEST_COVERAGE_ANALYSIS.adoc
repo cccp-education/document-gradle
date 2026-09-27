@@ -1,6 +1,40 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-27
-:session: 271
+:session: 272
+
+== Session 272 — DOC-BOOK-PUBLISH (10 UT + 5 FT + 8 BDD + 1 FT dogfooding)
+
+*Périmètre* : publication **fan-out** du livre multi-langue (EPIC
+DOC-BOOK-PUBLISH, 4/4 US). Preuves **offline** (fake LLM, zéro coût metered).
+*Note méthodo* : règle **Local = Build, Tests = CI** — les suites ne sont pas
+exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
+
+*Nouveaux tests* :
+
+- `document.BookPublicationPlannerTest` — **10 UT** (domaine pur) : no-op sans
+  langue / sans format, produit cartésien langue × format, source/output names,
+  base name, format inconnu ignoré, doublon collapsé, codes case-insensitive,
+  ordre déterministe langue-major, résolution de tous les `DocumentFormat`.
+- `document.BookPublishFunctionalTest` — **5 FT** (TestKit) : publication par
+  langue, dérivation depuis le livre traduit (`dependsOn`), no-op sans format,
+  CLI prioritaire, `outputFileName` honoré.
+- `document.bookpublish` — **8 BDD** (`@book-publish`, 25e runner) : plan plein,
+  format inconnu, doublon, case-insensitive, no-op (×2), naming source/output,
+  base name.
+- `document.BookPublishContentFunctionalTest` — **1 FT** dogfooding corpus réel
+  réduit (fake LLM, Règle 7) : `book-en.html` + `book-de.html` + ancres TOC D1.
+- `document.BookDslTest` — +1 UT (knob `publishFormats`) ;
+  `document.DocumentConfigSerializerTest` — +1 UT (round-trip N3
+  `publishFormats`).
+
+*Non-régression* : `bookPipeline` **non modifié** (D10) ; les 5 convertisseurs
+mono-source et `TranslateBookAllLanguagesTask` intacts ; `DocumentConverter`
+seulement *consommé* (aucune signature modifiée).
+
+*Gates (Local = Build, Tests = CI)* : `compileKotlin` / `compileTestKotlin` /
+`compileFunctionalTestKotlin` **VERT** ; `validatePlugins` **VERT** ;
+`assemble` **VERT** ; graphe `--dry-run` consommateur /tmp OK. Suites UT/FT/BDD
+déléguées à la CI.
 
 == Session 271 — DOC-BOOK-MULTILANG (10 UT + 5 FT + 7 BDD + 1 FT dogfooding)
 

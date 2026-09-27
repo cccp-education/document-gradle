@@ -46,6 +46,8 @@ data class BookConfig(
     val translateToAll: Boolean? = null,
     /** DOC-BOOK-MULTILANG — explicit target-language subset (takes precedence). */
     val targetLanguages: List<String>? = null,
+    /** DOC-BOOK-PUBLISH — output formats for the publication fan-out. */
+    val publishFormats: List<String>? = null,
 ) {
 
     /**

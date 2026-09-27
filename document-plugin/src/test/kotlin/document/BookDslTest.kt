@@ -27,6 +27,7 @@ class BookDslTest {
         targetLanguage = objects().property(String::class.java),
         translateToAll = objects().property(Boolean::class.java),
         targetLanguages = objects().listProperty(String::class.java),
+        publishFormats = objects().listProperty(String::class.java),
     )
 
     @Test
@@ -73,5 +74,13 @@ class BookDslTest {
 
         assertTrue(dsl.translateToAll.get())
         assertEquals(listOf("en", "de"), dsl.targetLanguages.get())
+    }
+
+    @Test
+    fun `BookDsl exposes the publication formats knob`() {
+        val dsl = dsl()
+        dsl.publishFormats.set(listOf("html", "pdf"))
+
+        assertEquals(listOf("html", "pdf"), dsl.publishFormats.get())
     }
 }

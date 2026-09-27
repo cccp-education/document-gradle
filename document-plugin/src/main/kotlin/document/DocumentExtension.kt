@@ -120,6 +120,9 @@ abstract class DocumentExtension {
     /** Book pipeline (DOC-BOOK-MULTILANG) — explicit target-language subset (takes precedence). */
     abstract val bookTargetLanguages: ListProperty<String>
 
+    /** Book pipeline (DOC-BOOK-PUBLISH) — output formats for `publishBookAllLanguages`. */
+    abstract val bookPublishFormats: ListProperty<String>
+
     /**
      * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.

@@ -92,6 +92,10 @@ class DocumentConfigSerializer {
                 val array = book.putArray("targetLanguages")
                 langs.forEach { array.add(it) }
             }
+            config.book.publishFormats?.takeIf { it.isNotEmpty() }?.let { formats ->
+                val array = book.putArray("publishFormats")
+                formats.forEach { array.add(it) }
+            }
             root.set<ObjectNode>("book", book)
         }
 
@@ -167,6 +171,11 @@ class DocumentConfigSerializer {
                 targetLanguage = bookNode.get("targetLanguage")?.textValueOrNull(),
                 translateToAll = bookNode.get("translateToAll")?.takeIf { !it.isNull }?.asBoolean(),
                 targetLanguages = bookNode.get("targetLanguages")
+                    ?.takeIf { it.isArray }
+                    ?.map { it.textValueOrNull() }
+                    ?.filterNotNull()
+                    ?.takeIf { it.isNotEmpty() },
+                publishFormats = bookNode.get("publishFormats")
                     ?.takeIf { it.isArray }
                     ?.map { it.textValueOrNull() }
                     ?.filterNotNull()

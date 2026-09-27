@@ -1,6 +1,14 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-27 (session 272 — **DOC-BOOK-PUBLISH ✅ TERMINÉ 4/4 US
++ cadrage** — décision pilote #1 : le corpus multi-langue (`book-<lang>.adoc`)
+se **publie** dans chaque format demandé (`publishBookAllLanguages` →
+`book-<lang>.<ext>` par langue × format). Domaine `BookPublicationPlanner` +
+tâche `publishBookAllLanguages` (conversion `DocumentConverter` DRY) + DSL
+`book { publishFormats }` + N3 `BookConfig` additif. 10 UT + 5 FT + 8 BDD
+`@book-publish` (25e runner) + 1 FT dogfooding corpus réel offline. `bookPipeline`
+non modifié (D10).)
 _Date revision_ : 2026-09-27 (session 271 — **DOC-BOOK-MULTILANG ✅ TERMINÉ
 4/4 US + cadrage** — décision pilote : implémenter l'extension multi-langue
 `translateToAll`, **preuves offline uniquement** (fake LLM, aucune traduction
@@ -341,6 +349,48 @@ multi — zéro duplication.
 
 *Pièges* : #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out) + #41
 (fake suffixé par langue cible, pas source).
+
+'''
+
+'''
+== EPIC DOC-BOOK-PUBLISH — Publication fan-out du livre multi-langue ✅ TERMINÉ (S-272)
+
+_Origine : décision D1 du cadrage `DOC-BOOK-MULTILANG` (S-271) — « convertir N
+`book-<lang>.adoc` en N formats est un EPIC de publication, pas de traduction ».
+Candidat #1 retenu par le pilote à l'ouverture S-272 (seul actionnable sans coût
+LLM externe)._
+_Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc` (6 constats, 11 décisions)._
+
+*Constat* : `DOC-BOOK-MULTILANG` produit N `book-<lang>.adoc` mais ne les
+distribue pas — les 5 convertisseurs `convertDocumentTo*` sont **mono-source**
+(`sourceFile: RegularFileProperty`). Il manquait le fan-out langues × formats.
+
+*Décision* : plan (langue × format) **dérivé** (`BookPublicationPlanner` +
+`DocumentFormat`) ; le moteur `DocumentConverter` est **réutilisé** (DRY) ;
+`bookPipeline` non modifié (D10 — fan-out autonome).
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+| DOC-BOOK-PUBLISH-0 | Cadrage EPIC (gouvernance pure) — 6 constats, 11 décisions | ✅ TERMINÉ (S-272) | 1
+| DOC-BOOK-PUBLISH-1 | Domaine pur `BookPublicationPlanner` + `BookPublicationTarget` (produit cartésien langues × formats) | ✅ TERMINÉ (S-272 — 10 UT) | 3
+| DOC-BOOK-PUBLISH-2 | Tâche `publishBookAllLanguages` (`@OutputFiles`, `skipExisting`, `DocumentConverter` DRY) + DSL/CLI + N3 `BookConfig` | ✅ TERMINÉ (S-272 — 5 FT) | 4
+| DOC-BOOK-PUBLISH-3 | BDD `@book-publish` (25e runner `bookPublishCucumberTest`) | ✅ TERMINÉ (S-272 — 8/8) | 3
+| DOC-BOOK-PUBLISH-4 | Dogfooding end-to-end offline (fake LLM, corpus réel réduit, Règle 7) | ✅ TERMINÉ (S-272) | 2
+|===
+
+*Total* : ~13 pts + cadrage. **EPIC TERMINÉ 4/4 US.**
+
+*Gate structurel* (cœur) : chaque `book-<lang>.<ext>` porte le contenu traduit
+(`[<LANG>]`) et les ancres structurelles de la TOC (D1). *Non-goals* : pas de
+refonte des convertisseurs mono-source, pas de rattachement à `bookPipeline`
+(US-5 ultérieure), pas de publication du `book.adoc` source (D8 `includeSource`
+différé).
+
+*Backward compat* : sans `publishFormats`, aucune cible produite (no-op) ; les
+5 convertisseurs et `bookPipeline` sont byte-identiques.
+
+*Pièges* : #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out).
 
 '''
 

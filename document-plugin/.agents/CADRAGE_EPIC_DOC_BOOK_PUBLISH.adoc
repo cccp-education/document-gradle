@@ -1,0 +1,257 @@
+= Cadrage EPIC DOC-BOOK-PUBLISH — Publication fan-out du livre multi-langue
+
+_Date_ : 2026-09-27
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : décision D1 du cadrage `DOC-BOOK-MULTILANG` (S-271) — « convertir N
+`book-<lang>.adoc` en N formats exige N tâches de conversion ; c'est un EPIC de
+*publication*, pas de *traduction* ». Candidat #1 retenu par le pilote à
+l'ouverture S-272 (seul candidat actionnable sans coût LLM externe).
+_Statut_ : 🟡 EN COURS (S-272 — cadrage)
+_Pattern_ : gouvernance pure S-057/S-063 + baby-step DDD/TDD/BDD strict
+
+== Contexte
+
+`DOC-BOOK-MULTILANG` (S-271, ✅ TERMINÉ 4/4 US) produit **un `book-<lang>.adoc`
+par langue cible** dans `build/docs/document/`. Mais ces N livres traduits ne
+sont **pas distribués** : les cinq convertisseurs (`convertDocumentToHtml`,
+`convertDocumentToPdf`, `convertDocumentToEpub`, `convertDocumentToDocBook`,
+`convertDocumentToManPage`) sont **mono-source** — ils alimentent un unique
+`sourceFile` (`RegularFileProperty`) et écrivent
+`build/docs/document/${outputFileName}.${ext}`.
+
+Publier le corpus multi-langue exige donc un **fan-out** : pour chaque
+`book-<lang>.adoc`, produire `book-<lang>.html` / `.pdf` / `.epub` / … C'est le
+chaînon manquant entre la *traduction* (faite) et la *distribution* du produit
+livre.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *Le fan-out de langues existe déjà* — `translateBookAllLanguages` dérive un
+  plan de `LanguageCatalog` N0 (`BookLanguagePlanner`) et écrit un
+  `book-<lang>.adoc` par entrée. La brique de publication doit consommer ces
+  livres, pas les recalculer.
+| `TranslateBookAllLanguagesTask.kt`, `BookLanguagePlanner.kt`.
+
+| 2
+| *Les convertisseurs sont mono-source* — les 5 tâches `convertDocumentTo*` sont
+  enregistrées statiquement par `registerConvertTasks`, chacune avec une seule
+  `sourceFile` et une seule `outputFile`. Il n'existe aucun moyen de convertir
+  N sources en un run.
+| `DocumentPlugin.kt:328-364`, `ConvertDocumentTask.kt:40-73`.
+
+| 3
+| *Le moteur de conversion est réutilisable* — `DocumentConverter` (object pur,
+  `convert`/`convertToFile`/`shouldSkipConversion`/`shouldSkipBinaryConversion`)
+  encapsule déjà l'appel AsciidoctorJ, l'en-tête de metadata (hash source) et le
+  sidecar binaire. Le fan-out doit le **réutiliser** (DRY), pas le dupliquer.
+| `DocumentConverter.kt`, `ConvertDocumentTask.kt:108-211`.
+
+| 4
+| *Le pattern `@OutputFiles` dynamique est déjà éprouvé* — `translateBookAllLanguages`
+  déclare une collection `@OutputFiles` peuplée par un provider (piège #40) car
+  le répertoire `docs/document/` est partagé par plusieurs tâches ; un
+  `@OutputDirectory` créerait un conflit de sorties.
+| `TranslateBookAllLanguagesTask.kt:124-126`, `DocumentPlugin.kt:500-509`.
+
+| 5
+| *Le catalogue de formats existe* — `DocumentFormat` (HTML/PDF/EPUB/DOCBOOK/
+  MANPAGE) porte `backend` et `extension`. Le plan de publication peut le
+  consommer directement, sans nouveau vocabulaire.
+| `DocumentFormat.kt`.
+
+| 6
+| *Le DSL `book { }` ignore la publication* — il porte les knobs de traduction
+  (`translateToAll`, `targetLanguages`) mais aucun knob de format de
+  publication. Le contrat N3 `BookConfig` non plus.
+| `BookDsl.kt`, `BookConfig.kt`.
+
+|===
+
+== Décisions
+
+[cols="1,4", options="header"]
+|===
+| # | Décision
+
+| D1
+| *Périmètre = fan-out formats du corpus multi-langue* — produire
+  `book-<lang>.<ext>` pour chaque langue du plan × chaque format demandé. Ce
+  n'est PAS une refonte des 5 convertisseurs mono-source (intacts) ni un
+  moteur de templates.
+
+| D2
+| *Source de vérité des langues = `BookLanguagePlanner`* (N0 `LanguageCatalog`) —
+  le plan de publication **réutilise** le plan de traduction (mêmes knobs
+  `translateToAll`/`targetLanguages`), zéro second catalogue, zéro split-brain.
+
+| D3
+| *Source de vérité des formats = `DocumentFormat`* — le plan résout les noms
+  de formats du DSL vers l'enum (extension/backend), codes inconnus ignorés,
+  doublons collapsés, ordre déterministe. Domaine pur, Gradle-free.
+
+| D4
+| *Nouveau domaine pur* `BookPublicationPlanner` + `BookPublicationTarget`
+  (Gradle-free, testable en UT) : pour chaque (langue, format) un
+  `sourceFileName` (`book-<lang>.adoc`) et un `outputFileName`
+  (`book-<lang>.<ext>`).
+
+| D5
+| *Knob additif* `book { publishFormats }` (liste de noms, vide par défaut =
+  no-op, Économie d'Encre) + mirror flat + CLI
+  `-Pdocument.bookPublishFormats=html,pdf`. Découplé du bloc `outputs { }`
+  (qui pilote les convertisseurs mono-source) — pas de couplage surprenant.
+
+| D6
+| *Tâche thin `publishBookAllLanguages`* : résout le plan de langues puis le
+  plan de publication, construit le thème, itère la conversion via
+  `DocumentConverter` (DRY). `@OutputFiles` dynamique (piège #40),
+  `@DisableCachingByDefault` ; `dependsOn translateBookAllLanguages` (les
+  sources sont les livres traduits) ; `skipExisting` par cible (Économie
+  d'Encre, réutilise `DocumentConverter.shouldSkip*Conversion`).
+
+| D7
+| *N3 contract additif* : `BookConfig.publishFormats` (List<String>? null,
+  omis quand absent). Round-trip idempotent préservé.
+
+| D8
+| *Le livre source (`book.adoc`) est opt-in* via `includeSource` (défaut
+  `false`) : le fan-out publie par défaut uniquement les livres **traduits**
+  (le livre source est déjà couvert par les convertisseurs mono-source). Knob
+  exposé seulement si le besoin apparaît — pas dans la première US.
+
+| D9
+| *Zéro traduction, zéro coût externe* : le fan-out **convertit** des fichiers
+  déjà présents sur disque (AsciidoctorJ local). Les preuves FT/dogfooding
+  utilisent `llmMode=fake` pour produire les sources sans réseau.
+
+| D10
+| *`bookPipeline` non modifié* — la nouvelle tâche reste autonome (non
+  ajoutée au composite) pour préserver la non-régression stricte du pipeline
+  existant. Le rattachement au composite sera une US ultérieure si demandé.
+
+| D11
+| *Baby-step DDD/TDD/BDD strict* : US-1 domaine pur (UT) → US-2 tâche + DSL +
+  N3 (FT TestKit) → US-3 BDD `@book-publish` runner dédié → US-4 dogfooding
+  end-to-end offline (corpus réduit, Règle 7).
+
+|===
+
+== User Stories
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-BOOK-PUBLISH-0
+| Cadrage EPIC (gouvernance pure) — audit 6 constats, 11 décisions.
+| — (gouvernance)
+| 1
+| ✅ TERMINÉ (S-272)
+
+| DOC-BOOK-PUBLISH-1
+| Domaine pur `BookPublicationPlanner` + `BookPublicationTarget` : plan
+  (langue × format) dérivé de `BookLanguagePlanner` + `DocumentFormat`,
+  `fileName`, code de format inconnu ignoré, dédoublonnage, ordre déterministe,
+  opt-in `includeSource`.
+| UT (`BookPublicationPlannerTest`)
+| 3
+| 🟡 À FAIRE
+
+| DOC-BOOK-PUBLISH-2
+| Tâche `publishBookAllLanguages` + DSL `book { publishFormats }` (+ mirror
+  flat + CLI) + N3 `BookConfig` additif + wiring plugin. Conversion via
+  `DocumentConverter` (DRY), `@OutputFiles` dynamique, `skipExisting`.
+| FT TestKit (`BookPublishFunctionalTest`)
+| 4
+| 🟡 À FAIRE
+
+| DOC-BOOK-PUBLISH-3
+| BDD `@book-publish` — plan plein/sous-ensemble, format inconnu ignoré,
+  naming `book-<lang>.<ext>`, no-op sans knob. Runner dédié
+  `bookPublishCucumberTest`.
+| BDD scénarios
+| 3
+| 🟡 À FAIRE
+
+| DOC-BOOK-PUBLISH-4
+| Dogfooding end-to-end **offline** (fake LLM, corpus réel réduit, Règle 7) :
+  `translateBookAllLanguages` → `publishBookAllLanguages` produit
+  `book-<lang>.<ext>` pour chaque langue, sources non mutées.
+| FT dogfooding (`BookPublishContentFunctionalTest`)
+| 2
+| 🟡 À FAIRE
+
+|===
+
+_Total_ : ~13 pts, 4 US + cadrage.
+
+== Dépendances (DAG)
+
+----
+PUBLISH-0 (cadrage) ─→ PUBLISH-1 (planner pur) ─→ PUBLISH-2 (tâche + DSL + N3)
+                                                       │
+                                                       ├─→ PUBLISH-3 (BDD)
+                                                       └─→ PUBLISH-4 (dogfooding offline)
+
+Prérequis amont : DOC-BOOK-MULTILANG ✅ (S-271) — fournit `book-<lang>.adoc`.
+----
+
+== DSL proposé (surface publique)
+
+[source,kotlin]
+----
+document {
+    book {
+        pagesDir.set(file("src/book/pages"))
+        tocFile.set(file("src/book/toc.adoc"))
+        sourceLanguage.set("fr")
+        translateToAll.set(true)                 // langues du corpus (D2)
+        publishFormats.set(listOf("html", "pdf")) // formats fan-out (D5)
+    }
+    translation {
+        llmMode.set("fake")                      // preuves offline (D9)
+    }
+}
+----
+
+*Précédence* : CLI `-Pdocument.bookPublishFormats=html,pdf` > DSL > défaut vide
+(no-op).
+
+== Gates
+
+* *Gate plan* : `book-en` × {html,pdf} → 2 cibles nommées `book-en.html`,
+  `book-en.pdf` ; format inconnu ignoré ; doublons collapsés ; ordre
+  déterministe.
+* *Gate structurel (cœur)* : chaque `book-<lang>.<ext>` produit contient le
+  contenu traduit (`[<LANG>]`) et les ancres structurelles de la TOC.
+* *Gate non-régression* : les 5 convertisseurs mono-source et `bookPipeline`
+  sont inchangés (aucun `bookPipeline` modifié — D10) ; baseline UT/FT/BDD
+  préservée ; 24 runners Cucumber existants verts.
+* *Gate Économie d'Encre* : `publishFormats` vide → aucune tâche active ;
+  `skipExisting` par cible.
+* *Gate dogfooding offline* : zéro appel LLM réel (`llmMode=fake`), corpus
+  privé en lecture seule (Règle 7).
+
+== Risques
+
+* *Risque #1 (coût)* : aucun — la conversion AsciidoctorJ est locale. Le coût
+  LLM est déplacé à la traduction (opt-in, `skipExisting`).
+* *Risque #2 (collisions de sortie)* : `@OutputDirectory` revendiquerait le
+  répertoire partagé → conflit. Mitigation : `@OutputFiles` dynamique (piège
+  #40, éprouvé S-271).
+* *Risque #3 (fidélité OCR/contenu)* : hors périmètre (déjà traité par
+  DOC-BOOK-TRANSLATE/IMAGES/MATTER).
+* *Risque #4 (formats binaires lourds)* : PDF/EPUB par langue coûtent du CPU ;
+  mitigation : `publishFormats` opt-in, delta par hash source.
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+English only dans le code/tests/features (gouvernance `.adoc` en français).
+Zéro Python — outputs analysés avec Read/Grep/xmllint/rapports Gradle natifs.
+Local = build/compile uniquement ; les tests s'exécutent en CI (GitHub Actions).

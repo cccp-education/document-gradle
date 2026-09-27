@@ -112,4 +112,10 @@ class BookDsl(
      * Empty by default.
      */
     val targetLanguages: ListProperty<String>,
+    /**
+     * DOC-BOOK-PUBLISH — the output formats `publishBookAllLanguages` fans the
+     * translated books into (lowercase names: `html`, `pdf`, `epub`, `docbook`,
+     * `manpage`). Empty by default → no publication (Ink Economy Law).
+     */
+    val publishFormats: ListProperty<String>,
 )
