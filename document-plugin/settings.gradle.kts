@@ -18,10 +18,17 @@ val globalProps = java.util.Properties().also {
     if (globalFile.exists()) it.load(globalFile.inputStream())
 }
 
+// DOC-CI-ISOLATION (D2) — credentials are OPTIONAL at configuration time.
+// A GitHub runner has no ~/.gradle/gradle.properties; hard-failing here
+// (`?: error(...)`) kills every invocation — `./gradlew build` included —
+// before a single test runs, neutralising "Local = Build, Tests = CI".
+// bakery BKY-CI-ISOLATION (S-243) proved the `?: ""` fallback: an isolated
+// checkout configures and tests fine; only a real
+// publishAggregationToCentralPortal fails later, without credentials.
 nmcpSettings {
     centralPortal {
-        username = globalProps.getProperty("ossrhUsername") ?: error("ossrhUsername not found")
-        password = globalProps.getProperty("ossrhPassword") ?: error("ossrhPassword not found")
+        username = globalProps.getProperty("ossrhUsername") ?: ""
+        password = globalProps.getProperty("ossrhPassword") ?: ""
         publishingType = "AUTOMATIC"
     }
 }

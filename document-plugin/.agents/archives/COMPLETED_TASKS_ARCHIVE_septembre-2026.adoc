@@ -2,6 +2,30 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 273 (2026-09-27) — DOC-CI-ISOLATION ✅ TERMINÉ 5 US + cadrage
+
+*Type* : maintenance build/CI + TDD
+*Score* : 10/10
+*Mission* : candidat #1 du prompt S-273 (P0) — la CI GitHub Actions était rouge
+**en configuration** depuis ≥ 2026-09-25 (`ossrhUsername not found`, 0 succès sur
+60 runs), neutralisant « Local = Build, Tests = CI ».
+*Diagnostic (2 barrières)* : #1 `settings.gradle.kts` exigeait les credentials
+nmcp au configuration time ; #2 `DocumentPluginPublicationTest` lisait le working
+tree du dépôt voisin `../workspace-bom` (absent d'un checkout CI isolé). La #1
+masquait la #2.
+*Livrables* :
+- `settings.gradle.kts` — credentials optionnels (pattern bakery `?: ""`,
+  BKY-CI-ISOLATION S-243).
+- `build.gradle.kts` — `systemProperty` `document.publishedCatalog.documentVersion`
+  / `bomVersion` (pattern graphify D5-RACE S-029).
+- `SettingsCredentialPolicy.kt` + `SettingsCredentialIsolationTest.kt` (2 UT).
+- `PublishedCatalogVersion.kt` + `PublishedCatalogVersionTest.kt` (3 UT).
+- `DocumentPluginPublicationTest.kt` — 4 gardes préservées, sans accès dépôt voisin.
+- `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc` (6 constats, 7 décisions).
+*Décisions notables* : D1 corriger les 2 barrières ensemble ; D2 `?: ""` ;
+D3 injection `systemProperty` ; D6 zéro publication ; D7 secrets/US-4 différée.
+*Preuve finale* : run CI vert du commit poussé.
+
 === Session 272 (2026-09-27) — DOC-BOOK-PUBLISH ✅ TERMINÉ 4/4 US + cadrage
 
 *Type* : feat DDD/TDD/BDD + dogfooding offline (fake LLM)

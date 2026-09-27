@@ -1,5 +1,6 @@
 package document
 
+import document.ci.PublishedCatalogVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -12,13 +13,21 @@ import kotlin.text.Charsets.UTF_8
  * (`ws.versions.document.plugin.get()`) — never a duplicated literal.
  * D4: the borough pins the catalog once in settings.gradle.kts.
  * D5 hygiene: the local toml self version and the ws catalog version must agree.
+ *
+ * DOC-CI-ISOLATION D3 (S-273): the *published* catalog versions are injected by
+ * Gradle as system properties (build.gradle.kts). The guard never reads a
+ * neighbour repository's working tree (`../workspace-bom/…`) — that was racy
+ * between sessions and absent from an isolated CI checkout, which kept the CI
+ * red behind the settings barrier (graphify D5-RACE, S-029).
  */
 class DocumentPluginPublicationTest {
     private val pluginDir = File(System.getProperty("user.dir")).absoluteFile
 
-    private val rootDir =
-        pluginDir.parentFile
-            ?: throw IllegalStateException("Cannot resolve repo root from plugin dir")
+    private val publishedDocumentVersion: String
+        get() = PublishedCatalogVersion.require("document.publishedCatalog.documentVersion")
+
+    private val publishedBomVersion: String
+        get() = PublishedCatalogVersion.require("document.publishedCatalog.bomVersion")
 
     @Test
     fun `plugin version matches root consumer catalog version`() {
@@ -33,24 +42,22 @@ class DocumentPluginPublicationTest {
             .withFailMessage("build.gradle.kts version must derive from the published workspace catalog (ws.versions.document.plugin)")
             .contains("ws.versions.document.plugin.get()")
 
-        // Hygiene (D5): local toml self version must match the ws catalog version —
+        // Hygiene (D5): local toml self version must match the published ws catalog version —
         // the ws catalog (workspace-bom repo) is the cross-borough source of truth.
-        val pluginCatalogVersion = documentVersionFrom(pluginDir.resolve("gradle/libs.versions.toml").readText(UTF_8), local = true)
-        val wsCatalogVersion = documentVersionFrom(wsCatalogToml(), local = false)
+        val pluginCatalogVersion = documentVersionFrom(pluginDir.resolve("gradle/libs.versions.toml").readText(UTF_8))
 
         assertThat(pluginCatalogVersion)
-            .withFailMessage("plugin catalog document version ($pluginCatalogVersion) must match ws catalog document version ($wsCatalogVersion)")
-            .isEqualTo(wsCatalogVersion)
+            .withFailMessage("plugin catalog document version ($pluginCatalogVersion) must match ws catalog document version ($publishedDocumentVersion)")
+            .isEqualTo(publishedDocumentVersion)
     }
 
     @Test
     fun `workspace bom platform pin matches ws catalog bom version`() {
         val buildScript = pluginDir.resolve("build.gradle.kts").readText(UTF_8)
-        val wsBomVersion = bomVersionFrom(wsCatalogToml())
 
         assertThat(buildScript)
-            .withFailMessage("workspace-bom platform pin must use the ws catalog BOM version ($wsBomVersion)")
-            .contains("""platform("education.cccp:workspace-bom:$wsBomVersion")""")
+            .withFailMessage("workspace-bom platform pin must use the ws catalog BOM version ($publishedBomVersion)")
+            .contains("""platform("education.cccp:workspace-bom:$publishedBomVersion")""")
     }
 
     /**
@@ -63,50 +70,13 @@ class DocumentPluginPublicationTest {
     fun `local toml workspace-bom entry must not drift from published catalog`() {
         val localBomVersion =
             workspaceBomVersionFrom(pluginDir.resolve("gradle/libs.versions.toml").readText(UTF_8))
-        val wsBomVersion = bomVersionFrom(wsCatalogToml())
 
         if (localBomVersion != null) {
             assertThat(localBomVersion)
-                .withFailMessage("local toml workspace-bom ($localBomVersion) must match ws catalog BOM ($wsBomVersion)")
-                .isEqualTo(wsBomVersion)
+                .withFailMessage("local toml workspace-bom ($localBomVersion) must match ws catalog BOM ($publishedBomVersion)")
+                .isEqualTo(publishedBomVersion)
         }
     }
-
-    /**
-     * Reads the `ws` catalog toml resolved by Gradle (module cache) and extracts the
-     * `document-plugin` version. Fallback: parse the local MEMPHIS repo toml (same
-     * source file as the published catalog).
-     */
-    private fun wsCatalogToml(): String {
-        val wsRepoToml = rootDir.parentFile
-            ?.resolve("workspace-bom/gradle/libs.versions.toml")
-        if (wsRepoToml != null && wsRepoToml.exists()) return wsRepoToml.readText(UTF_8)
-        error("ws catalog toml introuvable — résolution ws impossible pour l'hygiène")
-    }
-
-    private fun documentVersionFrom(content: String, local: Boolean): String =
-        content
-            .lineSequence()
-            .map { it.substringBefore('#').trim() }
-            .first { if (local) it.startsWith("document =") else it.startsWith("document-plugin =") }
-            .substringAfter("\"")
-            .substringBefore("\"")
-
-    private fun bomVersionFrom(content: String): String =
-        content
-            .lineSequence()
-            .map { it.substringBefore('#').trim() }
-            .first { it.startsWith("workspace-bom =") }
-            .substringAfter("\"")
-            .substringBefore("\"")
-
-    private fun workspaceBomVersionFrom(content: String): String? =
-        content
-            .lineSequence()
-            .map { it.substringBefore('#').trim() }
-            .firstOrNull { it.startsWith("workspace-bom =") }
-            ?.substringAfter("\"")
-            ?.substringBefore("\"")
 
     @Test
     fun `plugin group and id are stable for publication`() {
@@ -124,4 +94,20 @@ class DocumentPluginPublicationTest {
         assertThat(buildScript).contains("group = \"education.cccp\"")
         assertThat(pluginId).isEqualTo("education.cccp.document")
     }
+
+    private fun documentVersionFrom(content: String): String =
+        content
+            .lineSequence()
+            .map { it.substringBefore('#').trim() }
+            .first { it.startsWith("document =") }
+            .substringAfter("\"")
+            .substringBefore("\"")
+
+    private fun workspaceBomVersionFrom(content: String): String? =
+        content
+            .lineSequence()
+            .map { it.substringBefore('#').trim() }
+            .firstOrNull { it.startsWith("workspace-bom =") }
+            ?.substringAfter("\"")
+            ?.substringBefore("\"")
 }

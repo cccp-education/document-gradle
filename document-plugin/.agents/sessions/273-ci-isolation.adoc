@@ -1,0 +1,130 @@
+= Session 273 — DOC-CI-ISOLATION (la CI document-gradle redevient testable)
+
+:date: 2026-09-27
+:borough: New Orleans (document-gradle)
+:epic: DOC-CI-ISOLATION
+:session_precedente: 272 — DOC-BOOK-PUBLISH (publication fan-out du livre multi-langue)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-273 désignait le candidat **#1** :
+`DOC-CI-ISOLATION (P0) — À CADRER EN PRIORITÉ`. La CI GitHub Actions du borough
+est **rouge en configuration** (`ossrhUsername not found`), comme **100 % des
+runs depuis ≥ 2026-09-25** (audit `gh run list` : 0 succès sur 60 runs). Aucun
+test ne s'exécute : la règle **« Local = Build, Tests = CI »** est neutralisée
+et la dette aval masquée (leçon bakery `BKY-CI-ISOLATION`, S-243). Le pilote a
+retenu ce candidat.
+
+== Diagnostic (2 barrières, pas 1)
+
+=== Barrière #1 — credentials exigés au configuration time
+
+`settings.gradle.kts:21-27` évalue
+`nmcpSettings { centralPortal { username = globalProps.getProperty("ossrhUsername")
+?: error("ossrhUsername not found") } }` sur **toute** invocation — `./gradlew
+build` compris. Le runner GitHub n'a pas de `~/.gradle/gradle.properties` → le
+build meurt au **configuration time**, avant la moindre compilation.
+
+Reproduction locale **fidèle** (faux `HOME`, aucun credential) :
+
+----
+$ HOME=/tmp/... ./gradlew help
+* Where:
+Settings file '.../settings.gradle.kts' line: 23
+* What went wrong:
+ossrhUsername not found
+BUILD FAILED in 1s
+----
+
+C'est **le même échec** que le log CI `36352150595`.
+
+=== Barrière #2 — la garde de publication lit un dépôt voisin
+
+`DocumentPluginPublicationTest.wsCatalogToml()` lisait
+`../workspace-bom/gradle/libs.versions.toml` (working tree du repo MEMPHIS). Sur
+un **checkout CI isolé** (le repo `document-gradle` seul), ce chemin n'existe
+pas → `error("ws catalog toml introuvable ...")`. Même famille que
+`graphify D5-RACE` (S-029) : une garde ne lit **jamais** le working tree d'un
+dépôt voisin — racy entre sessions, absent en CI.
+
+**La barrière #1 masquait la #2** : tant que la configuration échoue, aucun test
+ne tourne, donc la #2 restait invisible dans les logs. Les corriger séparément
+aurait laissé la CI rouge (leçon bakery S-243 : « V1 masque V2..Vn »).
+
+== Livré (EPIC DOC-CI-ISOLATION)
+
+=== US-0 — cadrage (gouvernance pure)
+
+` .agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc` : audit 6 constats, 7 décisions
+(D1 corriger les 2 barrières ensemble ; D2 `?: ""` pattern bakery ;
+D3 injection `systemProperty` pattern graphify D5-RACE ; D4 garde TDD ;
+D5 preuve = config sous faux HOME puis run CI ; D6 zéro publication ;
+D7 secrets GitHub Actions différé), 5 US (~6 pts).
+
+=== US-1 — barrière #1 + garde TDD (RED → GREEN)
+
+**Domaine pur** `SettingsCredentialPolicy` (source set `test`) : policy
+déterministe sur le texte de `settings.gradle.kts` — interdit le hard-fail
+`?: error("ossrh...")`, exige que nmcp reste appliqué (`com.gradleup.nmcp.settings`
++ `centralPortal` + lecture `ossrhUsername`) : « tolérant, pas absent ».
+
+**RED prouvé** : le motif interdit est présent (`settings.gradle.kts:23-24`) →
+verdict `tolerant = false`. **GREEN** : `settings.gradle.kts` passe au pattern
+**bakery prouvé** (`?: ""`, leçon `BKY-CI-ISOLATION`) → configuration sous faux
+HOME **VERTE**.
+
+=== US-2 — barrière #2 (plus de dépôt voisin)
+
+**Domaine pur** `PublishedCatalogVersion.require(property)` (source set `test`,
+pattern `bakery.workspace.PublishedCatalogVersion` + `graphify D5-RACE`) :
+la version *publiée* du catalog est **injectée par Gradle** en `systemProperty`,
+jamais lue d'un dépôt voisin ; propriété absente/vide = erreur explicite.
+
+`build.gradle.kts` injecte dans la tâche `test` :
+`document.publishedCatalog.documentVersion` = `ws.versions.document.plugin.get()`
+et `document.publishedCatalog.bomVersion` = `ws.versions.workspace.bom.get()`.
+
+`DocumentPluginPublicationTest` réécrit : les 4 gardes historiques préservées
+(D3 dérivation, D4 platform pin, D5 hygiène toml, id stable), mais lisent les
+propriétés injectées — `wsCatalogToml()`/`rootDir.parentFile` supprimés (zéro
+accès dépôt voisin).
+
+== Découverte annexe — `.gitignore` bare `build` (bug latent)
+
+En préparant le commit, les 4 nouveaux fichiers de garde (placés initialement
+dans le package `document.build`) n'apparaissaient **pas** en untracked :
+`git check-ignore` a révélé que le motif `.gitignore` **non ancré** `build`
+(ligne `build` du `.gitignore` plugin + `build/` de la racine) matche **tout
+répertoire nommé `build` à n'importe quelle profondeur** — donc le package
+source `document.build/`. **Conséquence potentielle** : une garde de test jamais
+committée = une garde jamais exécutée en CI. Correctifs : (1) package source
+renommé `document.ci` (un package `build` entre en collision avec le répertoire
+Gradle `build/` omniprésent) ; (2) motifs **ancrés** (`/build` plugin,
+`/build/` racine) pour que la cause racine ne puisse plus piéger un futur
+package. Build re-vérifié VERT.
+
+== Preuves (Local = Build)
+
+[cols="3,4", options="header"]
+|===
+| Vérification | Résultat
+| `settings.gradle.kts` hard-fail (avant) | RED — `ossrhUsername not found`
+| `./gradlew help` sous faux HOME (après) | **VERT** — barrier #1 levée
+| `compileKotlin` / `compileTestKotlin` / `compileFunctionalTestKotlin` | **VERT**
+| `assemble` + `validatePlugins` | **VERT**
+| `publishToMavenLocal` sous faux HOME + `CI=true` | **VERT** — le 2e step CI passe aussi
+| `grep 'error("ossrh'` settings.gradle.kts | **zéro** (GREEN)
+| `grep wsCatalogToml\|workspace-bom/gradle\|rootDir.parentFile src/` | **zéro** (barrier #2 levée)
+|===
+
+**Preuve finale** : le **run CI vert** du commit poussé (règle du workspace : le
+vert CI est l'unique preuve de validité).
+
+== Portée / non-goals
+
+* Zéro publication Central, zéro bump de version (D6).
+* Les 12 suites dépendant du corpus privé self-skipent déjà (`assumeTrue`) — la
+  CI isolée ne les exécute pas (constat #5 du cadrage).
+* Secrets GitHub Actions + gate « publish-on-tag » = US-4, **différée** (D7) :
+  non nécessaire pour rendre la CI testable tant que la publication se fait
+  depuis la machine de dev (credentials présents, chemin inchangé).

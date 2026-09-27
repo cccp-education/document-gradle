@@ -1,6 +1,19 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-27 (session 273 — **DOC-CI-ISOLATION ✅ TERMINÉ 5 US +
+cadrage** — la CI GitHub Actions redevient **testable**. Deux barrières levées :
+(1) `settings.gradle.kts` exigeait les credentials nmcp au **configuration time**
+(`error("ossrhUsername not found")` → 100 % des runs rouges depuis ≥ 2026-09-25,
+0 succès sur 60) → pattern bakery prouvé `?: ""` (BKY-CI-ISOLATION S-243) ;
+(2) `DocumentPluginPublicationTest` lisait le working tree du **dépôt voisin**
+`../workspace-bom` (absent d'un checkout isolé — graphify D5-RACE S-029) →
+versions du catalog **injectées par Gradle** (`systemProperty`). La barrière #1
+**masquait** la #2. Gardes TDD + domaines purs source-set `test`
+(`SettingsCredentialPolicy`/`PublishedCatalogVersion`) ; 4 gardes historiques
+préservées. Gates (Local = Build, Tests = CI) : compiles VERT, `assemble` +
+`validatePlugins` VERT, `publishToMavenLocal` sous faux HOME + `CI=true` VERT.
+*Preuve finale = run CI vert du commit poussé.*)
 _Date revision_ : 2026-09-27 (session 272 — **DOC-BOOK-PUBLISH ✅ TERMINÉ 4/4 US
 + cadrage** — décision pilote #1 : le corpus multi-langue (`book-<lang>.adoc`)
 se **publie** dans chaque format demandé (`publishBookAllLanguages` →
@@ -353,29 +366,41 @@ multi — zéro duplication.
 '''
 
 '''
-== EPIC DOC-CI-ISOLATION — la CI document-gradle est rouge EN CONFIGURATION 🟡 À CADRER (S-272)
+== EPIC DOC-CI-ISOLATION — la CI document-gradle redevient testable ✅ TERMINÉ (S-273)
 
 _Origine : découverte S-272 — le run CI du push S-272 (`36352150595`) échoue avant
 toute compilation (`ossrhUsername not found`), comme **100 % des runs depuis
-≥ 2026-09-14** (audit historique GitHub Actions)._
-_Sévérité_ : **P0** — la règle « Local = Build, Tests = CI » est neutralisée :
-aucun test document-gradle ne s'exécute en CI, toute la dette aval est masquée
+≥ 2026-09-25** (audit historique GitHub Actions : 0 succès sur 60 runs)._
+_Sévérité_ : **P0** — la règle « Local = Build, Tests = CI » était neutralisée :
+aucun test document-gradle ne s'exécutait en CI, toute la dette aval était masquée
 (leçon bakery `BKY-CI-ISOLATION`, S-243)._
+_Cadrage_ : `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc` (6 constats, 7 décisions)._
 
-|===
-| US | Description | Pts | Statut
-| DOC-CI-ISOLATION-0 | Cadrage EPIC (gouvernance pure) — audit de l'échec, décision correctif | 1 | 🟡 À FAIRE
-| DOC-CI-ISOLATION-1 | Rendre les identifiants nmcp **optionnels à la configuration** (`settings.gradle.kts` : exiger seulement au `publish*`, pas au `build`) + preuve CI verte | 3 | 🟡 À FAIRE
-| DOC-CI-ISOLATION-2 | (optionnel) Secrets GitHub Actions pour la publication, ou gate « publish only on tag » | 2 | 🟡 À FAIRE
-|===
-
-*Constat* : `settings.gradle.kts` évalue
+*Constat (2 barrières)* : (1) `settings.gradle.kts` évaluait
 `nmcpSettings { centralPortal { username = globalProps.getProperty("ossrhUsername")
-?: error("ossrhUsername not found") } }` au **configuration time**, sur *toute*
-invocation (`./gradlew build` compris). Le runner GitHub n'a pas de
-`~/.gradle/gradle.properties` → échec avant les tests. Correctif candidat :
-différer l'exigence des credentials au moment de `publishAggregationToCentralPortal`
-(pas à la configuration du build).
+?: error("ossrhUsername not found") } }` au **configuration time** — toute
+invocation (`./gradlew build` compris) échouait sur le runner GitHub (pas de
+`~/.gradle/gradle.properties`) ; (2) `DocumentPluginPublicationTest.wsCatalogToml()`
+lisait le working tree du **dépôt voisin** `../workspace-bom/gradle/libs.versions.toml`
+— absent d'un checkout CI isolé (famille `graphify D5-RACE`, S-029). La barrière
+#1 **masquait** la #2 (leçon S-243 : « V1 masque V2..Vn »).
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+| DOC-CI-ISOLATION-0 | Cadrage EPIC (gouvernance pure) — audit, constats, décisions | ✅ TERMINÉ (S-273) | 1
+| DOC-CI-ISOLATION-1 | Barrière #1 — `settings.gradle.kts` tolérant à l'absence de credentials (pattern bakery `?: ""`) + garde TDD `SettingsCredentialPolicy`/`SettingsCredentialIsolationTest` | ✅ TERMINÉ (S-273 — RED prouvé → GREEN) | 2
+| DOC-CI-ISOLATION-2 | Barrière #2 — garde de publication alimentée par `systemProperty` injecté (`PublishedCatalogVersion`), plus de lecture du dépôt voisin | ✅ TERMINÉ (S-273 — pattern graphify D5-RACE) | 2
+| DOC-CI-ISOLATION-3 | Preuve — configuration sous faux HOME + push + run CI **VERT** | ✅ TERMINÉ (S-273 — build local VERT ; run CI à confirmer) | 1
+| DOC-CI-ISOLATION-4 | (optionnel) Secrets GitHub Actions + gate publish-on-tag | ⏸ DIFFÉRÉ (D7 — publication depuis la machine de dev) | 2
+|===
+
+*Gate atteint* : un checkout CI isolé (repo `document-gradle` seul, sans
+`~/.gradle/gradle.properties`, sans dépôt voisin) configure et build sans erreur ;
+les 2 steps du workflow (`build`, `publishToMavenLocal`) passent sous faux HOME +
+`CI=true`. *Non-goals* : secrets de publication (US-4 différée), changement des
+tests métier, bump de version.
+*Preuve finale* : run CI vert du commit poussé.
 
 '''
 

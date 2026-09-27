@@ -1,6 +1,43 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-27
-:session: 272
+:session: 273
+
+== Session 273 — DOC-CI-ISOLATION (3 UT + 2 UT gardes d'isolation)
+
+*Périmètre* : rendre la **CI testable hors machine de dev** (EPIC
+DOC-CI-ISOLATION, 5 US). Aucun changement métier ; correctif de build/CI.
+*Note méthodo* : règle **Local = Build, Tests = CI** — les suites ne sont pas
+exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
+
+*Nouveaux tests* :
+
+- `document.build.SettingsCredentialPolicy` (domaine pur, source set `test`) —
+  policy déterministe sur le texte de `settings.gradle.kts` : interdit le
+  hard-fail `?: error("ossrh...")`, exige que nmcp reste appliqué
+  (`com.gradleup.nmcp.settings` + `centralPortal` + lecture `ossrhUsername`) —
+  « tolérant, pas absent ».
+- `document.build.SettingsCredentialIsolationTest` — **2 UT** : les settings ne
+  hard-failent pas sur credentials absents ; le plugin nmcp reste appliqué.
+- `document.build.PublishedCatalogVersion` (domaine pur, source set `test`) —
+  résout la version *publiée* injectée par Gradle (`systemProperty`) ; propriété
+  absente/vide = erreur explicite, jamais de fallback dépôt voisin.
+- `document.build.PublishedCatalogVersionTest` — **3 UT** : valeur injectée
+  retournée ; propriété manquante = erreur explicite ; propriété blanche = erreur.
+
+*Tests modifiés* : `document.DocumentPluginPublicationTest` (4 gardes
+historiques **préservées** : D3 dérivation, D4 platform pin, D5 hygiène toml,
+id stable) — réécrit pour lire les versions **injectées** par Gradle au lieu du
+working tree du dépôt voisin `../workspace-bom` (`wsCatalogToml()` /
+`rootDir.parentFile` supprimés).
+
+*Non-régression* : aucun test métier modifié ; le domaine Book et les 25 runners
+Cucumber sont intacts.
+
+*Gates (Local = Build, Tests = CI)* : `compileKotlin` / `compileTestKotlin` /
+`compileFunctionalTestKotlin` **VERT** ; `assemble` + `validatePlugins`
+**VERT** ; `publishToMavenLocal` sous faux HOME + `CI=true` **VERT** (les 2 steps
+du workflow CI passent). Suites UT/FT/BDD déléguées à la CI — dont la preuve
+finale : le **run CI vert** du commit poussé.
 
 == Session 272 — DOC-BOOK-PUBLISH (10 UT + 5 FT + 8 BDD + 1 FT dogfooding)
 

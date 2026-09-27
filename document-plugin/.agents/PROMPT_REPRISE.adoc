@@ -1,23 +1,24 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 273
+== Mission session 274
 
-S-272 (2026-09-27) a livré l'**EPIC DOC-BOOK-PUBLISH** (4 US + cadrage) : le
-corpus multi-langue du livre (N `book-<lang>.adoc`) se **publie désormais dans
-chaque format demandé** en un run (`publishBookAllLanguages`) —
-`book-<lang>.<ext>` par (langue × format). Décision pilote S-272 : candidat #1
-(fan-out de publication, seul actionnable sans coût LLM externe). Preuves
-**offline** (fake LLM). **EPIC TERMINÉ 4/4 US.**
+S-273 (2026-09-27) a livré l'**EPIC DOC-CI-ISOLATION** (5 US, cadrage inclus) :
+la CI GitHub Actions redevient **testable**. Deux barrières ont été levées —
+(1) `settings.gradle.kts` exigeait les credentials nmcp au **configuration time**
+(`error("ossrhUsername not found")` → 100 % des runs rouges depuis ≥ 2026-09-25),
+(2) la garde de publication lisait le working tree du dépôt voisin
+(`../workspace-bom`, absent d'un checkout isolé). Correctifs aux patterns
+**prouvés** : bakery `?: ""` (BKY-CI-ISOLATION S-243) + graphify `systemProperty`
+(D5-RACE S-029). **Preuve finale = run CI vert du commit poussé** (à confirmer
+au prochain run).
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *EPIC DOC-CI-ISOLATION (P0) — À CADRER EN PRIORITÉ* : la CI GitHub Actions est
-  **rouge EN CONFIGURATION depuis ≥ 2026-09-14** (`ossrhUsername not found` —
-  `settings.gradle.kts` exige les identifiants nmcp au config time, absents du
-  runner). **Aucun test ne s'exécute en CI** → la règle « Local = Build, Tests =
-  CI » est neutralisée et la dette aval masquée (leçon bakery BKY-CI-ISOLATION
-  S-243). Correctif : identifiants nmcp optionnels à la configuration (exigés
-  seulement au `publish*`).
+* *Vérifier le run CI vert* de la clôture S-273 (GitHub Actions). Si vert →
+  la règle « Local = Build, Tests = CI » est rétablie ; observer le vrai bilan
+  des suites (dette aval jusqu'ici masquée par la barrière #1).
+* *DOC-CI-ISOLATION US-4 (optionnel)* : secrets GitHub Actions
+  (`OSSRH_USERNAME`/`OSSRH_PASSWORD`) + gate « publish only on tag ». Différé D7.
 * *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
   `bookPipeline`, ou `includeSource` (D8, publier aussi `book.adoc`).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
@@ -26,25 +27,24 @@ chaque format demandé** en un run (`publishBookAllLanguages`) —
 * *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH).
 * *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
 
-== État du code (S-272)
+== État du code (S-273)
 
-- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH, non publié.
+- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH + CI-ISOLATION,
+  non publié.
 - *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18).
-- *`translateBookAllLanguages`* : plan dérivé de `LanguageCatalog` N0
-  (`BookLanguagePlanner`), `book-<lang>.adoc` par langue.
-- *`publishBookAllLanguages`* (S-272) : plan de langues → plan de publication
-  (`BookPublicationPlanner`) → convertit chaque `book-<lang>.adoc` via
-  `DocumentConverter` (DRY) en `book-<lang>.<ext>`. `@OutputFiles` dynamique,
-  `skipExisting`, `dependsOn translateBookAllLanguages`.
-- *DSL (S-272, additif)* : `book { publishFormats }` (vide par défaut) + mirror
-  flat + CLI `-Pdocument.bookPublishFormats=html,pdf`. Contrat N3
-  `BookConfig.publishFormats` (additif, round-trip idempotent).
+- *CI* : `settings.gradle.kts` tolérant (creds optionnels) ; `build.gradle.kts`
+  injecte `document.publishedCatalog.documentVersion`/`bomVersion` en
+  `systemProperty` ; le 2e step `publishToMavenLocal` passe sous faux HOME +
+  `CI=true`.
+- *Book* : `assembleBook` → `book.adoc` ; `translateBook`/`translateBookAllLanguages`
+  → `book-<lang>.adoc` ; `publishBookAllLanguages` → `book-<lang>.<ext>`.
+  DSL `book { publishFormats }` (+ mirror flat + CLI CSV) ; contrat N3 additif.
 - *Domaine pur* : `BookPublicationPlanner` / `BookPublicationTarget`.
-- *Preuves* : 10 UT planner + 5 FT TestKit + 8 BDD `@book-publish` (25e runner)
-  + 1 FT dogfooding corpus réel offline.
-- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc`.
+- *Preuves S-272* : 10 UT planner + 5 FT TestKit + 8 BDD `@book-publish` (25e runner).
+- *Cadrages* : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc` +
+  `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc`.
 
-== Pièges Gradle à retenir (S-232..S-272)
+== Pièges Gradle à retenir (S-232..S-273)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -58,9 +58,14 @@ chaque format demandé** en un run (`publishBookAllLanguages`) —
 13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
 33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
 36. *`mustRunAfter` dans `taskGraph.whenReady` est TROP TARD* — ordre au config.
+37. *Une ligne `=` non-titre NPE* (`=>`, `=*`) — `isHeading`/`HEADING_PATTERN`.
+38. *Gate structurel, pas regex* sur la prose OCR (guillemets « → `<<`).
 39. *Le corps OCR peut porter une ancre in-band* — gate D1 sur les refs de la TOC.
 40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271/S-272).
 41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271).
+42. *Une CI morte en configuration masque toute la dette aval* — corriger les
+    barrières **ensemble** (S-273, leçon bakery S-243) : ici #1 (creds au config
+    time) masquait #2 (garde lisant un dépôt voisin, pattern graphify D5-RACE).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -74,7 +79,7 @@ Chaque feature a UN runner propriétaire. Le runner global (glue
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
 CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build, Tests = CI* (GitHub Actions).
 English only code/tests/features (gouvernance .adoc en français).
-Zéro secret, zéro commit/push sans accord (accord pilote donné S-272).
+Zéro secret, zéro commit/push sans accord (accord pilote donné S-273).
 `bookPipeline` non modifié (D10) — le fan-out reste autonome.
 
 == À vérifier en ouverture
@@ -82,9 +87,11 @@ Zéro secret, zéro commit/push sans accord (accord pilote donné S-272).
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Décision pilote — PUBLISH US-5, FPA-PUBLISH-0, run metered, ou publication.
+4. *Run CI du commit S-273* sur GitHub Actions — doit être **vert**.
+5. Décision pilote — US-4 secrets, PUBLISH US-5, FPA-PUBLISH-0, run metered,
+   ou publication 0.0.19.
 
 == Vision « livre content SERVER »
 
-Le produit est servable, auditable, documenté, illustré, distribué, multi-langue
-et désormais **multi-format** de bout en bout (fan-out langues × formats).
+Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
+multi-format, et désormais **testé en CI** de bout en bout.

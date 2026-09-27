@@ -88,6 +88,14 @@ dependencies {
 // corpus directory (office/metiers/...).
 tasks.named<Test>("test") {
     systemProperty("content.book.publish", System.getProperty("content.book.publish") ?: "false")
+
+    // DOC-CI-ISOLATION (D3, S-273) — inject the *published* workspace catalog
+    // versions resolved by Gradle (from the ws catalog pin). The publication
+    // hygiene guard must never read a neighbour repository's working tree
+    // (`../workspace-bom/…`): that is racy between sessions and absent from an
+    // isolated CI checkout (graphify D5-RACE, S-029; bakery pattern).
+    systemProperty("document.publishedCatalog.documentVersion", ws.versions.document.plugin.get())
+    systemProperty("document.publishedCatalog.bomVersion", ws.versions.workspace.bom.get())
 }
 
 cucumberConventions {

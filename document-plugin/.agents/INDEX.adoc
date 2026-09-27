@@ -6,7 +6,26 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-09-27 (session 272 — **DOC-BOOK-PUBLISH 4/4 US +
+_Derniere mise a jour_ : 2026-09-27 (session 273 — **DOC-CI-ISOLATION 5 US
+TERMINÉ** — la CI GitHub Actions redevient **testable**. Deux barrières levées :
+(1) `settings.gradle.kts` exigeait les credentials nmcp au **configuration time**
+(`error("ossrhUsername not found")` → 100 % des runs rouges depuis ≥ 2026-09-25) ;
+(2) la garde de publication lisait le working tree du **dépôt voisin**
+(`../workspace-bom`, absent d'un checkout CI isolé — famille graphify D5-RACE
+S-029). Correctifs aux patterns **prouvés** : bakery `?: ""` (BKY-CI-ISOLATION
+S-243) + injection `systemProperty` (`ws.versions.*`). Domaines purs (source set
+`test`) `SettingsCredentialPolicy` + `PublishedCatalogVersion` ; gardes TDD
+`SettingsCredentialIsolationTest` + `PublishedCatalogVersionTest` ; 4 gardes
+historiques de `DocumentPluginPublicationTest` préservées, réécrites sans accès
+dépôt voisin. RED prouvé (hard-fail présent → verdict `false`) → GREEN
+(configuration sous faux HOME VERTE). Gates (Local = Build, Tests = CI) :
+`compileKotlin`/`compileTestKotlin`/`compileFunctionalTestKotlin` VERT,
+`assemble` + `validatePlugins` VERT, `publishToMavenLocal` sous faux HOME +
+`CI=true` VERT, zéro secret. **Preuve finale = run CI vert du commit poussé.**
+Cadrage `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc`. Rapport :
+`.agents/sessions/273-ci-isolation.adoc`.)
+
+|_Derniere mise a jour_ : 2026-09-27 (session 272 — **DOC-BOOK-PUBLISH 4/4 US +
 cadrage TERMINÉ** — décision pilote S-272 : candidat #1 (fan-out de publication,
 seul actionnable sans coût LLM). Le corpus multi-langue (`book-<lang>.adoc`) se
 **publie** dans chaque format demandé : `publishBookAllLanguages` produit
@@ -289,6 +308,27 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 273 — **DOC-CI-ISOLATION (5 US + cadrage) —
+  EPIC TERMINÉ** : la CI GitHub Actions redevient **testable**. Elle était rouge
+  **en configuration** depuis ≥ 2026-09-25 (`ossrhUsername not found` ; 0 succès
+  sur 60 runs — règle « Local = Build, Tests = CI » neutralisée). **Barrière #1**
+  : `settings.gradle.kts` exigeait les credentials nmcp au configuration time →
+  fix pattern bakery **prouvé** `?: ""` (BKY-CI-ISOLATION S-243). **Barrière #2**
+  (masquée par la #1) : `DocumentPluginPublicationTest` lisait le working tree du
+  dépôt voisin `../workspace-bom` (absent d'un checkout isolé — famille graphify
+  D5-RACE S-029) → versions du catalog **injectées par Gradle** (`systemProperty`
+  `ws.versions.document.plugin` / `ws.versions.workspace.bom`). Domaines purs
+  (source set `test`) `SettingsCredentialPolicy` + `PublishedCatalogVersion` +
+  gardes `SettingsCredentialIsolationTest`/`PublishedCatalogVersionTest` ; 4
+  gardes historiques préservées, réécrites sans accès dépôt voisin. RED prouvé
+  (hard-fail présent → verdict `false`) → GREEN (config sous faux HOME VERTE).
+  Preuves de build : compiles VERT, `assemble` + `validatePlugins` VERT,
+  `publishToMavenLocal` sous faux HOME + `CI=true` VERT. **Preuve finale = run
+  CI vert du commit poussé.** Cadrage `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc`.
+  Rapport : `.agents/sessions/273-ci-isolation.adoc`.
+  _Prochaine session_ : vérifier le run CI vert — ou DOC-CI-ISOLATION US-4
+  (secrets, différé) / PUBLISH US-5 / DOC-FPA-PUBLISH-0 (STANDBY, A1) / run
+  metered / publication 0.0.19 / drift ws.
 |_Derniere session terminee_ : 272 — **DOC-BOOK-PUBLISH (4/4 US + cadrage) —
   EPIC TERMINÉ** (décision pilote, preuves **offline** fake LLM) : le corpus
   multi-langue se publie dans chaque format demandé. Domaine pur
@@ -516,6 +556,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | ✅ TERMINÉ (S-267 cadrage, S-268 US-1 `BookTranslator`, S-269 US-2→US-5, S-270 US-6 dogfooding end-to-end fake) | P1
 | EPIC DOC-BOOK-MULTILANG | Traduction **multi-langue** du livre structuré — plan dérivé de `LanguageCatalog` N0 (`BookLanguagePlanner`), extraction DRY `BookTranslationRunner`, tâche `translateBookAllLanguages` (`book-<lang>.adoc` par langue, `@OutputFiles` dynamique, `skipExisting`), DSL `book { translateToAll; targetLanguages }` + N3 `BookConfig` additif, BDD `@book-multilang` (4 US + cadrage, ~13 pts) | ✅ TERMINÉ (S-271 — 4/4 US, preuves offline fake LLM) | P1
 | EPIC DOC-BOOK-PUBLISH | **Publication fan-out** du livre multi-langue — plan (langue × format) dérivé de `BookLanguagePlanner` + `DocumentFormat` (`BookPublicationPlanner`/`BookPublicationTarget`), tâche `publishBookAllLanguages` (`book-<lang>.<ext>` par format, `@OutputFiles` dynamique, `skipExisting`, conversion `DocumentConverter` DRY), DSL `book { publishFormats }` + N3 `BookConfig` additif, BDD `@book-publish` (4 US + cadrage, ~13 pts) | ✅ TERMINÉ (S-272 — 4/4 US, preuves offline fake LLM) | P1
+| EPIC DOC-CI-ISOLATION | **CI testable hors machine de dev** — la CI GitHub Actions était rouge **en configuration** (`ossrhUsername not found`) depuis ≥ 2026-09-25 (règle « Local = Build, Tests = CI » neutralisée). Barrière #1 : credentials nmcp optionnels au configuration time (pattern bakery `?: ""`) ; barrière #2 : garde de publication alimentée par `systemProperty` injecté (`ws.versions.*`), plus de lecture du dépôt voisin `../workspace-bom` (pattern graphify D5-RACE). Gardes TDD + preuve configuration sous faux HOME (5 US + cadrage, ~6 pts) | ✅ TERMINÉ (S-273 — 5 US, preuve finale = run CI vert) | P0
 |===
 
 '''
@@ -653,6 +694,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 270 | 2026-09-27 | test-only (dogfooding fake) | **DOC-BOOK-TRANSLATE US-6 ✅ + EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding end-to-end **offline** (fake LLM, corpus réel réduit, Règle 7). Nouveau FT `BookPipelineTranslateContentFunctionalTest` : `bookPipeline` `targetLanguage=en` publie le livre traduit (`book-en.adoc` → HTML `[EN]`/PDF/EPUB), `book.adoc` jamais muté, structure régénérée (D1). **Découverte** : ancre OCR **in-band** (`[[page-10]]`) légitimement perdue par le pivot → gate D1 sur les refs de la TOC (piège #39). Test-only, zéro prod. Rapport : `.agents/sessions/270-book-translate-us6-dogfooding-fake.adoc`. | 10/10
 | 271 | 2026-09-27 | feat DDD/TDD/BDD + offline | **DOC-BOOK-MULTILANG 4/4 US + cadrage — EPIC TERMINÉ** (décision pilote, preuves offline fake LLM) : livre traduit en plusieurs langues en un run. Domaine `BookLanguagePlanner` + `BookLanguageTarget` (plan dérivé de `LanguageCatalog` N0) + extraction DRY `BookTranslationRunner` + tâche `translateBookAllLanguages` (`@OutputFiles` dynamique, `skipExisting`) + DSL `book { translateToAll; targetLanguages }` + N3 `BookConfig` additif. 10 UT + 5 FT + 7 BDD `@book-multilang` (24e runner) + 1 FT dogfooding offline. Pièges #40/#41. Rapport : `.agents/sessions/271-book-multilang.adoc`. | 10/10
 | 272 | 2026-09-27 | feat DDD/TDD/BDD + offline | **DOC-BOOK-PUBLISH 4/4 US + cadrage — EPIC TERMINÉ** (décision pilote #1). Le corpus multi-langue se publie dans chaque format : `publishBookAllLanguages` → `book-<lang>.<ext>` par (langue × format). Domaine `BookPublicationPlanner` + `BookPublicationTarget` (produit cartésien langues × formats) + tâche (`@OutputFiles` dynamique, `skipExisting`, `dependsOn translateBookAllLanguages`, conversion `DocumentConverter` DRY) + DSL `book { publishFormats }` + N3 `BookConfig` additif. 10 UT + 5 FT + 8 BDD `@book-publish` (25e runner) + 1 FT dogfooding offline. `bookPipeline` non modifié (D10). Gates : compiles VERT, `validatePlugins` VERT, `assemble` VERT, graphe `--dry-run` OK. Tests délégués à la CI. Rapport : `.agents/sessions/272-book-publish.adoc`. | 10/10
+| 273 | 2026-09-27 | maintenance build/CI + TDD | **DOC-CI-ISOLATION 5 US + cadrage — EPIC TERMINÉ**. La CI GitHub Actions redevient **testable** (elle était rouge **en configuration** depuis ≥ 2026-09-25 — `ossrhUsername not found`, 0 succès sur 60 runs). **2 barrières** : (1) `settings.gradle.kts` exigeait les creds nmcp au configuration time → fix pattern bakery prouvé `?: ""` (BKY-CI-ISOLATION S-243) ; (2) `DocumentPluginPublicationTest` lisait le working tree du dépôt voisin `../workspace-bom` (absent d'un checkout isolé — famille graphify D5-RACE S-029) → versions du catalog **injectées par Gradle** (`systemProperty` `ws.versions.*`). La barrière #1 **masquait** la #2 (leçon S-243). Domaines purs (source set `test`) `SettingsCredentialPolicy` + `PublishedCatalogVersion` + gardes TDD `SettingsCredentialIsolationTest`/`PublishedCatalogVersionTest` ; 4 gardes historiques préservées, réécrites sans accès dépôt voisin. RED prouvé (hard-fail présent) → GREEN (configuration sous faux HOME VERTE). Gates (Local = Build, Tests = CI) : compiles VERT, `assemble` + `validatePlugins` VERT, `publishToMavenLocal` sous faux HOME + `CI=true` VERT, zéro secret. Piège #42. Rapport : `.agents/sessions/273-ci-isolation.adoc`. | 10/10
 |===
 
 '''

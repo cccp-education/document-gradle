@@ -1,0 +1,180 @@
+= Cadrage EPIC DOC-CI-ISOLATION — La CI document-gradle doit testable hors machine de dev
+
+_Date_ : 2026-09-27
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : découverte S-272 — le run CI du push S-272 (`36352150595`) échoue
+**avant toute compilation** (`ossrhUsername not found`), comme **100 % des runs
+depuis ≥ 2026-09-25** (audit `gh run list` : 0 succès sur 60 runs).
+_Statut_ : 🟡 EN COURS (S-273 — cadrage)
+_Pattern_ : gouvernance pure S-057/S-063 + baby-step DDD/TDD/BDD strict
+_Référence_ : leçon bakery `BKY-CI-ISOLATION` (S-243) + graphify `D5-RACE` (S-029)
+
+== Contexte
+
+La règle transverse du workspace est **« Local = Build, Tests = CI »** : le poste
+local ne fait que compiler/builder, la **CI GitHub Actions** exécute `test` →
+`functionalTest` → `cucumberTest` → `check`, et son **vert est l'unique preuve de
+validité** de la session.
+
+Or la CI document-gradle est **rouge en configuration** depuis au moins
+2026-09-25 : elle échoue dans `settings.gradle.kts` **avant** la moindre
+compilation. Conséquence : **aucun test ne s'exécute**, la dette aval est
+masquée, et la règle « Tests = CI » est neutralisée pour ce borough.
+
+C'est exactement le schéma documenté par bakery S-243 : *une CI morte en
+configuration masque toute la dette aval*. Le correctif se fait en **verrous
+indépendants** — corriger le premier échec en révèle un second.
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *Barrière #1 — credentials exigés au configuration time.* `settings.gradle.kts`
+  évalue `nmcpSettings { centralPortal { username =
+  globalProps.getProperty("ossrhUsername") ?: error("ossrhUsername not found") } }`
+  sur **toute** invocation (`./gradlew build` compris). Le runner GitHub n'a pas
+  de `~/.gradle/gradle.properties` → `BUILD FAILED` avant les tests.
+| `settings.gradle.kts:21-27` ; log CI `36352150595` :
+  `Settings file .../settings.gradle.kts line: 23 / What went wrong:
+  ossrhUsername not found`.
+
+| 2
+| *Reproduction locale à l'identique.* Avec un faux `HOME` (aucun
+  `~/.gradle/gradle.properties`), `./gradlew help` rejoue **le même** échec :
+  `Settings file .../settings.gradle.kts line: 23 — ossrhUsername not found`.
+| `HOME=/tmp/... ./gradlew help` → BUILD FAILED (1s).
+
+| 3
+| *Barrière #2 — la garde de publication lit un dépôt voisin.*
+  `DocumentPluginPublicationTest.wsCatalogToml()` lit
+  `../workspace-bom/gradle/libs.versions.toml` (working tree du repo MEMPHIS).
+  Sur un checkout CI **isolé** (le repo `document-gradle` seul), ce chemin
+  n'existe pas → `error("ws catalog toml introuvable ...")`. C'est la famille
+  graphify `D5-RACE` (S-029) : **une garde ne lit jamais le working tree d'un
+  dépôt voisin** — racy entre sessions et absent en CI.
+| `DocumentPluginPublicationTest.kt:80-85`.
+
+| 4
+| *La barrière #1 masque la #2.* Tant que `settings.gradle.kts` échoue en
+  configuration, aucun test ne tourne : la barrière #2 est **invisible** dans
+  les logs CI. Les corriger séparément laisse la CI rouge (leçon bakery S-243,
+  « V1 masque V2..Vn »).
+| audit : 60 derniers runs = 60 `failure`, jamais d'exécution de tests.
+
+| 5
+| *Les tests dépendant du corpus privé self-skipent déjà.* Les 12 suites qui
+  lisent `office/metiers/FPA/...` sont toutes protégées par `assumeTrue`
+  (corpus absent → skipped, jamais FAILED). La CI isolée ne les exécute pas.
+| `grep assumeTrue` sur les 12 fichiers `*Content*Test.kt` → SKIP-OK.
+
+| 6
+| *Le pattern correct existe déjà dans le workspace.* bakery (S-243) et academy
+  (ACADEMY-12-0, S-014) configurent nmcp **sans échouer** quand les credentials
+  sont absents (`?: ""` pour bakery, garde conditionnelle pour academy). graphify
+  (S-029) injecte la version du catalog publié par `systemProperty` au lieu de
+  lire le dépôt voisin.
+| `bakery-plugin/settings.gradle.kts:25` ; `academy-plugin/settings.gradle.kts:25-36` ;
+  `graphify-plugin/build.gradle.kts:31` + `GraphifyPluginPublicationTest.kt:18-33`.
+
+| 7
+| *Bug latent annexe — motif `.gitignore` non ancré.* Le `.gitignore` du plugin
+  porte `build` (racine `build/`) — pattern qui matche **tout répertoire nommé
+  `build` à n'importe quelle profondeur**, donc aussi un package source
+  `document.build/`. Une garde de test placée là serait **silencieusement
+  ignorée** : jamais committée, donc jamais exécutée en CI. Découvert en
+  préparant le commit S-273 (`git check-ignore`).
+| `document-plugin/.gitignore:5` + `.gitignore:2` (racine).
+|===
+
+== Décisions
+
+[cols="1,4", options="header"]
+|===
+| # | Décision
+
+| D1
+| *Corriger les deux barrières dans la même session.* L'EPIC est « CI verte »,
+  pas « settings tolérant ». Corriger D1 sans D2 laisserait la CI rouge (constat 4).
+
+| D2
+| *Barrière #1 — credentials optionnels au configuration time*, pattern bakery
+  `?: ""` (leçon citée, CI verte prouvée). nmcp reste configuré avec des
+  credentials vides en l'absence de `~/.gradle/gradle.properties` ; `build`,
+  `assemble`, `test` et `publishToMavenLocal` fonctionnent sans credentials. Seul
+  le `publishAggregationToCentralPortal` réel échoue plus tard (comportement
+  attendu sur une machine sans secrets).
+
+| D3
+| *Barrière #2 — injecter la version du catalog publié par Gradle* (pattern
+  graphify `D5-RACE`, S-029). `build.gradle.kts` injecte
+  `ws.versions.document.plugin.get()` et `ws.versions.workspace.bom.get()` en
+  `systemProperty` ; la garde lit ces propriétés, jamais un dépôt voisin. La
+  version *publiée* est la **source de vérité résolue par Gradle**, pas un
+  fichier relatif fragile.
+
+| D4
+| *Garde de non-régression (TDD).* Un test unitaire verrouille la barrière #1 :
+  `settings.gradle.kts` ne doit **jamais** hard-fail sur l'absence de
+  credentials (`error("ossrhUsername not found")` interdit). RED écrit avant le
+  fix, GREEN après. La barrière #2 est verrouillée par la garde existante
+  réécrite (plus d'accès dépôt voisin — prouvé par l'absence de `rootDir.parentFile`).
+
+| D5
+| *Preuve locale = build.* La barrière #1 se prouve par une invocation de
+  **configuration** (`./gradlew help`) sous faux `HOME` — RED rejoué avant fix,
+  GREEN après. Aucun test local (règle « Tests = CI »). La preuve finale est le
+  **run CI vert** du commit poussé.
+
+| D6
+| *Zéro publication.* L'EPIC est un correctif de build/CI — pas de bump de
+  version, pas de publication Central.
+
+| D7
+| *Secrets GitHub Actions (US-2) — différé.* Configurer `OSSRH_USERNAME`/
+  `OSSRH_PASSWORD` comme secrets du repo + gate « publish only on tag » est une
+  amélioration distincte, non nécessaire pour rendre la CI **testable**. Hors
+  périmètre tant que la publication se fait depuis la machine de dev.
+
+| D8
+| *Corriger le motif `.gitignore` non ancré* (constat #7, découverte S-273) :
+  `build` → `/build` (plugin) et `build/` → `/build/` (racine). La garde de test
+  vit dans le package `document.ci` (jamais `document.build`, qui collisionne
+  avec le répertoire Gradle `build/` omniprésent).
+|===
+
+== US découpées
+
+[cols="1,5,2,1", options="header"]
+|===
+| US | Description | Statut | Pts
+| DOC-CI-ISOLATION-0 | Cadrage EPIC (gouvernance pure) — audit, constats, décisions | ✅ S-273 (ce doc) | 1
+| DOC-CI-ISOLATION-1 | Barrière #1 — `settings.gradle.kts` tolérant à l'absence de credentials + garde TDD (RED→GREEN) | 🟡 À FAIRE | 2
+| DOC-CI-ISOLATION-2 | Barrière #2 — garde de publication : version du catalog publié injectée par Gradle (`systemProperty`), plus de lecture de dépôt voisin | 🟡 À FAIRE | 2
+| DOC-CI-ISOLATION-3 | Clôture — preuve locale (config sous faux HOME) + push + run CI **VERT** observé | 🟡 À FAIRE | 1
+| DOC-CI-ISOLATION-4 | (optionnel) Secrets GitHub Actions + gate publish-on-tag | ⏸ DIFFÉRÉ (D7) | 2
+|===
+
+*Total* : ~6 pts (hors US-4 différée).
+
+== Gate (cœur de l'EPIC)
+
+Un checkout CI **isolé** (repo `document-gradle` seul, sans
+`~/.gradle/gradle.properties`, sans dépôt `workspace-bom` voisin) exécute
+`./gradlew build` **de bout en bout** : configuration OK, `test` +
+`functionalTest` + `cucumberTest` exécutés, **job vert**.
+
+*Non-goals* : pas de configuration des secrets de publication (D7), pas de
+changement des tests métier, pas de bump de version.
+
+*Backward compat* : en local (credentials présents), `build` et
+`publishAggregationToCentralPortal` sont inchangés — nmcp reçoit les mêmes
+valeurs réelles.
+
+== Références
+
+* Leçon bakery `BKY-CI-ISOLATION` (S-243) — `.agents/sessions/243-ci-isolation-8-verrous.adoc`
+* graphify `D5-RACE` (S-029) — garde d'hygiène injectée par Gradle.
+* academy `ACADEMY-12-0` (S-014) — `settings.gradle.kts` tolérant.
