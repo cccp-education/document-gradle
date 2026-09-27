@@ -1,0 +1,107 @@
+= Session 270 — DOC-BOOK-TRANSLATE US-6 (dogfooding réel fake) + clôture EPIC
+
+:date: 2026-09-27
+:borough: New Orleans (document-gradle)
+:epic: DOC-BOOK-TRANSLATE
+:session_precedente: 269 — US-2→US-5 (wiring Gradle + BDD + dogfooding structurel)
+
+== Mission (option 2, accord pilote)
+
+Le pilote a retenu l'**option 2** de la liste proposée à l'ouverture :
+*l'US-6 en mode `fake`* — lever la charpente de clôture de l'EPIC sans
+exécution LLM metered (Règle 2). L'US-6 « dogfooding réel » devient donc une
+**preuve end-to-end offline** (fake LLM déterministe), le run metered restant
+une décision pilote ultérieure.
+
+== Constat d'ouverture (gap réel)
+
+L'US-5 (S-269) avait livré `BookTranslateContentTest` — une preuve
+**structurelle domaine** sur le corpus réel (arbre traduit + `BookAssembler`
+régénéré, **0 cible dangling**), mais **sans aucun fichier** : elle ne prouve
+jamais que `bookPipeline` *publie* le livre traduit.
+
+Le pipeline **non traduit** disposait, lui, d'une preuve end-to-end
+(`BookPipelineContentFunctionalTest` + `BookPipelineN3ContentFunctionalTest` —
+HTML/PDF/EPUB + statut N3). Il **manquait l'équivalent traduit** : le trou
+exact de l'US-6.
+
+== Livré (US-6, option 2)
+
+Nouveau **FT dogfooding** `BookPipelineTranslateContentFunctionalTest`
+(TestKit, LLM `fake`, corpus réel privé en lecture seule — Règle 7) :
+
+* TOC réelle **réduite** (en-tête + 6 pages référencées existantes — Loi de
+  l'Économie d'Encre : la preuve *structurelle* pleine échelle existe déjà en
+  US-5 ; cette preuve-ci ne teste que la chaîne de publication).
+* `bookPipeline` avec `targetLanguage=en` :
+  * `book-en.adoc` **produit** et **traduit** (`[EN]` sur titres + corps),
+  * `book.adoc` **jamais muté** (lecture seule),
+  * **structure régénérée** (D1) : chaque ancre structurelle de la TOC
+    (`[[1.0.0]]`, `[[1.0.1]]`, `[[1.0.2]]`) préservée, `:doctype: book`,
+    `toc::[]`,
+  * **publication effective** HTML (`[EN]` rendu) + PDF (`%PDF`) + EPUB (zip
+    `PK`).
+
+=== Découverte — ancre in-band OCR et lossiness du pivot
+
+La première exécution a **échoué** (RED authentique, pas un faux positif) :
+le `book.adoc` source portait `[[page-10]]`, une ancre **in-band** au tête du
+scan `010.adoc` — **non structurelle**. Le livre traduit l'a perdue : le
+`BookTranslator` route le corps de page dans le pivot (`parseBody`), qui est
+*lossy* sur les constructions de livre (constat #2 du cadrage, la raison même
+de D1). Le gate D1 légitime porte sur les **refs structurelles de la TOC**
+(générées par `BookAssembler`), jamais sur une égalité byte-à-byte du jeu
+d'ancres. Le test a été affiné en conséquence :
+
+----
+val missing = tocRefs - anchorRefs(translated)
+assertTrue(missing.isEmpty(), ...)   # portée = refs structurelles, pas artefacts OCR
+----
+
+C'est une caractérisation **précieuse** : elle documente que la traduction du
+corps (pivot) peut perdre un artefact d'ancre OCR, ce qui est acceptable (le
+livre reste navigable par construction), et interdit un gate trop strict.
+
+== Baby-step DDD/TDD/BDD (RED → GREEN → REFACTOR)
+
+. **RED** : le FT écrit → `functionalTest` **FAILED** (assertion sur le jeu
+  d'ancres, preuve que le test n'est pas tautologique).
+. **GREEN** : gate affiné à la portée structurelle → **PASSED** (4m53s).
+. **REFACTOR / discrimination** : sabotage one-shot de la production
+  (`val translated = false` dans `DocumentPlugin.bookPipeline`) → le FT
+  **FAILED** à l'assertion HTML `[EN]` (l.168) → production restaurée
+  (`git diff` vide). La preuve du pouvoir discriminant du filet est faite.
+
+== Gates
+
+[cols="1,3"]
+|===
+| Gate | Résultat
+
+| `functionalTest` (nouveau FT) | **PASSED** (corpus réel, fake LLM)
+| `test` ciblé (`BookTranslator`/`BookTranslateContent`/`TranslateBookTask`/`DocumentPluginPublication`) | **PASSED** (garde publication 5/5)
+| `bookTranslateCucumberTest --rerun-tasks` | **5/5 PASSED** (`@book-translate`, 23e runner)
+| Test-only | **zéro fichier de production modifié** (`git diff` vide après restauration)
+| Secrets | RAS
+| Publication / bump | aucun (Économie d'Encre)
+|===
+
+== Clôture EPIC DOC-BOOK-TRANSLATE
+
+**6/6 US terminées** : US-0 cadrage ✅, US-1 `BookTranslator` ✅, US-2
+`translateBook` ✅, US-3 insertion `bookPipeline` ✅, US-4 BDD ✅, US-5
+dogfooding structurel ✅ — **US-6 dogfooding end-to-end offline ✅ (cette
+session)**.
+
+Le run LLM **metered** (livre FR→EN réel, extension multi-langue) n'est plus
+un bloquant d'EPIC : c'est une **US ultérieure optionnelle**, sur accord
+pilote explicite. L'EPIC est clos sur sa preuve structurelle + publication
+(fake).
+
+== Prochaine session
+
+* `DOC-FPA-PUBLISH-0` (STANDBY — attend la convergence du corpus A1
+  Tombouctou).
+* Run LLM metered livre FR→EN réel + extension multi-langue `translateToAll`
+  (pattern `capsule.multilang`) — **sur accord pilote uniquement**.
+* Drift catalogue ws (piège #13) si MEMPHIS bump.

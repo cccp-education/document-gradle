@@ -2,6 +2,32 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 270 (2026-09-27) — DOC-BOOK-TRANSLATE US-6 ✅ + clôture EPIC
+
+*Type* : test-only FT + dogfooding end-to-end offline (baby-step DDD/TDD/BDD)
+*Score* : 10/10
+*Mission* : option 2 pilote — clore l'EPIC DOC-BOOK-TRANSLATE par une preuve
+end-to-end **offline** (fake LLM), sans run metered (Règle 2).
+*Constat d'ouverture* : l'US-5 (S-269) n'avait qu'une preuve *structurelle
+domaine* (`BookTranslateContentTest`, sans fichier) ; le pipeline traduit
+n'était jamais prouvé *publiant* le livre (le pipeline non traduit avait son
+FT end-to-end, pas l'équivalent traduit — le trou exact de l'US-6).
+*Découverte (RED authentique)* : le `book.adoc` source porte `[[page-10]]`, ancre
+**in-band** non structurelle ; le livre traduit la perd (pivot lossy sur le corps
+OCR, constat #2 = raison de D1). Gate affiné à la portée structurelle (refs TOC),
+piège #39.
+*Livrables* :
+- `src/functionalTest/.../BookPipelineTranslateContentFunctionalTest.kt` (FT
+  TestKit, corpus réel réduit, fake LLM, Règle 7).
+*Discrimination* : sabotage one-shot (`val translated = false`) → FT FAILED →
+production restaurée (`git diff` vide).
+*Gates* : FT nouveau PASSED ; `test` ciblé PASSED (garde publication 5/5) ;
+`bookTranslateCucumberTest` 5/5 ; test-only, zéro prod modifié ; zéro bump ;
+zéro publication ; zéro secret.
+*EPIC* : DOC-BOOK-TRANSLATE **TERMINÉ 6/6 US**. Le run LLM metered + extension
+`translateToAll` deviennent des US ultérieures optionnelles (accord pilote).
+*Rapport* : `.agents/sessions/270-book-translate-us6-dogfooding-fake.adoc`.
+
 === Session 269 (2026-09-27) — DOC-BOOK-TRANSLATE US-2→US-5 ✅
 
 *Type* : implémentation + BDD + dogfooding (baby-step DDD/TDD/BDD strict)

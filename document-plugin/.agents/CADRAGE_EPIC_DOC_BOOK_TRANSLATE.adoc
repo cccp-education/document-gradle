@@ -3,7 +3,7 @@
 _Date_ : 2026-09-26
 _Borough_ : New Orleans (document-gradle)
 _Origine_ : demande pilote — « est-ce que document intègre bien le livre avec la TOC avec la traduction ? »
-_Statut_ : 🟡 EN COURS (S-267, cadrage)
+_Statut_ : ✅ TERMINÉ (S-267 cadrage, S-268 US-1, S-269 US-2→US-5, S-270 US-6)
 _Pattern_ : S-057/S-063 (gouvernance pure) + baby-step DDD/TDD/BDD strict
 
 == Contexte
@@ -211,7 +211,7 @@ de stabiliser.
   → `TranslatedBook` (titres traduits + résolveur de corps traduits), via la
   chaîne de traduction existante. UT (fake) : titres, corps, refs intacts,
   non-régression vide.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-268)
 | 3
 
 | DOC-BOOK-TRANSLATE-2
@@ -219,33 +219,41 @@ de stabiliser.
   targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`.
   FT TestKit (fake LLM) : sortie produite, ancres/TOC/navigation présentes,
   défaut vide = pas de tâche active.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-269)
 | 3
 
 | DOC-BOOK-TRANSLATE-3
 | Insertion dans `bookPipeline` (pattern constat #8) : quand une langue cible
   est configurée, les convertisseurs consomment `book-<lang>.adoc` au lieu de
   `book.adoc`. FT TestKit.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-269)
 | 2
 
 | DOC-BOOK-TRANSLATE-4
 | BDD `book_translate.feature` `@book-translate` (23e runner dédié) : structure
   préservée (ancres, `:doctype:`, `toc::[]`, navigation) + contenu traduit
   (fake LLM). Preuve anti-régression de la décision D1.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-269, 5/5)
 | 2
 
 | DOC-BOOK-TRANSLATE-5
 | Dogfooding sur le corpus FPA réel (ou fixture réduite) : livre traduit
   FR→EN/…, gate 0 ancre dangling, N cibles == N ancres, EPUB/PDF produits.
   Extension multi-langue (`translateToAll`) si le besoin est confirmé.
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-269 structurel ; S-270 end-to-end offline)
+| 1
+
+| DOC-BOOK-TRANSLATE-6
+| Dogfooding **end-to-end offline** (fake LLM) : `bookPipeline` +
+  `targetLanguage` publie le livre traduit (HTML/PDF/EPUB), `book.adoc` jamais
+  muté, structure D1 préservée — corpus réel réduit (Règle 7). Le run metered
+  reste une US ultérieure optionnelle (accord pilote).
+| ✅ TERMINÉ (S-270 — `BookPipelineTranslateContentFunctionalTest`)
 | 1
 
 |===
 
-*Total* : ~12 pts (6 US).
+*Total* : ~12 pts + US-6 (1 pt). **EPIC TERMINÉ 6/6 US.**
 
 == Ordre d'exécution (baby-step)
 

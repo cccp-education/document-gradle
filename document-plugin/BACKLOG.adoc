@@ -1,6 +1,15 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-27 (session 270 — **DOC-BOOK-TRANSLATE US-6 ✅ +
+EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding **end-to-end offline**
+(fake LLM, corpus réel réduit, Règle 7). Nouveau FT
+`BookPipelineTranslateContentFunctionalTest` : `bookPipeline` avec
+`targetLanguage=en` publie le livre traduit (`book-en.adoc` → HTML/PDF/EPUB),
+`book.adoc` jamais muté, structure régénérée (D1). **Découverte** : ancre OCR
+**in-band** `[[page-10]]` légitimement perdue par le pivot (lossy) → gate D1 sur
+les refs de la TOC (piège #39). Test-only, zéro prod modifié. Le run LLM metered
+devient une US ultérieure optionnelle, plus un bloquant d'EPIC.)
 _Date revision_ : 2026-09-27 (session 269 — **DOC-BOOK-TRANSLATE US-2→US-5 ✅**
 câblage Gradle complet : tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI +
 insertion `bookPipeline` + BDD `@book-translate` (23e runner) + dogfooding
@@ -197,7 +206,7 @@ BDD `@inline-image` 8/8). Convergence : 4/4 IMAGE_MISSING localisées.
 '''
 
 '''
-== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré 🟡 QUASI-CLOS (S-267 cadrage, S-268 US-1, S-269 US-2→US-5)
+== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré ✅ TERMINÉ (S-267 cadrage, S-268 US-1, S-269 US-2→US-5, S-270 US-6)
 
 _Origine : demande pilote 2026-09-26 — « est-ce que document intègre bien le
 livre avec la TOC avec la traduction ? ». Constat : non — deux silos étanches._
@@ -229,10 +238,16 @@ envoyés au LLM). Preuve par caractérisation empirique S-267.
 | DOC-BOOK-TRANSLATE-2 | Tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage; targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`. FT TestKit | ✅ TERMINÉ (S-269) | 3
 | DOC-BOOK-TRANSLATE-3 | Insertion dans `bookPipeline` : langue configurée → les convertisseurs consomment `book-<lang>.adoc`. FT TestKit | ✅ TERMINÉ (S-269) | 2
 | DOC-BOOK-TRANSLATE-4 | BDD `@book-translate` (23e runner) : structure préservée (ancres, doctype, toc, navigation) + contenu traduit | ✅ TERMINÉ (S-269, 5/5) | 2
-| DOC-BOOK-TRANSLATE-5 | Dogfooding corpus réel : livre traduit, gate 0 ancre dangling, EPUB/PDF produits ; extension multi-langue si confirmée | 🟡 US-5 structurel ✅ (S-269) — dogfooding réel LLM (US-6) à faire | 1
+| DOC-BOOK-TRANSLATE-5 | Dogfooding corpus réel : livre traduit, gate 0 ancre dangling, EPUB/PDF produits ; extension multi-langue si confirmée | ✅ TERMINÉ (S-269 structurel plein échelle ; end-to-end offline S-270) | 1
+| DOC-BOOK-TRANSLATE-6 | Dogfooding **end-to-end offline** (fake LLM) : `bookPipeline` + `targetLanguage` publie le livre traduit (HTML/PDF/EPUB), `book.adoc` jamais muté, structure D1 préservée — corpus réel réduit (Règle 7) | ✅ TERMINÉ (S-270 — `BookPipelineTranslateContentFunctionalTest`, sabotage one-shot discriminant) | 1
 |===
 
-*Total* : ~12 pts (6 US). *Gate structurel* (cœur de l'EPIC) : le livre traduit
+*Total* : ~12 pts + US-6 (dogfooding offline, 1 pt). **EPIC TERMINÉ 6/6 US.**
+Le run LLM *metered* (livre FR→EN réel) et l'extension N langues
+(`translateToAll`, pattern `capsule.multilang`) sont des **US ultérieures
+optionnelles**, sur accord pilote explicite — ils ne bloquent plus l'EPIC.
+
+*Gate structurel* (cœur de l'EPIC) : le livre traduit
 porte le **même nombre d'ancres** `[[ref]]` que la source, plus `:doctype: book`
 et `toc::[]`, avec **0 ancre dangling**. *Non-goals* : pas d'extension du pivot
 (bakery-safe), pas de delta bloc-à-bloc, pas de traduction codex/RAG.
@@ -257,6 +272,15 @@ perdait son 1er paragraphe (`parseJbakeHeader` avale jusqu'à la 1re ligne vide)
 3 points d'extension **additifs** : `parseBody`/`renderBlocks`/`translateBlocks`
 + `translateField`. No-op strict si `tgt` vide/identique ; cache de titres.
 Piège #35 documenté PROMPT_REPRISE.
+
+*Avancement S-270 (US-6 ✅ + clôture)* : preuve **end-to-end offline** sur le
+corpus réel réduit (fake LLM, Règle 7) — `BookPipelineTranslateContentFunctionalTest` :
+`bookPipeline` avec `targetLanguage=en` produit `book-en.adoc` traduit puis
+HTML/PDF/EPUB, `book.adoc` jamais muté, structure D1 régénérée. **Découverte** :
+un scan OCR peut porter une ancre **in-band** (`[[page-10]]`) non structurelle,
+légitimement perdue par le pivot (lossy) — le gate D1 porte sur les refs de la
+TOC, jamais sur une égalité byte-à-byte d'ancres (piège #39). Discrimination
+prouvée par sabotage one-shot. Test-only, zéro prod modifié.
 
 '''
 

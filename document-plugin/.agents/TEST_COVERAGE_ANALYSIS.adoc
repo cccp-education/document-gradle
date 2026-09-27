@@ -1,6 +1,40 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-27
-:session: 269
+:session: 270
+
+== Session 270 — DOC-BOOK-TRANSLATE US-6 (1 FT ajouté, clôture EPIC)
+
+*Périmètre* : test-only — preuve **end-to-end offline** que `bookPipeline`
+avec `targetLanguage` publie le livre traduit (option 2 pilote, fake LLM, zéro
+coût metered). **Zéro fichier de production modifié.**
+
+*Nouveau test* :
+
+- `document.BookPipelineTranslateContentFunctionalTest` — **1 FT** (TestKit,
+  corpus réel privé réduit, fake LLM, Règle 7) : `bookPipeline` avec
+  `targetLanguage=en` → `book-en.adoc` traduit (`[EN]` titres+corps) + HTML
+  (`[EN]`) + PDF (`%PDF`) + EPUB (`PK`) ; `book.adoc` jamais muté ; structure D1
+  régénérée (refs TOC `[[1.0.0]]`/`[[1.0.1]]`/`[[1.0.2]]` préservées,
+  `:doctype: book`, `toc::[]`).
+
+*Baby-step* : RED authentique (assertion sur le jeu d'ancres — le `book.adoc`
+source porte une ancre **in-band** `[[page-10]]`, non structurelle, que le pivot
+lossy du corps ne préserve pas) → GREEN (gate affiné à la portée **structurelle**,
+piège #39) → **discrimination par sabotage one-shot** (`val translated = false`
+dans `DocumentPlugin.bookPipeline` → FT FAILED à l'assertion HTML `[EN]` l.168 →
+production restaurée, `git diff` vide).
+
+*Leçon* : le gate D1 porte sur les **refs structurelles de la TOC** (générées par
+`BookAssembler`), jamais sur une égalité byte-à-byte du jeu d'ancres — un artefact
+d'ancre OCR in-band peut légitimement disparaître.
+
+*Non-régression* : `test` ciblé (`BookTranslat*`/`TranslateBook*`/`DocumentPluginPublicationTest`)
+PASSED (garde publication **5/5**) ; `bookTranslateCucumberTest --rerun-tasks`
+**5/5 PASSED** (23e runner) ; FT nouveau PASSED.
+
+*Baseline préservée* : test-only, zéro code de production modifié, aucun seuil de
+couverture modifié. Zéro bump BOM, zéro publication, zéro secret. **EPIC
+DOC-BOOK-TRANSLATE → TERMINÉ 6/6 US.**
 
 == Session 269 — DOC-BOOK-TRANSLATE US-2→US-5 (24 tests ajoutés)
 

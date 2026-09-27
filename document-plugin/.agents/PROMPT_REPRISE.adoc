@@ -1,56 +1,55 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 270
+== Mission session 271
 
-S-269 (2026-09-27) a **câblé les US-2→US-5 de l'EPIC DOC-BOOK-TRANSLATE** :
-tâche `translateBook`, DSL/CLI, insertion `bookPipeline`, BDD `@book-translate`
-(23e runner), et dogfooding structurel sur le corpus FPA réel. L'EPIC est
-**quasi clos** (US-0→US-5 livrées).
+S-270 (2026-09-27) a **clos l'EPIC DOC-BOOK-TRANSLATE** : l'US-6 a été livrée
+en mode `fake` (accord pilote, option 2) — une preuve **end-to-end offline**
+(`BookPipelineTranslateContentFunctionalTest`, corpus réel réduit, LLM
+déterministe) que `bookPipeline` avec `targetLanguage` **publie** le livre
+traduit (HTML/PDF/EPUB) en préservant la structure (D1), sans coût metered.
 
-*1. Mission de la session 270 (clôture EPIC)* :
-- **US-6 — dogfooding réel LLM + clôture** : traduction metered d'un livre
-  FR→EN (ou fixture réduite d'abord), gate 0 ancre dangling, EPUB/PDF produits.
-  Extension multi-langue (`translateToAll` dérivé de `LanguageCatalog` N0,
-  pattern `capsule.multilang`) **seulement si le besoin est confirmé**.
-  ⚠️ Toute exécution LLM metered exige l'accord pilote (Règle 2).
+**EPIC DOC-BOOK-TRANSLATE = 6/6 US TERMINÉ.** Le run LLM *metered* (livre
+FR→EN réel, extension `translateToAll`) n'est plus un bloquant d'EPIC : c'est
+une US ultérieure optionnelle, sur accord pilote.
 
-*2. Candidats alternatifs (sur demande pilote)* :
-- *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : republication multi-format du livre FPA
-  après convergence du corpus A1 (Tombouctou). **Bloqué** (16 pages `[ILLISIBLE]`).
-- *Drift catalogue ws* : la garde `DocumentPluginPublicationTest` RED au build si
-  MEMPHIS bump (fix : réaligner settings/platform/toml sur la version publiée,
-  piège #13 — 7e occurrence S-269).
-- *FT RichToc page 73* : **préexistant** (drift corpus A1). Ne PAS corriger
-  avant convergence du corpus.
+== Candidats prochaine session (sur demande pilote — Règle 2)
 
-== État du code (S-269)
+* *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : republication multi-format du livre
+  FPA après convergence du corpus A1 (Tombouctou). **Bloqué** (16 pages
+  `[ILLISIBLE]`). Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste
+  préexistant tant qu'A1 n'a pas convergé.
+* *US ultérieure optionnelle* — dogfooding **LLM réel metered** du livre
+  FR→EN + extension multi-langue (`translateToAll` dérivé de
+  `LanguageCatalog` N0, pattern `capsule.multilang`). Accord pilote requis.
+* *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
+  Vérifier le POM versionné HTTP 200 avant tout pin (piège #11).
 
-- *0.0.18 PUBLIÉE* Central. Le HEAD porte l'EPIC DOC-BOOK-TRANSLATE
-  (US-2→US-5) en plus du contenu 0.0.18 (non publié).
-- *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18 ; MEMPHIS S-240 a bumpé
-  0.0.57→0.0.58, document réaligné S-269).
+== État du code (S-270)
+
+- *0.0.18 PUBLIÉE* Central. Le HEAD porte l'EPIC DOC-BOOK-TRANSLATE complet
+  (US-2→US-5 câblage + US-6 preuve end-to-end fake), non publié.
+- *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18 ; réaligné S-269).
 - *Tâche `translateBook`* : traduit le **domaine** Book (titres + corps) puis
   `BookAssembler` régénère la structure (D1). Sortie `book-<lang>.adoc`
-  (knob `outputFileName`), `skipExisting`, no-op si `targetLanguage` vide/identique.
+  (knob `outputFileName`), `skipExisting`, no-op si `targetLanguage`
+  vide/identique.
 - *DSL* : `book { sourceLanguage; targetLanguage }` (défauts `fr`/`""`) +
   flat `bookSourceLanguage`/`bookTargetLanguage` + CLI
   `-Pdocument.bookTargetLanguage`. Contrat N3 `BookConfig` étendu (additif).
 - *`bookPipeline`* : dépend de `translateBook` ; langue cible configurée →
   convertisseurs sur `book-<lang>.adoc`. Ordre fixé au **configuration time**
   (piège #36 — `whenReady` est trop tard).
-- *Domaine (S-268 rappel)* : `BookTranslator` + `TranslatedBook` ;
-  points d'extension additifs `parseBody`/`renderBlocks`/`translateBlocks`/
-  `translateField`.
-- *Bug parser corrigé (S-269)* : `isHeading`/`HEADING_PATTERN` — une ligne `=`
-  non-titre (flèche OCR `=>`, `=*`, `====`) n'est plus un titre (NPE supprimé).
-- *Refactor* : `BookImageMaterializer` partagé `AssembleBookTask`/`TranslateBookTask`.
+- *Preuves* : US-5 `BookTranslateContentTest` (structure domaine plein
+  échelle, 0 dangling) + **US-6 `BookPipelineTranslateContentFunctionalTest`**
+  (end-to-end publication traduite, corpus réel réduit, fake LLM).
+- *Bug parser corrigé (S-269)* : `isHeading`/`HEADING_PATTERN` (ligne `=` non
+  titre : flèches OCR `=>`, `=*`, `====`).
 - *EPICs* : DOC-BOOK-CONSISTENCY ✅, DOC-BOOK-IMAGES ✅, DOC-BOOK-MATTER ✅,
   DOC-BOOK-CONSISTENCY-B6 ✅, CROSS-DOC-BOOK-FIDELITY ✅, DOC-PUB ✅ 0.0.18,
-  DOC-BOOK-TRANSLATE 🟡 quasi-clos (US-0→US-5 ✅, US-6 dogfooding réel à faire).
-- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc` (8 constats,
-  13 décisions, décision A/B tracée).
+  **DOC-BOOK-TRANSLATE ✅ TERMINÉ 6/6 US**.
+- *Cadrage* : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
 
-== Pièges Gradle à retenir (S-232..S-269)
+== Pièges Gradle à retenir (S-232..S-270)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -105,6 +104,11 @@ tâche `translateBook`, DSL/CLI, insertion `bookPipeline`, BDD `@book-translate`
 38. *Gate structurel = objets du domaine, pas regex sur la prose* (S-269) : la
     prose OCR contient des `<<` légitimes (guillemets «) — vérifier les ancres
     via `BookNumbering`, jamais par regex de contenu.
+39. *Le corps OCR peut porter une ancre in-band* (S-270) : une page peut
+    commencer par `[[page-N]]` (artefact, non structurel). Le pivot est lossy
+    dessus ; le gate D1 porte sur les **refs structurelles de la TOC**, jamais
+    sur une égalité byte-à-byte du jeu d'ancres (l'ancre in-band du source peut
+    légitimement disparaître dans le livre traduit).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -123,7 +127,7 @@ rapports Gradle natifs uniquement.
 
 - English only dans le code/commentaires/tests (gouvernance .adoc en français).
 - Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-269).
+- Zéro secret, zéro commit/push sans accord (accord pilote donné à l'ouverture S-270).
 - `bookPipeline` lit l'AsciiDoc/HTML/PDF/EPUB sur disque en lecture seule.
 - Ne jamais lancer `./gradlew test` complet sans permission.
 
@@ -132,11 +136,13 @@ rapports Gradle natifs uniquement.
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. EPIC DOC-BOOK-TRANSLATE — US-6 (dogfooding réel + clôture) ou DOC-FPA-PUBLISH-0.
+4. Décision pilote — `DOC-FPA-PUBLISH-0` (STANDBY) ou US metered optionnelle.
 
 == Vision « livre content SERVER »
 
 Le produit est servable, auditable, documenté, illustré et distribué de bout en
-bout. L'EPIC `DOC-BOOK-TRANSLATE` ouvre le multi-langue : traduire le domaine
+bout. L'EPIC `DOC-BOOK-TRANSLATE` a ouvert le multi-langue : traduire le domaine
 Book, régénérer la structure, produire `book-<lang>.adoc` puis HTML/PDF/EPUB par
-langue. **US-0→US-5 sont livrées ; reste le dogfooding réel LLM (US-6).**
+langue. **US-0→US-6 livrées — EPIC TERMINÉ.** Le run LLM réel metered et
+l'extension N langues restent optionnels (accord pilote).
+

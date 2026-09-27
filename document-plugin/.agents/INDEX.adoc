@@ -6,7 +6,21 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-09-27 (session 269 — **DOC-BOOK-TRANSLATE
+_Derniere mise a jour_ : 2026-09-27 (session 270 — **DOC-BOOK-TRANSLATE US-6 ✅
++ EPIC TERMINÉ 6/6 US** — option 2 pilote : dogfooding **end-to-end offline**
+(fake LLM, corpus réel réduit, Règle 7). Nouveau FT
+`BookPipelineTranslateContentFunctionalTest` : `bookPipeline` avec
+`targetLanguage=en` **publie** le livre traduit (`book-en.adoc` → HTML/PDF/EPUB),
+`book.adoc` jamais muté, structure régénérée (D1 — refs TOC `[[1.0.0]]`
+préservées, `:doctype: book`, `toc::[]`). **Découverte** : un scan OCR peut
+porter une ancre **in-band** (`[[page-10]]`) non structurelle, légitimement
+perdue par le pivot (lossy) — le gate D1 porte sur les refs de la TOC, jamais sur
+une égalité byte-à-byte d'ancres (piège #39). Baby-step RED (assertion ancres) →
+GREEN → discrimination par sabotage one-shot (production restaurée). Test-only,
+zéro prod modifié, zéro secret. Rapport :
+`.agents/sessions/270-book-translate-us6-dogfooding-fake.adoc`.)
+
+|_Derniere mise a jour_ : 2026-09-27 (session 269 — **DOC-BOOK-TRANSLATE
 US-2→US-5** — câblage Gradle complet de l'EPIC. **US-2** tâche `translateBook`
 (`book-<lang>.adoc`, `skipExisting`, no-op si langue vide/identique ; DSL
 `book { sourceLanguage; targetLanguage }` + CLI + mirror flat + contrat N3
@@ -254,6 +268,20 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 270 — **DOC-BOOK-TRANSLATE US-6 + EPIC TERMINÉ
+6/6 US** (option 2 pilote, dogfooding end-to-end offline, test-only) : nouveau FT
+`BookPipelineTranslateContentFunctionalTest` (corpus réel réduit, fake LLM,
+Règle 7) — `bookPipeline` avec `targetLanguage=en` publie le livre traduit
+(`book-en.adoc` → HTML `[EN]`/PDF/EPUB), `book.adoc` jamais muté, structure
+régénérée (D1 : refs TOC préservées, `:doctype: book`, `toc::[]`). **Découverte** :
+ancre OCR in-band `[[page-10]]` légitimement perdue par le pivot (lossy) → gate D1
+sur les refs de la TOC (piège #39). Baby-step RED (assertion ancres) → GREEN →
+sabotage one-shot discriminant (production restaurée). Gates : FT nouveau PASSED,
+`test` ciblé PASSED (garde publication 5/5), `bookTranslateCucumberTest` 5/5,
+zéro prod modifié, zéro secret. Rapport :
+`.agents/sessions/270-book-translate-us6-dogfooding-fake.adoc`.
+  _Prochaine session_ : DOC-FPA-PUBLISH-0 (STANDBY, A1) — ou US metered
+  optionnelle (accord pilote) / drift ws si MEMPHIS bump.
 |_Derniere session terminee_ : 269 — **DOC-BOOK-TRANSLATE US-2→US-5** (câblage
 Gradle complet, baby-step DDD/TDD/BDD strict) : **US-2** tâche `translateBook`
 (sortie `book-<lang>.adoc`, `skipExisting`, `@DisableCachingByDefault` ; DSL
@@ -427,7 +455,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
-| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 QUASI-CLOS (S-267 cadrage ✅, S-268 US-1 `BookTranslator` ✅, S-269 US-2→US-5 ✅, **US-6 dogfooding réel LLM restante**) | P1
+| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | ✅ TERMINÉ (S-267 cadrage, S-268 US-1 `BookTranslator`, S-269 US-2→US-5, S-270 US-6 dogfooding end-to-end fake) | P1
 |===
 
 '''

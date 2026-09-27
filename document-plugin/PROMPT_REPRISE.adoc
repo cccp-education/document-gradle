@@ -1,40 +1,24 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :borough: New Orleans
-:session: 270
-:session_precedente: 269 — DOC-BOOK-TRANSLATE US-2→US-5 (wiring + BDD + dogfooding)
-_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-269). Ce fichier
+:session: 271
+:session_precedente: 270 — DOC-BOOK-TRANSLATE US-6 (dogfooding end-to-end fake) + clôture EPIC
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-270). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 270 — Clôture EPIC DOC-BOOK-TRANSLATE (US-6 dogfooding réel)
+== Mission session 271 — sur décision pilote
 
-S-269 (2026-09-27) a câblé les US-2→US-5 : tâche `translateBook`, DSL/CLI,
-insertion `bookPipeline`, BDD `@book-translate` (23e runner) et dogfooding
-structurel sur le corpus FPA réel (0 ancre dangling). L'EPIC est quasi clos.
+S-270 (2026-09-27) a **clos l'EPIC DOC-BOOK-TRANSLATE** (6/6 US) : l'US-6 a été
+livrée en mode `fake` (accord pilote, option 2) — un FT end-to-end offline
+(`BookPipelineTranslateContentFunctionalTest`, corpus réel réduit, LLM
+déterministe) prouvant que `bookPipeline` avec `targetLanguage` publie le livre
+traduit (HTML/PDF/EPUB) en préservant la structure (D1).
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
-dogfooding réel LLM (metered, **accord pilote requis**) → livre FR→EN +
-EPUB/PDF ; extension multi-langue (`translateToAll`) seulement si le besoin
-est confirmé. Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
 
-== Contexte hérité (S-269)
-
-- *0.0.18 publiée Central* ; catalogue ws **0.0.58** (drift piège #13 réaligné
-  S-269 — MEMPHIS S-240 avait bumpé 0.0.57→0.0.58).
-- *Bug parser corrigé* (S-269) : une ligne `=` non-titre (flèche OCR `=>`,
-  `=*`, `====`) n'est plus un titre — `isHeading`/`HEADING_PATTERN`.
-- *Piège #36* : `mustRunAfter` dans `taskGraph.whenReady` est trop tard.
-- *Gates S-269* : `test` 5142/0, FT 151/1 (préexistant RichToc page 73),
-  23 runners Cucumber 0 fail, `validatePlugins` VERT, `publishToMavenLocal` VERT.
-
-== Candidats prochaine session (sur demande pilote — Règle 2)
-
-- *US-6 dogfooding réel* (metered — accord pilote requis).
-- *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
-  livre le corpus corrigé. Le FT `AssembleBookTaskContentRichTocTest` (page 73)
-  reste préexistant tant qu'A1 n'a pas convergé.
-- *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
-  Vérifier le POM versionné HTTP 200 avant tout pin (piège #11).
+- `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
+- US metered optionnelle (livre FR→EN réel + extension `translateToAll`) — accord pilote.
+- Drift catalogue ws (piège #13) si MEMPHIS bump.
 
 == Méthode (rappel)
 
