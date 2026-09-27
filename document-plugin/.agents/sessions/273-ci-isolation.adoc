@@ -125,6 +125,14 @@ ignoré »).
 fantôme) + **2 UT** de verrouillage. Compilation VERTE ; preuve finale = run CI
 suivant.
 
+== Preuve finale — CI VERTE ✅
+
+Run **`36353834078`** (commit `cd6b1f1`) : job **Build & Test** `success` en
+**15m53s**, les 2 steps (`build` puis `publishToMavenLocal`) PASSENT. Le run
+précédent `36353300514` avait prouvé l'exécution (5029 tests) ; celui-ci prouve
+le **vert**. La règle « Local = Build, Tests = CI » est **rétablie** pour
+document-gradle — l'unique preuve de validité de la session.
+
 == Preuves (Local = Build)
 
 [cols="3,4", options="header"]

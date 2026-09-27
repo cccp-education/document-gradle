@@ -9,14 +9,16 @@ la CI GitHub Actions redevient **testable**. Deux barrières ont été levées �
 (2) la garde de publication lisait le working tree du dépôt voisin
 (`../workspace-bom`, absent d'un checkout isolé). Correctifs aux patterns
 **prouvés** : bakery `?: ""` (BKY-CI-ISOLATION S-243) + graphify `systemProperty`
-(D5-RACE S-029). **Preuve finale = run CI vert du commit poussé** (à confirmer
-au prochain run).
+(D5-RACE S-029). **CI VERTE** prouvée : run `36353834078` (commit `cd6b1f1`),
+15m53s, `success` — 5029 tests exécutés. Le run avait au passage révélé (et fait
+corriger) une dette masquée : `BookPublicationPlanner` produisait un fantôme
+`book-.html` pour un code de langue blanc (barrière #3).
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *Vérifier le run CI vert* de la clôture S-273 (GitHub Actions). Si vert →
-  la règle « Local = Build, Tests = CI » est rétablie ; observer le vrai bilan
-  des suites (dette aval jusqu'ici masquée par la barrière #1).
+* *CI désormais disponible* : la règle « Local = Build, Tests = CI » est rétablie
+  (run `36353834078` vert). La dette aval, jusqu'ici masquée, est visible ; toute
+  nouvelle session peut s'appuyer sur le run CI comme preuve.
 * *DOC-CI-ISOLATION US-4 (optionnel)* : secrets GitHub Actions
   (`OSSRH_USERNAME`/`OSSRH_PASSWORD`) + gate « publish only on tag ». Différé D7.
 * *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
@@ -87,7 +89,8 @@ Zéro secret, zéro commit/push sans accord (accord pilote donné S-273).
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. *Run CI du commit S-273* sur GitHub Actions — doit être **vert**.
+4. *Run CI du commit courant* sur GitHub Actions — doit être **vert** (le
+   dernier run vert S-273 est `36353834078`, commit `cd6b1f1`).
 5. Décision pilote — US-4 secrets, PUBLISH US-5, FPA-PUBLISH-0, run metered,
    ou publication 0.0.19.
 
