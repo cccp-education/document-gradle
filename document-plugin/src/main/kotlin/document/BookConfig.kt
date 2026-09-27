@@ -38,6 +38,10 @@ data class BookConfig(
     val matterBreaks: Boolean? = null,
     /** DOC-BOOK-CONSISTENCY-B6 — emit previous / next cross-references. */
     val navigation: Boolean? = null,
+    /** DOC-BOOK-TRANSLATE — source language of the scanned book (default `fr`). */
+    val sourceLanguage: String? = null,
+    /** DOC-BOOK-TRANSLATE — target language (blank/absent = no translation). */
+    val targetLanguage: String? = null,
 ) {
 
     /**

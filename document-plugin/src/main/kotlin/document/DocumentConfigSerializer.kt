@@ -85,6 +85,8 @@ class DocumentConfigSerializer {
             book.put("matterPolicy", config.book.matterPolicy)
             config.book.matterBreaks?.let { book.put("matterBreaks", it) }
             config.book.navigation?.let { book.put("navigation", it) }
+            config.book.sourceLanguage?.let { book.put("sourceLanguage", it) }
+            config.book.targetLanguage?.let { book.put("targetLanguage", it) }
             root.set<ObjectNode>("book", book)
         }
 
@@ -156,6 +158,8 @@ class DocumentConfigSerializer {
                 matterPolicy = bookNode.get("matterPolicy")?.textValueOrNull(),
                 matterBreaks = bookNode.get("matterBreaks")?.takeIf { !it.isNull }?.asBoolean(),
                 navigation = bookNode.get("navigation")?.takeIf { !it.isNull }?.asBoolean(),
+                sourceLanguage = bookNode.get("sourceLanguage")?.textValueOrNull(),
+                targetLanguage = bookNode.get("targetLanguage")?.textValueOrNull(),
             )
         } else {
             BookConfig()

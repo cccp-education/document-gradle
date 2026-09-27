@@ -2,6 +2,35 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 269 (2026-09-27) — DOC-BOOK-TRANSLATE US-2→US-5 ✅
+
+*Type* : implémentation + BDD + dogfooding (baby-step DDD/TDD/BDD strict)
+*Score* : 10/10
+*Mission* : câbler le pipeline Gradle complet de l'EPIC DOC-BOOK-TRANSLATE
+(tâche `translateBook`, DSL/CLI, insertion `bookPipeline`, BDD, dogfooding).
+*Découverte* : `AsciiDocParser.parseHeading` NPE sur toute ligne commençant par
+`=` mais non-titre (flèches OCR `=>`, marqueurs `=*`/`====`) — bug P0 corrigé
+TDD (`isHeading`/`HEADING_PATTERN`). Gate dogfooding = structurel (`BookNumbering`),
+jamais une regex sur la prose OCR (guillemets « → `<<` légitimes).
+*Livrables* :
+- `document/TranslateBookTask.kt` (traduction du domaine + régénération).
+- `document/BookImageMaterializer.kt` (refactor partagé, fin de duplication).
+- `BookDsl`/`DocumentExtension`/`DocumentPlugin` (DSL/CLI/mirror/régistration).
+- `BookConfig`/`DocumentConfigSerializer`/`SerializeDocumentConfigTask` (N3 additif).
+- `document/translation/AsciiDocParser.kt` (fix `isHeading`, piège #37).
+- `src/test/kotlin/document/TranslateBookTaskUnitTest.kt` (4 UT).
+- `src/functionalTest/kotlin/document/BookTranslateFunctionalTest.kt` (5 FT).
+- `src/functionalTest/kotlin/document/BookPipelineTranslateFunctionalTest.kt` (2 FT).
+- `src/test/kotlin/document/booktranslate/` (runner 23e + steps).
+- `src/test/resources/features/book_translate.feature` (5 scénarios).
+- `src/test/kotlin/document/BookTranslateContentTest.kt` (gate dogfooding FPA).
+- `src/test/kotlin/document/translation/AsciiDocParserTest.kt` (+2 UT).
+- `.agents/sessions/269-book-translate-us2-us5-wiring-bdd.adoc`.
+*Gates* : `test` 5142/0, FT 151/1 (1 préexistant RichToc page 73), 23 runners
+Cucumber 0 fail, `validatePlugins` + `publishToMavenLocal` VERT, garde 4/4.
+*Drift réaligné* : ws 0.0.57→0.0.58 (piège #13, 7e occurrence). Zéro bump,
+zéro publication, zéro secret.
+
 === Session 268 (2026-09-27) — DOC-BOOK-TRANSLATE US-1 `BookTranslator` ✅
 
 *Type* : implémentation (domaine pur, baby-step DDD/TDD strict)

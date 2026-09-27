@@ -253,6 +253,31 @@ class DocumentConfigSerializerTest {
     }
 
     @Test
+    fun `deserialize reads back the source and target languages of the book block`() {
+        val dir = tempDir()
+        val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
+        val pagesDir = File(dir, "pages").apply { mkdirs() }
+        val original = DocumentPipelineConfig(
+            source = DocumentSource(sourceFile),
+            book = BookConfig(
+                pagesDir = pagesDir,
+                title = "Mon Livre",
+                author = "Auteur",
+                sourceLanguage = "fr",
+                targetLanguage = "en",
+            ),
+        )
+        val serializer = DocumentConfigSerializer()
+        val file = serializer.serialize(dir, original)
+
+        val roundTripped = serializer.deserialize(file, baseDir = dir)
+
+        assertEquals("fr", roundTripped.book.sourceLanguage)
+        assertEquals("en", roundTripped.book.targetLanguage)
+        assertTrue(file.readText().contains("\"targetLanguage\""), "the JSON must carry the target language")
+    }
+
+    @Test
     fun `round-trip serialize then deserialize is idempotent`() {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }

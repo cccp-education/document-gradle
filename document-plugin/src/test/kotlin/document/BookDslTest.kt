@@ -26,6 +26,8 @@ class BookDslTest {
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
             navigation = objects().property(Boolean::class.java),
+            sourceLanguage = objects().property(String::class.java),
+            targetLanguage = objects().property(String::class.java),
         )
         assertNotNull(dsl.pagesDir)
         assertNotNull(dsl.photosDir)
@@ -46,6 +48,8 @@ class BookDslTest {
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
             navigation = objects().property(Boolean::class.java),
+            sourceLanguage = objects().property(String::class.java),
+            targetLanguage = objects().property(String::class.java),
         )
         assertFalse(dsl.title.isPresent)
         assertFalse(dsl.author.isPresent)
@@ -66,6 +70,8 @@ class BookDslTest {
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
             navigation = objects().property(Boolean::class.java),
+            sourceLanguage = objects().property(String::class.java),
+            targetLanguage = objects().property(String::class.java),
         )
         dsl.title.convention("Untitled Book")
         dsl.author.convention("Unknown Author")
@@ -86,6 +92,8 @@ class BookDslTest {
             matterPolicy = objects().property(MatterPolicyMode::class.java),
             matterBreaks = objects().property(Boolean::class.java),
             navigation = objects().property(Boolean::class.java),
+            sourceLanguage = objects().property(String::class.java),
+            targetLanguage = objects().property(String::class.java),
         )
         dsl.title.set("Mon Livre")
         dsl.author.set("Auteur")

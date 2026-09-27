@@ -166,7 +166,7 @@ class AsciiDocParser {
                     blocks.add(PivotBlock.Hr)
                     i++
                 }
-                line.startsWith("=") -> {
+                line.startsWith("=") && isHeading(line) -> {
                     val heading = parseHeading(line)
                     blocks.add(heading)
                     i++
@@ -227,11 +227,22 @@ class AsciiDocParser {
 
     private fun isHr(line: String): Boolean = line == "---"
 
+    /**
+     * True only for a real AsciiDoc heading (`=`, `==`, … followed by text).
+     *
+     * The real OCR corpus contains lines that *start* with `=` but are not
+     * headings — arrow continuations (`=> …`) and stray markers (`=*`, `====`).
+     * They must fall through to the paragraph branch instead of being routed to
+     * [parseHeading] (which used to NPE on `Regex(...).find(line)!!`).
+     * EPIC DOC-BOOK-TRANSLATE US-5 (dogfooding discovery).
+     */
+    private fun isHeading(line: String): Boolean = HEADING_PATTERN.matches(line)
+
     private fun isAdmonitionDelimiter(line: String): Boolean =
         line.length >= 4 && line.all { it == '=' }
 
     private fun parseHeading(line: String): PivotBlock.Heading {
-        val match = Regex("^(=+)\\s+(.+)$").find(line)!!
+        val match = HEADING_PATTERN.find(line)!!
         val level = match.groupValues[1].length
         val text = match.groupValues[2].trim()
         return PivotBlock.Heading(level, text, translatable = true)
@@ -592,7 +603,7 @@ class AsciiDocParser {
         val collectedLines = mutableListOf<String>()
         var i = start
         while (i < lines.size && lines[i].isNotBlank() &&
-            !lines[i].startsWith("=") && !isUnorderedListMarker(lines[i]) &&
+            !(lines[i].startsWith("=") && isHeading(lines[i])) && !isUnorderedListMarker(lines[i]) &&
             !lines[i].startsWith(". ") && !isNumberedListMarker(lines[i]) &&
             !lines[i].startsWith("[") &&
             !lines[i].startsWith("|===") && !lines[i].startsWith("---") &&
@@ -729,5 +740,8 @@ class AsciiDocParser {
 
     companion object {
         private val ADMONITION_KINDS = setOf("NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION")
+
+        /** A real AsciiDoc heading: one or more `=` followed by non-empty text. */
+        private val HEADING_PATTERN = Regex("^(=+)\\s+(.+)$")
     }
 }

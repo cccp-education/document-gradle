@@ -1,6 +1,44 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
 :date: 2026-09-27
-:session: 268
+:session: 269
+
+== Session 269 — DOC-BOOK-TRANSLATE US-2→US-5 (24 tests ajoutés)
+
+*Périmètre* : câblage Gradle de l'EPIC (`TranslateBookTask`, DSL/CLI,
+`bookPipeline`), BDD, dogfooding — plus le fix d'un bug P0 du parser pivot
+(`AsciiDocParser.isHeading`, piège #37) et un refactor (`BookImageMaterializer`).
+
+*Nouveaux tests* :
+
+- `document.TranslateBookTaskUnitTest` — **4 UT** (ProjectBuilder, `llmMode=fake`).
+- `document.BookTranslateFunctionalTest` — **5 FT** (TestKit : `book-en.adoc`
+  produit + structure préservée ; langue vide = inactive ; knob `outputFileName` ;
+  CLI override ; `book.adoc` jamais muté).
+- `document.BookPipelineTranslateFunctionalTest` — **2 FT** (TestKit :
+  `bookPipeline` publie le HTML traduit avec langue cible ; non-régression sans
+  langue cible).
+- `document.BookTranslateCucumberRunner` → **5 scénarios** `@book-translate`
+  (23e runner dédié : titres+corps traduits/refs intacts ; ancres/doctype/toc
+  régénérés ; navigation sur titres traduits ; cible vide = no-op ; src == tgt
+  = no-op).
+- `document.BookTranslateContentTest` — **1 test** (gate dogfooding structurel
+  corpus FPA réel, `assumeTrue`, fake LLM : même nombre d'ancres, **0 cible
+  dangling** via `BookNumbering`).
+- `document.translation.AsciiDocParserTest` — **+2 UT** (verrouillage du fix :
+  une ligne `=` non-titre → paragraphe, pas de NPE ; marqueur vide `====` non-titre).
+- `document.DocumentConfigSerializerTest` — **+1 UT** (round-trip
+  `sourceLanguage`/`targetLanguage` du bloc book).
+
+*Baby-step* : RED prouvé (compile `Unresolved reference 'TranslateBookTask'` ×16 ;
+NPE parser prouvé) → GREEN → REFACTOR (extraction `BookImageMaterializer`).
+
+*Non-régression* : `test` **5142 tests, 0 failure** ; FT **151 tests, 1 failure**
+(préexistant `AssembleBookTaskContentRichTocTest` page 73, stash-prouvé) ;
+**23 runners** Cucumber dédiés 0 fail ; `validatePlugins` + `publishToMavenLocal`
+VERT ; garde publication 4/4.
+
+*Baseline préservée* : aucun seuil de couverture modifié. Zéro bump BOM, zéro
+publication.
 
 == Session 268 — DOC-BOOK-TRANSLATE US-1 `BookTranslator` (10 UT ajoutés)
 

@@ -42,6 +42,19 @@ import org.gradle.api.provider.Property
  *
  * Concrete class with eagerly-initialised [Property]s for Kotlin DSL
  * access (pattern [DocumentEnrichDsl] / [DocumentOutputsDsl]).
+ *
+ * DOC-BOOK-TRANSLATE extends the block with the source / target languages:
+ *
+ * ```
+ * document {
+ *     book {
+ *         pagesDir.set(file("src/book/pages"))
+ *         tocFile.set(file("src/book/toc.adoc"))
+ *         sourceLanguage.set("fr")   // default "fr"
+ *         targetLanguage.set("en")   // blank (default) = no translation
+ *     }
+ * }
+ * ```
  */
 class BookDsl(
     val pagesDir: DirectoryProperty,
@@ -65,4 +78,14 @@ class BookDsl(
      * foot of every emitted section. Off by default (backward compatible).
      */
     val navigation: Property<Boolean>,
+    /**
+     * DOC-BOOK-TRANSLATE — the language the scanned book is written in.
+     * Defaults to `fr`; used only by `translateBook`.
+     */
+    val sourceLanguage: Property<String>,
+    /**
+     * DOC-BOOK-TRANSLATE — the language `translateBook` produces.
+     * Blank (default) means "no translation": the task stays inactive.
+     */
+    val targetLanguage: Property<String>,
 )

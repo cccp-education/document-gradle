@@ -1,131 +1,48 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 :borough: New Orleans
-:session: 267
-:session_precedente: 266 — Réparation dérive de gouvernance
-_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-267). Ce fichier
+:session: 270
+:session_precedente: 269 — DOC-BOOK-TRANSLATE US-2→US-5 (wiring + BDD + dogfooding)
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-269). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 267 — Cadrage EPIC DOC-BOOK-TRANSLATE
-Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant (mission S-268,
-US-1 `BookTranslator`). Résumé : le livre n'était pas traduit (deux silos
-étanches) ; EPIC DOC-BOOK-TRANSLATE cadré (décision B — traduire le domaine
-Book, `BookAssembler` régénère la structure). Cadrage :
-`.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
+== Mission session 270 — Clôture EPIC DOC-BOOK-TRANSLATE (US-6 dogfooding réel)
 
-== Contexte hérité (session 266 — sur demande pilote)
+S-269 (2026-09-27) a câblé les US-2→US-5 : tâche `translateBook`, DSL/CLI,
+insertion `bookPipeline`, BDD `@book-translate` (23e runner) et dogfooding
+structurel sur le corpus FPA réel (0 ancre dangling). L'EPIC est quasi clos.
 
-S-265 (2026-09-25) a soldé le candidat #1 : **hygiène toml** — l'entrée morte
-`workspace-bom = "0.0.43"` (résidu stale S-264, jamais référencée) est
-supprimée et une **4e garde** `DocumentPluginPublicationTest` interdit
-désormais qu'une entrée `workspace-bom` locale diverge du catalogue publié
-(baby-step TDD strict : RED 1 FAILED prouvé → GREEN 4/4).
+Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
+dogfooding réel LLM (metered, **accord pilote requis**) → livre FR→EN +
+EPUB/PDF ; extension multi-langue (`translateToAll`) seulement si le besoin
+est confirmé. Cadrage : `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`.
 
-Le borough est à jour et **sain** : **0.0.18 publiée Central**, catalogue ws
-**0.0.57** aligné (piège #13), garde publication 4/4, `compileKotlin` VERT,
-`validatePlugins` VERT. **Toutes les dettes B1→B6 sont soldées et distribuées.**
+== Contexte hérité (S-269)
 
-*Candidats prochaine session (sur demande pilote uniquement — Règle 2)* :
+- *0.0.18 publiée Central* ; catalogue ws **0.0.58** (drift piège #13 réaligné
+  S-269 — MEMPHIS S-240 avait bumpé 0.0.57→0.0.58).
+- *Bug parser corrigé* (S-269) : une ligne `=` non-titre (flèche OCR `=>`,
+  `=*`, `====`) n'est plus un titre — `isHeading`/`HEADING_PATTERN`.
+- *Piège #36* : `mustRunAfter` dans `taskGraph.whenReady` est trop tard.
+- *Gates S-269* : `test` 5142/0, FT 151/1 (préexistant RichToc page 73),
+  23 runners Cucumber 0 fail, `validatePlugins` VERT, `publishToMavenLocal` VERT.
 
-- *Bakery re-pin ws 0.0.57* (P2) : bakery pinne encore BOM 0.0.48 localement
-  et résout document 0.0.17 via transitives. Re-pin catalogue + platform =
-  session dédiée côté bakery (DAG document indépendant, zéro hardcode
-  MEM-CAT-3 D5).
+== Candidats prochaine session (sur demande pilote — Règle 2)
+
+- *US-6 dogfooding réel* (metered — accord pilote requis).
 - *DOC-FPA-PUBLISH-0 (1 pt)* — STANDBY : re-régénération quand A1 Tombouctou
-  livre le corpus corrigé (convergence 10 ILLISIBLE au 2026-09-24). Le FT
-  `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant tant qu'A1
-  n'a pas convergé.
-- *Drift catalogue ws* : si MEMPHIS bump (piège #13), la garde
-  `DocumentPluginPublicationTest` RED au build → réaligner les 3 sources vers
-  la version Central. Vérifier le **POM versionné HTTP 200** avant tout pin
-  (piège #11 — `<latest>` peut rester périmé ~27 min).
+  livre le corpus corrigé. Le FT `AssembleBookTaskContentRichTocTest` (page 73)
+  reste préexistant tant qu'A1 n'a pas convergé.
+- *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
+  Vérifier le POM versionné HTTP 200 avant tout pin (piège #11).
 
-== État du code (S-265)
-
-- *0.0.18 PUBLIÉE* Central — distribue 0.0.17 + RENAME-8 + Vague 4 + B1/B2 +
-  DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
-  CROSS-DOC-BOOK-FIDELITY (test-only) + pins catalogue ws 0.0.57.
-- *Catalogue ws* : **0.0.57** (consumer compile VERT, platform pin 0.0.57).
-- *Toml local* : plus d'entrée `workspace-bom` morte (S-265) — garde 4/4.
-- *Gates document* : garde publication 4/4, `test` runner-scoped, `validatePlugins`
-  VERT, `publishToMavenLocal` VERT (POM 20 deps toutes versionnées).
-- *EPIC CROSS-DOC-BOOK-FIDELITY* : ✅ TERMINÉ (S-263, test-only, distribué).
-- *EPIC DOC-BOOK-CONSISTENCY-B6* : ✅ TERMINÉ (S-262).
-- *EPIC DOC-BOOK-MATTER* : ✅ TERMINÉ 3/3 US (S-261).
-- *EPIC DOC-BOOK-IMAGES* : ✅ TERMINÉ 3/3 US (S-260).
-- *EPIC DOC-BOOK-CONSISTENCY* (B1/B2) : ✅ TERMINÉ 3/3 US (S-259).
-
-== Publication 0.0.18 (S-264) — bundlerefs
-
-- MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog
-  0.0.57, AUTOMATIC).
-- document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18, AUTOMATIC).
-- Preuve : POM/JAR/plugin-marker HTTP 200 ; consommateur tiers
-  `/tmp/opencode/doc-consumer-018` résout 0.0.18 et prouve `xrefValidation
-  STRICT` fail-fast sur ancre morte.
-
-== Pièges Gradle à retenir (S-232..S-265)
-
-1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
-3. *Chaîne N3 staged* : produce → validate → collect (3 builds).
-4. *Property DSL sans convention reste unset même derrière `.orElse(...)`*.
-5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`.
-6. *`@InputFile` valide l'existence AVANT l'action* — auditer en `@Input @Optional Property<String>`.
-7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par annotation du runner.
-8. *Imports DSL consommateur* : les enums des gardes ne sont pas résolus implicitement — `import document.*` explicite côté `build.gradle.kts` tiers.
-9. *epubcheck callback Java → null* : signature nullable obligatoire.
-10. *Preuve négative : corrompre la STRUCTURE, pas le contenu.*
-11. *Polling Central* : `<latest>` peut rester périmé ~27 min (re-confirmé S-264 ~15 min) — tester le **POM versionné HTTP 200**, jamais `<latest>` seul.
-12. *Test bakery JBake native roundtrip périmé* : préexistant — à mettre à jour côté bakery.
-13. *Drift catalogue ws* : MEMPHIS bump en amont → garde `DocumentPluginPublicationTest` RED. Fix : réaligner les 3 sources (settings D4 + platform + toml local). 6e occurrence S-264 (0.0.56→0.0.57).
-14. *PDFBox 3.x lénient sur les octets* : garde = texte extractible par page.
-15. *`PDPageContentStream.setFont(PDFont, float)` 2 params* — le size manquant.
-16. *Drift jar Central ↔ mavenLocal sous le MÊME numéro* : consumer DOIT déclarer `mavenLocal()` AVANT le Plugin Portal **dans `settings.gradle.kts → pluginManagement.repositories`** (S-262, dogfooding).
-17. *Central exige une version explicite par dépendance POM* : alias `libs.*` avec version.ref.
-18. *Faux positif grep « fpa/REAC »* : `LeafPath` contient « fpa » ; les chemins `office/metiers/FPA` sont des citations corpus légitimes — ne pas renommer.
-19. *Macro image AsciiDoc 2 formes (S-252)* : block `image::f[]` ET inline `image:f[]` → `image::?`.
-20. *Dogfooding HEAD via mavenLocal (S-252)* : `publishToMavenLocal` + consumer résolvant mavenLocal en tête. Le consumer `/tmp` **doit déclarer la version du plugin** (`id(...) version "0.0.18"`).
-21. *Central immutable × deployment concurrent (S-252b)* : coordonner MEMPHIS avant tout bump.
-22. *Fake de test doit matcher le contrat sémantique (S-253)*.
-23. *Paramètre additif fin de signature (S-253)* : toute extension d'API publique suit ce pattern.
-24. *Verrous RENAME = tests de comportement, pas fixtures nominales (S-254)*.
-25. *WIP parallèle dans le working tree (S-254)* : `git add` sélectif, jamais `-A` (re-confirmé S-264 côté MEMPHIS).
-26. *Vague 4 = champ lexical complet, pas les sigles (S-257).*
-27. *Transfuser AVANT de neutraliser (S-257).*
-28. *Gate Vague 4 : faux positifs + citations corpus (S-257).*
-29. *Un matter n'est dérivable que de la TOC (S-261)* : ne jamais hardcoder `0`/`9` comme exigence aveugle — `MatterPolicy.derive` n'adopte une racine que si la TOC la déclare. Défaut `DERIVED`, `LEGACY` disponible.
-30. *Navigation = sections émises, pas pages OCR (S-262)* : `BookNumbering.emittedNodes` (refs distincts) — sinon une ligne TOC multi-pages fait pointer « suivant » sur la même section logique.
-31. *Un test vert n'est pas un test fidèle (S-263)* : vérifier que les fixtures reproduisent la sortie **réelle** du producteur (codex = pas d'en-tête) et que le chemin testé est celui de la **production** (TOC structurée), sinon le filet valide une fiction.
-32. *Entrée toml non référencée = piège (S-265)* : une version locale qui survit à un bump de pin (`workspace-bom = "0.0.43"`) ressemble à de la configuration mais n'est jamais lue. La garde `DocumentPluginPublicationTest` exige désormais l'absence OU l'accord.
-
-== Anti-glue Cucumber (règle de propriété — S-238)
-
-Chaque feature a UN runner propriétaire. Runner global (glue `document.scenarios`) :
-`document.feature` + `release-notes.feature` + `frontmatter_retranslate.feature`.
-Les 22 runners dédiés sont listés dans `build.gradle.kts` (`cucumberConventions`).
-
-== Méthode
+== Méthode (rappel)
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-CONTRAINTE GLOBALE : *Zéro Python* — outputs (XML JUnit, rapports, logs)
-analysés avec Read/Grep/xmllint/rapports Gradle natifs uniquement.
+CONTRAINTE GLOBALE : *Zéro Python*. English only code/tests.
 
-== Règles absolues (AGENT.adoc)
+== Publication 0.0.18 (S-264) — rappel
 
-- English only dans le code/commentaires/tests (gouvernance .adoc en français).
-- Baby-step DDD/TDD/BDD strict — UT (domaine pur) → FT (TestKit) → BDD (runner dédié).
-- Zéro secret. Git/commit/push autorisés (décision pilote 2026-09-17) en clôture.
-- `bookPipeline` lit l'AsciiDoc sur disque en lecture seule (boundary Codex READ / Document WRITE+PUBLISH).
-- Ne jamais lancer `./gradlew test` complet en fin de session sans permission.
-
-== À vérifier en ouverture
-
-1. `git status` (document-gradle).
-2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
-3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. Central : vérifier le **POM versionné HTTP 200** (`document-plugin` 0.0.18,
-   `workspace-catalog` 0.0.57, `workspace-bom` 0.0.57) avant tout pin
-   (pièges #11/#13).
-5. Baseline : garde publication 4/4, `test` (runner-scoped 0 failure),
-   FT 144/1 (1 préexistant RichToc page 73), 22 runners Cucumber dédiés VERT.
+- MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog 0.0.57).
+- document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18).
+- Un futur bump (0.0.19) inclura l'EPIC DOC-BOOK-TRANSLATE — sur accord pilote.

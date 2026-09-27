@@ -1,0 +1,133 @@
+= Session 269 — DOC-BOOK-TRANSLATE US-2/US-3/US-4/US-5 (wiring Gradle + BDD + dogfooding)
+
+:date: 2026-09-27
+:borough: New Orleans (document-gradle)
+:epic: DOC-BOOK-TRANSLATE
+:session_precedente: 268 — US-1 `BookTranslator` (domaine pur)
+
+== Mission
+
+Poursuivre l'EPIC DOC-BOOK-TRANSLATE : après l'US-1 (domaine pur
+`BookTranslator`, S-268), câbler le pipeline Gradle complet — tâche
+`translateBook`, DSL/CLI, insertion `bookPipeline`, BDD et dogfooding — selon
+la méthode baby-step DDD/TDD/BDD stricte.
+
+== Livré
+
+=== US-2 — tâche `translateBook` (3 pts) ✅
+
+* Domaine : `TranslateBookTask` (`@DisableCachingByDefault`, LLM non
+  déterministe). Inputs `pagesDir`/`photosDir`/`tocFile` (`@Input @Optional`
+  pour les chemins, piège S-232 #3), `title`, `author`, `sourceLanguage`,
+  `targetLanguage`, `llmMode`, `skipExisting`, plus `matterPolicyMode`,
+  `matterBreaks`, `navigation` (parité de layout avec `assembleBook`).
+* La tâche traduit le **domaine** (`BookTranslator`) puis **régénère** la
+  structure (`BookAssembler`) : ancres `[[ref]]`, `:doctype: book`, `toc::[]`,
+  navigation préservés **par construction** (décision D1).
+* Sortie `book-<lang>.adoc` dérivée du knob `outputFileName` (S-259) —
+  `book.adoc` reste intact.
+* Ink Economy Law : `targetLanguage` vide ou identique = strict no-op (aucun
+  appel LLM, aucune écriture) ; `skipExisting` ne réécrit pas une traduction
+  existante.
+* DSL `book { sourceLanguage; targetLanguage }` (conventions `fr` / `""`) +
+  mirror flat `bookSourceLanguage`/`bookTargetLanguage` + CLI
+  `-Pdocument.bookTargetLanguage` + `-Pdocument.bookSourceLanguage`.
+* Contrat N3 : `BookConfig.sourceLanguage`/`targetLanguage` additifs +
+  `DocumentConfigSerializer` (round-trip idempotent préservé).
+
+=== US-3 — insertion `bookPipeline` (2 pts) ✅
+
+* `bookPipeline` dépend de `translateBook`. Quand une langue cible est
+  configurée, les convertisseurs HTML/PDF/EPUB consomment `book-<lang>.adoc`
+  (sortie de `translateBook`) au lieu de `book.adoc` — le pipeline publie le
+  livre traduit. Sans langue cible, comportement byte-identique (backward
+  compat).
+* L'ordre est fixé **au configuration time** (`mustRunAfter`) : un
+  positionnement en `taskGraph.whenReady` arrive trop tard (le graphe est déjà
+  ordonné) — leçon documentée (nouveau piège #36).
+* Preuve dogfooding manuelle : `bookPipeline` sur un projet TestKit →
+  `document.html` porte bien `Part I [EN]`.
+
+=== US-4 — BDD `@book-translate` (2 pts) ✅
+
+* Feature `book_translate.feature` 5 scénarios (titres+corps traduits, refs
+  intacts ; ancres/doctype/toc régénérés ; navigation sur titres traduits ;
+  cible vide = no-op ; source == cible = no-op).
+* `BookTranslateSteps` (préfixe `book-translate `, anti-glue S-088) +
+  `BookTranslateCucumberRunner` (**23e runner dédié**) + `CucumberTaskSpec`
+  `bookTranslateCucumberTest`. 5/5 PASSED.
+
+=== US-5 — dogfooding + découverte bug parser (1 pt) ✅
+
+* Gate structurel sur le **corpus FPA réel** (116 sections, 200+ pages) :
+  traduction FR→EN via un `FakeTranslationService` déterministe (aucun coût
+  LLM metered — Règle 2). Preuve : même nombre d'ancres que la source,
+  `:doctype: book`, `toc::[]`, **0 cible de navigation dangling** (vérifiée
+  structurellement via `BookNumbering`, pas par regex sur la prose OCR).
+* **Bug P0 découvert** — le parser pivot NPE (`Regex(...).find(line)!!`) sur
+  toute ligne commençant par `=` mais qui n'est pas un titre AsciiDoc : les
+  flèches OCR (`=> …`) et marqueurs parasites (`=*`, `====`) du corpus réel.
+  Fix TDD strict (RED NPE prouvé → GREEN) : nouveau `isHeading(line)` +
+  `HEADING_PATTERN` companion, appliqué dans `parseBlocks` ET dans la garde
+  d'arrêt de `parseParagraph`. 2 UT `AsciiDocParserTest` de verrouillage.
+
+=== Drift catalogue ws (piège #13) ✅
+
+* La garde `DocumentPluginPublicationTest` était **RED au HEAD** : MEMPHIS
+  (session parallèle S-240) a publié BOM/catalog **0.0.58** alors que document
+  pinnait 0.0.57. Réalignement des 2 sources (settings D4 +
+  platform pin `build.gradle.kts`) → garde **4/4 VERT**. Zéro bump plugin
+  (le catalogue 0.0.58 pinne toujours `document-plugin = 0.0.18`).
+
+=== Refactor
+
+* Extraction `BookImageMaterializer` (`resolveTargets`/`materialise`/
+  `IMAGES_DIR`) — supprime la duplication entre `AssembleBookTask` et
+  `TranslateBookTask` ; le second réplique désormais exactement l'illustration
+  et la réparation des images fantômes du premier.
+
+== Gates
+
+[cols="1,3"]
+|===
+| Gate | Résultat
+
+| `test` | **5142 tests, 0 failure**
+| `functionalTest` | **151 tests, 1 failure** — préexistante `AssembleBookTaskContentRichTocTest` (page 73, drift corpus A1, **stash-prouvée préexistante**)
+| Cucumber dédiés | 23 runners, **0 fail** (dont `bookTranslateCucumberTest` 5/5)
+| `validatePlugins` | ✅ VERT
+| `publishToMavenLocal` | ✅ VERT
+| Garde publication | 4/4 VERT (drift 0.0.58 réaligné)
+| Secrets | RAS — zéro publication Central, zéro bump
+|===
+
+== Découvertes / pièges
+
+* **Piège #35 (S-268)** confirmé et exploité : un corps de page est un
+  fragment sans en-tête → `parseBody`/`renderBlocks`/`translateBlocks`.
+* **Piège #36 (nouveau)** : `mustRunAfter` dans `taskGraph.whenReady` est
+  trop tard — l'ordre du graphe est déjà calculé. Fixer l'ordre au
+  configuration time.
+* **Bug parser** : `parseHeading` doit être gardé par `isHeading` —
+  `parseParagraph` aussi doit distinguer un titre d'une ligne `=` non-titre.
+* **Gate dogfooding = structurel, pas textuel** : la prose OCR contient des
+  `<<` légitimes (guillemets «) — vérifier les ancres via les objets du domaine
+  (`BookNumbering`), jamais par regex sur le contenu.
+
+== Mise à jour gouvernance
+
+* `PROMPT_REPRISE.adoc` (racine + `.agents/`) : mission S-270 (US-6 clôture
+  EPIC ou DOC-FPA-PUBLISH-0), état réel US-2→5 ✅, piège #36.
+* `.agents/INDEX.adoc` : roadmap DOC-BOOK-TRANSLATE 5/6 US, session 269.
+* `.agents/SESSIONS_HISTORY.adoc` : entrée session 269.
+* `BACKLOG.adoc` : section DOC-BOOK-TRANSLATE synchronisée (US-2→5 ✅ TERMINÉ).
+* `.agents/archives/COMPLETED_TASKS_ARCHIVE_septembre-2026.adoc` : entrée.
+
+== Prochaine session
+
+* *US-6 — clôture EPIC* : dogfooding réel LLM (metered, sur accord pilote) →
+  livre FR→EN/… + EPUB/PDF, extension multi-langue (`translateToAll`) si le
+  besoin est confirmé.
+* Alternatifs : `DOC-FPA-PUBLISH-0` (STANDBY, attend convergence A1) ;
+  drift catalogue ws (piège #13) ; FT RichToc page 73 (préexistant, ne pas
+  corriger avant convergence A1).

@@ -108,6 +108,12 @@ abstract class DocumentExtension {
     /** Book pipeline (DOC-BOOK-CONSISTENCY-B6) — emit previous / next cross-references (opt-in). */
     abstract val bookNavigation: Property<Boolean>
 
+    /** Book pipeline (DOC-BOOK-TRANSLATE) — language the scanned book is written in. */
+    abstract val bookSourceLanguage: Property<String>
+
+    /** Book pipeline (DOC-BOOK-TRANSLATE) — language `translateBook` produces (blank = no translation). */
+    abstract val bookTargetLanguage: Property<String>
+
     /**
      * AsciidoctorJ safe-mode guard applied to every conversion (DOC-CR3-2).
      * UNSAFE by default (backward-compatible). Mirrors [converter].safeMode.

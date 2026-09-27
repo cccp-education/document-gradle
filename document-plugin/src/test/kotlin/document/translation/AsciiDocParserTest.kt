@@ -1097,4 +1097,31 @@ class AsciiDocParserTest {
         assertEquals(1, dl.items.size)
         assertEquals("real", (dl.items[0].term[0] as PivotInline.Text).text)
     }
+
+    @Test
+    fun `a line starting with equals that is not a heading is parsed as a paragraph`() {
+        // EPIC DOC-BOOK-TRANSLATE (US-5 dogfooding) — the real OCR corpus
+        // contains arrow lines (`=> …`) and stray markers (`=*`, `====`) that
+        // start with `=` but are not AsciiDoc headings. Routing them through
+        // `parseHeading` used to NPE (`Regex(...).find(line)!!`).
+        val fragment = "=> Cette version du RE impose de faire la démonstration.\n\n=*"
+
+        val blocks = parser.parseBody(fragment)
+
+        assertTrue(blocks.isNotEmpty(), "the fragment must not be silently dropped")
+        assertTrue(
+            blocks.none { it is PivotBlock.Heading },
+            "a non-heading `=` line must not be parsed as a heading, got: $blocks",
+        )
+    }
+
+    @Test
+    fun `an empty heading marker without text is not a heading`() {
+        val blocks = parser.parseBody("====")
+
+        assertTrue(
+            blocks.none { it is PivotBlock.Heading },
+            "a `=` line with no heading text must not be parsed as a heading, got: $blocks",
+        )
+    }
 }

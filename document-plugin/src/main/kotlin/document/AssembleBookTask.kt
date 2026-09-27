@@ -144,15 +144,15 @@ abstract class AssembleBookTask : DefaultTask() {
             // (and only) scans to materialise — illustration, repaired ghosts and
             // pre-existing images alike (Ink Economy Law: never copy an
             // unreferenced scan, never risk a dangling target).
-            val referenced = resolveTargets(assembled.content, photos ?: pages)
+            val referenced = BookImageMaterializer.resolveTargets(assembled.content, photos ?: pages)
             if (referenced.isEmpty()) {
                 assembled
             } else {
-                materialiseScans(referenced, output.parentFile)
+                BookImageMaterializer.materialise(referenced, output.parentFile)
                 BookAssembler.assemble(
                     tree = tree,
                     layout = BookLayout(
-                        imagesDir = IMAGES_DIR,
+                        imagesDir = BookImageMaterializer.IMAGES_DIR,
                         emitMatterBreaks = matterBreaks.get(),
                         matterPolicy = matterPolicy,
                         emitNavigation = navigation.get(),
@@ -193,42 +193,12 @@ abstract class AssembleBookTask : DefaultTask() {
     }
 
     /**
-     * EPIC DOC-BOOK-IMAGES — the scans the assembled book references, keyed by
-     * the base name they must be materialised under next to the book.
-     *
-     * Derived from the assembled content itself: every `image::` target that
-     * resolves to a real file in [imageDir] is a scan to copy (the illustration
-     * emits it, the ghost repair substitutes it, a pre-existing image already
-     * points at one). Only the referenced scans are returned — the whole scanned
-     * corpus (hundreds of megabytes) is never copied (Ink Economy Law).
+     * DOC-BOOK-DOMAIN-6 / DOC-BOOK-VALIDATE — optional post-assembly
+     * validation: merges the tree-level structural validation (ref continuity,
+     * uniqueness, matter completeness, page-order monotonicity) with the
+     * file-level validation (page coverage, PDFs) into a single report. LENIENT
+     * logs warnings, STRICT fails the build.
      */
-    private fun resolveTargets(bookContent: String, imageDir: File): Map<String, File> {
-        val scans = LinkedHashMap<String, File>()
-        BookImageRewriter.targets(bookContent).forEach { target ->
-            val source = imageDir.resolve(target)
-            if (source.isFile) scans[target] = source
-        }
-        return scans
-    }
-
-    /**
-     * Copies the referenced [scans] into a flat `images/` directory next to the
-     * assembled book, so the relative `image::` targets resolve and the EPUB
-     * embeds them (RSC-007-free). The scanned corpus stores scans in a flat
-     * directory, so a flat target keeps the emitted names stable.
-     */
-    private fun materialiseScans(scans: Map<String, File>, outputDir: File) {
-        if (scans.isEmpty()) return
-        val target = outputDir.resolve(IMAGES_DIR).apply { mkdirs() }
-        scans.forEach { (name, source) ->
-            if (!source.isFile) return@forEach
-            val destination = target.resolve(name)
-            if (source.absoluteFile != destination.absoluteFile) {
-                source.copyTo(destination, overwrite = true)
-            }
-        }
-    }
-
     private fun validateIfConfigured(
         logger: org.slf4j.Logger,
         pages: File,

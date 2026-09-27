@@ -6,6 +6,22 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
+_Derniere mise a jour_ : 2026-09-27 (session 269 — **DOC-BOOK-TRANSLATE
+US-2→US-5** — câblage Gradle complet de l'EPIC. **US-2** tâche `translateBook`
+(`book-<lang>.adoc`, `skipExisting`, no-op si langue vide/identique ; DSL
+`book { sourceLanguage; targetLanguage }` + CLI + mirror flat + contrat N3
+additif) ; **US-3** insertion `bookPipeline` (langue cible → convertisseurs sur
+`book-<lang>.adoc`, ordre fixé au configuration time — piège #36) ; **US-4** BDD
+`book_translate.feature` 5 scénarios `@book-translate` + 23e runner
+`bookTranslateCucumberTest` ; **US-5** dogfooding structurel corpus FPA réel
+(fake LLM, 0 ancre dangling) + **bug P0 parser corrigé** (`parseHeading` NPE sur
+ligne `=` non-titre : flèches OCR `=>`, `=*`, `====` → `isHeading`/
+`HEADING_PATTERN`). Refactor : `BookImageMaterializer` partagé. Drift piège #13
+réaligné (ws 0.0.57→**0.0.58**, MEMPHIS S-240 parallèle). Gates : `test`
+5142/0, FT 151/1 (préexistant RichToc page 73), 23 runners 0 fail,
+`validatePlugins` VERT, garde publication 4/4. Zéro bump, zéro secret. Rapport :
+`.agents/sessions/269-book-translate-us2-us5-wiring-bdd.adoc`.)
+
 |_Derniere mise a jour_ : 2026-09-27 (session 268 — **DOC-BOOK-TRANSLATE
 US-1 `BookTranslator`** — implémentation, baby-step DDD/TDD strict, 10 UT. Le
 domaine pur traduit les **entrées** du livre (titres de nœuds + corps de page),
@@ -238,6 +254,25 @@ platform 0.0.36 → `document-plugin -> 0.0.17` sans hardcode (D5, compileKotlin
 3m52s, mavenLocal retiré du consumer racine). Commits : document `8989a05`
 (publié) + `cbaf8d9` (consumer racine). Rapport :
 `.agents/sessions/252b-pub-0.0.17-distribution.adoc`.)
+|_Derniere session terminee_ : 269 — **DOC-BOOK-TRANSLATE US-2→US-5** (câblage
+Gradle complet, baby-step DDD/TDD/BDD strict) : **US-2** tâche `translateBook`
+(sortie `book-<lang>.adoc`, `skipExisting`, `@DisableCachingByDefault` ; DSL
+`book { sourceLanguage; targetLanguage }` + mirror flat + CLI
+`-Pdocument.bookTargetLanguage` + contrat N3 `BookConfig` additif) ; **US-3**
+insertion `bookPipeline` (langue cible → convertisseurs HTML/PDF/EPUB sur
+`book-<lang>.adoc`) ; **US-4** BDD `book_translate.feature` 5 scénarios +
+23e runner `bookTranslateCucumberTest` ; **US-5** dogfooding structurel corpus
+FPA réel (fake LLM, **0 cible dangling** via `BookNumbering`) + **bug P0 parser
+corrigé** (`parseHeading` NPE sur ligne `=` non-titre → `isHeading`/
+`HEADING_PATTERN`, appliqué aussi à `parseParagraph`). Refactor :
+`BookImageMaterializer` partagé. Drift piège #13 réaligné (ws 0.0.57→0.0.58,
+MEMPHIS S-240 parallèle). Piège #36 (whenReady trop tard) + #37 (titre `=` +
+texte) + #38 (gate structurel pas regex). Gates : `test` 5142/0, FT 151/1
+(préexistant RichToc page 73), 23 runners 0 fail, `validatePlugins` VERT,
+`publishToMavenLocal` VERT, garde 4/4. Zéro bump, zéro secret. Rapport :
+`.agents/sessions/269-book-translate-us2-us5-wiring-bdd.adoc`.
+  _Prochaine session_ : US-6 dogfooding réel LLM (metered, accord pilote) +
+  clôture EPIC — ou DOC-FPA-PUBLISH-0 si A1 converge / drift ws si MEMPHIS bump.
 |_Derniere session terminee_ : 268 — **DOC-BOOK-TRANSLATE US-1
 `BookTranslator`** (implémentation, domaine pur, baby-step DDD/TDD strict) : le
 domaine traduit les **entrées** du livre — titres de nœuds/feuilles (refs
@@ -392,7 +427,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | EPIC DOC-BOOK-IMAGES | Livre illustré depuis OCR — référencer les photos originales (`photosDir`) en mode *structuré* + résoudre les images fantômes (légende OCR → `scans/NNN.jpg` ou placeholder valide) → EPUB epubcheck-VALID (3 US, ~7 pts) | ✅ TERMINÉ (S-260 — TDD/BDD, EPUB VALID prouvé, 20e runner) | P2
 | EPIC DOC-BOOK-MATTER | Front/body/back matter réel — `Matter` dérivable/configurable (fin de la convention aveugle `0.x`/`9.x`) + émission des matters par `BookLayout` + règle S3 du validateur ajustée (3 US, ~6 pts) | ✅ TERMINÉ (S-261 — 3/3 US) | P2
 | EPIC CROSS-DOC-BOOK-FIDELITY | Le BDD cross-borough teste le contrat réel — pages codex brutes (sans en-tête) + chemin de production TOC→tree→assemble + section multi-pages (4 US, ~4 pts) | ✅ TERMINÉ (S-263 — 6 scénarios fidèles PASS, test-only) | P1
-| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 EN COURS (S-267 cadrage ✅, **S-268 US-1 `BookTranslator` ✅**, US-2→5 à faire) | P1
+| EPIC DOC-BOOK-TRANSLATE | Traduction du livre structuré — traduire le **domaine Book** (titres + corps), `BookAssembler` régénère la structure (ancres/doctype/TOC/navigation préservés). Décision B vs A tracée. `BookTranslator` pur + tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI + insertion `bookPipeline` + BDD `@book-translate` (6 US, ~12 pts) | 🟡 QUASI-CLOS (S-267 cadrage ✅, S-268 US-1 `BookTranslator` ✅, S-269 US-2→US-5 ✅, **US-6 dogfooding réel LLM restante**) | P1
 |===
 
 '''
@@ -524,6 +559,9 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 | 264 | 2026-09-25 | PUB cross-borough | **PUB 0.0.18 Maven Central ✅** — accord pilote (« commence par 1 »). Distribution du HEAD cumulé depuis 0.0.17 : RENAME-8 + Vague 4 + DOC-BOOK-CONSISTENCY B1/B2 + DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57. Chaîne DAG N0→N2 MEMPHIS-first baby-step TDD strict (RED prouvé puis GREEN) : bundles Central `3f912bf6` (BOM+catalog 0.0.57) + `aab4b880` (document 0.0.18) AUTOMATIC, propagation POM/JAR/plugin-marker HTTP 200. Preuve consommateur tiers `/tmp/opencode/doc-consumer-018` (Central SANS mavenLocal) + preuve négative xref STRICT. Gates : garde publication 3/3, `test` 3915/0 runner-scoped, validatePlugins VERT. Rapport : `.agents/sessions/264-pub-0.0.18-distribution.adoc`. | 10/10
 | 266 | 2026-09-25 | gouvernance | **Réparation dérive de gouvernance (zéro code)** — le `PROMPT_REPRISE.adoc` était figé à la mission S-261 (5 sessions de retard : S-261→S-265 clôturées non reflétées) et les tables sessions étaient incomplètes : `SESSIONS_HISTORY.adoc` (13 entrées manquantes : 041, 212, 219, 220, 228-230, 233-235, 238, 244, 247) + `INDEX.adoc` (14 : 226, 228-230, 241-245, 253, 255-257, 264). Régénération complète du prompt (mission S-267, état 0.0.18/ws 0.0.57, item re-pin bakery corrigé en CADUQUE, piège #13 occurrences complétées) + complétion des 2 tables. Audit sans code : `compileKotlin` VERT, garde publication 4/4. Rapport : `.agents/sessions/266-repair-governance-drift.adoc`. | 10/10
 | 265 | 2026-09-25 | maintenance + TDD | **Hygiène toml + garde renforcée** — candidat #1 du prompt S-265. L'entrée morte `workspace-bom = "0.0.43"` du `gradle/libs.versions.toml` (résidu stale S-264, jamais référencée : le pin vivant est le littéral `0.0.57` dans `build.gradle.kts`) est supprimée. Baby-step TDD strict : nouvelle garde `local toml workspace-bom entry must not drift from published catalog` (helper `workspaceBomVersionFrom(): String?` — null = absent = OK, non-null = doit égaler le catalogue ws publié) RED prouvé (1 FAILED, 0.0.43 ≠ 0.0.57) → GREEN 4/4 (garde passe de 3 à 4). Ferme le trou d'une 4e source de vérité silencieuse. Gates : garde 4/4, `compileKotlin` VERT, `validatePlugins` VERT. Zéro publication. Rapport : `.agents/sessions/265-hygiene-toml-workspace-bom-entry.adoc`. | 10/10
+| 267 | 2026-09-26 | cadrage | **Cadrage EPIC DOC-BOOK-TRANSLATE (gouvernance pure, zéro code)** — audit 8 constats (deux silos étanches traduction ↔ domaine Book ; parser pivot *lossy* sur les constructions de livre — caractérisation empirique ancres `[[ref]]`/`:doctype:`/`toc::[]` ; structure du livre **générée** donc régénérable ; corps de page = fragments ; chaîne de traduction complète ; navigation/TOC dérivés des titres ; `bookPipeline` sait déjà rediriger les convertisseurs). **Décision B retenue** (traduire le domaine Book, `BookAssembler` régénère la structure) vs A écartée (étendre le pivot partagé avec bakery). 13 décisions, 6 US ~12 pts. Doc `.agents/CADRAGE_EPIC_DOC_BOOK_TRANSLATE.adoc`. Zéro code. Rapport : `.agents/sessions/267-book-translate-cadrage.adoc`. | 10/10
+| 268 | 2026-09-27 | feat DDD/TDD (domaine pur) | **DOC-BOOK-TRANSLATE US-1 `BookTranslator` ✅** — domaine pur traduisant les **entrées** du livre (titres + corps), `BookAssembler` régénère la structure (D1). **Découverte** : un corps de page OCR est un *fragment sans en-tête* → 3 points d'extension additifs `parseBody`/`renderBlocks`/`translateBlocks` + `translateField`. No-op strict si `tgt` vide/identique ; cache de titres. 10 UT `BookTranslatorTest` RED (11 erreurs) → GREEN. Gates : 794 tests 0 fail, 4 runners Book + 3 runners translation 0 fail, validatePlugins VERT. Piège #35. Rapport : `.agents/sessions/268-book-translate-us1-booktranslator.adoc`. | 10/10
+| 269 | 2026-09-27 | feat DDD/TDD/BDD + dogfooding | **DOC-BOOK-TRANSLATE US-2→US-5 ✅** — câblage Gradle complet de l'EPIC. **US-2** tâche `translateBook` (`book-<lang>.adoc`, `skipExisting`, no-op si langue vide/identique ; DSL `book { sourceLanguage; targetLanguage }` + CLI + contrat N3 additif) ; **US-3** insertion `bookPipeline` (langue cible → convertisseurs sur `book-<lang>.adoc`, ordre fixé au configuration time — piège #36) ; **US-4** BDD `book_translate.feature` 5/5 + 23e runner `bookTranslateCucumberTest` ; **US-5** dogfooding structurel corpus FPA réel (fake LLM, **0 cible dangling** via `BookNumbering`) + **bug P0 parser corrigé** (`parseHeading` NPE sur ligne `=` non-titre → `isHeading`/`HEADING_PATTERN`, piège #37). Refactor `BookImageMaterializer` partagé. Drift piège #13 réaligné (ws 0.0.57→**0.0.58**, MEMPHIS S-240 parallèle). Gates : `test` 5142/0, FT 151/1 (préexistant RichToc page 73), 23 runners 0 fail, `validatePlugins` + `publishToMavenLocal` VERT, garde 4/4. Zéro bump, zéro secret. Rapport : `.agents/sessions/269-book-translate-us2-us5-wiring-bdd.adoc`. | 10/10
 |===
 
 '''

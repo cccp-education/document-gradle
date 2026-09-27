@@ -115,6 +115,12 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Input
     @get:Optional
     abstract val bookNavigation: Property<Boolean>
+    @get:Input
+    @get:Optional
+    abstract val bookSourceLanguage: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val bookTargetLanguage: Property<String>
 
     init {
         group = "document"
@@ -167,6 +173,8 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 matterPolicy = bookMatterPolicy.orNull,
                 matterBreaks = bookMatterBreaks.orNull,
                 navigation = bookNavigation.orNull,
+                sourceLanguage = bookSourceLanguage.orNull,
+                targetLanguage = bookTargetLanguage.orNull,
             ),
         )
 

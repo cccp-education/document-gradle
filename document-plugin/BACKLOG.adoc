@@ -1,6 +1,12 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-27 (session 269 — **DOC-BOOK-TRANSLATE US-2→US-5 ✅**
+câblage Gradle complet : tâche `translateBook` (`book-<lang>.adoc`) + DSL/CLI +
+insertion `bookPipeline` + BDD `@book-translate` (23e runner) + dogfooding
+structurel corpus FPA. Bug P0 parser corrigé (`parseHeading` NPE sur ligne `=`
+non-titre). Drift piège #13 réaligné ws 0.0.57→0.0.58. Reste US-6 dogfooding
+réel LLM.)
 _Date revision_ : 2026-09-26 (session 267 — **cadrage EPIC DOC-BOOK-TRANSLATE**
 (gouvernance pure, zéro code) : la traduction et le domaine Book étaient deux
 silos étanches — le livre n'était pas traduit, et le brancher sur la chaîne
@@ -191,7 +197,7 @@ BDD `@inline-image` 8/8). Convergence : 4/4 IMAGE_MISSING localisées.
 '''
 
 '''
-== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré 🟡 EN COURS (S-267 cadrage, S-268 US-1)
+== EPIC DOC-BOOK-TRANSLATE — Traduction du livre structuré 🟡 QUASI-CLOS (S-267 cadrage, S-268 US-1, S-269 US-2→US-5)
 
 _Origine : demande pilote 2026-09-26 — « est-ce que document intègre bien le
 livre avec la TOC avec la traduction ? ». Constat : non — deux silos étanches._
@@ -220,10 +226,10 @@ envoyés au LLM). Preuve par caractérisation empirique S-267.
 | US | Description | Statut | Pts
 | DOC-BOOK-TRANSLATE-0 | Cadrage EPIC (gouvernance pure) — 8 constats, 13 décisions, décision A/B tracée | ✅ TERMINÉ (S-267) | 1
 | DOC-BOOK-TRANSLATE-1 | Domaine pur `BookTranslator.translate(tree, resolveContent, src, tgt)` → `TranslatedBook` (titres + corps traduits, refs intactes) via la chaîne existante. UT (fake) | ✅ TERMINÉ (S-268) | 3
-| DOC-BOOK-TRANSLATE-2 | Tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage; targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`. FT TestKit | 🟡 À FAIRE | 3
-| DOC-BOOK-TRANSLATE-3 | Insertion dans `bookPipeline` : langue configurée → les convertisseurs consomment `book-<lang>.adoc`. FT TestKit | 🟡 À FAIRE | 2
-| DOC-BOOK-TRANSLATE-4 | BDD `@book-translate` (23e runner) : structure préservée (ancres, doctype, toc, navigation) + contenu traduit | 🟡 À FAIRE | 2
-| DOC-BOOK-TRANSLATE-5 | Dogfooding corpus réel : livre traduit, gate 0 ancre dangling, EPUB/PDF produits ; extension multi-langue si confirmée | 🟡 À FAIRE | 1
+| DOC-BOOK-TRANSLATE-2 | Tâche `translateBook` (`book-<lang>.adoc`) + DSL `book { sourceLanguage; targetLanguage }` + CLI `-Pdocument.bookTargetLanguage` + `skipExisting`. FT TestKit | ✅ TERMINÉ (S-269) | 3
+| DOC-BOOK-TRANSLATE-3 | Insertion dans `bookPipeline` : langue configurée → les convertisseurs consomment `book-<lang>.adoc`. FT TestKit | ✅ TERMINÉ (S-269) | 2
+| DOC-BOOK-TRANSLATE-4 | BDD `@book-translate` (23e runner) : structure préservée (ancres, doctype, toc, navigation) + contenu traduit | ✅ TERMINÉ (S-269, 5/5) | 2
+| DOC-BOOK-TRANSLATE-5 | Dogfooding corpus réel : livre traduit, gate 0 ancre dangling, EPUB/PDF produits ; extension multi-langue si confirmée | 🟡 US-5 structurel ✅ (S-269) — dogfooding réel LLM (US-6) à faire | 1
 |===
 
 *Total* : ~12 pts (6 US). *Gate structurel* (cœur de l'EPIC) : le livre traduit
@@ -233,6 +239,17 @@ et `toc::[]`, avec **0 ancre dangling**. *Non-goals* : pas d'extension du pivot
 *Backward compat* : `targetLanguage` vide = pipeline actuel inchangé,
 byte-identique.
 
+*Avancement S-269 (US-2→US-5 ✅)* : tâche `TranslateBookTask` (traduit le
+domaine puis `BookAssembler` régénère la structure ; sortie `book-<lang>.adoc`,
+`skipExisting`, no-op si langue vide/identique) + DSL/CLI + mirror flat +
+contrat N3 `BookConfig` additif ; insertion `bookPipeline` (langue cible →
+convertisseurs sur `book-<lang>.adoc`, ordre fixé au configuration time —
+piège #36) ; BDD `book_translate.feature` 5/5 (23e runner
+`bookTranslateCucumberTest`) ; dogfooding structurel corpus FPA réel (fake LLM,
+**0 cible dangling** via `BookNumbering`). **Bug P0 corrigé** :
+`AsciiDocParser.parseHeading` NPE sur une ligne `=` non-titre (flèches OCR `=>`,
+`=*`, `====`) → `isHeading`/`HEADING_PATTERN` (piège #37). *Refactor* :
+`BookImageMaterializer` partagé `AssembleBookTask`/`TranslateBookTask`.
 *Avancement S-268 (US-1 ✅)* : `BookTranslator` (domaine pur, 10 UT) +
 `TranslatedBook` (arbre traduit + `bodyResolver`). **Découverte** : un corps de
 page OCR est un *fragment sans en-tête* ; routé dans `AsciiDocParser.parse`, il
