@@ -37,6 +37,29 @@ class BookPublicationPlannerTest {
     }
 
     @Test
+    fun `a blank language code is ignored`() {
+        // The DSL/CLI can surface a blank code (e.g. `book-targetLanguages=""`);
+        // an unresolved language must never yield a `book-.html` ghost artifact.
+        val blank =
+            listOf(BookLanguageTarget(code = "", name = "", nativeName = "", rtl = false))
+        val plan = BookPublicationPlanner.plan(blank, baseName = "book", requestedFormats = listOf("html"))
+
+        assertTrue(plan.isEmpty(), "a blank language code must be ignored, got: ${plan.map { it.outputFileName }}")
+    }
+
+    @Test
+    fun `a blank language code is dropped but valid languages survive`() {
+        val mixed =
+            listOf(
+                BookLanguageTarget(code = "", name = "", nativeName = "", rtl = false),
+                BookLanguageTarget(code = "en", name = "English", nativeName = "English", rtl = false),
+            )
+        val plan = BookPublicationPlanner.plan(mixed, baseName = "book", requestedFormats = listOf("html"))
+
+        assertEquals(listOf("book-en.html"), plan.map { it.outputFileName })
+    }
+
+    @Test
     fun `each language is published in every requested format`() {
         val plan = BookPublicationPlanner.plan(languages, baseName = "book", requestedFormats = listOf("html", "pdf"))
 

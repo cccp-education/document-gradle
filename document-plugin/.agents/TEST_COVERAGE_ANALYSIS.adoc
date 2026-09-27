@@ -23,6 +23,9 @@ exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
   absente/vide = erreur explicite, jamais de fallback dépôt voisin.
 - `document.build.PublishedCatalogVersionTest` — **3 UT** : valeur injectée
   retournée ; propriété manquante = erreur explicite ; propriété blanche = erreur.
+- `document.BookPublicationPlannerTest` — **+2 UT** (barrière #3 révélée par la
+  CI) : un code de langue blanc est ignoré (`book-.html` fantôme jamais produit) ;
+  un code blanc est écarté mais les langues valides survivent.
 
 *Tests modifiés* : `document.DocumentPluginPublicationTest` (4 gardes
 historiques **préservées** : D3 dérivation, D4 platform pin, D5 hygiène toml,

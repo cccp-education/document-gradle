@@ -103,6 +103,28 @@ Gradle `build/` omniprésent) ; (2) motifs **ancrés** (`/build` plugin,
 `/build/` racine) pour que la cause racine ne puisse plus piéger un futur
 package. Build re-vérifié VERT.
 
+== Barrière #3 — la dette masquée (1 test réel rouge, révélé par la CI)
+
+Le premier run CI après correctif (`36353300514`) **exécute enfin** les tests
+(7m36s, **5029 tests**, 4817 skipped corpus) — l'EPIC a atteint son but. Il
+révèle **1 échec réel**, jusqu'ici masqué par la barrière #1 : le scénario BDD
+`@book-publish` « No language is a strict no-op » (`BookPublishCucumberRunner`).
+
+----
+org.opentest4j.AssertionFailedError: the plan must be empty, got: [book-.html]
+----
+
+*Cause racine* (bug S-272) : `BookPublicationPlanner.plan` filtrait `emptyList()`
+de langues mais **pas un code de langue blanc** (`""`) — le step BDD passe
+`BookLanguageTarget(code = "")`, produisant un fantôme `book-.html` au lieu d'un
+no-op. Le garde-fou manquait au domaine (asymétrie avec « format inconnu
+ignoré »).
+
+*Correctif (TDD, RED prouvé par la CI)* : `plan` filtre désormais
+`it.code.isNotBlank()` (un code blanc est écarté, jamais un `book-.html`
+fantôme) + **2 UT** de verrouillage. Compilation VERTE ; preuve finale = run CI
+suivant.
+
 == Preuves (Local = Build)
 
 [cols="3,4", options="header"]

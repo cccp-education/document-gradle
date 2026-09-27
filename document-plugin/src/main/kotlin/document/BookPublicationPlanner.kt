@@ -24,7 +24,8 @@ data class BookPublicationTarget(
  * the [BookLanguageTarget] list already resolved by [BookLanguagePlanner] from
  * the N0 `LanguageCatalog`) and the requested output formats (source of truth:
  * [DocumentFormat]). Unknown format codes are ignored, duplicates collapsed
- * (first occurrence), and the order is deterministic — *language-major, then
+ * (first occurrence), blank language codes dropped (a `book-.html` ghost is
+ * never produced), and the order is deterministic — *language-major, then
  * the requested format order* — so the fan-out is reproducible.
  *
  * ```
@@ -56,15 +57,17 @@ object BookPublicationPlanner {
 
         if (formats.isEmpty()) return emptyList()
 
-        return languages.flatMap { language ->
-            formats.map { format ->
-                BookPublicationTarget(
-                    language = language.code,
-                    format = format,
-                    sourceFileName = "$baseName-${language.code}.adoc",
-                    outputFileName = "$baseName-${language.code}.${format.extension}",
-                )
+        return languages
+            .filter { it.code.isNotBlank() }
+            .flatMap { language ->
+                formats.map { format ->
+                    BookPublicationTarget(
+                        language = language.code,
+                        format = format,
+                        sourceFileName = "$baseName-${language.code}.adoc",
+                        outputFileName = "$baseName-${language.code}.${format.extension}",
+                    )
+                }
             }
-        }
     }
 }

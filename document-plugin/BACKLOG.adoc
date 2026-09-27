@@ -396,11 +396,19 @@ lisait le working tree du **dépôt voisin** `../workspace-bom/gradle/libs.versi
 |===
 
 *Gate atteint* : un checkout CI isolé (repo `document-gradle` seul, sans
-`~/.gradle/gradle.properties`, sans dépôt voisin) configure et build sans erreur ;
-les 2 steps du workflow (`build`, `publishToMavenLocal`) passent sous faux HOME +
-`CI=true`. *Non-goals* : secrets de publication (US-4 différée), changement des
-tests métier, bump de version.
+`~/.gradle/gradle.properties`, sans dépôt voisin) configure et build sans
+erreur ; les 2 steps du workflow (`build`, `publishToMavenLocal`) passent sous
+faux HOME + `CI=true`. *Non-goals* : secrets de publication (US-4 différée),
+changement des tests métier, bump de version.
 *Preuve finale* : run CI vert du commit poussé.
+
+*Constat #3 (dette masquée, révélée S-273)* : le premier run CI après correctif
+(`36353300514`) **exécute enfin** les tests (5029 tests, 7m36s) et révèle **1
+échec réel** jusqu'ici invisible — scénario BDD `@book-publish` « No language is
+a strict no-op » : `BookPublicationPlanner.plan` ne filtrait pas un **code de
+langue blanc** → fantôme `book-.html`. Corrigé (filtre `isNotBlank()` + 2 UT).
+C'est la démonstration même de l'EPIC : une CI morte en configuration masquait
+la dette réelle.
 
 '''
 
