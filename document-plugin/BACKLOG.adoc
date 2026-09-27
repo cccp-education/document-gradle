@@ -353,6 +353,33 @@ multi — zéro duplication.
 '''
 
 '''
+== EPIC DOC-CI-ISOLATION — la CI document-gradle est rouge EN CONFIGURATION 🟡 À CADRER (S-272)
+
+_Origine : découverte S-272 — le run CI du push S-272 (`36352150595`) échoue avant
+toute compilation (`ossrhUsername not found`), comme **100 % des runs depuis
+≥ 2026-09-14** (audit historique GitHub Actions)._
+_Sévérité_ : **P0** — la règle « Local = Build, Tests = CI » est neutralisée :
+aucun test document-gradle ne s'exécute en CI, toute la dette aval est masquée
+(leçon bakery `BKY-CI-ISOLATION`, S-243)._
+
+|===
+| US | Description | Pts | Statut
+| DOC-CI-ISOLATION-0 | Cadrage EPIC (gouvernance pure) — audit de l'échec, décision correctif | 1 | 🟡 À FAIRE
+| DOC-CI-ISOLATION-1 | Rendre les identifiants nmcp **optionnels à la configuration** (`settings.gradle.kts` : exiger seulement au `publish*`, pas au `build`) + preuve CI verte | 3 | 🟡 À FAIRE
+| DOC-CI-ISOLATION-2 | (optionnel) Secrets GitHub Actions pour la publication, ou gate « publish only on tag » | 2 | 🟡 À FAIRE
+|===
+
+*Constat* : `settings.gradle.kts` évalue
+`nmcpSettings { centralPortal { username = globalProps.getProperty("ossrhUsername")
+?: error("ossrhUsername not found") } }` au **configuration time**, sur *toute*
+invocation (`./gradlew build` compris). Le runner GitHub n'a pas de
+`~/.gradle/gradle.properties` → échec avant les tests. Correctif candidat :
+différer l'exigence des credentials au moment de `publishAggregationToCentralPortal`
+(pas à la configuration du build).
+
+'''
+
+'''
 == EPIC DOC-BOOK-PUBLISH — Publication fan-out du livre multi-langue ✅ TERMINÉ (S-272)
 
 _Origine : décision D1 du cadrage `DOC-BOOK-MULTILANG` (S-271) — « convertir N

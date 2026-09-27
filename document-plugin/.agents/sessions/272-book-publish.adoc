@@ -79,6 +79,36 @@ chaque format demandé** en un run — `book-<lang>.<ext>` par (langue × format
 | Production | 2 fichiers prod créés + DSL/N3/wiring (1 refactor DRY)
 |===
 
+== ⚠️ Découverte majeure — CI document-gradle rouge EN CONFIGURATION (préexistante)
+
+Le run CI déclenché par le push S-272 (`36352150595`, commit `8676baf`) échoue
+**avant toute compilation** :
+
+----
+* What went wrong:
+ossrhUsername not found
+BUILD FAILED in 7s
+----
+
+*Ce n'est PAS un échec de session.* Audit de l'historique GitHub Actions :
+**100 % des runs échouent** depuis ≥ 2026-09-14 avec le même message (S-261,
+S-262, S-263, S-264, S-265, S-266, S-267, S-268, S-269, S-270, S-271 — tous
+`failure`). Cause racine : `settings.gradle.kts` évalue
+`nmcpSettings { centralPortal { username = globalProps.getProperty("ossrhUsername")
+?: error("ossrhUsername not found") } }` au **configuration time**, sur *toute*
+invocation (`./gradlew build` compris). Le runner GitHub n'a pas de
+`~/.gradle/gradle.properties` → échec avant les tests.
+
+*Conséquence* : **aucun test document-gradle ne s'exécute en CI depuis ~2
+semaines** — la règle « Local = Build, Tests = CI » est neutralisée, et toute la
+dette aval est masquée (leçon bakery `BKY-CI-ISOLATION`, S-243 : « une CI morte
+en configuration masque toute la dette aval »).
+
+*Correctif candidat (hors périmètre S-272 — Règle 2)* : EPIC **DOC-CI-ISOLATION**
+— rendre les identifiants nmcp **optionnels à la configuration** (exiger
+seulement au moment de `publish*`, pas au `build`) ; éventuellement fournir les
+credentials via secrets GitHub Actions. À cadrer sur accord pilote.
+
 == Fichiers
 
 * Créés : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc`,

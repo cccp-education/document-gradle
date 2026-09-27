@@ -11,6 +11,13 @@ chaque format demandé** en un run (`publishBookAllLanguages`) —
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
+* *EPIC DOC-CI-ISOLATION (P0) — À CADRER EN PRIORITÉ* : la CI GitHub Actions est
+  **rouge EN CONFIGURATION depuis ≥ 2026-09-14** (`ossrhUsername not found` —
+  `settings.gradle.kts` exige les identifiants nmcp au config time, absents du
+  runner). **Aucun test ne s'exécute en CI** → la règle « Local = Build, Tests =
+  CI » est neutralisée et la dette aval masquée (leçon bakery BKY-CI-ISOLATION
+  S-243). Correctif : identifiants nmcp optionnels à la configuration (exigés
+  seulement au `publish*`).
 * *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
   `bookPipeline`, ou `includeSource` (D8, publier aussi `book.adoc`).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
