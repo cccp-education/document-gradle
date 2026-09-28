@@ -1,6 +1,17 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-28 (session 276 — **PUB 0.0.19 ✅ DISTRIBUÉE Central**
+(accord pilote : commit/push + **tag `v0.0.19`**). Distribution du HEAD cumulé
+depuis 0.0.18 : DOC-BOOK-TRANSLATE (6/6) + DOC-BOOK-MULTILANG (4/4) +
+DOC-BOOK-PUBLISH (5/5, `includeSource`) + DOC-CI-ISOLATION (5 US + release gate).
+**Baseline prouvée** : run CI `36477600723` (commit `bf9ddd9`) **VERT** avant
+tout acte de release. Chaîne DAG N0→N2 MEMPHIS-first : BOM/catalog **0.0.60**
+Central (bundle `27fae84c`, AUTOMATIC) + document re-pin 3 sources (catalog ws
+0.0.60 + platform BOM 0.0.60 + toml local `document = "0.0.19"`), version dérivée
+**0.0.19**, garde publication **4/4**. **Preuve finale** : tag `v0.0.19` → job CI
+`publish` (release gate S-274, GPG + secrets OSSRH + `CCCP_PUBLISH=true`) —
+**première publication document-gradle depuis la CI**. Zéro secret.)
 _Date revision_ : 2026-09-28 (session 275 — **DOC-BOOK-PUBLISH US-5 ✅ TERMINÉ**
 optionnel, seul candidat actionnable sans accord pilote externe — knob opt-in
 `includeSource` (D8) : le fan-out publie aussi le livre assemblé (`book.<ext>`,
@@ -106,11 +117,11 @@ TOC (un livre n'exige un FRONT/BACK que si sa TOC le déclare) → le faux posit
 permanent sur une TOC body-only (racines `{1,2,3,4}` du corpus FPA) disparaît.
 Preuve dogfooding : DERIVED = 0 finding matter, LEGACY = 2. 3 US, 17 UT +
 FT 4/4 + BDD 8/8 (21e runner). Toutes les dettes B1→B6 soldées.)
-_Version_ : 0.0.18 (publiée Maven Central — RENAME-8 + Vague 4 + B1/B2 +
-DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
-CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57 ; bundle `aab4b880`) ;
-*HEAD non publié* = + TRANSLATE + MULTILANG + BOOK-PUBLISH + CI-ISOLATION
-(US-1→4) — pin catalogue ws **0.0.59**
+_Version_ : 0.0.19 (HEAD publié via CI/tag `v0.0.19` — TRANSLATE + MULTILANG +
+BOOK-PUBLISH 5/5 + CI-ISOLATION release gate ; pin catalogue ws **0.0.60**) ;
+0.0.18 publiée Central (RENAME-8 + Vague 4 + B1/B2 + DOC-BOOK-IMAGES +
+DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 + CROSS-DOC-BOOK-FIDELITY + pins ws
+0.0.57 ; bundle `aab4b880`)
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)

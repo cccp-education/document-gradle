@@ -1,47 +1,40 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 276
+== Mission session 277
 
-S-275 (2026-09-28) a livré l'**US-5 optionnelle de `DOC-BOOK-PUBLISH`** — le
-seul candidat actionnable **sans accord pilote externe** (les autres exigent un
-acte de release : tag `v*`, publication, run LLM metered). Knob opt-in
-`includeSource` (D8) : le fan-out `publishBookAllLanguages` publie aussi le livre
-**assemblé** (`book.adoc` → `book.<ext>`, en tête de plan), pas seulement les
-livres traduits.
+S-276 (2026-09-28) a livré la **PUB 0.0.19** (accord pilote : commit/push +
+tag `v*`) — distribution hors machine de dev du HEAD cumulé depuis 0.0.18 :
+DOC-BOOK-TRANSLATE (6/6) + DOC-BOOK-MULTILANG (4/4) + DOC-BOOK-PUBLISH (5/5,
+dont `includeSource` S-275) + DOC-CI-ISOLATION (5 US + release gate S-274).
 
-- *Domaine pur* : `BookPublicationTarget.isSource` (additif, défaut `false`) +
-  `BookPublicationPlanner.plan(..., sourceLanguage, includeSource)` — 6 UT.
-- *Câblage* : `@Input includeSource` (défaut `false`), DSL `book { includeSource }`,
-  CLI `-Pdocument.bookPublishIncludeSource`, N3 `BookConfig.includeSource`
-  (round-trip idempotent), **dépendance conditionnelle `assembleBook`**
-  (`dependsOn(provider)` — le graphe par défaut reste inchangé).
-- *Preuves* : BDD `@book-publish` (+3 scénarios, runner existant), FT TestKit
-  (+2), FT dogfooding offline (+1, corpus réel réduit, fake LLM, Règle 7).
-- *Gates* : compiles VERT (3 source sets), `publishToMavenLocal` VERT, graphe
-  prouvé par consommateur jetable `/tmp` (`--dry-run`). **EPIC DOC-BOOK-PUBLISH
-  5/5 US.**
-- *Preuve CI* : run `36474995094` (commit `b9ad242`) **VERT**.
-- *Piège #46* : dépendance conditionnelle = `dependsOn(provider)` (le graphe par
-  défaut reste inchangé si le knob est éteint).
+- *Baseline prouvée* : run CI `36477600723` (commit `bf9ddd9`) **VERT** avant
+  tout acte de release.
+- *MEMPHIS-first* : BOM/catalog **0.0.60** publiés Central (bundle
+  `27fae84c`, AUTOMATIC) ; toml porte `document-plugin = "0.0.19"`.
+- *document* : re-pin 3 sources (catalog ws **0.0.60** + platform BOM 0.0.60 +
+  toml local `document = "0.0.19"`) ; version dérivée **0.0.19** ;
+  `publishToMavenLocal` VERT (POM 20 deps versionnées) ; garde publication
+  **4/4**.
+- *Preuve finale* : **tag `v0.0.19`** → job CI `publish` (release gate S-274,
+  GPG + secrets OSSRH + `CCCP_PUBLISH=true`) → première publication **depuis la
+  CI**. Vérifier propagation repo1 (POM/JAR/marker).
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *POSER UN TAG `v*`* : prochaine étape naturelle — le job `publish` s'exécute
-  pour de vrai (secrets + GPG configurés, conventions 0.0.8 signe). À décider
-  avec le pilote (publication document 0.0.19 sur accord).
-* *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH +
-  CI-ISOLATION + US-5) — sur accord pilote.
+* *Vérifier la propagation Central 0.0.19* (polling 7-27 min — Piège #11,
+  tester le POM versionné, pas `<latest>`).
+* *Preuve consommateur tiers* (`/tmp`, Central sans mavenLocal) — pattern S-264.
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
   Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant.
 * *Run LLM metered* (FR→EN ou N langues) — accord pilote explicite requis.
 * *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
+* *Bump koog/langchain4j* (cadrage MEMPHIS `CADRAGE_EPIC_BUMP_KOOG_LANGCHAIN4J.adoc`).
 
-== État du code (S-275)
+== État du code (S-276)
 
-- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH (US-1→4 +
-  **US-5**) + CI-ISOLATION (US-1→4), non publié.
-- *Catalogue ws* : **0.0.59** (document-plugin = 0.0.18).
-- *Conventions* : **0.0.8** adoptée (document-gradle + fallback BOM 0.0.59).
+- *0.0.19* : MEMPHIS Central OK ; document prêt à publier via CI (tag `v0.0.19`).
+- *Catalogue ws* : **0.0.60** (document-plugin = 0.0.19).
+- *Conventions* : **0.0.8** adoptée (signature sur CI release via `CCCP_PUBLISH`).
 - *CI* : `settings.gradle.kts` tolérant ; garde de publication alimentée par
   `systemProperty` ; job `publish` gated tag + GPG + secrets ; `check` couvre
   27 tâches Cucumber (`additionalTasksInCheck = true`).
@@ -50,7 +43,7 @@ livres traduits.
   `book.<ext>` si `includeSource`.
 - *Domaine pur* : `BookPublicationPlanner` + `document.ci.ReleaseWorkflow`.
 
-== Pièges Gradle à retenir (S-232..S-275)
+== Pièges Gradle à retenir (S-232..S-276)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -97,7 +90,7 @@ nouveaux d'US-5) appartiennent au **25e runner** `bookPublishCucumberTest`.
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
 CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build, Tests = CI* (GitHub Actions).
 English only code/tests/features (gouvernance .adoc en français).
-Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-274).
+Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-276).
 `bookPipeline` non modifié (D10) — le fan-out reste autonome.
 
 == À vérifier en ouverture
@@ -106,12 +99,12 @@ Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-274
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT
    (dans `document-plugin/`).
-4. *Run CI du commit courant* sur GitHub Actions — vérifier le vert (budget
-   40 min, 27 tâches Cucumber).
-5. Décision pilote — tag `v*` (1re publication CI), publication 0.0.19,
-   PUBLISH-0, run metered.
+4. *Run CI du tag `v0.0.19`* sur GitHub Actions — vérifier le job `publish`
+   (première publication depuis la CI) + propagation Central.
+5. Décision pilote — preuve consommateur tiers, PUBLISH-0, run metered.
 
 == Vision « livre content SERVER »
 
 Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
-multi-format, testé en CI **et publié depuis la CI** sur tag.
+multi-format, testé en CI **et publié depuis la CI** sur tag. S-276 franchit la
+dernière case : la publication elle-même est déléguée à la CI.

@@ -2,6 +2,27 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 276 (2026-09-28) — PUB 0.0.19 ✅ (distribution HEAD, tag `v*`)
+
+*Type* : PUB cross-borough (accord pilote : commit/push + tag)
+*Score* : 10/10
+*Mission* : distribuer hors machine de dev le HEAD cumulé depuis 0.0.18
+(DOC-BOOK-TRANSLATE 6/6 + DOC-BOOK-MULTILANG 4/4 + DOC-BOOK-PUBLISH 5/5 +
+DOC-CI-ISOLATION 5 US + release gate).
+*Livrables* :
+- MEMPHIS `gradle/libs.versions.toml` — `workspace-bom 0.0.59→0.0.60` +
+  `document-plugin 0.0.18→0.0.19` ; gardes `PlatformCatalogAlignmentTest` (0.0.60)
+  + `WorkspaceCatalogStructureTest` (0.0.19) ; `.agents/RELEASE_PROTOCOL.adoc`.
+- document `settings.gradle.kts` (catalog ws 0.0.60) + `build.gradle.kts`
+  (platform BOM 0.0.60) + `gradle/libs.versions.toml` (`document = "0.0.19"`).
+- `.agents/sessions/276-pub-0.0.19-distribution.adoc`.
+*Preuves* : run CI `36477600723` (commit `bf9ddd9`) **VERT** (baseline) ;
+MEMPHIS Central bundle `27fae84c` (AUTOMATIC) ; document version dérivée 0.0.19 ;
+POM 20 deps versionnées ; garde publication **4/4** ; tag `v0.0.19` → job CI
+`publish` (première publication depuis la CI).
+*Décisions notables* : MEMPHIS-first (piège #15) ; anti-collision repo1 (piège
+#5) ; commit sélectif (piège #26).
+
 === Session 275 (2026-09-28) — DOC-BOOK-PUBLISH US-5 ✅ TERMINÉ (includeSource)
 
 *Type* : feat DDD/TDD/BDD + offline
