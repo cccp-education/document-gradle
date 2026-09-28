@@ -79,6 +79,12 @@ dev sur Maven Central via le release gate CI, puis tag `v0.0.19`.
 | document garde publication
 | **4/4 PASSED**
 
+| Tag `v0.0.19` → CI `publish`
+| run `36481152085` **SUCCESS** (Build & Test ✓ 27m26s + Publish ✓ 1m17s), bundle `667d858e`
+
+| Propagation Central `document-plugin/0.0.19`
+| POM + JAR (`.asc`) + sources + javadoc HTTP **200** ; marker HTTP **200**
+
 | Secrets
 | RAS (aucune valeur affichée/committée)
 |===
@@ -117,3 +123,36 @@ seulement depuis la machine de dev.
 
 Reste : `DOC-FPA-PUBLISH-0` (STANDBY, A1 Tombouctou) ; run LLM metered (accord
 pilote) ; rollout conventions 0.0.8 aux autres consommateurs.
+
+== Preuve CI (tag `v0.0.19`) — publication depuis la CI
+
+[cols="2,4",options="header"]
+|===
+| Étape | Résultat
+
+| Run CI tag `v0.0.19`
+| `36481152085` — **SUCCESS**
+
+| Job `Build & Test`
+| ✓ **success** (27m26s) — les 27 tâches Cucumber + FT exécutés
+
+| Job `Publish to Maven Central`
+| ✓ **success** (1m17s) — import GPG + secrets OSSRH + `CCCP_PUBLISH=true`
+
+| Bundle nmcp
+| `667d858e-acea-4580-954c-fdf7595b5616` (AUTOMATIC)
+
+| Propagation repo1 `document-plugin/0.0.19`
+| POM **200**, JAR **200** (`.asc` signé **200**), sources + javadoc **200**
+
+| Propagation marker `education/cccp/document/.../0.0.19`
+| **200**
+
+| POM 0.0.19 (Central)
+| 20 deps toutes versionnées, platform pin **0.0.60**
+|===
+
+*C'est la démonstration de bout en bout du release gate DOC-CI-ISOLATION-4
+(S-274)* : un tag `v*` suffit à distribuer un artefact document-gradle sur
+Maven Central, testé et signé, sans machine de dev.
+

@@ -16,8 +16,11 @@ dont `includeSource` S-275) + DOC-CI-ISOLATION (5 US + release gate S-274).
   `publishToMavenLocal` VERT (POM 20 deps versionnées) ; garde publication
   **4/4**.
 - *Preuve finale* : **tag `v0.0.19`** → job CI `publish` (release gate S-274,
-  GPG + secrets OSSRH + `CCCP_PUBLISH=true`) → première publication **depuis la
-  CI**. Vérifier propagation repo1 (POM/JAR/marker).
+  GPG + secrets OSSRH + `CCCP_PUBLISH=true`) → **première publication depuis la
+  CI**. Run `36481152085` **SUCCESS** (Build & Test ✓ 27m26s + Publish ✓ 1m17s,
+  bundle `667d858e`) ; propagation repo1 POM+JAR (`.asc`)+sources+javadoc 200,
+  marker plugin 200. **DOC-CI-ISOLATION-4 démontré de bout en bout** : un tag
+  `v*` distribue l'artefact, testé et signé, sans machine de dev.
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
