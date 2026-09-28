@@ -1,21 +1,24 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-272). Ce fichier
+_note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-275). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 273 — sur décision pilote
+== Mission session 275 — sur décision pilote
 
-S-272 (2026-09-27) a livré l'**EPIC DOC-BOOK-PUBLISH** (4/4 US + cadrage) : le
-corpus multi-langue du livre se **publie** dans chaque format demandé
-(`publishBookAllLanguages`, `book-<lang>.<ext>`). Preuves offline (fake LLM).
+S-274 (2026-09-28) a livré l'**EPIC DOC-CI-ISOLATION US-4** (release gate) :
+la CI peut **publier sur Maven Central depuis un tag** (`publish` job gated
+`refs/tags/v`, GPG importé, `CCCP_PUBLISH=true`, secrets OSSRH). Blocage
+cross-borough levé : `conventions-plugin` **0.0.8** (signature sous CI pour un
+job de release). Découverte P0 corrigée : 25 runners Cucumber dédiés étaient
+retirés de `check` (adoption conventions 0.0.7, `additionalTasksInCheck=false`).
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
 - `DOC-BOOK-PUBLISH` US-5 optionnelle (composite `bookPipeline` / `includeSource`).
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
 - Run LLM *metered* réel — accord pilote requis.
-- Publication document-plugin 0.0.19 — sur accord pilote.
+- Publication document-plugin 0.0.19 / tag `v*` — sur accord pilote.
 - Drift catalogue ws (piège #13) si MEMPHIS bump.
 
 == Méthode (rappel)
@@ -27,5 +30,5 @@ CONTRAINTE GLOBALE : *Zéro Python*. English only code/tests/features.
 
 - MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog 0.0.57).
 - document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18).
-- Un futur bump (0.0.19) inclura DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG — sur
-  accord pilote.
+- Un futur bump (0.0.19) inclura DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG +
+  DOC-BOOK-PUBLISH + CI-ISOLATION — sur accord pilote.

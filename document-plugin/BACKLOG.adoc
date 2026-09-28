@@ -1,6 +1,17 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-28 (session 274 — **DOC-CI-ISOLATION US-4 ✅ TERMINÉ**
+(option 1 pilote, permission git/publish) — la CI peut **publier sur Maven
+Central depuis un tag**. Job `publish` gated `refs/tags/v` + `needs: [test]`,
+import GPG, secrets OSSRH → `~/.gradle/gradle.properties`, `CCCP_PUBLISH=true` ;
+garde pure `document.ci.ReleaseWorkflow` (7 UT) + BDD `@release-gate` (26e
+runner) ; **4 secrets repo configurés**. Cross-borough : `conventions-plugin`
+**0.0.8** (signature activée sur CI release, rejet Central sinon) publié Central ;
+adoption 0.0.8 + re-pin catalogue ws **0.0.59** (piège #13). **P0** : l'adoption
+conventions 0.0.7 avait retiré les 25 runners Cucumber dédiés de `check`
+(`additionalTasksInCheck` défaut `false`) → corrigé (27 tâches Cucumber, timeout
+test 20→40 min).)
 _Date revision_ : 2026-09-27 (session 273 — **DOC-CI-ISOLATION ✅ TERMINÉ 5 US +
 cadrage** — la CI GitHub Actions redevient **testable**. Deux barrières levées :
 (1) `settings.gradle.kts` exigeait les credentials nmcp au **configuration time**
@@ -87,7 +98,9 @@ Preuve dogfooding : DERIVED = 0 finding matter, LEGACY = 2. 3 US, 17 UT +
 FT 4/4 + BDD 8/8 (21e runner). Toutes les dettes B1→B6 soldées.)
 _Version_ : 0.0.18 (publiée Maven Central — RENAME-8 + Vague 4 + B1/B2 +
 DOC-BOOK-IMAGES + DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 +
-CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57 ; bundle `aab4b880`)
+CROSS-DOC-BOOK-FIDELITY + pins ws 0.0.57 ; bundle `aab4b880`) ;
+*HEAD non publié* = + TRANSLATE + MULTILANG + BOOK-PUBLISH + CI-ISOLATION
+(US-1→4) — pin catalogue ws **0.0.59**
 
 '''
 == EPIC DOC-BOOK-CONSISTENCY — Cohérence du knob `outputFileName` de bout en bout ✅ TERMINÉ (S-259)
@@ -366,7 +379,7 @@ multi — zéro duplication.
 '''
 
 '''
-== EPIC DOC-CI-ISOLATION — la CI document-gradle redevient testable ✅ TERMINÉ (S-273)
+== EPIC DOC-CI-ISOLATION — la CI document-gradle redevient testable + release gate ✅ TERMINÉ (S-273 + US-4 S-274)
 
 _Origine : découverte S-272 — le run CI du push S-272 (`36352150595`) échoue avant
 toute compilation (`ossrhUsername not found`), comme **100 % des runs depuis
@@ -392,14 +405,17 @@ lisait le working tree du **dépôt voisin** `../workspace-bom/gradle/libs.versi
 | DOC-CI-ISOLATION-1 | Barrière #1 — `settings.gradle.kts` tolérant à l'absence de credentials (pattern bakery `?: ""`) + garde TDD `SettingsCredentialPolicy`/`SettingsCredentialIsolationTest` | ✅ TERMINÉ (S-273 — RED prouvé → GREEN) | 2
 | DOC-CI-ISOLATION-2 | Barrière #2 — garde de publication alimentée par `systemProperty` injecté (`PublishedCatalogVersion`), plus de lecture du dépôt voisin | ✅ TERMINÉ (S-273 — pattern graphify D5-RACE) | 2
 | DOC-CI-ISOLATION-3 | Preuve — configuration sous faux HOME + push + run CI **VERT** | ✅ TERMINÉ (S-273 — build local VERT ; run CI à confirmer) | 1
-| DOC-CI-ISOLATION-4 | (optionnel) Secrets GitHub Actions + gate publish-on-tag | ⏸ DIFFÉRÉ (D7 — publication depuis la machine de dev) | 2
+| DOC-CI-ISOLATION-4 | Secrets GitHub Actions + gate « publish only on tag » — job `publish` (`if: startsWith(github.ref,'refs/tags/v')`, `needs: [test]`), import GPG (`crazy-max/ghaction-import-gpg@v6`), secrets OSSRH → `~/.gradle/gradle.properties`, `CCCP_PUBLISH=true` ; garde pure `document.ci.ReleaseWorkflow` (5 invariants) + BDD `@release-gate` (26e runner) ; cross-borough `conventions-plugin 0.0.8` (signature activée sur CI release) publié Central ; 4 secrets repo configurés ; **P0** : `additionalTasksInCheck = true` restaure les 26 runners Cucumber dans `check` | ✅ TERMINÉ (S-274) | 3 |
 |===
 
 *Gate atteint* : un checkout CI isolé (repo `document-gradle` seul, sans
 `~/.gradle/gradle.properties`, sans dépôt voisin) configure et build sans
 erreur ; les 2 steps du workflow (`build`, `publishToMavenLocal`) passent sous
-faux HOME + `CI=true`. *Non-goals* : secrets de publication (US-4 différée),
-changement des tests métier, bump de version.
+faux HOME + `CI=true`. **US-4 (S-274)** : le workflow sait en plus **publier sur
+tag** (job `publish` gated `refs/tags/v` + `needs: [test]`, GPG importé, secrets
+OSSRH + `CCCP_PUBLISH`) ; garde pure `ReleaseWorkflow` ; **et** `check` couvre de
+nouveau les 26 runners Cucumber dédiés (`additionalTasksInCheck = true`).
+*Non-goals* : changement des tests métier, bump de version document.
 *Preuve finale* : run CI vert du commit poussé.
 
 *Constat #3 (dette masquée, révélée S-273)* : le premier run CI après correctif

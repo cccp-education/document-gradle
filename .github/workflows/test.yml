@@ -3,6 +3,7 @@ name: Test
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
   pull_request:
     branches: [main, master]
 
@@ -10,12 +11,12 @@ jobs:
   test:
     name: Build & Test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 24
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
@@ -28,6 +29,55 @@ jobs:
         run: ./gradlew build
         working-directory: document-plugin
 
-      - name: Verify publishToMavenLocal (POM + signing)
+      - name: Verify publishToMavenLocal (POM)
         run: ./gradlew publishToMavenLocal
         working-directory: document-plugin
+
+  # DOC-CI-ISOLATION-4 — release gate. Publishing to Maven Central happens only
+  # from a `v*` tag, after the test job is green, and only when a GPG key is
+  # imported: Central rejects unsigned artefacts and a plain test job has no key
+  # (the conventions plugin skips signing there). CCCP_PUBLISH re-enables signing
+  # for this job; OSSRH secrets are materialised into ~/.gradle/gradle.properties,
+  # which is where settings.gradle.kts reads them. Locked by document.ci.ReleaseWorkflow.
+  publish:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Configure Maven Central credentials
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<EOF
+          ossrhUsername=${{ secrets.OSSRH_USERNAME }}
+          ossrhPassword=${{ secrets.OSSRH_PASSWORD }}
+          signing.useGpgCmd=true
+          signing.keyId=${{ steps.import-gpg.outputs.keyid }}
+          EOF
+
+      - name: Publish to Maven Central
+        run: ./gradlew publishAggregationToCentralPortal --no-daemon
+        working-directory: document-plugin
+        env:
+          CI: "true"
+          CCCP_PUBLISH: "true"

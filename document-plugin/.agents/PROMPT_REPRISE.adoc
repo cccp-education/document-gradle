@@ -1,52 +1,56 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 274
+== Mission session 275
 
-S-273 (2026-09-27) a livré l'**EPIC DOC-CI-ISOLATION** (5 US, cadrage inclus) :
-la CI GitHub Actions redevient **testable**. Deux barrières ont été levées —
-(1) `settings.gradle.kts` exigeait les credentials nmcp au **configuration time**
-(`error("ossrhUsername not found")` → 100 % des runs rouges depuis ≥ 2026-09-25),
-(2) la garde de publication lisait le working tree du dépôt voisin
-(`../workspace-bom`, absent d'un checkout isolé). Correctifs aux patterns
-**prouvés** : bakery `?: ""` (BKY-CI-ISOLATION S-243) + graphify `systemProperty`
-(D5-RACE S-029). **CI VERTE** prouvée : run `36353834078` (commit `cd6b1f1`),
-15m53s, `success` — 5029 tests exécutés. Le run avait au passage révélé (et fait
-corriger) une dette masquée : `BookPublicationPlanner` produisait un fantôme
-`book-.html` pour un code de langue blanc (barrière #3).
+S-274 (2026-09-28) a livré l'**EPIC DOC-CI-ISOLATION US-4** (release gate) :
+la CI peut désormais **publier sur Maven Central depuis un tag**. Un job
+`publish` (`if: startsWith(github.ref, 'refs/tags/v')`, `needs: [test]`) importe
+une clé GPG, matérialise les secrets OSSRH dans `~/.gradle/gradle.properties`,
+exporte `CCCP_PUBLISH=true`. Garde pure `document.ci.ReleaseWorkflow` (7 UT + BDD
+`@release-gate`, 26e runner). **Secrets configurés** (OSSRH_USERNAME/PASSWORD +
+GPG_PRIVATE_KEY/PASSPHRASE).
+
+*Blocage cross-borough levé* : la convention `publishing` désactivait la
+signature sous `CI=true` (Central rejette le non-signé) → `SigningPolicy` 3ᵉ
+dimension `CCCP_PUBLISH` + `conventions-plugin` **0.0.8** publié Central
+(bundle PUBLISHING → repo1 200).
+
+**Découverte P0** : l'adoption conventions 0.0.7 (S-273) avait retiré les **25
+runners Cucumber dédiés** de `check` (`additionalTasksInCheck` défaut `false`) —
+la CI verte ne couvrait presque rien. Corrigé : `additionalTasksInCheck = true`
+→ `check` planifie **27 tâches Cucumber** ; timeout test 20 → 40 min.
+
+Le re-pin catalogue ws **0.0.59** (piège #13, MEMPHIS `6aa2387`) a été fait au
+passage.
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *CI désormais disponible* : la règle « Local = Build, Tests = CI » est rétablie
-  (run `36353834078` vert). La dette aval, jusqu'ici masquée, est visible ; toute
-  nouvelle session peut s'appuyer sur le run CI comme preuve.
-* *DOC-CI-ISOLATION US-4 (optionnel)* : secrets GitHub Actions
-  (`OSSRH_USERNAME`/`OSSRH_PASSWORD`) + gate « publish only on tag ». Différé D7.
+* *Vérifier le run CI vert* du commit S-274 — attendu **plus long** (27 tâches
+  Cucumber), 40 min de budget. C'est la preuve finale.
 * *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
   `bookPipeline`, ou `includeSource` (D8, publier aussi `book.adoc`).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
   Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant.
 * *Run LLM metered* (FR→EN ou N langues) — accord pilote explicite requis.
-* *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH).
-* *Drift catalogue ws* (piège #13) : si MEMPHIS bump, réaligner les 3 sources.
+* *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH +
+  CI-ISOLATION) — sur accord pilote.
+* *Tag `v0.0.18` / `v0.0.19`* : poser un tag déclenche le job `publish` — la
+  première vraie publication depuis la CI (à décider avec le pilote).
 
-== État du code (S-273)
+== État du code (S-274)
 
-- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH + CI-ISOLATION,
-  non publié.
-- *Catalogue ws* : **0.0.58** (document-plugin = 0.0.18).
-- *CI* : `settings.gradle.kts` tolérant (creds optionnels) ; `build.gradle.kts`
-  injecte `document.publishedCatalog.documentVersion`/`bomVersion` en
-  `systemProperty` ; le 2e step `publishToMavenLocal` passe sous faux HOME +
-  `CI=true`.
+- *0.0.18 PUBLIÉE* Central. HEAD = TRANSLATE + MULTILANG + PUBLISH + CI-ISOLATION
+  (US-1→3) + **US-4 release gate**, non publié.
+- *Catalogue ws* : **0.0.59** (document-plugin = 0.0.18).
+- *Conventions* : **0.0.8** adoptée (document-gradle + fallback BOM 0.0.59).
+- *CI* : `settings.gradle.kts` tolérant ; garde de publication alimentée par
+  `systemProperty` ; job `publish` gated tag + GPG + secrets ; `check` couvre
+  27 tâches Cucumber (`additionalTasksInCheck = true`).
 - *Book* : `assembleBook` → `book.adoc` ; `translateBook`/`translateBookAllLanguages`
   → `book-<lang>.adoc` ; `publishBookAllLanguages` → `book-<lang>.<ext>`.
-  DSL `book { publishFormats }` (+ mirror flat + CLI CSV) ; contrat N3 additif.
-- *Domaine pur* : `BookPublicationPlanner` / `BookPublicationTarget`.
-- *Preuves S-272* : 10 UT planner + 5 FT TestKit + 8 BDD `@book-publish` (25e runner).
-- *Cadrages* : `.agents/CADRAGE_EPIC_DOC_BOOK_PUBLISH.adoc` +
-  `.agents/CADRAGE_EPIC_DOC_CI_ISOLATION.adoc`.
+- *Domaine pur* : `BookPublicationPlanner` + `document.ci.ReleaseWorkflow`.
 
-== Pièges Gradle à retenir (S-232..S-273)
+== Pièges Gradle à retenir (S-232..S-274)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
@@ -66,22 +70,27 @@ corriger) une dette masquée : `BookPublicationPlanner` produisait un fantôme
 40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271/S-272).
 41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271).
 42. *Une CI morte en configuration masque toute la dette aval* — corriger les
-    barrières **ensemble** (S-273, leçon bakery S-243) : ici #1 (creds au config
-    time) masquait #2 (garde lisant un dépôt voisin, pattern graphify D5-RACE).
+    barrières **ensemble** (S-273).
+43. *`additionalTasksInCheck` défaut `false`* (conventions 0.0.7+) — adopter les
+    conventions peut **retirer silencieusement** les runners Cucumber de `check` ;
+    une CI verte n'est pas une CI couvrante (S-274).
+44. *La convention `publishing` ne signe pas sous `CI=true`* — un job de release
+    doit exporter `CCCP_PUBLISH=true` sinon nmcp publie non signé (rejet Central)
+    (S-274).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. Le **25e runner dédié** est
-`bookPublishCucumberTest` (S-272).
++ `frontmatter_retranslate.feature`. Le **26e runner dédié** est
+`releaseGateCucumberTest` (S-274).
 
 == Méthode
 
 Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
 CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build, Tests = CI* (GitHub Actions).
 English only code/tests/features (gouvernance .adoc en français).
-Zéro secret, zéro commit/push sans accord (accord pilote donné S-273).
+Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-274).
 `bookPipeline` non modifié (D10) — le fan-out reste autonome.
 
 == À vérifier en ouverture
@@ -89,12 +98,12 @@ Zéro secret, zéro commit/push sans accord (accord pilote donné S-273).
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. *Run CI du commit courant* sur GitHub Actions — doit être **vert** (le
-   dernier run vert S-273 est `36353834078`, commit `cd6b1f1`).
-5. Décision pilote — US-4 secrets, PUBLISH US-5, FPA-PUBLISH-0, run metered,
-   ou publication 0.0.19.
+4. *Run CI du commit courant* sur GitHub Actions — doit être **vert** (budget
+   40 min, 27 tâches Cucumber).
+5. Décision pilote — US-5 PUBLISH, PUBLISH-0, tag `v*`, run metered,
+   publication 0.0.19.
 
 == Vision « livre content SERVER »
 
 Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
-multi-format, et désormais **testé en CI** de bout en bout.
+multi-format, testé en CI **et publié depuis la CI** sur tag.

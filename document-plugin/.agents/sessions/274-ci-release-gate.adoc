@@ -1,0 +1,119 @@
+= Session 274 — DOC-CI-ISOLATION-4 (release gate : secrets CI + publish-on-tag)
+
+:date: 2026-09-28
+:borough: New Orleans (document-gradle)
+:epic: DOC-CI-ISOLATION (US-4)
+:session_precedente: 273 — DOC-CI-ISOLATION (la CI redevient testable)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-274 listait 5 candidats *sur demande
+pilote* (Règle 2). Le pilote a retenu l'option **1 — `DOC-CI-ISOLATION-4`**
+(secrets GitHub Actions + gate « publish only on tag »), avec **permission
+explicite** d'utiliser git/publier en local et Central.
+
+La S-273 avait rendu la CI **testable** (2 barrières levées) mais avait
+explicitement **différé** (D7) la configuration des secrets et le gate de
+publication. Cette session ferme ce trou : la CI peut désormais **publier sur
+Maven Central depuis un tag**, proprement gaté.
+
+== Découverte P0 — l'adoption conventions 0.0.7 avait retiré la couverture BDD
+
+En adoptant `conventions-plugin 0.0.7` (S-273), le paramètre
+`cucumberConventions { additionalTasksInCheck }` (nouveau, **défaut `false`**,
+livré par la review P2/P3 de conventions S-021) a silencieusement **retiré les
+25 runners Cucumber dédiés du graphe `check`** — et donc de la CI (le workflow
+n'exécute que `build`). Preuve : le log du run CI vert S-273 (`36357120543`) ne
+montre que `:cucumberTest` — aucun `:bookTranslateCucumberTest`,
+`:xrefValidationCucumberTest`, etc. **La CI était verte en ne couvrant
+quasi rien.** Correctif : `additionalTasksInCheck = true` → `check` (et `build`)
+planifient de nouveau **27 tâches Cucumber** (`--dry-run` vérifié). Le timeout du
+job `test` passe 20 → 40 min (les 26 runners supplémentaires coûtent du temps).
+
+== Livré
+
+=== Partie 1 — conventions-gradle (cross-borough)
+
+*Blocage identifié* : sous `CI=true`, la convention
+`education.cccp.build.publishing` **désactivait la signature**
+(`SigningPolicy.shouldSign = !isCi`), or Maven Central **rejette** les
+artefacts non signés → un job `publishAggregationToCentralPortal` en CI aurait
+échoué. Le corriger côté document seul était impossible (le plugin est
+distribué).
+
+*Correctif (baby-step TDD strict)* :
+
+* `SigningPolicy.shouldSign(isCi, isPublishing, version)` — 3ᵉ dimension : un
+  job de **release** exporte `CCCP_PUBLISH=true` (variable `PUBLISH_ENV_VAR`) et
+  **doit** signer même sur CI ; un job de test CI ne signe pas (pas de clé). Un
+  `-SNAPSHOT` n'est jamais signé. 5 UT `SigningPolicyTest` (RED écrit avant le
+  changement de signature).
+* `PublishingConventionsPlugin.shouldSign` + `build.gradle.kts` du plugin
+  (inline, hors classpath buildscript) alignés.
+* BDD `publishing-conventions.feature` : nouveau scénario « signs on CI when the
+  job is publishing » + step `CCCP_PUBLISH` (helper `signingProbe` dédupliqué).
+* Hygiène : fallback `WorkspaceBom.FALLBACK_VERSION` 0.0.58 → **0.0.59**
+  (aligné catalogue publié, MEMPHIS `6aa2387`).
+* Bump **0.0.8**, publié Central (bundle `PUBLISHING` → repo1 POM/marker HTTP
+  200, `<latest>0.0.8`).
+
+=== Partie 2 — document-gradle (release gate)
+
+* Adoption `conventions-plugin 0.0.8` (4 plugins) + re-pin catalogue ws
+  **0.0.59** (settings D4 + platform BOM) — piège #13 soldé.
+* Garde **pure** `document.ci.ReleaseWorkflow` (source set `test`, zéro Gradle,
+  zéro I/O) : verdict sur le texte du workflow — 5 invariants (tag gate,
+  `needs` sur le job de test, import GPG, signal `CCCP_PUBLISH`, secrets
+  OSSRH). 7 UT `ReleaseWorkflowTest` (RED→GREEN) + le test « le vrai workflow
+  est conforme ».
+* Workflow `.github/workflows/test.yml` : nouveau job `publish`
+  (`if: startsWith(github.ref, 'refs/tags/v')`, `needs: [test]`), import GPG
+  (`crazy-max/ghaction-import-gpg@v6`), matérialisation des secrets OSSRH +
+  `signing.keyId` dans `~/.gradle/gradle.properties` (ce que lit
+  `settings.gradle.kts`), `CCCP_PUBLISH=true`, `timeout-minutes: 40`.
+* BDD `@release-gate` 7 scénarios + `ReleaseGateSteps` (préfixe anti-glue
+  S-088/S-223) + **26e runner** `ReleaseGateCucumberRunner` +
+  `CucumberTaskSpec("releaseGateCucumberTest")`.
+* **Secrets GitHub Actions configurés** (repo `cccp-education/document-gradle`) :
+  `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE` —
+  posés depuis `~/.gradle/gradle.properties` sans jamais afficher de valeur.
+  Clé GPG exportée, **prouvée importable et signante** dans un trousseau neuf.
+
+== Preuves (Local = Build)
+
+[cols="3,4", options="header"]
+|===
+| Vérification | Résultat
+| conventions `compileKotlin`/`compileTestKotlin` | **VERT**
+| conventions `publishToMavenLocal` (0.0.8, `.asc` générés) | **VERT**
+| conventions **Central 0.0.8** (POM + marker publishing HTTP 200) | **VERT**
+| document `compileKotlin`/`compileTestKotlin`/`compileFunctionalTestKotlin` | **VERT**
+| document `assemble` + `validatePlugins` | **VERT**
+| document `help` sous faux HOME (sans config cache) | **VERT** (barrière #1 tenue)
+| document `publishToMavenLocal` sous faux HOME + `CI=true` | **VERT**
+| document `check --dry-run` | **27 tâches Cucumber** (26 dédiées + globale)
+| `CI=true CCCP_PUBLISH=true publishToMavenLocal` → `.asc` régénéré | **signature réactivée** (5 appels gpg)
+| document `build --dry-run` | contient `:releaseGateCucumberTest`
+|===
+
+**Preuve finale** : le **run CI vert** du commit poussé (règle du workspace).
+
+== Portée / non-goals
+
+* Zéro bump de version document-plugin (0.0.18 inchangée) ; la publication
+  document 0.0.19 reste un EPIC distinct sur accord pilote.
+* Le gate est **structurel** (policy + workflow) : il ne teste pas la
+  publication réelle (qui exige un tag `v*` + secrets réels).
+* Corriger le blocage signing était **hors périmètre initial** (US-4 était
+  « document-only ») : imposé par la réalité cross-borough — `conventions-gradle`
+  modifié + 0.0.8 publié.
+
+== Pièges
+
+* **#43 (nouveau)** : `additionalTasksInCheck` défaut `false` (conventions 0.0.7+)
+  — adopter les conventions **peut retirer silencieusement des runners Cucumber
+  du `check`** ; une CI verte n'est pas une CI couvrante (famille piège #31).
+* **#44 (nouveau)** : la convention `publishing` **désactive la signature sous
+  `CI=true`** ; un job de release doit exporter `CCCP_PUBLISH=true` sinon nmcp
+  reçoit des artefacts non signés (rejet Central).
+* Piège #13 (drift catalogue ws) : 0.0.58 → 0.0.59 réaligné (8ᵉ occurrence).

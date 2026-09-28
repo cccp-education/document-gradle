@@ -1,10 +1,10 @@
 import build.CucumberTaskSpec
 
 plugins {
-    id("education.cccp.build.gradle-plugin") version "0.0.7"
-    id("education.cccp.build.publishing") version "0.0.7"
-    id("education.cccp.build.functional-test") version "0.0.7"
-    id("education.cccp.build.cucumber") version "0.0.7"
+    id("education.cccp.build.gradle-plugin") version "0.0.8"
+    id("education.cccp.build.publishing") version "0.0.8"
+    id("education.cccp.build.functional-test") version "0.0.8"
+    id("education.cccp.build.cucumber") version "0.0.8"
 }
 
 group = "education.cccp"
@@ -12,7 +12,7 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.58"))
+    implementation(platform("education.cccp:workspace-bom:0.0.59"))
 
     implementation(kotlin("stdlib-jdk8"))
 
@@ -99,6 +99,13 @@ tasks.named<Test>("test") {
 }
 
 cucumberConventions {
+    // DOC-CI-ISOLATION — the dedicated runners below must run in `check` (and
+    // therefore in CI). With conventions-plugin 0.0.7+ the additional Cucumber
+    // tasks are opt-in (fast default `check`), and the global `cucumberTest`
+    // only owns document/release-notes/frontmatter (S-238). Without this opt-in
+    // every @book-*/@xref-*/... scenario would silently stop being executed in
+    // CI — a green build covering nothing.
+    additionalTasksInCheck = true
     additionalTasks = listOf(
         CucumberTaskSpec(
             name = "tableTranslationCucumberTest",
@@ -249,6 +256,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/book_publish.feature"),
             tags = listOf("@book-publish"),
             runnerClass = "document.bookpublish.BookPublishCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "releaseGateCucumberTest",
+            features = listOf("src/test/resources/features/release_gate.feature"),
+            tags = listOf("@release-gate"),
+            runnerClass = "document.ci.ReleaseGateCucumberRunner",
         ),
     )
 }
