@@ -15,7 +15,9 @@ DOC-SEMANTIC-TABLE (baby-step DDD/TDD strict, RED → GREEN → REFACTOR).
   8 UT AsciidoctorJ réel.
 
 Compiles VERT (3 source sets), `assemble` + `validatePlugins` VERT.
-**Aucun test local** (Local = Build, Tests = CI). Aucun bump/publication.
+**Aucun test local** (Local = Build, Tests = CI). **Preuve CI** : run
+`36491999484` (commit `712b4a1`) — **Build & Test VERT 27m36s** (43 nouveaux
+tests exécutés). Aucun bump/publication.
 
 Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (S-277), rapport
 `.agents/sessions/278-semantic-domain-adapter.adoc`.

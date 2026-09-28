@@ -95,6 +95,7 @@ seule preuve de validité du comportement JRuby réel.
 | `assemble` + `validatePlugins` | VERT
 | Domaine pur (US-1) | 4 fichiers prod + 35 UT
 | Port/adapter (US-2) | 2 fichiers prod + extension holder + 8 UT
+| **Preuve CI** | run `36491999484` (commit `712b4a1`) — **Build & Test ✓ 27m36s**
 | Tests locaux exécutés | **aucun** (règle Local = Build, Tests = CI)
 | Bump / publication | aucun (sur accord pilote ultérieur)
 | Secrets | RAS
