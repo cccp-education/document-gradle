@@ -98,6 +98,13 @@ distribué).
 
 **Preuve finale** : le **run CI vert** du commit poussé (règle du workspace).
 
+Run **`36466896278`** (commit `afc5829`) : job **Build & Test** `success` en
+**27m45s**, 24+ tâches Cucumber dédiées exécutées (dont `:releaseGateCucumberTest`),
+job **Publish to Maven Central** correctement **SKIPPED** (pas de tag).
+Le premier run (`36463649717`) avait révélé que la garde GPG matchait
+`ghaction-import-gpg` **ou** `gpg_private_key` → retirer l'action mais garder
+l'input passait à tort (faux vert) ; corrigé (exige l'action) → `afc5829` vert.
+
 == Portée / non-goals
 
 * Zéro bump de version document-plugin (0.0.18 inchangée) ; la publication

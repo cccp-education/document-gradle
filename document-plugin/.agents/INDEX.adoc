@@ -25,9 +25,12 @@ Cucumber, timeout test 20→40 min). Re-pin catalogue ws **0.0.59** (piège #13,
 MEMPHIS `6aa2387`). Gates (Local = Build) : compiles VERT, `assemble` +
 `validatePlugins` VERT, `help` sous faux HOME VERT, `publishToMavenLocal` sous
 faux HOME + `CI=true` VERT, `CI=true CCCP_PUBLISH=true` → signature réactivée
-(`.asc` régénéré), `check --dry-run` = 27 tâches Cucumber. **Preuve finale = run
-CI vert du commit poussé.** Pièges #43 (une CI verte n'est pas couvrante) + #44
-(signature CI release). Rapport : `.agents/sessions/274-ci-release-gate.adoc`.)
+(`.asc` régénéré), `check --dry-run` = 27 tâches Cucumber. **Preuve finale : CI
+VERTE** — run `36466896278` (commit `afc5829`, 27m45s, 24+ tâches Cucumber dont
+`:releaseGateCucumberTest`, job Publish SKIPPED sans tag). Pièges #43 (une CI
+verte n'est pas couvrante) + #44 (signature CI release) + #45 (un garde d'action
+doit exiger l'action, pas un input associé). Rapport :
+`.agents/sessions/274-ci-release-gate.adoc`.)
 
 |_Derniere mise a jour_ : 2026-09-27 (session 273 — **DOC-CI-ISOLATION 5 US
 TERMINÉ** — la CI GitHub Actions redevient **testable**. Deux barrières levées :

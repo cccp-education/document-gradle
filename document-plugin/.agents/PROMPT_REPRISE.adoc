@@ -23,10 +23,16 @@ la CI verte ne couvrait presque rien. Corrigé : `additionalTasksInCheck = true`
 Le re-pin catalogue ws **0.0.59** (piège #13, MEMPHIS `6aa2387`) a été fait au
 passage.
 
+**Preuve finale** : CI **VERTE** — run `36466896278` (commit `afc5829`), job
+Build & Test `success` 27m45s (24+ tâches Cucumber dont `:releaseGateCucumberTest`),
+job Publish correctement SKIPPED (pas de tag). Le 1er run (`36463649717`) avait
+révélé un faux vert de la garde GPG (corrigé, piège #45).
+
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
-* *Vérifier le run CI vert* du commit S-274 — attendu **plus long** (27 tâches
-  Cucumber), 40 min de budget. C'est la preuve finale.
+* *POSER UN TAG `v*`* : c'est la prochaine étape naturelle — le job `publish`
+  s'exécute pour de vrai (secrets + GPG configurés, conventions 0.0.8 signe).
+  À décider avec le pilote (publication document 0.0.19 sur accord).
 * *DOC-BOOK-PUBLISH US-5 (optionnel)* : rattacher `publishBookAllLanguages` à
   `bookPipeline`, ou `includeSource` (D8, publier aussi `book.adoc`).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
@@ -34,8 +40,7 @@ passage.
 * *Run LLM metered* (FR→EN ou N langues) — accord pilote explicite requis.
 * *Publication document-plugin 0.0.19* (TRANSLATE + MULTILANG + PUBLISH +
   CI-ISOLATION) — sur accord pilote.
-* *Tag `v0.0.18` / `v0.0.19`* : poser un tag déclenche le job `publish` — la
-  première vraie publication depuis la CI (à décider avec le pilote).
+* *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
 
 == État du code (S-274)
 
@@ -77,6 +82,9 @@ passage.
 44. *La convention `publishing` ne signe pas sous `CI=true`* — un job de release
     doit exporter `CCCP_PUBLISH=true` sinon nmcp publie non signé (rejet Central)
     (S-274).
+45. *Un garde d'action CI doit exiger l'action, pas un input associé* — matcher
+    `ghaction-import-gpg|gpg_private_key` laissait passer « action retirée, input
+    gardé » (faux vert). Exiger l'action précisément (S-274).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
@@ -98,10 +106,10 @@ Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-274
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin` VERT (dans `document-plugin/`).
-4. *Run CI du commit courant* sur GitHub Actions — doit être **vert** (budget
-   40 min, 27 tâches Cucumber).
-5. Décision pilote — US-5 PUBLISH, PUBLISH-0, tag `v*`, run metered,
-   publication 0.0.19.
+4. *Run CI du commit courant* sur GitHub Actions — **VERT** (run
+   `36466896278`, commit `afc5829`, 27m45s, 27 tâches Cucumber).
+5. Décision pilote — tag `v*` (1re publication CI), US-5 PUBLISH, PUBLISH-0,
+   run metered, publication 0.0.19.
 
 == Vision « livre content SERVER »
 
