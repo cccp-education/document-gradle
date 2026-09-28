@@ -2,6 +2,7 @@ package document
 
 import org.asciidoctor.Asciidoctor
 import org.asciidoctor.Options
+import org.asciidoctor.ast.Document
 import java.io.File
 
 /**
@@ -40,5 +41,19 @@ internal object AsciidoctorHolder {
     fun convertFile(source: File, options: Options): String? = synchronized(lock) {
         val asciidoctor = instance ?: provider().also { instance = it }
         asciidoctor.convertFile(source, options)
+    }
+
+    /**
+     * Loads the AsciidoctorJ object model (AST) of [source] with the same shared
+     * instance (DOC-SEMANTIC-TABLE, decision D6/D11).
+     *
+     * Parallel to [convertFile] : the JRuby runtime is started once and reused.
+     * The caller passes the same [Options]/`SafeMode` as the conversion, so a
+     * non-trusted document (OCR/LLM) cannot trigger filesystem access through
+     * macros during the lifting.
+     */
+    fun load(source: File, options: Options): Document = synchronized(lock) {
+        val asciidoctor = instance ?: provider().also { instance = it }
+        asciidoctor.loadFile(source, options)
     }
 }

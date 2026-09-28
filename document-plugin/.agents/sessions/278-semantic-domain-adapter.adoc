@@ -1,0 +1,130 @@
+= Session 278 — DOC-SEMANTIC-1/2 (domaine pur + port/adapter AST)
+
+:date: 2026-09-29
+:borough: New Orleans (document-gradle)
+:epic: DOC-SEMANTIC-TABLE (US-1 + US-2)
+:type: feature — baby-step DDD/TDD strict (RED → GREEN → REFACTOR)
+:session_precedente: 277 — cadrage EPIC DOC-SEMANTIC-TABLE (gouvernance pure)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-277 proposait `DOC-SEMANTIC-1` *si le
+pilote valide la direction*. Le pilote a validé la direction B (lifting
+sémantique des tableaux via l'AST AsciidoctorJ) et autorise le commit/push +
+bump en clôture. Mission retenue : **implémenter les deux premières US du
+cadrage** — US-1 (domaine pur) puis US-2 (port + adapter AST) — en baby-step
+DDD/TDD strict, conformément à la méthode du borough.
+
+== Audit d'ouverture
+
+* `git status` propre, `main` = `origin/main`, HEAD `faf19ca` (S-277).
+* Compiles VERT (`compileKotlin` / `compileTestKotlin`
+  `compileFunctionalTestKotlin`), JDK 25.
+* **0.0.19** publiée Central depuis la CI ; catalogue ws **0.0.60** == pin
+  document (pas de drift).
+* Cadrage S-277 lu (13 décisions, 6 US ~22 pts).
+
+== Livrable — US-1 (DOC-SEMANTIC-1, domaine pur `document.semantic`)
+
+Baby-step TDD strict :
+
+. *RED* — 4 suites UT écrites (`SemanticTableSchemaTest`, `SemanticRowTest`,
+  `SemanticTableTest`, `SemanticExtractionTest`, 35 tests). Échec de compilation
+  prouvé : `Unresolved reference` sur les 7 symboles du domaine.
+
+. *GREEN* — 4 fichiers de production créés (Gradle-free, AsciidoctorJ-free) :
+* `SemanticTableSchema.kt` — `SemanticColumnSpec` (index **ou** header, `role`
+  opaque, `required`, invariants) + factories `byIndex`/`byHeader` +
+  `SemanticTableSchema` (nom, colonnes, rôles uniques).
+* `SemanticTable.kt` — `RawTable` (nom + header + lignes de texte),
+  `SemanticRow` (`Map<role, String>`, `get`/`roles`/`isBlank`),
+  `SemanticFinding` (rowIndex, role, message), `SemanticTable` + projection
+  pure `projection(raw, schema)` (rôle par index, fallback header
+  case-insensitive, cellules ragged → `""`, colonnes non déclarées ignorées).
+* `SemanticExtraction.kt` — sealed `Extracted`/`Skipped` + `SemanticExtractor`
+  (appariement nom→schéma, ordre document, jamais de drop muet).
+* `SemanticTableReader.kt` — port `fun interface` (Gradle-free).
+
+. *REFACTOR* — 3 source sets VERT.
+
+Décisions D4/D5/D8 matérialisées : le schéma est **injecté par le
+consommateur** (zéro mot métier dans le plugin public, gate RENAME) ; le domaine
+**enregistre** les findings sans jamais lever (la sévérité STRICT/LENIENT/OFF
+reste à la tâche, US-4).
+
+== Livrable — US-2 (DOC-SEMANTIC-2, port + adapter AST)
+
+Baby-step TDD strict :
+
+. *RED* — `AsciidoctorTableReaderTest` (8 tests AsciidoctorJ réel) :
+`Unresolved reference 'AsciidoctorTableReader'` prouvé.
+
+. *GREEN* — `AsciidoctorTableReader.kt` : parcours récursif de l'AST
+(`AsciidoctorHolder.load` + `blocks`), détection **opt-in** par annotation
+(`[semantic=<name>]` prioritaire, sinon rôle `semantic-<name>`), extraction
+`header`/`body` en `RawTable`. Plus extension de `AsciidoctorHolder` avec
+`load(source, options)` (`Asciidoctor.loadFile`) — même instance partagée JRuby
+(DOC-CR3-1) et même `SafeMode` que la conversion (D11).
+
+. *REFACTOR* — `annotationName`/`collect` durcis (accès plateforme nullable,
+`.orEmpty()`), 3 source sets + `assemble` + `validatePlugins` VERT.
+
+== Vérification statique de l'API AsciidoctorJ (zéro sonde locale)
+
+L'API réelle a été auditée dans les **sources** des jars déjà en cache
+(`asciidoctorj-api-3.0.1-sources.jar` + `asciidoctorj-3.0.1-sources.jar`),
+jamais par un test local :
+
+* `Table.getHeader(): List<Row>`, `Row.getCells(): List<Cell>`,
+  `Cell.getText(): String`, `Column.getColumnNumber()` ;
+* `ContentNode.getRoles(): List<String>` (`roles`), `getAttributes()` via
+  `RubyAttributesMapDecorator` à **clés String** ;
+* `Asciidoctor.loadFile(File, Options)` + `Options.builder().safe(...)`.
+
+Les tests d'adapter s'exécutent **en CI** (Local = Build, Tests = CI) — la
+seule preuve de validité du comportement JRuby réel.
+
+== Gates de session
+
+[cols="2,4", options="header"]
+|===
+| Gate | Résultat
+
+| `git status` ouverture | propre — `main` = `origin/main`, HEAD `faf19ca`
+| Compiles (3 source sets) | VERT (JDK 25)
+| `assemble` + `validatePlugins` | VERT
+| Domaine pur (US-1) | 4 fichiers prod + 35 UT
+| Port/adapter (US-2) | 2 fichiers prod + extension holder + 8 UT
+| Tests locaux exécutés | **aucun** (règle Local = Build, Tests = CI)
+| Bump / publication | aucun (sur accord pilote ultérieur)
+| Secrets | RAS
+|===
+
+== Méthode et non-régression
+
+* Baby-step DDD/TDD strict RED → GREEN → REFACTOR aux deux niveaux.
+* English only code/tests ; gouvernance `.adoc` en français.
+* Zéro Python ; aucune modification de la source AsciiDoc (Règle 7).
+* `bookPipeline`, les 5 convertisseurs, la traduction et le pivot
+  `document.translation.Table` sont **inchangés** (D12) ; zéro fichier existant
+  modifié hors `AsciidoctorHolder` (ajout d'une méthode, additif).
+
+== Suite
+
+* *US-3* — tâche `collectTableSemantics` + DSL `semantic { }` + export
+  `table-semantics.json` + câblage N3 (FT TestKit).
+* *US-4* — validation des rôles requis (STRICT/LENIENT/OFF).
+* *US-5* — BDD `@table-semantic` (runner dédié).
+* *US-6* — dogfooding lecture seule (Règle 7).
+
+== Pièges / notes
+
+* *Un premier rang de tableau n'est un en-tête que si `options="header"` est
+  déclaré* — l'adapter lit `Table.getHeader()`, il ne devine pas par position.
+  Toutes les fixtures de test déclarent l'option explicitement.
+* *Deux modèles tabulaires parallèles* (piège #47) : l'AST
+  `org.asciidoctor.ast.Table` (lifting) et le pivot regex
+  `document.translation.Table` (traduction) cohabitent — nommage sans ambiguïté,
+  aucune tentative d'unification.
+* *Contrainte OSS* : aucun rôle métier codé dans le plugin (schéma injecté,
+  D4) — c'est le cœur de la conception et la protection de la gate RENAME.

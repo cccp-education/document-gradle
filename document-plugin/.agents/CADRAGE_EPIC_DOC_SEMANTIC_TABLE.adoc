@@ -7,7 +7,7 @@ _Origine_ : note pilote `pense-bete.txt` (trackée, racine `document-gradle/`) �
 transformer de simples cellules textuelles en structures de données fortement
 typées, porteuses de sens »*. Aucun EPIC n'existait ; la note était une vision
 non cadrée.
-_Statut_ : 🟡 EN COURS (S-277 — cadrage)
+_Statut_ : 🟡 EN COURS (S-277 cadrage, S-278 US-1 domaine + US-2 port/adapter)
 _Pattern_ : gouvernance pure S-057/S-063 + baby-step DDD/TDD/BDD strict
 
 == Contexte
@@ -206,7 +206,7 @@ Vague 4) — le consommateur **déclare** son schéma, comme il injectait son
   de rôle requis.
 | UT (`SemanticTableSchemaTest`, `SemanticRowTest`)
 | 4
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-278 — 4 fichiers prod + 35 UT)
 
 | DOC-SEMANTIC-2
 | Port `SemanticTableReader` + adapter `AsciidoctorTableReader` (bridge
@@ -215,7 +215,7 @@ Vague 4) — le consommateur **déclare** son schéma, comme il injectait son
   annotés.
 | UT avec AsciidoctorJ réel (`AsciidoctorTableReaderTest`)
 | 5
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-278 — adapter + `AsciidoctorHolder.load`, 8 UT)
 
 | DOC-SEMANTIC-3
 | Tâche `collectTableSemantics` + DSL `semantic { }` (+ mirror plat + CLI) +

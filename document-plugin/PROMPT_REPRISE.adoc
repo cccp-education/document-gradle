@@ -4,16 +4,18 @@ _note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-275). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 278 — sur décision pilote
+== Mission session 279 — sur décision pilote
 
-S-277 (2026-09-29) a livré le **cadrage EPIC DOC-SEMANTIC-TABLE** (gouvernance
-pure, zéro code) — lifting sémantique des tableaux via l'AST AsciidoctorJ
-(direction B pilote, à partir de la note `pense-bete.txt`). 13 décisions,
-6 US ~22 pts. Voir `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.
+S-278 (2026-09-29) a implémenté **DOC-SEMANTIC-1 + DOC-SEMANTIC-2** de l'EPIC
+DOC-SEMANTIC-TABLE (baby-step DDD/TDD strict) : domaine pur `document.semantic`
+(5 fichiers prod, 35 UT) + port `SemanticTableReader` / adapter
+`AsciidoctorTableReader` (8 UT AsciidoctorJ réel) + extension
+`AsciidoctorHolder.load`. Compiles VERT, aucun test local (Local = Build,
+Tests = CI), aucun bump/publication.
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
-- Candidat `DOC-SEMANTIC-1` (domaine pur) si le pilote valide la direction.
+- Candidat `DOC-SEMANTIC-3` (tâche + DSL + N3 + export) si le pilote valide.
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
 - Preuve consommateur tiers `0.0.19` (Central sans mavenLocal, pattern S-264).
 - Publication document-plugin 0.0.20 / tag `v*` — sur accord pilote.
@@ -28,5 +30,5 @@ CONTRAINTE GLOBALE : *Zéro Python*. English only code/tests/features.
 
 - MEMPHIS : bundle `3f912bf6-48f5-49c1-b36a-e970961d889d` (BOM + catalog 0.0.57).
 - document : bundle `aab4b880-b7c5-493e-b5eb-ba59033d5ad6` (0.0.18).
-- Un futur bump (0.0.19) inclura DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG +
-  DOC-BOOK-PUBLISH + CI-ISOLATION — sur accord pilote.
+- Un futur bump (0.0.19/0.0.20) inclura DOC-BOOK-TRANSLATE + DOC-BOOK-MULTILANG +
+  DOC-BOOK-PUBLISH + CI-ISOLATION + DOC-SEMANTIC-TABLE — sur accord pilote.

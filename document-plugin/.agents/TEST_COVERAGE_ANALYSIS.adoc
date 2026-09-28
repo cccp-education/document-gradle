@@ -1,6 +1,53 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-28
-:session: 275
+:date: 2026-09-29
+:session: 278
+
+== Session 278 — DOC-SEMANTIC-1 + US-2 (43 UT, domaine pur + adapter AST)
+
+*Périmètre* : lifting sémantique des tableaux via l'AST AsciidoctorJ (EPIC
+DOC-SEMANTIC-TABLE) — domaine pur `document.semantic` + port/adapter AST.
+*Note méthodo* : règle **Local = Build, Tests = CI** — les suites ne sont pas
+exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
+
+*Nouveaux tests* — US-1 (domaine pur, 35 UT) :
+
+- `document.semantic.SemanticTableSchemaTest` — **11 UT** : colonne par index /
+  par header, rôle blanc rejeté, ni index ni header rejeté, index négatif rejeté,
+  factories `byIndex`/`byHeader`, schéma (nom/colonnes), nom vide rejeté,
+  zéro colonne rejeté, rôle dupliqué rejeté.
+- `document.semantic.SemanticRowTest` — **7 UT** : mapping rôle→valeur, rôle
+  absent → null, ordre des rôles, valeur blanche / rôle absent = `isBlank`,
+  clé vide rejetée, ligne vide autorisée.
+- `document.semantic.SemanticTableTest` — **8 UT** : projection rôle par rôle,
+  ordre schéma, header **case-insensitive**, colonnes non déclarées ignorées,
+  ligne ragged (cellule manquante → `""`), table headerless (index seulement),
+  nom + raw exposés, table sans enregistrement valide.
+- `document.semantic.SemanticExtractionTest` — **9 UT** : table annotée + schéma
+  → `Extracted`, table annotée sans schéma → `Skipped` (raison non blanche,
+  jamais de drop muet), ordre document, rôle `required` blanc → finding,
+  table pleine → 0 finding, rôle optionnel blanc → 0 finding, findings ordonnés
+  row→colonne, zéro schéma → `Skipped`.
+
+*Nouveaux tests* — US-2 (adapter AST, 8 UT) :
+
+- `document.semantic.AsciidoctorTableReaderTest` — **8 UT** (AsciidoctorJ réel) :
+  table annotée lue (nom + header + lignes), annotation par **attribut de bloc**
+  `[semantic=...]`, table non annotée **ignorée** (D3), document sans table,
+  plusieurs tables dans l'ordre, table sans `header` → header vide, table
+  imbriquée dans une section trouvée, document mixte ne garde que l'annotée.
+
+*Tests modifiés* : aucun test historique modifié. `AsciidoctorHolderTest`
+(1 UT) reste valide — l'ajout `AsciidoctorHolder.load` est additif (méthode
+sœur de `convertFile`, même instance partagée).
+
+*Non-régression* : `bookPipeline`, les 5 convertisseurs, la traduction et le
+pivot `document.translation.Table` ne sont pas touchés (D12). Le domaine
+`document.semantic` est isolé (nouveau package), zéro collision de nom avec le
+pivot `document.translation.Table` (piège #47).
+
+*Gates (Local = Build, Tests = CI)* : `compileKotlin` / `compileTestKotlin` /
+`compileFunctionalTestKotlin` **VERT** ; `assemble` + `validatePlugins` **VERT** ;
+zéro secret. Aucun test local exécuté.
 
 == Session 275 — DOC-BOOK-PUBLISH US-5 (includeSource, 7 UT + 3 FT + 3 BDD)
 

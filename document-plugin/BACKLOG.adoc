@@ -1,6 +1,16 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-29 (session 278 — **DOC-SEMANTIC-1 + US-2 ✅**
+(baby-step DDD/TDD strict) — implémentation des 2 premières US de code de l'EPIC
+DOC-SEMANTIC-TABLE. **US-1** domaine pur `document.semantic` (4 fichiers prod +
+35 UT) : `SemanticColumnSpec`/`SemanticTableSchema`, `RawTable`/`SemanticRow`/
+`SemanticFinding` + `SemanticTable.projection`, `SemanticExtraction` sealed +
+`SemanticExtractor`, port `SemanticTableReader`. **US-2** adapter
+`AsciidoctorTableReader` (détection opt-in `[semantic=<name>]` > `[.semantic-<name>]`)
++ extension `AsciidoctorHolder.load` (8 UT AsciidoctorJ réel). Compiles VERT
+(3 source sets), `assemble` + `validatePlugins` VERT ; aucun test local
+(Local = Build, Tests = CI) ; zéro bump/publication. Pièges #49/#50.)
 _Date revision_ : 2026-09-29 (session 277 — **cadrage EPIC DOC-SEMANTIC-TABLE**,
 gouvernance pure, zéro code — direction B pilote à partir de la note
 `pense-bete.txt` : *exploiter l'AST AsciidoctorJ pour transformer les cellules
@@ -2552,7 +2562,7 @@ pilote requis).
 
 '''
 
-== 🟡 EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ (S-277 — cadré)
+== 🟡 EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ (S-277 cadré — S-278 US-1/US-2)
 
 _Origine_ : note pilote `document-gradle/pense-bete.txt` (trackée, restée hors
 backlog) — *« AsciiDoc sémantique : exploiter le modèle objet AsciidoctorJ (AST)
@@ -2591,14 +2601,14 @@ Vague 4 ; patron RENAME-8 D14). Source de vérité = l'AST **réel**
   ligne→enregistrement, règle de rôle requis.
 | UT
 | 4
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-278 — 4 fichiers prod + 35 UT, RED prouvé)
 
 | DOC-SEMANTIC-2
 | Port `SemanticTableReader` + adapter `AsciidoctorTableReader` (bridge
   `org.asciidoctor.ast`, annotation opt-in, réutilise `AsciidoctorHolder`).
 | UT (AsciidoctorJ réel)
 | 5
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-278 — adapter + `AsciidoctorHolder.load`, 8 UT)
 
 | DOC-SEMANTIC-3
 | Tâche `collectTableSemantics` + DSL `semantic { }` (+ mirror + CLI) + export
@@ -2628,9 +2638,12 @@ Vague 4 ; patron RENAME-8 D14). Source de vérité = l'AST **réel**
 
 |===
 
-_Total_ : ~22 pts, 6 US + cadrage. *Non-goals* : pas de refonte du pivot de
+_Total_ : ~22 pts, 6 US + cadrage (3/7 US — US-0 + US-1 + US-2 ✅ S-277/S-278).
+*Non-goals* : pas de refonte du pivot de
 traduction, pas de génération de contenu, pas de modification de `bookPipeline`
 (D12). *Backward compat* : défaut `OFF` — sans knobs, conversions et pipeline
 livre byte-identiques.
 *Pièges* : #47 (deux modèles tabulaires parallèles — nommer sans ambiguïté),
-#48 (note visionnaire trackée hors backlog).
+#48 (note visionnaire trackée hors backlog), #49 (en-tête de tableau =
+`options="header"`, jamais deviné par position — S-278), #50 (types plateforme
+JRuby nuls → accès défensifs — S-278).

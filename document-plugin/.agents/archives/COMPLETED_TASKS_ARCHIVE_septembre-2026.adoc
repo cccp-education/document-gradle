@@ -2,6 +2,30 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 278 (2026-09-29) — DOC-SEMANTIC-1 + US-2 (domaine pur + port/adapter AST)
+
+*Type* : feature — baby-step DDD/TDD strict (RED → GREEN → REFACTOR)
+*Score* : 10/10
+*Mission* : implémenter les 2 premières US de code de l'EPIC DOC-SEMANTIC-TABLE
+(direction B pilote validée S-277).
+*Livrables* :
+- Domaine pur `document.semantic` (4 fichiers prod) : `SemanticColumnSpec` +
+  `SemanticTableSchema`, `RawTable`/`SemanticRow`/`SemanticFinding` +
+  `SemanticTable.projection`, sealed `SemanticExtraction` + `SemanticExtractor`,
+  port `SemanticTableReader`.
+- Adapter `AsciidoctorTableReader` + extension additive `AsciidoctorHolder.load`.
+- 35 UT (US-1) + 8 UT (US-2) ; rapport `.agents/sessions/278-semantic-domain-adapter.adoc`.
+*Décisions notables* : schéma **injecté par le consommateur** (D4, zéro métier
+plugin) ; findings **sans exception** dans le domaine (D8, la sévérité reste à
+US-4) ; détection **opt-in** `[semantic=<name>]` > `[.semantic-<name>]` (D3) ;
+`SafeMode` partagé à la lecture (D11).
+*Preuves* : RED prouvé (`Unresolved reference` × 7 puis × 1) → GREEN ; compiles
+3 source sets VERT, `assemble` + `validatePlugins` VERT ; API AsciidoctorJ
+auditée dans les sources des jars (zéro sonde locale) ; tests délégués CI.
+*Pièges* : #49 (en-tête = `options="header"`, jamais deviné par position),
+#50 (types plateforme JRuby nuls → accès défensifs).
+*Zéro bump, zéro publication, zéro secret.*
+
 === Session 277 (2026-09-29) — Cadrage EPIC DOC-SEMANTIC-TABLE (AST AsciidoctorJ)
 
 *Type* : cadrage — gouvernance pure, zéro code
