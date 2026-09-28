@@ -2647,3 +2647,45 @@ livre byte-identiques.
 #48 (note visionnaire trackée hors backlog), #49 (en-tête de tableau =
 `options="header"`, jamais deviné par position — S-278), #50 (types plateforme
 JRuby nuls → accès défensifs — S-278).
+
+'''
+
+== 🟡 EPIC PUB 0.0.20 — Distribution du HEAD post-S-278 (à planifier, S-279)
+
+_Origine_ : S-278 a livré `DOC-SEMANTIC-1` (domaine pur + 35 UT) + `DOC-SEMANTIC-2`
+(adapter AST + 8 UT) — **code non distribué** (aucun bump cette session : la
+publication est un acte de release distinct, sur accord pilote explicite).
+_Type_ : PUB cross-borough — chaîne DAG N0→N2 **MEMPHIS-first**, baby-step TDD strict.
+_Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
+
+*Contenu distribué (delta depuis 0.0.19)* :
+
+* `DOC-SEMANTIC-TABLE` (US-1 domaine pur + US-2 port/adapter AST) — 5 fichiers
+  prod `document.semantic` + extension `AsciidoctorHolder.load`.
+* (cumulable si livré d'ici là) `DOC-SEMANTIC-3/4/5/6` — tâche/DSL/N3, validation
+  rôles requis, BDD `@table-semantic`, dogfooding.
+
+*Chaîne de publication (ordre DAG, ne pas inverser)* :
+
+. *MEMPHIS (N0)* — bump `gradle/libs.versions.toml` `workspace-bom 0.0.60→0.0.61`
+  + `document-plugin 0.0.19→0.0.20` ; gardes réalignées
+  (`WorkspaceCatalogStructureTest` document 0.0.20 +
+  `PlatformCatalogAlignmentTest` BOM 0.0.61) ; `publishToMavenLocal` VERT ;
+  `publishAggregationToCentralPortal` → bundle Central (AUTOMATIC) ; **commit
+  sélectif** (piège #26 : exclure le WIP concurrent) ; propagation POM/JAR/
+  `<latest>` (piège #11 : polling 7-27 min, tester le POM versionné).
+. *document-gradle (N2)* — re-pin 3 sources (settings `workspace-catalog:0.0.61`
+  D4 + platform `workspace-bom:0.0.61` + toml local `document = "0.0.20"`),
+  version dérivée **0.0.20** (`./gradlew properties`), garde publication **4/4**
+  (`DocumentPluginPublicationTest`), `publishToMavenLocal` VERT (POM : toutes les
+  deps versionnées, platform pin 0.0.61).
+. *Release CI* — tag `v0.0.20` → job CI `publish` (release gate S-274, import GPG
+  + secrets OSSRH + `CCCP_PUBLISH=true`) — publication **depuis la CI**.
+. *Preuve consommateur tiers* — `/tmp` consumer, **Central SANS mavenLocal**
+  (pattern S-264) : 0.0.20 résolu + `convertDocumentToHtml` VERT + preuve négative
+  (ex. tableau `[.semantic-x]` non annoté ignoré, ou xref STRICT rouge).
+
+_Pièges à surveiller_ : #5 (anti-collision repo1 — vérifier 404 avant bump),
+#11 (polling POM), #13 (drift catalogue ws → garde RED), #26 (commit sélectif WIP),
+#44 (signature non appliquée sous `CI=true` sans `CCCP_PUBLISH`).
+_Statut_ : 🟡 À PLANIFIER (S-279, sur accord pilote).

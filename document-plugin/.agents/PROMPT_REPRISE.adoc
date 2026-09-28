@@ -24,6 +24,10 @@ Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (S-277), rapport
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
+* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-278 (DOC-SEMANTIC-1/US-2) :
+  chaîne DAG N0→N2 MEMPHIS-first (BOM 0.0.61 + document 0.0.20), tag `v0.0.20`
+  → publication CI, preuve consommateur tiers Central. **Cadré au BACKLOG**
+  (S-278, section « 🟡 EPIC PUB 0.0.20 »).
 * *DOC-SEMANTIC-3* — tâche thin `collectTableSemantics` + DSL `semantic { }`
   (+ mirror plat + CLI) + export `table-semantics.json` + câblage N3 additif
   (`DocumentMetadata`/`DocumentRetrieveResult`). FT TestKit.
@@ -42,7 +46,7 @@ Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (S-277), rapport
 - *Catalogue ws* : **0.0.60** (document-plugin = 0.0.19) — pas de drift.
 - *Conventions* : **0.0.8** (signature sur CI release via `CCCP_PUBLISH`).
 - *Backlog* : `DOC-FPA-PUBLISH-0` (STANDBY) ; `DOC-SEMANTIC-TABLE` 2/6 US
-  (US-0 cadrage + US-1 + US-2).
+  (US-0 cadrage + US-1 + US-2) ; **`EPIC PUB 0.0.20`** 🟡 cadré (S-278).
 - *Domaine* : `document.semantic` (prod 5 fichiers) — Gradle-free (sauf adapter).
 
 == Pièges Gradle à retenir (S-232..S-278)
