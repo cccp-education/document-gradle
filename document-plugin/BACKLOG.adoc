@@ -1,6 +1,14 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-29 (session 277 — **cadrage EPIC DOC-SEMANTIC-TABLE**,
+gouvernance pure, zéro code — direction B pilote à partir de la note
+`pense-bete.txt` : *exploiter l'AST AsciidoctorJ pour transformer les cellules
+en structures typées*. Audit 8 constats, 13 décisions, 6 US ~22 pts. Nouveau
+domaine pur `document.semantic` + port/adapter AST + tâche
+`collectTableSemantics` + export `table-semantics.json`. Identification opt-in
+par annotation, **schéma injecté par le consommateur** (zéro métier dans le
+plugin — contrainte RENAME). Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.)
 _Date revision_ : 2026-09-28 (session 276 — **PUB 0.0.19 ✅ DISTRIBUÉE Central**
 (accord pilote : commit/push + **tag `v0.0.19`**). Distribution du HEAD cumulé
 depuis 0.0.18 : DOC-BOOK-TRANSLATE (6/6) + DOC-BOOK-MULTILANG (4/4) +
@@ -2541,3 +2549,88 @@ piège EPUB #10 : corrompre la STRUCTURE, pas le contenu.
 demandée — la garde sera distribuée à la prochaine publication (accord
 pilote requis).
 ====
+
+'''
+
+== 🟡 EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ (S-277 — cadré)
+
+_Origine_ : note pilote `document-gradle/pense-bete.txt` (trackée, restée hors
+backlog) — *« AsciiDoc sémantique : exploiter le modèle objet AsciidoctorJ (AST)
+pour transformer de simples cellules textuelles en structures de données
+fortement typées, porteuses de sens »*. Direction B choisie par le pilote à
+l'ouverture S-277.
+_Cadrage_ : `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (8 constats,
+13 décisions).
+
+*Constat* : le plugin n'utilise AsciidoctorJ que comme **moteur de conversion**
+(`convertFile`) ; son **modèle objet** (`org.asciidoctor.ast.*`) n'est jamais
+parcouru. Un AsciiDoc tabulaire porte pourtant du **sens** : chaque tableau
+annoté peut être lu comme une collection d'enregistrements typés, exploitable
+(export JSON, validation de champs requis, fiche LMS).
+
+*Décision cœur* : identification **opt-in par annotation** (`[.semantic-<name>]`
+/ `[semantic=<name>]`) — l'heuristique par nombre de colonnes de la note est
+rejetée ; **schéma injecté par le consommateur** (`SemanticColumnSpec` abstrait),
+donc **zéro vocabulaire métier dans le plugin public** (contrainte RENAME
+Vague 4 ; patron RENAME-8 D14). Source de vérité = l'AST **réel**
+(`Asciidoctor.load` + `findBy { it is Table }`).
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-SEMANTIC-0
+| Cadrage EPIC (gouvernance pure) — 8 constats, 13 décisions.
+| — (gouvernance)
+| 1
+| ✅ TERMINÉ (S-277)
+
+| DOC-SEMANTIC-1
+| Domaine pur `document.semantic` : `SemanticColumnSpec`, `SemanticTableSchema`,
+  `SemanticRow`, `SemanticTable`, `SemanticExtraction` sealed, projection
+  ligne→enregistrement, règle de rôle requis.
+| UT
+| 4
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-2
+| Port `SemanticTableReader` + adapter `AsciidoctorTableReader` (bridge
+  `org.asciidoctor.ast`, annotation opt-in, réutilise `AsciidoctorHolder`).
+| UT (AsciidoctorJ réel)
+| 5
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-3
+| Tâche `collectTableSemantics` + DSL `semantic { }` (+ mirror + CLI) + export
+  `table-semantics.json` + N3 additif.
+| FT TestKit
+| 4
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-4
+| Validation des rôles `required` (STRICT/LENIENT/OFF) + findings JSON.
+| UT + FT
+| 3
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-5
+| BDD `@table-semantic` (annoté extrait, non annoté ignoré, required blanc,
+  no-op sans schéma) + runner dédié `tableSemanticCucumberTest`.
+| BDD
+| 3
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-6
+| Dogfooding **lecture seule** (Règle 7) sur corpus réel réduit.
+| FT dogfooding
+| 2
+| 🟡 À FAIRE
+
+|===
+
+_Total_ : ~22 pts, 6 US + cadrage. *Non-goals* : pas de refonte du pivot de
+traduction, pas de génération de contenu, pas de modification de `bookPipeline`
+(D12). *Backward compat* : défaut `OFF` — sans knobs, conversions et pipeline
+livre byte-identiques.
+*Pièges* : #47 (deux modèles tabulaires parallèles — nommer sans ambiguïté),
+#48 (note visionnaire trackée hors backlog).

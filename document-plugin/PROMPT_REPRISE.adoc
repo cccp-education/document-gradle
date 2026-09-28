@@ -4,17 +4,19 @@ _note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-275). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 276 — sur décision pilote
+== Mission session 278 — sur décision pilote
 
-S-275 (2026-09-28) a livré l'**US-5 optionnelle de `DOC-BOOK-PUBLISH`** (knob
-`includeSource`, D8) — le seul candidat actionnable sans accord pilote externe.
-Le fan-out publie aussi le livre assemblé (`book.<ext>`, en tête de plan).
+S-277 (2026-09-29) a livré le **cadrage EPIC DOC-SEMANTIC-TABLE** (gouvernance
+pure, zéro code) — lifting sémantique des tableaux via l'AST AsciidoctorJ
+(direction B pilote, à partir de la note `pense-bete.txt`). 13 décisions,
+6 US ~22 pts. Voir `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
+- Candidat `DOC-SEMANTIC-1` (domaine pur) si le pilote valide la direction.
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
-- Run LLM *metered* réel — accord pilote requis.
-- Publication document-plugin 0.0.19 / tag `v*` — sur accord pilote.
+- Preuve consommateur tiers `0.0.19` (Central sans mavenLocal, pattern S-264).
+- Publication document-plugin 0.0.20 / tag `v*` — sur accord pilote.
 - Drift catalogue ws (piège #13) si MEMPHIS bump.
 
 == Méthode (rappel)

@@ -2,6 +2,30 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 277 (2026-09-29) — Cadrage EPIC DOC-SEMANTIC-TABLE (AST AsciidoctorJ)
+
+*Type* : cadrage — gouvernance pure, zéro code
+*Score* : 10/10
+*Mission* : cadrer la note pilote `pense-bete.txt` (trackée, racine du repo)
+— *AsciiDoc sémantique : exploiter l'AST AsciidoctorJ pour transformer les
+cellules en structures typées*. Restée hors backlog. Direction B choisie par le
+pilote.
+*Livrables* :
+- `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` — audit 8 constats,
+  13 décisions, 6 US ~22 pts, DAG, DSL, gates, risques.
+- `.agents/sessions/277-cadrage-semantic-table.adoc`.
+*Décisions notables* : identification **opt-in par annotation**
+(`[.semantic-<name>]`) — heuristique `columns.size == 8` rejetée (D3) ;
+schéma **injecté par le consommateur** (zéro métier dans le plugin, contrainte
+RENAME Vague 4 — D4) ; source de vérité = l'AST **réel** (`Asciidoctor.load` +
+`findBy { it is Table }` — D2) ; domaine pur + port/adapter (D6) ; tâche thin
+`collectTableSemantics` + export `table-semantics.json` (D7) ; `bookPipeline` et
+le pivot intacts (D12).
+*Gates* : compile VERT (3 source sets), **zéro code modifié**, zéro bump, zéro
+publication, zéro secret ; 2 `|` non échappés corrigés dans le cadrage.
+*Pièges* : #47 (deux modèles tabulaires parallèles — nommer sans ambiguïté),
+#48 (note visionnaire trackée hors backlog).
+
 === Session 276 (2026-09-28) — PUB 0.0.19 ✅ (distribution HEAD, tag `v*`)
 
 *Type* : PUB cross-borough (accord pilote : commit/push + tag)

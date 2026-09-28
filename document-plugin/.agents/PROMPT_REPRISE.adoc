@@ -1,58 +1,42 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 277
+== Mission session 278
 
-S-276 (2026-09-28) a livré la **PUB 0.0.19** (accord pilote : commit/push +
-tag `v*`) — distribution hors machine de dev du HEAD cumulé depuis 0.0.18 :
-DOC-BOOK-TRANSLATE (6/6) + DOC-BOOK-MULTILANG (4/4) + DOC-BOOK-PUBLISH (5/5,
-dont `includeSource` S-275) + DOC-CI-ISOLATION (5 US + release gate S-274).
+S-277 (2026-09-29) a livré le **cadrage EPIC DOC-SEMANTIC-TABLE** (gouvernance
+pure, zéro code) — lifting sémantique des tableaux via l'AST AsciidoctorJ
+(direction B choisie par le pilote, à partir de la note `pense-bete.txt`).
+13 décisions, 6 US ~22 pts. Fichier : `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.
 
-- *Baseline prouvée* : run CI `36477600723` (commit `bf9ddd9`) **VERT** avant
-  tout acte de release.
-- *MEMPHIS-first* : BOM/catalog **0.0.60** publiés Central (bundle
-  `27fae84c`, AUTOMATIC) ; toml porte `document-plugin = "0.0.19"`.
-- *document* : re-pin 3 sources (catalog ws **0.0.60** + platform BOM 0.0.60 +
-  toml local `document = "0.0.19"`) ; version dérivée **0.0.19** ;
-  `publishToMavenLocal` VERT (POM 20 deps versionnées) ; garde publication
-  **4/4**.
-- *Preuve finale* : **tag `v0.0.19`** → job CI `publish` (release gate S-274,
-  GPG + secrets OSSRH + `CCCP_PUBLISH=true`) → **première publication depuis la
-  CI**. Run `36481152085` **SUCCESS** (Build & Test ✓ 27m26s + Publish ✓ 1m17s,
-  bundle `667d858e`) ; propagation repo1 POM+JAR (`.asc`)+sources+javadoc 200,
-  marker plugin 200. **DOC-CI-ISOLATION-4 démontré de bout en bout** : un tag
-  `v*` distribue l'artefact, testé et signé, sans machine de dev.
+En résumé : le plugin n'utilise AsciidoctorJ que comme moteur de **conversion**,
+jamais son **AST**. L'EPIC ajoute un domaine pur `document.semantic` (port
+`SemanticTableReader` + adapter `AsciidoctorTableReader`) qui lit les tableaux
+**annotés** (`[.semantic-<name>]`) et les projette en enregistrements typés,
+avec schéma **injecté par le consommateur** (zéro métier dans le plugin —
+contrainte RENAME). Tâche thin `collectTableSemantics` + export
+`table-semantics.json` + validation rôles `required` (STRICT/LENIENT/OFF).
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
+* *DOC-SEMANTIC-1* — implémenter le domaine pur si le pilote valide la direction.
 * *Vérifier la propagation Central 0.0.19* (polling 7-27 min — Piège #11,
   tester le POM versionné, pas `<latest>`).
-* *Preuve consommateur tiers* (`/tmp`, Central sans mavenLocal) — pattern S-264.
+* *Preuve consommateur tiers* 0.0.19 (`/tmp`, Central sans mavenLocal) — S-264.
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
-  Le FT `AssembleBookTaskContentRichTocTest` (page 73) reste préexistant.
-* *Run LLM metered* (FR→EN ou N langues) — accord pilote explicite requis.
 * *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
 * *Bump koog/langchain4j* (cadrage MEMPHIS `CADRAGE_EPIC_BUMP_KOOG_LANGCHAIN4J.adoc`).
 
-== État du code (S-276)
+== État du code (S-277)
 
-- *0.0.19* : MEMPHIS Central OK ; document prêt à publier via CI (tag `v0.0.19`).
-- *Catalogue ws* : **0.0.60** (document-plugin = 0.0.19).
-- *Conventions* : **0.0.8** adoptée (signature sur CI release via `CCCP_PUBLISH`).
-- *CI* : `settings.gradle.kts` tolérant ; garde de publication alimentée par
-  `systemProperty` ; job `publish` gated tag + GPG + secrets ; `check` couvre
-  27 tâches Cucumber (`additionalTasksInCheck = true`).
-- *Book* : `assembleBook` → `book.adoc` ; `translateBook`/`translateBookAllLanguages`
-  → `book-<lang>.adoc` ; `publishBookAllLanguages` → `book-<lang>.<ext>` et
-  `book.<ext>` si `includeSource`.
+- *0.0.19* : Central OK ; tag `v0.0.19` ; publication CI prouvée (S-276).
+- *Catalogue ws* : **0.0.60** (document-plugin = 0.0.19) — pas de drift.
+- *Conventions* : **0.0.8** (signature sur CI release via `CCCP_PUBLISH`).
+- *Backlog* : **tous EPICs clos** sauf `DOC-FPA-PUBLISH-0` (STANDBY) ;
+  + `DOC-SEMANTIC-TABLE` 🟡 cadré (S-277).
 - *Domaine pur* : `BookPublicationPlanner` + `document.ci.ReleaseWorkflow`.
 
-== Pièges Gradle à retenir (S-232..S-276)
+== Pièges Gradle à retenir (S-232..S-277)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-2. *mustRunAfter inverse la CLI* : conflit d'inputs si 2 tâches partagent un build.
-3. *Chaîne N3 staged* : produce → validate → collect (3 builds).
-4. *Property DSL sans convention reste unset même derrière `.orElse(...)`*.
-5. *Dérivation knob sans dépendance de tâche* : jamais provider vers `outputFile`.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en
    `@Input @Optional Property<String>`.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
@@ -60,33 +44,22 @@ dont `includeSource` S-275) + DOC-CI-ISOLATION (5 US + release gate S-274).
 13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
 33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
 36. *`mustRunAfter` dans `taskGraph.whenReady` est TROP TARD* — ordre au config.
-37. *Une ligne `=` non-titre NPE* (`=>`, `=*`) — `isHeading`/`HEADING_PATTERN`.
-38. *Gate structurel, pas regex* sur la prose OCR (guillemets « → `<<`).
-39. *Le corps OCR peut porter une ancre in-band* — gate D1 sur les refs de la TOC.
-40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`* (S-271/S-272).
-41. *Le fake multi-langue suffixe chaque cible, pas la source* (S-271).
-42. *Une CI morte en configuration masque toute la dette aval* — corriger les
-    barrières **ensemble** (S-273).
-43. *`additionalTasksInCheck` défaut `false`* (conventions 0.0.7+) — adopter les
-    conventions peut **retirer silencieusement** les runners Cucumber de `check` ;
-    une CI verte n'est pas une CI couvrante (S-274).
-44. *La convention `publishing` ne signe pas sous `CI=true`* — un job de release
-    doit exporter `CCCP_PUBLISH=true` sinon nmcp publie non signé (rejet Central)
-    (S-274).
-45. *Un garde d'action CI doit exiger l'action, pas un input associé* — matcher
-    `ghaction-import-gpg|gpg_private_key` laissait passer « action retirée, input
-    gardé » (faux vert). Exiger l'action précisément (S-274).
-46. *Dépendance conditionnelle = `dependsOn(provider)`* — ajouter `assembleBook`
-    au graphe seulement quand `includeSource` est actif (le graphe par défaut
-    reste inchangé). Ne jamais `dependsOn` inconditionnellement une tâche
-    optionnelle (S-275).
+40. *Fan-out dynamique = `@OutputFiles`, pas `@OutputDirectory`*.
+43. *`additionalTasksInCheck` défaut `false`* — une CI verte n'est pas couvrante.
+44. *La convention `publishing` ne signe pas sous `CI=true`* — release = `CCCP_PUBLISH=true`.
+46. *Dépendance conditionnelle = `dependsOn(provider)`*.
+47. *L'AST AsciidoctorJ et le pivot regex tabulaire sont deux modèles
+    parallèles* (S-277) — nommer sans ambiguïté (`document.semantic.*` vs
+    `document.translation.*`), ne jamais tenter de les unifier sans refonte.
+48. *Une note visionnaire trackée peut rester hors backlog des mois* (S-277) —
+    la relire à l'ouverture ; l'EPIC doit rester OSS-clean (schéma injecté, D4).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. Les `@book-publish` scénarios (dont les 3
-nouveaux d'US-5) appartiennent au **25e runner** `bookPublishCucumberTest`.
++ `frontmatter_retranslate.feature`. Les `@book-publish` scénarios appartiennent
+au **25e runner** `bookPublishCucumberTest`. 27 runners dédiés au total.
 
 == Méthode
 
@@ -102,12 +75,11 @@ Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-276
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT
    (dans `document-plugin/`).
-4. *Run CI du tag `v0.0.19`* sur GitHub Actions — vérifier le job `publish`
-   (première publication depuis la CI) + propagation Central.
-5. Décision pilote — preuve consommateur tiers, PUBLISH-0, run metered.
+4. Décision pilote — DOC-SEMANTIC-1, preuve consommateur tiers, PUBLISH-0.
 
 == Vision « livre content SERVER »
 
 Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
-multi-format, testé en CI **et publié depuis la CI** sur tag. S-276 franchit la
-dernière case : la publication elle-même est déléguée à la CI.
+multi-format, testé en CI **et publié depuis la CI** sur tag. S-277 ouvre la
+prochaine dimension : le document ne se contente plus d'être converti — il
+**livre ses données** sous forme typée.

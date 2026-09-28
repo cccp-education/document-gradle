@@ -1,0 +1,348 @@
+= Cadrage EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ
+
+_Date_ : 2026-09-29
+_Borough_ : New Orleans (document-gradle)
+_Origine_ : note pilote `pense-bete.txt` (trackée, racine `document-gradle/`) —
+*« AsciiDoc sémantique : exploiter le modèle objet AsciidoctorJ (AST) pour
+transformer de simples cellules textuelles en structures de données fortement
+typées, porteuses de sens »*. Aucun EPIC n'existait ; la note était une vision
+non cadrée.
+_Statut_ : 🟡 EN COURS (S-277 — cadrage)
+_Pattern_ : gouvernance pure S-057/S-063 + baby-step DDD/TDD/BDD strict
+
+== Contexte
+
+Le plugin `document` n'utilise AsciidoctorJ que comme **moteur de conversion
+backend** : `AsciidoctorHolder.convertFile(source, options)` produit HTML/PDF/
+EPUB/DocBook/ManPage. Le **modèle objet** AsciidoctorJ (`org.asciidoctor.ast.*`
+— `Document`, `Block`, `Table`, `Cell`, `Section`) n'est **jamais** parcouru.
+
+Or un AsciiDoc structuré — en particulier tabulaire — porte du **sens** : chaque
+tableau peut être lu non comme une grille de texte, mais comme une **collection
+d'enregistrements typés**. Le pilote veut *« intégrer cette dimension dans le
+code du plugin »* : lift sémantique du tableau → structure Kotlin typée, puis
+export/validation exploitables (JSON pour une application web, fiche LMS,
+métriques, avertissements de build sur champ obligatoire manquant).
+
+C'est le chaînon manquant entre la **conversion** (faite, aveugle au sens) et
+l'**exploitation des données** du document. Le domaine reste **générique** :
+aucun vocabulaire métier n'est codé dans le plugin public (contrainte RENAME
+Vague 4) — le consommateur **déclare** son schéma, comme il injectait son
+`borrowedVocabulary` (RENAME-8 D14).
+
+== Audit (constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| *L'AST AsciidoctorJ n'est jamais consommé* — le plugin ne parcourt aucun
+  `org.asciidoctor.ast.*`. `AsciidoctorHolder` n'expose que `convertFile` ; il
+  n'existe ni `load()`, ni `TreeProcessor`, ni `ExtensionRegistry`.
+| `AsciidoctorHolder.kt:40-43` ; `grep -rniE "org.asciidoctor.ast\|treeprocessor\|extension.?registry" src/main/kotlin` = 0.
+
+| 2
+| *Le modèle `Table` existant est un pivot de traduction, pas un AST* — il est
+  produit par un **parser regex** (`AsciiDocParser.parseTableStructured`) et sert
+  au round-trip de traduction (`extractTranslatable`/`reinject`). Ce n'est PAS le
+  modèle objet AsciidoctorJ ; c'est une seconde représentation parallèle.
+| `document/translation/Table.kt` (`ColSpec`/`Row`/`Cell`/`PivotInline`),
+  `AsciiDocParser.kt`.
+
+| 3
+| *La validation existante est syntaxique, jamais sémantique* —
+  `TableSyntaxValidator` vérifie la cohérence `cols`/délimiteurs, pas le sens des
+  cellules. Aucun test « la colonne `X` doit contenir une valeur ».
+| `document/translation/validation/TableSyntaxValidator.kt`.
+
+| 4
+| *L'infrastructure d'extension AsciidoctorJ est déjà sur le classpath* —
+  `asciidoctorj-diagram` + `asciidoctorj-diagram-plantuml` sont en
+  `implementation`, donc le mécanisme d'extension/extraction est disponible sans
+  nouvelle dépendance.
+| `build.gradle.kts:25-26`.
+
+| 5
+| *Aucun export JSON du contenu tabulaire* — les seuls JSON produits sont des
+  **rapports de validation** (`document-validation-report.json`,
+  `xref-validation-report.json`, `table-validation-report.json`), jamais la
+  *donnée* extraite.
+| `grep -rln "toJson\|writeText" src/main/kotlin/document` (rapports seuls).
+
+| 6
+| *Le pattern d'extension est déjà éprouvé* — un domaine `document.*` pur
+  (Gradle-free) + une tâche *thin* + un export JSON + une sévérité
+  `STRICT/LENIENT/OFF` + un runner Cucumber dédié est le moule de
+  `document.xref`, `document.epub`, `document.pdf`, `document.validation`.
+| `XrefValidator.kt`, `EpubValidationReport.kt`, `PdfValidationReport.kt`.
+
+| 7
+| *La note pilote propose une heuristique fragile* — elle identifie un tableau
+  par `table.columns.size == 8` (`isSequenceTable`) et code en dur 8 rôles
+  métier. Heuristique rejetée : un tableau à N colonnes n'est pas « sémantique »
+  par sa taille, et le plugin public ne doit pas connaître de rôle métier.
+| `pense-bete.txt:86-89` (`isSequenceTable`), `:23-46` (rôles en dur).
+
+| 8
+| *Le vocabulaire métier est banni des repos publics* — un type ou rôle nommé
+  d'après le métier du pilote violerait la gate RENAME Vague 4 (S-257).
+| `AGENT.adoc` / gate `src/` = 0 match métier.
+
+|===
+
+== Décisions
+
+[cols="1,4", options="header"]
+|===
+| # | Décision
+
+| D1
+| *Périmètre = lifting sémantique des tableaux* — lire l'AST AsciidoctorJ d'un
+  document, identifier les tableaux **annotés**, et projeter leurs lignes en
+  **enregistrements typés** (rôle de colonne → valeur texte). Non-goals : pas de
+  refonte du pivot de traduction (`document.translation.Table` reste intact), pas
+  de génération de contenu, pas de conversion multi-format.
+
+| D2
+| *Source de vérité du parsing = l'AST AsciidoctorJ réel* —
+  `Asciidoctor.load(source, options)` puis parcours `document.findBy { it is
+  Table }` (`org.asciidoctor.ast.Table`/`Cell`, `gridPosition`, `colspan`/
+  `rowspan`). Le pivot regex reste **hors** de cette chaîne (deux modèles
+  parallèles assumés, aucune unification au prix du risque). Le lifting *lit*
+  l'AST, il ne réinvente pas un parser.
+
+| D3
+| *Identification opt-in par annotation, jamais par heuristique* — un tableau
+  est sémantique **seulement** s'il porte une annotation AsciiDoc explicite : une
+  **role** `[.semantic-<name>]` ou un **attribut de bloc**
+  `[semantic=<name>]`. Rejet motivé de `columns.size == 8` (constat #7). Zéro
+  faux positif : un tableau non annoté est ignoré (Économie d'Encre).
+
+| D4
+| *Schéma injecté par le consommateur, zéro métier dans le plugin* — le plugin
+  ne connaît que des **rôles abstraits** : `SemanticColumnSpec(index | header,
+  role, required)`. Le consommateur déclare ses schémas via le DSL ; le plugin
+  public ne référence aucun terme métier (contrainte RENAME, constat #8 ;
+  patron RENAME-8 D14 « vocabulaire injecté »).
+
+| D5
+| *Nouveau domaine pur* `document.semantic` (Gradle-free) :
+  `SemanticColumnSpec`, `SemanticTableSchema`, `SemanticRow`
+  (`Map<role, String>`), `SemanticTable`, `SemanticExtraction` (résultat, sealed
+  `Extracted`/`Skipped`). Mapping ligne→enregistrement par rôle, déterministe,
+  testable en UT sans AsciidoctorJ.
+
+| D6
+| *Port/adapter pour l'accès AST* — port `SemanticTableReader` (fun interface
+  Gradle-free) : `read(source): List<RawTable>` (tableaux annotés bruts :
+  name + header + lignes de cellules texte + gridPosition). Adapter
+  `AsciidoctorTableReader` (bridge `org.asciidoctor.ast`, réutilise
+  `AsciidoctorHolder`). Le domaine ne dépend jamais de `org.asciidoctor.*`
+  (dependency inversion, patron `EpubCheckRunner`/`PdfValidator`).
+
+| D7
+| *Tâche thin `collectTableSemantics`* (groupe `document`) : résout les schémas
+  du DSL, lit l'AST via le port, projette, écrit un artefact export
+  `table-semantics.json` (`@OutputFile`) conforme au contrat N3 (liste de
+  tableaux → enregistrements). `@DisableCachingByDefault` (sévérité/effets),
+  réutilise `AsciidoctorHolder` (instance partagée, DOC-CR3-1).
+
+| D8
+| *Validation des rôles requis* — un rôle marqué `required` dont la valeur est
+  blanche produit un finding ; sévérité réutilisant le pattern maison
+  `STRICT` (fail-fast `GradleException`) / `LENIENT` (warn + rapport) / `OFF`
+  (no-op). Symétrique `document.xref`/`document.validation`. Le finding alimente
+  le rapport JSON (pas de crash silencieux).
+
+| D9
+| *DSL additif* `semantic { }` : `tableSemantics.schemas.register("<name>") {
+  column(...); column(...) }` + mirror plat + CLI
+  `-Pdocument.tableSemantics=STRICT|LENIENT|OFF`. Défaut `OFF` (backward-compat
+  totale) : sans knobs, aucun tableau n'est lu, `table-semantics.json` est vide
+  ou absent — les conversions et le pipeline livre sont byte-identiques.
+
+| D10
+| *Contrat N3 additif* — `DocumentMetadata`/`DocumentRetrieveResult` exposent
+  les chemins de l'artefact s'il existe (lecture seule, dégradé silencieux,
+  Loi de l'Économie d'Encre — jamais de re-extraction à la collecte).
+
+| D11
+| *SafeMode respecté à la lecture* — `Asciidoctor.load` reçoit le même
+  `SafeMode` que la conversion (défaut `UNSAFE` backward-compat, configurable
+  `converter { safeMode }`). Un document non fiable (OCR/LLM) ne doit pas
+  déclencher d'accès FS via les attributs/macros lors du lifting.
+
+| D12
+| *Additif et autonome* — `bookPipeline`, les 5 convertisseurs, la traduction
+  et le pivot ne sont **pas** modifiés (D10 du cadrage DOC-BOOK-PUBLISH). Le
+  lifting est une tâche indépendante, branchable plus tard dans le composite si
+  un besoin réel émerge (US ultérieure).
+
+| D13
+| *Baby-step DDD/TDD/BDD strict* : US-1 domaine pur (UT) → US-2 port/adapter AST
+  (UT avec AsciidoctorJ réel) → US-3 tâche + DSL + N3 + export (FT TestKit) →
+  US-4 validation rôles requis (UT + FT) → US-5 BDD `@table-semantic` (runner
+  dédié) → US-6 dogfooding lecture seule (Règle 7).
+
+|===
+
+== User Stories
+
+[cols="1,4,2,1,1", options="header"]
+|===
+| US | Description | Tests | Pts | Statut
+
+| DOC-SEMANTIC-0
+| Cadrage EPIC (gouvernance pure) — audit 8 constats, 13 décisions.
+| — (gouvernance)
+| 1
+| ✅ TERMINÉ (S-277)
+
+| DOC-SEMANTIC-1
+| Domaine pur `document.semantic` : `SemanticColumnSpec` (index ou header, rôle,
+  `required`), `SemanticTableSchema`, `SemanticRow`, `SemanticTable`,
+  `SemanticExtraction` sealed, projection ligne→enregistrement par rôle, règle
+  de rôle requis.
+| UT (`SemanticTableSchemaTest`, `SemanticRowTest`)
+| 4
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-2
+| Port `SemanticTableReader` + adapter `AsciidoctorTableReader` (bridge
+  `org.asciidoctor.ast`, `Asciidoctor.load` + parcours `Table`/`Cell`,
+  annotation opt-in D3, réutilise `AsciidoctorHolder`). Filtre les tableaux non
+  annotés.
+| UT avec AsciidoctorJ réel (`AsciidoctorTableReaderTest`)
+| 5
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-3
+| Tâche `collectTableSemantics` + DSL `semantic { }` (+ mirror plat + CLI) +
+  export `table-semantics.json` + câblage N3 (`DocumentMetadata`/
+  `DocumentRetrieveResult` additif).
+| FT TestKit (`CollectTableSemanticsFunctionalTest`)
+| 4
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-4
+| Validation des rôles requis (STRICT/LENIENT/OFF) intégrée à la tâche + findings
+  dans le rapport JSON ; symétrique `document.xref`.
+| UT + FT
+| 3
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-5
+| BDD `@table-semantic` — tableau annoté extrait, tableau non annoté ignoré,
+  rôle requis blanc → LENIENT warn / STRICT fail, no-op sans schéma. Runner
+  dédié `tableSemanticCucumberTest`.
+| BDD scénarios
+| 3
+| 🟡 À FAIRE
+
+| DOC-SEMANTIC-6
+| Dogfooding **lecture seule** (Règle 7) sur corpus réel réduit : extraction d'un tableau annoté, source non mutée (hash avant/après).
+| FT dogfooding (`TableSemanticContentFunctionalTest`)
+| 2
+| 🟡 À FAIRE
+
+|===
+
+_Total_ : ~22 pts, 6 US + cadrage.
+
+== Dépendances (DAG)
+
+----
+SEMANTIC-0 (cadrage) ─→ SEMANTIC-1 (domaine pur) ─→ SEMANTIC-2 (port + adapter AST)
+                                                          │
+                                                          ├─→ SEMANTIC-3 (tâche + DSL + N3)
+                                                          │        │
+                                                          │        ├─→ SEMANTIC-4 (validation)
+                                                          │        └─→ SEMANTIC-5 (BDD)
+                                                          └─→ SEMANTIC-6 (dogfooding)
+
+Prérequis amont : AsciidoctorJ (déjà en `implementation`) + `AsciidoctorHolder` (DOC-CR3-1).
+Aucun prérequis cross-borough. Aucun bump de BOM (AsciidoctorJ déjà présent).
+----
+
+== DSL proposé (surface publique)
+
+[source,kotlin]
+----
+document {
+    source.set(file("src/docs/plan.adoc"))
+    semantic {
+        tableSemantics.set(TableSemanticsMode.LENIENT)   // OFF par defaut
+        // Schema declared by the CONSUMER, zero metier in the plugin (D4).
+        schema("planning") {
+            column(0, role = "reference")
+            column("Title", role = "title")
+            column(2, role = "objective", required = true)
+            column(3, role = "duration")
+        }
+    }
+}
+----
+
+*Annotation AsciiDoc (D3, opt-in)* :
+
+[source,asciidoc]
+----
+[.semantic-planning]
+|===
+| Ref | Titre | Objectif | Durée
+
+| 1.0 | Introduction | Situer le cadre | 30 min
+|===
+----
+
+*Précédence* : CLI `-Pdocument.tableSemantics=STRICT|LENIENT|OFF` > DSL > défaut
+`OFF` (no-op).
+
+== Gates
+
+* *Gate extraction* : un tableau annoté `[.semantic-<name>]` avec schéma déclaré
+  produit `N` enregistrements `Map<role, String>` ; un tableau **non annoté** est
+  ignoré ; un tableau annoté **sans schéma** est signalé (pas d'échec silencieux).
+* *Gate structurel (cœur)* : `table-semantics.json` porte l'association
+  `name → [ {role: value}, … ]`, déterministe, encodage UTF-8.
+* *Gate validation* : rôle `required` blanc → STRICT fail-fast / LENIENT warn +
+  finding / OFF skip.
+* *Gate non-régression* : les 5 convertisseurs, `bookPipeline`, la traduction et
+  le pivot `document.translation.Table` sont **inchangés** ; baseline UT/FT/BDD
+  préservée ; les 27 runners Cucumber existants restent verts.
+* *Gate Économie d'Encre* : mode `OFF` (défaut) → aucune lecture AST, aucun
+  artefact ; `skipExisting` sur l'export.
+* *Gate OSS-clean* : `grep` métier sur `src/` = 0 (le schéma vient du
+  consommateur, jamais du plugin).
+* *Gate dogfooding* : corpus privé lu en **lecture seule** (Règle 7) ; le test
+  échoue si la source est mutée (hash avant/après).
+
+== Risques
+
+* *Risque #1 (heuristique de détection)* : identifier un tableau par son nombre
+  de colonnes produit des faux positifs. Mitigation : annotation **opt-in** (D3),
+  zéro heuristique.
+* *Risque #2 (dérive du vocabulaire métier)* : coder des rôles métier dans le
+  plugin violerait la gate RENAME. Mitigation : schéma **injecté** (D4), gate
+  OSS-clean au build.
+* *Risque #3 (double modèle tabulaire)* : l'AST (`org.asciidoctor.ast.Table`) et
+  le pivot regex (`document.translation.Table`) cohabitent. Accepté : ils servent
+  des besoins distincts (conversion/lifting vs traduction) ; toute unification
+  serait une refonte hors périmètre (D2). Mitigation : nommage sans ambiguïté
+  (`document.semantic.*` vs `document.translation.*`).
+* *Risque #4 (JRuby / coût)* : `Asciidoctor.load` démarre JRuby — déjà amorti par
+  `AsciidoctorHolder` (instance partagée, DOC-CR3-1) ; le lifting est opt-in.
+* *Risque #5 (SafeMode)* : `load` peut résoudre des macros. Mitigation : même
+  SafeMode que la conversion (D11), défaut UNSAFE backward-compat, configurable.
+* *Risque #6 (schéma vide / tableau non annoté)* : silence. Mitigation : le
+  rapport liste explicitement les tableaux annotés non résolus (visibilité, pas
+  de skip muet — patron HTML absent `<html-file-missing>` S-232).
+
+== Méthode
+
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
+English only dans le code/tests/features/rôles (gouvernance `.adoc` en français).
+Zéro Python — outputs analysés avec Read/Grep/xmllint/rapports Gradle natifs.
+Local = build/compile uniquement ; les tests s'exécutent en CI (GitHub Actions).
+Zéro secret. Commit/push + bump sur accord pilote explicite (accord S-276).

@@ -1,0 +1,147 @@
+= Session 277 — Cadrage EPIC DOC-SEMANTIC-TABLE (lifting sémantique des tableaux via l'AST AsciidoctorJ)
+
+:date: 2026-09-29
+:borough: New Orleans (document-gradle)
+:epic: DOC-SEMANTIC-TABLE (nouveau, cadrage)
+:type: cadrage — gouvernance pure, zéro code
+:session_precedente: 276 — PUB 0.0.19 (distribution HEAD, tag `v*`)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-276 listait des candidats *sur demande
+pilote* (Règle 2). Le pilote a choisi la **direction B** : cadrer une note
+visionnaire restée hors backlog — `document-gradle/pense-bete.txt` (trackée,
+racine du repo) :
+
+[quote]
+____
+AsciiDoc sémantique — exploiter le modèle objet AsciidoctorJ (AST) pour
+transformer de simples cellules textuelles en structures de données fortement
+typées, porteuses de sens et d'intention du contenu des cases.
+____
+
+Aucun EPIC n'existait. Mission retenue : **cadrer l'EPIC** (gouvernance pure,
+zéro ligne de code), en respectant les règles du borough (contrainte RENAME
+Vague 4, économie d'encre, méthode baby-step DDD/TDD/BDD).
+
+== Audit d'ouverture
+
+* `git status` propre, `main` = `origin/main`, HEAD `6d0ceec` (S-276).
+* **0.0.19 publiée Central depuis la CI** (bundle `667d858e`), tag `v0.0.19`.
+* **Tous les EPICs du BACKLOG clos** ; seul reste `DOC-FPA-PUBLISH-0`
+  (STANDBY, bloque sur A1 Tombouctou).
+* Pas de drift catalogue : MEMPHIS `workspace-bom = 0.0.60` == pin document.
+* Compiles VERT (`compileKotlin` / `compileTestKotlin`
+  `compileFunctionalTestKotlin`), JDK 25.
+* `pense-bete.txt` vérifié **tracké** (`git ls-files`) — donc lisible, non
+  gitignoré.
+
+== Audit du code (8 constats)
+
+[cols="1,4,3", options="header"]
+|===
+| # | Constat | Preuve
+
+| 1
+| L'AST AsciidoctorJ n'est jamais consommé — ni `load()`, ni `TreeProcessor`,
+  ni `ExtensionRegistry`. Seul `convertFile` est utilisé.
+| `AsciidoctorHolder.kt:40-43` ; `grep` AST = 0.
+
+| 2
+| Le modèle `Table` existant est un **pivot de traduction** (parser regex,
+  `extractTranslatable`/`reinject`), pas l'AST AsciidoctorJ.
+| `document/translation/Table.kt`, `AsciiDocParser.kt`.
+
+| 3
+| La validation tabulaire est **syntaxique** (`TableSyntaxValidator` :
+  `cols`/délimiteurs), jamais sémantique.
+| `document/translation/validation/TableSyntaxValidator.kt`.
+
+| 4
+| L'infrastructure d'extension AsciidoctorJ est déjà sur le classpath
+  (`asciidoctorj-diagram` + `-plantuml` en `implementation`) — zéro nouvelle
+  dépendance, zéro bump de BOM.
+| `build.gradle.kts:25-26`.
+
+| 5
+| Aucun export JSON du **contenu** tabulaire — seuls des rapports de
+  validation existent.
+| `grep toJson/writeText` = rapports seuls.
+
+| 6
+| Le pattern « domaine pur + tâche thin + JSON + STRICT/LENIENT/OFF + runner
+  Cucumber dédié » est éprouvé (xref/epub/pdf/validation).
+| `XrefValidator.kt`, `EpubValidationReport.kt`, `PdfValidationReport.kt`.
+
+| 7
+| La note pilote propose des heuristiques fragiles : tableau identifié par
+  `columns.size == 8`, rôles métier codés en dur. Rejetées.
+| `pense-bete.txt:86-89`, `:23-46`.
+
+| 8
+| Un type/rôle métier nommé d'après le domaine du pilote violerait la gate
+  RENAME Vague 4.
+| `AGENT.adoc` / gate `src/` = 0.
+
+|===
+
+== Livrable (cadrage)
+
+Fichier créé : `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` — **13 décisions,
+6 US ~22 pts**, structuré comme les cadrages maison (contexte, audit, décisions,
+US, DAG, DSL, gates, risques, méthode).
+
+Décisions structurantes :
+
+* *D1* périmètre = lifting sémantique des tableaux (non-goals explicites : pas
+  de refonte du pivot, pas de génération de contenu).
+* *D2* source de vérité = l'AST **réel** (`Asciidoctor.load` +
+  `document.findBy { it is Table }`, `gridPosition`/`colspan`/`rowspan`).
+* *D3* identification **opt-in par annotation** `[.semantic-<name>]` ou
+  `[semantic=<name>]` — rejet motivé de l'heuristique par nombre de colonnes.
+* *D4* schéma **injecté par le consommateur** (`SemanticColumnSpec` abstrait) :
+  zéro vocabulaire métier dans le plugin public (patron RENAME-8 D14).
+* *D5/D6* nouveau domaine pur `document.semantic` + port `SemanticTableReader`
+  / adapter `AsciidoctorTableReader` (dependency inversion, le domaine ne
+  dépend jamais de `org.asciidoctor.*`).
+* *D7* tâche thin `collectTableSemantics` + export `table-semantics.json`.
+* *D8* validation des rôles `required` (STRICT/LENIENT/OFF, symétrique xref).
+* *D11* `SafeMode` respecté à la lecture ; *D12* `bookPipeline` et le pivot
+  inchangés ; *D13* baby-step DDD/TDD/BDD strict.
+
+== Méthode et non-régression
+
+* Gouvernance pure : **aucun code de production ni de test modifié**.
+* Le cadrage respecte la contrainte OSS : le plugin public reste neutre, le
+  schéma vient du consommateur (gate OSS-clean inscrite au cadrage).
+* Vérification de rendu AsciiDoc du cadrage : 2 `|` non échappés dans des
+  cellules corrigés (sinon tableaux cassés).
+
+== Gates de session
+
+[cols="2,4", options="header"]
+|===
+| Gate | Résultat
+
+| `git status` ouverture | propre — `main` = `origin/main`, HEAD `6d0ceec`
+| Compiles (3 source sets) | VERT (JDK 25)
+| Cadrage | `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (348 lignes)
+| Code / tests modifiés | **zéro** (gouvernance pure)
+| Bump / publication | **aucun**
+| Secrets | RAS
+|===
+
+== Suite
+
+* *Mission S-278* : sur décision pilote. Le cadrage ouvre la voie à
+  `DOC-SEMANTIC-1` (domaine pur, UT) si le pilote valide la direction.
+* Candidats toujours ouverts (Règle 2) : preuve consommateur tiers 0.0.19,
+  `DOC-FPA-PUBLISH-0` (STANDBY A1), rollout conventions 0.0.8, bump
+  koog/langchain4j (cadrage MEMPHIS).
+
+== Pièges / notes
+
+* Une note visionnaire *trackée* peut rester hors backlog des mois — la relire
+  à l'ouverture évite de la perdre (`pense-bete.txt`, commit `c137cce`).
+* Contrainte OSS : un EPIC « sémantique » ne doit pas recoder de métier dans le
+  plugin public → schéma injecté (D4), c'est le cœur de la conception.
