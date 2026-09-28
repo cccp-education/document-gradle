@@ -80,6 +80,11 @@ Preuve TestKit additionnelle (livre synthétique) : `includeSource` publie
 * Zéro secret. Le delta de tests s'exécute en CI (règle Local = Build,
   Tests = CI).
 
+*Preuve finale CI* : run `36474995094` (commit `b9ad242`, workflow `Test`, job
+`Build and Test` **success**, ~22 min) — les 27 tâches Cucumber dont
+`:bookPublishCucumberTest` (scénarios `includeSource`) et le FT TestKit du
+nouveau knob sont exécutés. Job `Publish` correctement SKIPPED (pas de tag).
+
 == Non-régression
 
 * `includeSource` défaut `false` : plan, graphe, `@OutputFiles`, N3 et les 5

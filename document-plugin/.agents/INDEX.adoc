@@ -22,7 +22,8 @@ release). *Domaine pur* : `BookPublicationTarget.isSource` (additif, défaut
 **EPIC DOC-BOOK-PUBLISH 5/5 US.** Gates (Local = Build) : compiles VERT
 (3 source sets), `publishToMavenLocal` VERT, graphe prouvé par consommateur
 jetable `/tmp` (`--dry-run` : `assembleBook` présent si `includeSource`, absent
-sinon). Zéro secret, zéro publication. Rapport :
+sinon). **Preuve CI** : run `36474995094` (commit `b9ad242`) **VERT**. Zéro
+secret, zéro publication. Rapport :
 `.agents/sessions/275-book-publish-include-source.adoc`.)
 
 |_Derniere mise a jour_ : 2026-09-28 (session 274 — **DOC-CI-ISOLATION US-4

@@ -20,6 +20,9 @@ livres traduits.
 - *Gates* : compiles VERT (3 source sets), `publishToMavenLocal` VERT, graphe
   prouvé par consommateur jetable `/tmp` (`--dry-run`). **EPIC DOC-BOOK-PUBLISH
   5/5 US.**
+- *Preuve CI* : run `36474995094` (commit `b9ad242`) **VERT**.
+- *Piège #46* : dépendance conditionnelle = `dependsOn(provider)` (le graphe par
+  défaut reste inchangé si le knob est éteint).
 
 == Candidats prochaine session (sur demande pilote — Règle 2)
 
