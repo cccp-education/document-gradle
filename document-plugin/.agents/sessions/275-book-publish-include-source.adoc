@@ -1,0 +1,126 @@
+= Session 275 — DOC-BOOK-PUBLISH US-5 (includeSource)
+
+:date: 2026-09-28
+:borough: New Orleans (document-gradle)
+:epic: DOC-BOOK-PUBLISH (US-5)
+:session_precedente: 274 — DOC-CI-ISOLATION-4 (release gate)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-275 listait des candidats *sur demande
+pilote* (Règle 2) : tag `v*` (1re publication CI), US-5 PUBLISH, PUBLISH-0
+STANDBY, run LLM metered, publication 0.0.19. Les candidats publication/tag/run
+metered exigent un **accord pilote explicite** (coût externe ou acte de release).
+
+Le seul candidat **actionnable sans coût externe** était la clôture optionnelle
+`DOC-BOOK-PUBLISH US-5` (D8 `includeSource`), laissée hors périmètre en S-272.
+Mission retenue : la livrer en baby-step DDD/TDD/BDD strict.
+
+== Livré — DOC-BOOK-PUBLISH US-5 (knob `includeSource`, décision D8)
+
+Le fan-out de publication (`publishBookAllLanguages`, S-272) publiait uniquement
+les livres **traduits** (`book-<lang>.adoc` × format). Le livre source assemblé
+(`book.adoc`) restait hors du fan-out, couvert par les seuls convertisseurs
+mono-source. US-5 ajoute le knob **opt-in** `includeSource` : quand il est actif,
+le livre assemblé est publié lui aussi (`book.<ext>`, sans suffixe de langue),
+**en première position** du plan (ordre déterministe).
+
+=== US-5-1 — domaine pur `BookPublicationPlanner` (TDD, RED → GREEN)
+
+* `BookPublicationTarget` gagne un champ additif `isSource: Boolean = false` —
+  backward-compatible (les cibles traduites restent `false` par défaut).
+* `BookPublicationPlanner.plan(...)` gagne 2 paramètres additifs
+  (`sourceLanguage: String = ""`, `includeSource: Boolean = false`) et émet, en
+  tête, une cible `<base>.adoc` → `<base>.<ext>` par format quand l'opt-in est
+  actif. Un `includeSource` sans format reste un **no-op strict** (Économie
+  d'Encre). Le domaine reste Gradle-free et pur.
+* RED prouvé : 6 nouveaux tests → `No parameter with name 'includeSource'`
+  (`compileTestKotlin` FAILED). GREEN après extension du domaine.
+
+=== US-5-2 — tâche + DSL + N3 + wiring
+
+* `PublishBookAllLanguagesTask` : propriété `@Input includeSource` (défaut
+  `false`), transmise à `BookPublicationPlanner.plan` dans l'action.
+* `DocumentPlugin.registerPublishBookAllLanguages` : CLI
+  `-Pdocument.bookPublishIncludeSource` > DSL, et **dépendance conditionnelle**
+  `assembleBook` (le livre source est produit par `assembleBook`) — ajoutée
+  *uniquement* quand `includeSource` est actif, via un `provider`, pour que le
+  graphe par défaut reste **byte-identique** (aucune tâche amont surprise).
+  `@OutputFiles` (piège #40) reflète le plan étendu.
+* DSL : `BookDsl.includeSource` (+ convention `false`) + mirror flat
+  `DocumentExtension.bookPublishIncludeSource`.
+* N3 : `BookConfig.includeSource` (additif, `null` omis) +
+  `SerializeDocumentConfigTask.bookPublishIncludeSource` + sérialisation /
+  désérialisation `document-config.json` (round-trip idempotent préservé).
+
+=== US-5-3 — BDD `@book-publish` (3 scénarios, runner existant)
+
+Le runner `bookPublishCucumberTest` (25e) possède déjà la feature : pas de
+nouveau runner (Économie d'Encre). 3 scénarios ajoutés + 3 steps préfixés
+`book-publish` (anti-collision S-088) : source non publiée par défaut,
+`includeSource` publie la source en tête de plan, no-op sans format.
+
+=== US-5-4 — FT dogfooding offline (corpus réel réduit, Règle 7)
+
+Nouveau FT `BookPublishContentFunctionalTest` : sur un sous-ensemble réel borné
+du corpus privé, `publishBookAllLanguages` avec `includeSource=true` produit
+`book.html` (source non traduite — porteuse du contenu, **sans** marqueur
+`[EN]`) **et** `book-en.html` (traduite), `assembleBook` est bien exécuté.
+Preuve TestKit additionnelle (livre synthétique) : `includeSource` publie
+`book.html` + `book-en.html` et planifie `assembleBook` ; sans le knob,
+`book.html` absent et `assembleBook` hors graphe.
+
+== Gates (Local = Build, Tests = CI)
+
+* `compileKotlin` / `compileTestKotlin` / `compileFunctionalTestKotlin` VERT.
+* `publishToMavenLocal` VERT (POM porte ws 0.0.59).
+* Vérification de graphe par consommateur jetable `/tmp` (`--dry-run`) :
+  `includeSource=true` → `assembleBook` + `translateBookAllLanguages` +
+  `publishBookAllLanguages` ; `includeSource=false` → `assembleBook` **absent**.
+* Zéro secret. Le delta de tests s'exécute en CI (règle Local = Build,
+  Tests = CI).
+
+== Non-régression
+
+* `includeSource` défaut `false` : plan, graphe, `@OutputFiles`, N3 et les 5
+  convertisseurs mono-source sont inchangés (backward-compat totale).
+* `BookPublicationTarget.isSource` additif avec défaut ; les 12 UT existants du
+  planner restent valides.
+* `bookPipeline` non modifié (D10) — `publishBookAllLanguages` reste autonome.
+
+== Fichiers
+
+[cols="1,5"]
+|===
+| Type | Fichiers
+
+| Prod
+| `BookPublicationPlanner.kt`, `BookConfig.kt`, `BookDsl.kt`,
+  `DocumentExtension.kt`, `DocumentPlugin.kt`, `PublishBookAllLanguagesTask.kt`,
+  `SerializeDocumentConfigTask.kt`, `DocumentConfigSerializer.kt`
+
+| Test (UT)
+| `BookPublicationPlannerTest.kt` (+6), `BookDslTest.kt` (+1),
+  `DocumentConfigSerializerTest.kt` (+1)
+
+| Test (BDD)
+| `book_publish.feature` (+3 scénarios), `BookPublishSteps.kt` (+3 steps)
+
+| Test (FT)
+| `BookPublishFunctionalTest.kt` (+2), `BookPublishContentFunctionalTest.kt` (+1)
+|===
+
+== Pièges
+
+* Aucun nouveau piège. `@OutputFiles` (piège #40) re-confirmé : le fan-out
+  peuplé par provider suit le plan étendu sans conflit d'output sur
+  `docs/document/`.
+* Dépendance conditionnelle `assembleBook` : un `dependsOn(provider)` évite
+  d'ajouter une tâche amont au graphe quand le knob est éteint (leçon
+  « le graphe par défaut doit rester inchangé »).
+
+== Prochaine session
+
+Sur demande pilote (Règle 2) : tag `v*` (1re publication CI), publication
+document-plugin 0.0.19, `DOC-FPA-PUBLISH-0` (STANDBY, A1), run LLM metered, ou
+drift catalogue ws si MEMPHIS bump (piège #13).

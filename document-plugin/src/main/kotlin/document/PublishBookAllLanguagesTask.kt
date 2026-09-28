@@ -64,6 +64,13 @@ abstract class PublishBookAllLanguagesTask : DefaultTask() {
     @get:Input
     abstract val outputFileName: Property<String>
 
+    /**
+     * DOC-BOOK-PUBLISH (US-5) — also publish the assembled *source* book
+     * (`book.adoc`), not only the translated books. Off by default (decision D8).
+     */
+    @get:Input
+    abstract val includeSource: Property<Boolean>
+
     /** DOC-BOOK-PUBLISH — do not overwrite an already published book. */
     @get:Input
     abstract val skipExisting: Property<Boolean>
@@ -108,6 +115,7 @@ abstract class PublishBookAllLanguagesTask : DefaultTask() {
         targetLanguages.convention(emptyList())
         publishFormats.convention(emptyList())
         outputFileName.convention("book")
+        includeSource.convention(false)
         skipExisting.convention(false)
         safeMode.convention(SafeMode.UNSAFE)
     }
@@ -133,7 +141,13 @@ abstract class PublishBookAllLanguagesTask : DefaultTask() {
             requested = targetLanguages.getOrElse(emptyList()),
             translateToAll = translateToAll.getOrElse(false),
         )
-        val plan = BookPublicationPlanner.plan(languages, baseName, publishFormats.getOrElse(emptyList()))
+        val plan = BookPublicationPlanner.plan(
+            languages,
+            baseName,
+            publishFormats.getOrElse(emptyList()),
+            sourceLanguage = source,
+            includeSource = includeSource.getOrElse(false),
+        )
 
         // Ink Economy Law — no format (or no language) selected is a strict
         // no-op: the pipeline is left untouched (backward compatible).

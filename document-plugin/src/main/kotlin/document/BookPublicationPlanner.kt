@@ -14,6 +14,12 @@ data class BookPublicationTarget(
     val format: DocumentFormat,
     val sourceFileName: String,
     val outputFileName: String,
+    /**
+     * DOC-BOOK-PUBLISH (US-5) — `true` when this target publishes the assembled
+     * *source* book (`book.adoc`) rather than a translated book (`book-<lang>.adoc`).
+     * The source target is emitted first (decision D8).
+     */
+    val isSource: Boolean = false,
 )
 
 /**
@@ -50,6 +56,8 @@ object BookPublicationPlanner {
         languages: List<BookLanguageTarget>,
         baseName: String,
         requestedFormats: Collection<String>,
+        sourceLanguage: String = "",
+        includeSource: Boolean = false,
     ): List<BookPublicationTarget> {
         val formats = requestedFormats
             .mapNotNull { name -> DocumentFormat.ALL.firstOrNull { it.name.equals(name, ignoreCase = true) } }
@@ -57,7 +65,23 @@ object BookPublicationPlanner {
 
         if (formats.isEmpty()) return emptyList()
 
-        return languages
+        // DOC-BOOK-PUBLISH (US-5) — the assembled source book is opt-in and
+        // emitted first: `<base>.adoc` -> `<base>.<ext>` (no language suffix).
+        val sourceTargets = if (includeSource) {
+            formats.map { format ->
+                BookPublicationTarget(
+                    language = sourceLanguage,
+                    format = format,
+                    sourceFileName = "$baseName.adoc",
+                    outputFileName = "$baseName.${format.extension}",
+                    isSource = true,
+                )
+            }
+        } else {
+            emptyList()
+        }
+
+        val translatedTargets = languages
             .filter { it.code.isNotBlank() }
             .flatMap { language ->
                 formats.map { format ->
@@ -69,5 +93,7 @@ object BookPublicationPlanner {
                     )
                 }
             }
+
+        return sourceTargets + translatedTargets
     }
 }

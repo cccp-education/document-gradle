@@ -2,6 +2,35 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 275 (2026-09-28) — DOC-BOOK-PUBLISH US-5 ✅ TERMINÉ (includeSource)
+
+*Type* : feat DDD/TDD/BDD + offline
+*Score* : 10/10
+*Mission* : clôture optionnelle de `DOC-BOOK-PUBLISH` (US-5, D8 `includeSource`)
+— seul candidat actionnable **sans accord pilote externe** (les autres exigent
+un acte de release : tag `v*`, publication 0.0.19, run LLM metered).
+*Livrables* :
+- `BookPublicationPlanner.kt` — `BookPublicationTarget.isSource` + paramètres
+  `sourceLanguage`/`includeSource` (cible source en tête de plan).
+- `PublishBookAllLanguagesTask.kt` — `@Input includeSource` (défaut `false`).
+- `DocumentPlugin.kt` — DSL/CLI + **dépendance conditionnelle `assembleBook`**
+  (`dependsOn(provider)`, graphe par défaut inchangé).
+- `BookDsl.kt` / `DocumentExtension.kt` / `BookConfig.kt` /
+  `SerializeDocumentConfigTask.kt` / `DocumentConfigSerializer.kt` — N3 additif
+  `includeSource` (round-trip idempotent).
+- `book_publish.feature` (+3 scénarios) + `BookPublishSteps.kt` (+3 steps).
+- `BookPublicationPlannerTest.kt` (+6 UT), `BookDslTest.kt` (+1),
+  `DocumentConfigSerializerTest.kt` (+1).
+- `BookPublishFunctionalTest.kt` (+2 FT), `BookPublishContentFunctionalTest.kt`
+  (+1 FT dogfooding offline).
+- `.agents/sessions/275-book-publish-include-source.adoc`.
+*Décisions notables* : `includeSource` opt-in (D8) ; source en tête de plan
+(ordre déterministe) ; dépendance conditionnelle `assembleBook` (piège #46) ;
+zéro publication ; `bookPipeline` non modifié (D10).
+*Preuves* : compiles VERT (3 source sets), `publishToMavenLocal` VERT, graphe
+`--dry-run` consommateur jetable (`assembleBook` présent/absent selon le knob).
+**EPIC DOC-BOOK-PUBLISH 5/5 US.**
+
 === Session 273 (2026-09-27) — DOC-CI-ISOLATION ✅ TERMINÉ 5 US + cadrage
 
 *Type* : maintenance build/CI + TDD

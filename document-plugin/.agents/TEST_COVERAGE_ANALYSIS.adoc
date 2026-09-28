@@ -1,6 +1,43 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-27
-:session: 273
+:date: 2026-09-28
+:session: 275
+
+== Session 275 — DOC-BOOK-PUBLISH US-5 (includeSource, 7 UT + 3 FT + 3 BDD)
+
+*Périmètre* : knob opt-in `includeSource` (D8) — le fan-out publie aussi le
+livre assemblé (`book.<ext>`).
+*Note méthodo* : règle **Local = Build, Tests = CI** — les suites ne sont pas
+exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
+
+*Nouveaux tests* :
+
+- `document.BookPublicationPlannerTest` — **+6 UT** (domaine pur) : `includeSource`
+  off par défaut ; source publiée dans chaque format **en tête** de plan ;
+  `sourceFileName` = `<base>.adoc` ; no-op strict sans format ; base name
+  appliqué ; `isSource` porté.
+- `document.BookDslTest` — **+1 UT** : le DSL expose le knob `includeSource`.
+- `document.DocumentConfigSerializerTest` — **+1 UT** : round-trip N3 du champ
+  `includeSource` (présent dans le JSON, relu à l'identique).
+- `book_publish.feature` — **+3 scénarios** `@book-publish` (source non publiée
+  par défaut ; `includeSource` publie la source en tête ; no-op sans format) +
+  `BookPublishSteps.kt` (+3 steps, préfixe anti-glue).
+- `document.BookPublishFunctionalTest` — **+2 FT** (TestKit) : `includeSource`
+  publie `book.html` + `book-en.html` et planifie `assembleBook` ; sans le knob,
+  `book.html` absent.
+- `document.BookPublishContentFunctionalTest` — **+1 FT** dogfooding offline
+  (corpus réel réduit, fake LLM, Règle 7) : `book.html` (source, sans `[EN]`) +
+  `book-en.html` (traduite), `assembleBook` exécuté.
+
+*Tests modifiés* : aucun test historique modifié (le champ `isSource` est additif
+avec défaut `false` ; les 12 UT planner existants restent valides).
+
+*Non-régression* : `includeSource` défaut `false` → plan, graphe, `@OutputFiles`,
+N3 et les 5 convertisseurs mono-source inchangés ; `bookPipeline` non modifié (D10).
+
+*Gates (Local = Build, Tests = CI)* : `compileKotlin` / `compileTestKotlin` /
+`compileFunctionalTestKotlin` **VERT** ; `publishToMavenLocal` **VERT** ; graphe
+`--dry-run` consommateur jetable (`assembleBook` présent si `includeSource`,
+absent sinon) ; zéro secret.
 
 == Session 273 — DOC-CI-ISOLATION (3 UT + 2 UT gardes d'isolation)
 

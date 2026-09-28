@@ -4,18 +4,14 @@ _note_ : fichier canonique = `.agents/PROMPT_REPRISE.adoc` (S-275). Ce fichier
 racine est conservé pour compatibilité d'ouverture mais n'est plus mis à jour —
 ne pas s'y fier pour la mission courante.
 
-== Mission session 275 — sur décision pilote
+== Mission session 276 — sur décision pilote
 
-S-274 (2026-09-28) a livré l'**EPIC DOC-CI-ISOLATION US-4** (release gate) :
-la CI peut **publier sur Maven Central depuis un tag** (`publish` job gated
-`refs/tags/v`, GPG importé, `CCCP_PUBLISH=true`, secrets OSSRH). Blocage
-cross-borough levé : `conventions-plugin` **0.0.8** (signature sous CI pour un
-job de release). Découverte P0 corrigée : 25 runners Cucumber dédiés étaient
-retirés de `check` (adoption conventions 0.0.7, `additionalTasksInCheck=false`).
+S-275 (2026-09-28) a livré l'**US-5 optionnelle de `DOC-BOOK-PUBLISH`** (knob
+`includeSource`, D8) — le seul candidat actionnable sans accord pilote externe.
+Le fan-out publie aussi le livre assemblé (`book.<ext>`, en tête de plan).
 
 Voir `.agents/PROMPT_REPRISE.adoc` pour l'état courant. En résumé :
 
-- `DOC-BOOK-PUBLISH` US-5 optionnelle (composite `bookPipeline` / `includeSource`).
 - `DOC-FPA-PUBLISH-0` (STANDBY, attend la convergence A1 Tombouctou).
 - Run LLM *metered* réel — accord pilote requis.
 - Publication document-plugin 0.0.19 / tag `v*` — sur accord pilote.

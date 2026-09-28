@@ -118,4 +118,11 @@ class BookDsl(
      * `manpage`). Empty by default → no publication (Ink Economy Law).
      */
     val publishFormats: ListProperty<String>,
+    /**
+     * DOC-BOOK-PUBLISH (US-5) — also publish the assembled *source* book
+     * (`book.adoc`) into each requested format, alongside the translated books.
+     * Off by default (decision D8): the source book is already covered by the
+     * mono-source converters.
+     */
+    val includeSource: Property<Boolean>,
 )

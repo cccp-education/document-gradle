@@ -1,6 +1,16 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-09-28 (session 275 — **DOC-BOOK-PUBLISH US-5 ✅ TERMINÉ**
+optionnel, seul candidat actionnable sans accord pilote externe — knob opt-in
+`includeSource` (D8) : le fan-out publie aussi le livre assemblé (`book.<ext>`,
+en tête de plan). Domaine pur `BookPublicationTarget.isSource` +
+`BookPublicationPlanner.plan(..., includeSource)` (6 UT) + tâche/DSL/CLI +
+N3 `BookConfig.includeSource` + **dépendance conditionnelle `assembleBook`**
+(`dependsOn(provider)`, graphe par défaut inchangé) + BDD 3 scénarios +
+FT dogfooding offline. **EPIC DOC-BOOK-PUBLISH 5/5 US.** Gates : compiles VERT
+(3 source sets), `publishToMavenLocal` VERT, graphe prouvé par consommateur
+jetable `--dry-run`. Zéro secret, zéro publication.)
 _Date revision_ : 2026-09-28 (session 274 — **DOC-CI-ISOLATION US-4 ✅ TERMINÉ**
 (option 1 pilote, permission git/publish) — la CI peut **publier sur Maven
 Central depuis un tag**. Job `publish` gated `refs/tags/v` + `needs: [test]`,
@@ -429,7 +439,7 @@ la dette réelle.
 '''
 
 '''
-== EPIC DOC-BOOK-PUBLISH — Publication fan-out du livre multi-langue ✅ TERMINÉ (S-272)
+== EPIC DOC-BOOK-PUBLISH — Publication fan-out du livre multi-langue ✅ TERMINÉ (S-272 + US-5 S-275)
 
 _Origine : décision D1 du cadrage `DOC-BOOK-MULTILANG` (S-271) — « convertir N
 `book-<lang>.adoc` en N formats est un EPIC de publication, pas de traduction ».
@@ -453,20 +463,23 @@ distribue pas — les 5 convertisseurs `convertDocumentTo*` sont **mono-source**
 | DOC-BOOK-PUBLISH-2 | Tâche `publishBookAllLanguages` (`@OutputFiles`, `skipExisting`, `DocumentConverter` DRY) + DSL/CLI + N3 `BookConfig` | ✅ TERMINÉ (S-272 — 5 FT) | 4
 | DOC-BOOK-PUBLISH-3 | BDD `@book-publish` (25e runner `bookPublishCucumberTest`) | ✅ TERMINÉ (S-272 — 8/8) | 3
 | DOC-BOOK-PUBLISH-4 | Dogfooding end-to-end offline (fake LLM, corpus réel réduit, Règle 7) | ✅ TERMINÉ (S-272) | 2
+| DOC-BOOK-PUBLISH-5 | Knob opt-in `includeSource` (D8) — publier aussi le livre assemblé (`book.<ext>`, en tête de plan) : domaine pur (UT) + tâche/DSL/CLI + N3 `BookConfig` + dépendance conditionnelle `assembleBook` + BDD `@book-publish` (3 scénarios) + FT dogfooding offline | ✅ TERMINÉ (S-275) | 2
 |===
 
-*Total* : ~13 pts + cadrage. **EPIC TERMINÉ 4/4 US.**
+*Total* : ~15 pts + cadrage. **EPIC TERMINÉ 5/5 US.**
 
 *Gate structurel* (cœur) : chaque `book-<lang>.<ext>` porte le contenu traduit
 (`[<LANG>]`) et les ancres structurelles de la TOC (D1). *Non-goals* : pas de
 refonte des convertisseurs mono-source, pas de rattachement à `bookPipeline`
-(US-5 ultérieure), pas de publication du `book.adoc` source (D8 `includeSource`
-différé).
+(D10 — fan-out autonome).
 
 *Backward compat* : sans `publishFormats`, aucune cible produite (no-op) ; les
-5 convertisseurs et `bookPipeline` sont byte-identiques.
+5 convertisseurs et `bookPipeline` sont byte-identiques. `includeSource` (US-5)
+défaut `false` : plan, graphe et N3 inchangés.
 
-*Pièges* : #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out).
+*Pièges* : #40 (`@OutputFiles` pas `@OutputDirectory` pour un fan-out). Dépendance
+conditionnelle `assembleBook` via `dependsOn(provider)` — le graphe par défaut
+reste sans tâche amont surprise (S-275).
 
 '''
 

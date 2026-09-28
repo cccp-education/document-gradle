@@ -115,6 +115,7 @@ class DocumentPlugin : Plugin<Project> {
                 translateToAll = project.objects.property(Boolean::class.java),
                 targetLanguages = project.objects.listProperty(String::class.java),
                 publishFormats = project.objects.listProperty(String::class.java),
+                includeSource = project.objects.property(Boolean::class.java),
             ),
             template = TemplateDsl(
                 templateFile = project.objects.property(String::class.java),
@@ -193,6 +194,9 @@ class DocumentPlugin : Plugin<Project> {
         ext.book.targetLanguages.convention(emptyList())
         // DOC-BOOK-PUBLISH — opt-in publication fan-out (default empty = no-op)
         ext.book.publishFormats.convention(emptyList())
+        // DOC-BOOK-PUBLISH (US-5) — the source book is opt-in (off by default)
+        ext.book.includeSource.convention(false)
+        ext.bookPublishIncludeSource.convention(false)
         // DOC-13 — template DSL conventions
         ext.template.failOnMissingVariable.convention(true)
         ext.template.outputFileName.convention("document")
@@ -253,6 +257,7 @@ class DocumentPlugin : Plugin<Project> {
         ext.bookTranslateToAll.convention(ext.book.translateToAll)
         ext.bookTargetLanguages.convention(ext.book.targetLanguages)
         ext.bookPublishFormats.convention(ext.book.publishFormats)
+        ext.bookPublishIncludeSource.convention(ext.book.includeSource)
         // DOC-CR3-2 — mirror the flat safeMode property from the nested converter block
         ext.safeMode.convention(ext.converter.safeMode)
         // DOC-12 — Mirror outputs flags back into the legacy formats list so the
@@ -553,6 +558,21 @@ class DocumentPlugin : Plugin<Project> {
                     .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
                     .orElse(ext.bookPublishFormats),
             )
+            // DOC-BOOK-PUBLISH (US-5) — publish the assembled source book too.
+            task.includeSource.set(
+                cliProp(project, "bookPublishIncludeSource").map { it.toBoolean() }
+                    .orElse(ext.bookPublishIncludeSource)
+                    .orElse(false),
+            )
+            // The assembled source book is produced by `assembleBook`; the
+            // dependency is added *only* when includeSource is on, so the default
+            // fan-out graph is byte-identical (no surprise upstream task).
+            val assembleBook = project.tasks.named("assembleBook")
+            task.dependsOn(
+                project.provider {
+                    if (task.includeSource.getOrElse(false)) listOf(assembleBook) else emptyList<Any>()
+                },
+            )
             task.skipExisting.set(
                 cliProp(project, "bookPublishSkipExisting").map { it.toBoolean() }.orElse(false),
             )
@@ -576,8 +596,13 @@ class DocumentPlugin : Plugin<Project> {
                         requested = task.targetLanguages.getOrElse(emptyList()),
                         translateToAll = task.translateToAll.getOrElse(false),
                     )
-                    BookPublicationPlanner.plan(languages, base, task.publishFormats.getOrElse(emptyList()))
-                        .map { target -> project.layout.buildDirectory.file("docs/document/${target.outputFileName}") }
+                    BookPublicationPlanner.plan(
+                        languages,
+                        base,
+                        task.publishFormats.getOrElse(emptyList()),
+                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                        includeSource = task.includeSource.getOrElse(false),
+                    ).map { target -> project.layout.buildDirectory.file("docs/document/${target.outputFileName}") }
                 },
             )
         }
@@ -700,6 +725,9 @@ class DocumentPlugin : Plugin<Project> {
                 cliProp(project, "bookPublishFormats")
                     .map { csv -> csv.split(",").map { it.trim() }.filter { it.isNotEmpty() } }
                     .orElse(ext.bookPublishFormats),
+            )
+            task.bookPublishIncludeSource.set(
+                cliProp(project, "bookPublishIncludeSource").map { it.toBoolean() }.orElse(ext.bookPublishIncludeSource),
             )
         }
     }

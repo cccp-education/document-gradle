@@ -3,6 +3,7 @@ package document
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -125,6 +126,84 @@ class BookPublishContentFunctionalTest {
             val missing = tocRefs - anchorRefs(html.readText())
             assertTrue(missing.isEmpty(), "book-$lang.html must carry the structural TOC ids (D1), missing: $missing")
         }
+    }
+
+    @Test
+    fun `the includeSource fan-out publishes the assembled source book over the real corpus`() {
+        assumeTrue(CONTENT_TOC.isFile) { "content TOC not found at ${CONTENT_TOC.absolutePath}" }
+        assumeTrue(CONTENT_SCANS.isDirectory) { "content scans not found at ${CONTENT_SCANS.absolutePath}" }
+
+        val tocLines = CONTENT_TOC.readText().lines()
+        val header = tocLines.firstOrNull { it.trim().startsWith("|") }
+        assumeTrue(header != null) { "the content TOC carries no header row" }
+        data class TocEntry(val line: String, val ref: String, val fileName: String)
+        val referenced = tocLines.mapNotNull { line ->
+            val cells = line.trim().split("|").map { it.trim() }.drop(1)
+            if (cells.size < 4) return@mapNotNull null
+            val ref = cells[0]
+            val fileName = cells[3]
+            if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc") &&
+                File(CONTENT_SCANS, fileName).isFile
+            ) {
+                TocEntry(line, ref, fileName)
+            } else {
+                null
+            }
+        }.take(MAX_PAGES)
+        assumeTrue(referenced.size >= 3) { "at least three referenced real content pages are required" }
+
+        projectDir.resolve("content").mkdirs()
+        projectDir.resolve("content/toc.adoc").writeText(
+            (listOf(header) + referenced.map { it.line }).joinToString("\n") + "\n",
+        )
+        val pagesDir = projectDir.resolve("content/pages").apply { mkdirs() }
+        referenced.forEach { (_, _, name) ->
+            File(CONTENT_SCANS, name).copyTo(pagesDir.resolve(name), overwrite = true)
+        }
+
+        projectDir.resolve("settings.gradle.kts").writeText(
+            """
+            rootProject.name = "test-book-publish-content-source"
+            """.trimIndent(),
+        )
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("education.cccp.document")
+            }
+            document {
+                book {
+                    pagesDir.set(layout.projectDirectory.dir("content/pages"))
+                    title.set("Content Book")
+                    author.set("Content Author")
+                    tocFile.set(layout.projectDirectory.file("content/toc.adoc"))
+                    sourceLanguage.set("fr")
+                    targetLanguages.set(listOf("en"))
+                    publishFormats.set(listOf("html"))
+                    includeSource.set(true)
+                }
+                translation {
+                    llmMode.set("fake")
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("publishBookAllLanguages")
+            .withPluginClasspath()
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome, "assembleBook must run for includeSource")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publishBookAllLanguages")?.outcome, "publication must succeed")
+
+        val docsDir = projectDir.resolve("build/docs/document")
+        val sourceHtml = docsDir.resolve("book.html")
+        assertTrue(sourceHtml.isFile, "book.html (assembled source) must be produced — dir: ${docsDir.listFiles()?.joinToString { it.name }}")
+        assertTrue(docsDir.resolve("book-en.html").isFile, "book-en.html must still be produced")
+        // The source book is the untranslated assembled book: it must NOT carry the [EN] marker.
+        assertFalse(sourceHtml.readText().contains("[EN]"), "book.html must be the untranslated source book")
     }
 
     private fun anchorRefs(content: String): Set<String> =

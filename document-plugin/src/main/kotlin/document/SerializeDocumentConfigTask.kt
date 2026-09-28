@@ -133,6 +133,10 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
     @get:Optional
     abstract val bookPublishFormats: ListProperty<String>
 
+    @get:Input
+    @get:Optional
+    abstract val bookPublishIncludeSource: Property<Boolean>
+
     init {
         group = "document"
     }
@@ -189,6 +193,7 @@ abstract class SerializeDocumentConfigTask : DefaultTask() {
                 translateToAll = bookTranslateToAll.orNull,
                 targetLanguages = bookTargetLanguages.orNull,
                 publishFormats = bookPublishFormats.orNull,
+                includeSource = bookPublishIncludeSource.orNull,
             ),
         )
 

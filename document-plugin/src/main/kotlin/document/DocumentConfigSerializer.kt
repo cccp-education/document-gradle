@@ -96,6 +96,7 @@ class DocumentConfigSerializer {
                 val array = book.putArray("publishFormats")
                 formats.forEach { array.add(it) }
             }
+            config.book.includeSource?.let { book.put("includeSource", it) }
             root.set<ObjectNode>("book", book)
         }
 
@@ -180,6 +181,7 @@ class DocumentConfigSerializer {
                     ?.map { it.textValueOrNull() }
                     ?.filterNotNull()
                     ?.takeIf { it.isNotEmpty() },
+                includeSource = bookNode.get("includeSource")?.takeIf { !it.isNull }?.asBoolean(),
             )
         } else {
             BookConfig()

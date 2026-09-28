@@ -124,6 +124,78 @@ class BookPublicationPlannerTest {
         )
     }
 
+    // --- DOC-BOOK-PUBLISH US-5 — includeSource (D8) ---
+
+    @Test
+    fun `includeSource is off by default`() {
+        val plan = BookPublicationPlanner.plan(languages, baseName = "book", requestedFormats = listOf("html"))
+
+        assertTrue(plan.none { it.isSource }, "the source book must not be published by default")
+        assertEquals(listOf("book-en.html", "book-de.html"), plan.map { it.outputFileName })
+    }
+
+    @Test
+    fun `includeSource publishes the source book in every requested format first`() {
+        val plan = BookPublicationPlanner.plan(
+            languages,
+            baseName = "book",
+            requestedFormats = listOf("html", "pdf"),
+            sourceLanguage = "fr",
+            includeSource = true,
+        )
+
+        assertEquals(
+            listOf("book.html", "book.pdf", "book-en.html", "book-en.pdf", "book-de.html", "book-de.pdf"),
+            plan.map { it.outputFileName },
+        )
+        assertTrue(plan.first().isSource, "the source book must come first (deterministic order)")
+    }
+
+    @Test
+    fun `includeSource pairs the assembled source book with its output`() {
+        val plan = BookPublicationPlanner.plan(
+            languages,
+            baseName = "book",
+            requestedFormats = listOf("epub"),
+            sourceLanguage = "fr",
+            includeSource = true,
+        )
+        val source = plan.single { it.isSource }
+
+        assertEquals("fr", source.language)
+        assertEquals(DocumentFormat.EPUB, source.format)
+        assertEquals("book.adoc", source.sourceFileName)
+        assertEquals("book.epub", source.outputFileName)
+    }
+
+    @Test
+    fun `includeSource with no format stays a strict no-op`() {
+        val plan = BookPublicationPlanner.plan(
+            languages,
+            baseName = "book",
+            requestedFormats = emptyList(),
+            sourceLanguage = "fr",
+            includeSource = true,
+        )
+
+        assertTrue(plan.isEmpty(), "no format selected must be a no-op even with includeSource")
+    }
+
+    @Test
+    fun `includeSource applies the base name to the source book`() {
+        val plan = BookPublicationPlanner.plan(
+            languages,
+            baseName = "livre",
+            requestedFormats = listOf("html"),
+            sourceLanguage = "fr",
+            includeSource = true,
+        )
+        val source = plan.single { it.isSource }
+
+        assertEquals("livre.adoc", source.sourceFileName)
+        assertEquals("livre.html", source.outputFileName)
+    }
+
     @Test
     fun `every document format is resolvable by its lowercase name`() {
         val names = DocumentFormat.ALL.map { it.name.lowercase() }

@@ -327,6 +327,31 @@ class DocumentConfigSerializerTest {
     }
 
     @Test
+    fun `deserialize reads back the includeSource knob of the book block`() {
+        val dir = tempDir()
+        val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
+        val pagesDir = File(dir, "pages").apply { mkdirs() }
+        val original = DocumentPipelineConfig(
+            source = DocumentSource(sourceFile),
+            book = BookConfig(
+                pagesDir = pagesDir,
+                title = "Mon Livre",
+                author = "Auteur",
+                translateToAll = true,
+                publishFormats = listOf("html"),
+                includeSource = true,
+            ),
+        )
+        val serializer = DocumentConfigSerializer()
+        val file = serializer.serialize(dir, original)
+
+        val roundTripped = serializer.deserialize(file, baseDir = dir)
+
+        assertEquals(true, roundTripped.book.includeSource)
+        assertTrue(file.readText().contains("\"includeSource\""), "the JSON must carry the includeSource knob")
+    }
+
+    @Test
     fun `round-trip serialize then deserialize is idempotent`() {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }

@@ -142,6 +142,42 @@ class BookPublishFunctionalTest {
     }
 
     @Test
+    fun `includeSource also publishes the assembled source book`() {
+        writeBuild(
+            """
+            |targetLanguages.set(listOf("en"))
+            |publishFormats.set(listOf("html"))
+            |includeSource.set(true)
+            """.trimMargin(),
+        )
+
+        val result = run("publishBookAllLanguages")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publishBookAllLanguages")?.outcome)
+
+        // The assembled source book must be published as book.html (no lang suffix).
+        assertTrue(docsDir().resolve("book.html").isFile, "book.html must be produced — dir: ${docsDir().listFiles()?.joinToString { it.name }}")
+        assertTrue(docsDir().resolve("book-en.html").isFile, "book-en.html must still be produced")
+        // includeSource forces the assembleBook dependency into the graph.
+        assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome, "assembleBook must run when includeSource is on")
+    }
+
+    @Test
+    fun `without includeSource the source book is not published`() {
+        writeBuild(
+            """
+            |targetLanguages.set(listOf("en"))
+            |publishFormats.set(listOf("html"))
+            """.trimMargin(),
+        )
+
+        val result = run("publishBookAllLanguages")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publishBookAllLanguages")?.outcome)
+
+        assertFalse(docsDir().resolve("book.html").exists(), "book.html must not be produced by default")
+        assertTrue(docsDir().resolve("book-en.html").isFile, "book-en.html must be produced")
+    }
+
+    @Test
     fun `the outputFileName knob drives both the source and the published books`() {
         writeBuild(
             """

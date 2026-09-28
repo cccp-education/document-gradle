@@ -28,6 +28,7 @@ class BookDslTest {
         translateToAll = objects().property(Boolean::class.java),
         targetLanguages = objects().listProperty(String::class.java),
         publishFormats = objects().listProperty(String::class.java),
+        includeSource = objects().property(Boolean::class.java),
     )
 
     @Test
@@ -82,5 +83,13 @@ class BookDslTest {
         dsl.publishFormats.set(listOf("html", "pdf"))
 
         assertEquals(listOf("html", "pdf"), dsl.publishFormats.get())
+    }
+
+    @Test
+    fun `BookDsl exposes the includeSource knob`() {
+        val dsl = dsl()
+        dsl.includeSource.set(true)
+
+        assertTrue(dsl.includeSource.get())
     }
 }

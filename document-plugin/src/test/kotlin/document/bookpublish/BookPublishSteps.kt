@@ -23,6 +23,7 @@ class BookPublishSteps {
     private var languages: List<BookLanguageTarget> = emptyList()
     private var formats: List<String> = emptyList()
     private var baseName: String = "book"
+    private var includeSource: Boolean = false
     private var plan: List<BookPublicationTarget> = emptyList()
 
     private fun quoted(text: String): List<String> =
@@ -45,9 +46,20 @@ class BookPublishSteps {
         baseName = base
     }
 
+    @Given("^book-publish includeSource is enabled$")
+    fun `book-publish includeSource is enabled`() {
+        includeSource = true
+    }
+
     @When("^book-publish the publication plan is resolved$")
     fun `book-publish the publication plan is resolved`() {
-        plan = BookPublicationPlanner.plan(languages, baseName, formats)
+        plan = BookPublicationPlanner.plan(
+            languages,
+            baseName,
+            formats,
+            sourceLanguage = "fr",
+            includeSource = includeSource,
+        )
     }
 
     @Then("^book-publish the outputs are (.+)$")
@@ -70,5 +82,19 @@ class BookPublishSteps {
     fun `book-publish the output of a language in a format`(lang: String, format: String, expected: String) {
         val target = plan.first { it.language == lang && it.format == DocumentFormat.valueOf(format.uppercase()) }
         assertEquals(expected, target.outputFileName, "the output file name must follow the convention")
+    }
+
+    @Then("^book-publish no output is the source book$")
+    fun `book-publish no output is the source book`() {
+        assertTrue(plan.none { it.isSource }, "the source book must not be published by default, got: ${plan.map { it.outputFileName }}")
+    }
+
+    @Then("^book-publish the source book is published in every format$")
+    fun `book-publish the source book is published in every format`() {
+        val sources = plan.filter { it.isSource }
+        assertEquals(formats.size, sources.size, "the source book must be published once per format")
+        assertEquals("$baseName.adoc", sources.first().sourceFileName, "the source book is the assembled <base>.adoc")
+        assertTrue(sources.all { it.language == "fr" }, "the source books carry the source language")
+        assertEquals(plan.first(), sources.first(), "the source book must come first (deterministic order)")
     }
 }

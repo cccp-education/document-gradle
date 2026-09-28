@@ -48,6 +48,8 @@ data class BookConfig(
     val targetLanguages: List<String>? = null,
     /** DOC-BOOK-PUBLISH — output formats for the publication fan-out. */
     val publishFormats: List<String>? = null,
+    /** DOC-BOOK-PUBLISH (US-5) — also publish the assembled source book (opt-in). */
+    val includeSource: Boolean? = null,
 ) {
 
     /**
