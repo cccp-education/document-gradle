@@ -28,7 +28,7 @@ object ReleaseWorkflow {
     private val PUBLISH_TASK = Regex("""publishAggregationToCentralPortal""")
     private val TAG_GATE = Regex("""refs/tags/v""")
     private val NEEDS = Regex("""(?m)^\s*needs\s*:""")
-    private val GPG = Regex("""ghaction-import-gpg|gpg_private_key""")
+    private val GPG = Regex("""ghaction-import-gpg""")
     private val PUBLISH_SIGNAL = Regex("""CCCP_PUBLISH""")
     private val OSSRH_USERNAME = Regex("""OSSRH_USERNAME""")
     private val OSSRH_PASSWORD = Regex("""OSSRH_PASSWORD""")
