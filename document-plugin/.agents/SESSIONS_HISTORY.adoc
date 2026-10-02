@@ -474,3 +474,51 @@ déjà un String (pas de `takeSubstring`).
 
 **Suite** : S-239 — hygiene .bak/backup residuels, consommation externe
 0.0.14 (projet tiers), option E assembleBook knob si besoin réel.
+
+== Session 279 — 2026-10-02 — EPIC DOC-SEMANTIC-TABLE TERMINÉ 6/6 US (US-3→6)
+
+**Type** : feature — baby-step DDD/TDD/BDD strict (unit → functional →
+cucumber), méthode agile software craftmanship.
+
+**Mission** : clore l'EPIC DOC-SEMANTIC-TABLE (cadré S-277, US-1/2 livrées
+S-278) — reliquat actionnable sans accord externe ni coût LLM.
+
+**US-3 (tâche + DSL + export + N3)** : domaine `document.semantic` enrichi —
+`TableSemanticsMode` (`OFF`/`LENIENT`/`STRICT`, défaut `OFF`) +
+`TableSemanticsReport` (Jackson ; `fromExtractions`/`empty`/`toJson`, construit
+depuis les `SemanticExtraction` déjà produites, **zéro re-lecture de l'AST**) ;
+DSL `semantic { tableSemantics.set(…) ; schema("<name>") { column(index|header,
+role, required) } }` (`SemanticDsl`/`SemanticSchemaDsl`, **zéro mot métier** —
+D4 gate RENAME) câblé `DocumentExtension`/`DocumentPlugin` ; tâche thin
+`collectTableSemantics` (port `AsciidoctorTableReader` + `SemanticExtractor`)
+exportant `table-semantics.json` ; N3 additif `DocumentMetadata.tableSemanticsPath`
+(NON_NULL) + snapshot lecture seule `collectDocumentRetrieve` (D10).
+
+**US-4 (validation)** : sévérité `OFF`/`LENIENT`/`STRICT` intégrée à la tâche
+(symétrique `document.xref`) — rapport écrit puis `GradleException` en STRICT.
+
+**US-5 (BDD)** : `table_semantic.feature` 5 scénarios `@table-semantic` +
+`TableSemanticSteps` (préfixés S-088) + `TableSemanticCucumberRunner` —
+**28e runner dédié** câblé `additionalTasksInCheck` (sinon test fantôme, leçon
+S-269).
+
+**US-6 (dogfooding lecture seule, Règle 7)** : `TableSemanticContentFunctionalTest`
+(TestKit) — page réelle FPA `scans/110.adoc` (table `Durée | Perte`) annotée
+**sur la copie seule** → enregistrements `20 min`/`42%`, source jamais mutée
+(SHA-256 avant/après). Self-skip hors corpus.
+
+**Tests** : 6 UT (`TableSemanticsReportTest`) + 4 UT (`DocumentMetadataTest`
+étendu) + 4 FT (`CollectTableSemanticsFunctionalTest`) + 1 FT dogfooding + 5 BDD.
+
+**Gates (Local = Build, Tests = CI)** : compiles VERT (3 source sets) +
+`validatePlugins` VERT ; **aucun test local** — décision pilote réaffirmée en
+session. Run CI du commit de clôture = unique preuve. Zéro bump/publication,
+zéro secret. Additif pur (D12 : `bookPipeline`/convertisseurs/pivot intacts ;
+défaut `OFF` byte-identique).
+
+**Pièges retenus** : `ListProperty<Custom>` exige `Serializable` (S-279 #51) ;
+un runner Cucumber non câblé est un test fantôme (S-279 #52) ; `logger.lifecycle`
+(pas `log.lifecycle`).
+
+**Suite** : EPIC PUB 0.0.20 (distribution HEAD post-S-279, accord pilote) ;
+propagation/consommateur tiers 0.0.19 ; DOC-FPA-PUBLISH-0 (STANDBY).

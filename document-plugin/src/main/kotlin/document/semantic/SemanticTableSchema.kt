@@ -16,7 +16,7 @@ data class SemanticColumnSpec(
     val header: String? = null,
     val role: String,
     val required: Boolean = false,
-) {
+) : java.io.Serializable {
     init {
         require(role.isNotBlank()) { "a column role must not be blank" }
         require(index != null || header?.isNotBlank() == true) {
@@ -48,7 +48,7 @@ data class SemanticColumnSpec(
 data class SemanticTableSchema(
     val name: String,
     val columns: List<SemanticColumnSpec>,
-) {
+) : java.io.Serializable {
     init {
         require(name.isNotBlank()) { "a schema name must not be blank" }
         require(columns.isNotEmpty()) { "a schema must declare at least one column" }

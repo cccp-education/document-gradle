@@ -204,4 +204,47 @@ class DocumentMetadataTest {
         val content = file.readText()
         assertTrue(!content.contains("validationStatus"))
     }
+
+    // --- DOC-SEMANTIC-TABLE — semantic lifting artifact path in metadata.json ---
+
+    @Test
+    fun `DocumentMetadata defaults tableSemanticsPath to null`() {
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        assertEquals(null, metadata.tableSemanticsPath)
+    }
+
+    @Test
+    fun `DocumentMetadata forNewOrleans accepts a tableSemanticsPath`() {
+        val metadata = DocumentMetadata.forNewOrleans(
+            tableSemanticsPath = "/build/docs/document/table-semantics.json",
+        )
+
+        assertEquals("/build/docs/document/table-semantics.json", metadata.tableSemanticsPath)
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo includes tableSemanticsPath when set`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans(
+            tableSemanticsPath = "/build/docs/document/table-semantics.json",
+        )
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(content.contains("\"tableSemanticsPath\""))
+        assertTrue(content.contains("/build/docs/document/table-semantics.json"))
+    }
+
+    @Test
+    fun `DocumentMetadata writeTo omits tableSemanticsPath when null`() {
+        val dir = tempDir()
+        val metadata = DocumentMetadata.forNewOrleans()
+
+        val file = DocumentMetadata.writeTo(dir, metadata)
+
+        val content = file.readText()
+        assertTrue(!content.contains("tableSemanticsPath"))
+    }
 }

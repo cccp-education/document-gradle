@@ -1,55 +1,46 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-== Mission session 279
+:session: 280
+:borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
+:etat: S-279 (2026-10-02) — **EPIC DOC-SEMANTIC-TABLE TERMINÉ 6/6 US** (US-3 tâche+DSL+N3, US-4 validation, US-5 BDD, US-6 dogfooding). Local = Build VERT, Tests = CI.
 
-S-278 (2026-09-29) a implémenté **DOC-SEMANTIC-1 + DOC-SEMANTIC-2** de l'EPIC
-DOC-SEMANTIC-TABLE (baby-step DDD/TDD strict, RED → GREEN → REFACTOR).
+== Mission session 280 — sur décision pilote
 
-- *US-1* — domaine pur `document.semantic` : `SemanticColumnSpec` (index|header,
-  role, required), `SemanticTableSchema`, `RawTable`, `SemanticRow`,
-  `SemanticFinding`, `SemanticTable.projection`, sealed `SemanticExtraction`,
-  `SemanticExtractor`, port `SemanticTableReader`. 4 fichiers prod + 35 UT.
-- *US-2* — adapter `AsciidoctorTableReader` (bridge `org.asciidoctor.ast`,
-  détection opt-in `[semantic=<name>]` / `[.semantic-<name>]`) + extension
-  `AsciidoctorHolder.load` (AST, instance JRuby partagée, même `SafeMode`).
-  8 UT AsciidoctorJ réel.
+L'EPIC DOC-SEMANTIC-TABLE est clos. Candidats (Règle 2 — accord pilote) :
 
-Compiles VERT (3 source sets), `assemble` + `validatePlugins` VERT.
-**Aucun test local** (Local = Build, Tests = CI). **Preuve CI** : run
-`36491999484` (commit `712b4a1`) — **Build & Test VERT 27m36s** (43 nouveaux
-tests exécutés). Aucun bump/publication.
-
-Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (S-277), rapport
-`.agents/sessions/278-semantic-domain-adapter.adoc`.
-
-== Candidats prochaine session (sur demande pilote — Règle 2)
-
-* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-278 (DOC-SEMANTIC-1/US-2) :
-  chaîne DAG N0→N2 MEMPHIS-first (BOM 0.0.61 + document 0.0.20), tag `v0.0.20`
-  → publication CI, preuve consommateur tiers Central. **Cadré au BACKLOG**
-  (S-278, section « 🟡 EPIC PUB 0.0.20 »).
-* *DOC-SEMANTIC-3* — tâche thin `collectTableSemantics` + DSL `semantic { }`
-  (+ mirror plat + CLI) + export `table-semantics.json` + câblage N3 additif
-  (`DocumentMetadata`/`DocumentRetrieveResult`). FT TestKit.
-* *DOC-SEMANTIC-4* — validation rôles `required` (STRICT/LENIENT/OFF).
-* *DOC-SEMANTIC-5* — BDD `@table-semantic` (runner dédié, 28e).
-* *DOC-SEMANTIC-6* — dogfooding lecture seule (Règle 7, hash avant/après).
+* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-279 : chaîne DAG N0→N2
+  MEMPHIS-first (catalogue ws **0.0.61** + document **0.0.20**), tag `v0.0.20`
+  → publication CI, preuve consommateur tiers Central (sans mavenLocal,
+  pattern S-264). Cadré au BACKLOG (S-279, section « 🟡 EPIC PUB 0.0.20 »).
 * *Vérifier la propagation Central 0.0.19* (polling 7-27 min — Piège #11).
-* *Preuve consommateur tiers* 0.0.19 (`/tmp`, Central sans mavenLocal) — S-264.
+* *Preuve consommateur tiers 0.0.19* (`/tmp`, Central sans mavenLocal).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
 * *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
 * *Bump koog/langchain4j* (cadrage MEMPHIS `CADRAGE_EPIC_BUMP_KOOG_LANGCHAIN4J.adoc`).
 
-== État du code (S-278)
+== État du code (S-279)
 
-- *0.0.19* : Central OK ; tag `v0.0.19` ; publication CI prouvée (S-276).
-- *Catalogue ws* : **0.0.60** (document-plugin = 0.0.19) — pas de drift.
-- *Conventions* : **0.0.8** (signature sur CI release via `CCCP_PUBLISH`).
-- *Backlog* : `DOC-FPA-PUBLISH-0` (STANDBY) ; `DOC-SEMANTIC-TABLE` 2/6 US
-  (US-0 cadrage + US-1 + US-2) ; **`EPIC PUB 0.0.20`** 🟡 cadré (S-278).
-- *Domaine* : `document.semantic` (prod 5 fichiers) — Gradle-free (sauf adapter).
+* *0.0.19* : Central OK ; catalogue ws **0.0.60** (pas de drift).
+* *Conventions* : **0.0.8** (signature sur CI release via `CCCP_PUBLISH`).
+* *Domaine* : `document.semantic` — Gradle-free sauf l'adapter AST
+  (`AsciidoctorTableReader`) : `SemanticColumnSpec`, `SemanticTableSchema`,
+  `RawTable`, `SemanticRow`, `SemanticFinding`, `SemanticTable`,
+  `SemanticExtraction`, `SemanticExtractor`, `SemanticTableReader`,
+  `TableSemanticsMode`, `TableSemanticsReport`.
+* *Tâche* : `collectTableSemantics` (groupe `document`,
+  `table-semantics.json`) ; défaut `OFF`.
+* *DSL* : `document { semantic { tableSemantics.set(…); schema("<name>") { … } } }`.
+* *Backlog* : `DOC-FPA-PUBLISH-0` (STANDBY) ; `EPIC PUB 0.0.20` 🟡 cadré.
 
-== Pièges Gradle à retenir (S-232..S-278)
+== EPIC DOC-SEMANTIC-TABLE (S-277→S-279) — TERMINÉ 6/6
+
+* US-0 cadrage (S-277) · US-1 domaine (S-278) · US-2 port/adapter (S-278) ·
+  US-3 tâche+DSL+N3 (S-279) · US-4 validation (S-279) · US-5 BDD (S-279) ·
+  US-6 dogfooding (S-279).
+* Doc : `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.
+* Rapports : `278-semantic-domain-adapter.adoc`, `279-semantic-task-dsl-bdd-dogfood.adoc`.
+
+== Pièges Gradle à retenir (S-232..S-279)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en
@@ -63,30 +54,30 @@ Fichier `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc` (S-277), rapport
 43. *`additionalTasksInCheck` défaut `false`* — une CI verte n'est pas couvrante.
 44. *La convention `publishing` ne signe pas sous `CI=true`* — release = `CCCP_PUBLISH=true`.
 46. *Dépendance conditionnelle = `dependsOn(provider)`*.
-47. *L'AST AsciidoctorJ et le pivot regex tabulaire sont deux modèles
-    parallèles* (S-277) — nommer sans ambiguïté (`document.semantic.*` vs
-    `document.translation.*`).
-48. *Une note visionnaire trackée peut rester hors backlog des mois* (S-277).
-*49.* (S-278) *Un premier rang de tableau n'est un en-tête que si
-    `options="header"`* — l'AST `Table.getHeader()` est vide sans l'option ; ne
-    jamais deviner l'en-tête par la position de ligne.
-*50.* (S-278) *`Cell.getText()`/`getRoles()` renvoient des types plateforme
-    potentiellement nuls* (JRuby) — accès défensifs (`.orEmpty()`, `?.trim()`),
-    jamais d'assertion de non-null.
+47. *L'AST AsciidoctorJ et le pivot regex tabulaire sont deux modèles parallèles*.
+48. *Une note visionnaire trackée peut rester hors backlog des mois*.
+49. *Un premier rang de tableau n'est un en-tête que si `options="header"`*.
+50. *`Cell.getText()`/`getRoles()` renvoient des types plateforme nuls* — accès défensifs.
+*51.* (S-279) *`ListProperty<Custom>` exige `Serializable`* — `SemanticTableSchema`/
+    `SemanticColumnSpec` l'implémentent.
+*52.* (S-279) *Un runner Cucumber non câblé est un test fantôme* — tout nouveau
+    `CucumberTaskSpec` doit être enregistré dans `build.gradle.kts`
+    (`additionalTasksInCheck = true`).
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. 27 runners dédiés au total (le futur
-`@table-semantic` sera le 28e).
++ `frontmatter_retranslate.feature`. **28 runners dédiés** au total (dont
+`tableSemanticCucumberTest`, le dernier).
 
 == Méthode
 
-Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), économie d'encre.
-CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build, Tests = CI* (GitHub Actions).
-English only code/tests/features (gouvernance .adoc en français).
-Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-278).
+Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), unit → functional →
+cucumber, économie d'encre. CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build,
+Tests = CI* (GitHub Actions `build`). English only code/tests/features
+(gouvernance .adoc en français). Zéro secret en clair, commit/push sur accord
+pilote (donné S-279).
 
 == À vérifier en ouverture
 
@@ -94,13 +85,12 @@ Zéro secret en clair, zéro commit/push sans accord (accord pilote donné S-278
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT
    (dans `document-plugin/`).
-4. CI verte du commit S-278 (les UT US-1/US-2 s'exécutent en CI).
-5. Décision pilote — DOC-SEMANTIC-3, preuve consommateur tiers, PUBLISH-0.
+4. CI verte du commit S-279 (les UT/FT/BDD US-3→6 s'exécutent en CI).
+5. Décision pilote — PUB 0.0.20, preuve consommateur tiers, PUBLISH-0.
 
 == Vision « livre content SERVER »
 
 Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
-multi-format, testé en CI **et publié depuis la CI** sur tag. S-278 fait du
-document une **source de données typée** : l'AST AsciidoctorJ est lu, les
-tableaux annotés sont projetés en enregistrements `Map<role, String>` — l'EPIC
-DOC-SEMANTIC-TABLE est en marche.
+multi-format, testé en CI **et publié depuis la CI** sur tag. S-279 achève le
+lifting sémantique : un tableau AsciiDoc annoté devient une **source de données
+typée** exportée en JSON, consommable par une application web / une fiche LMS.

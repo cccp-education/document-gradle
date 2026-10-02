@@ -2562,7 +2562,7 @@ pilote requis).
 
 '''
 
-== 🟡 EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ (S-277 cadré — S-278 US-1/US-2)
+== ✅ EPIC DOC-SEMANTIC-TABLE — Lifting sémantique des tableaux via l'AST AsciidoctorJ (S-277 cadré — S-279 TERMINÉ 6/6 US)
 
 _Origine_ : note pilote `document-gradle/pense-bete.txt` (trackée, restée hors
 backlog) — *« AsciiDoc sémantique : exploiter le modèle objet AsciidoctorJ (AST)
@@ -2615,30 +2615,30 @@ Vague 4 ; patron RENAME-8 D14). Source de vérité = l'AST **réel**
   `table-semantics.json` + N3 additif.
 | FT TestKit
 | 4
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-279)
 
 | DOC-SEMANTIC-4
 | Validation des rôles `required` (STRICT/LENIENT/OFF) + findings JSON.
 | UT + FT
 | 3
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-279)
 
 | DOC-SEMANTIC-5
 | BDD `@table-semantic` (annoté extrait, non annoté ignoré, required blanc,
   no-op sans schéma) + runner dédié `tableSemanticCucumberTest`.
 | BDD
 | 3
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-279 — 5 scénarios, 28e runner dédié)
 
 | DOC-SEMANTIC-6
 | Dogfooding **lecture seule** (Règle 7) sur corpus réel réduit.
 | FT dogfooding
 | 2
-| 🟡 À FAIRE
+| ✅ TERMINÉ (S-279 — page FPA `scans/110.adoc`)
 
 |===
 
-_Total_ : ~22 pts, 6 US + cadrage (3/7 US — US-0 + US-1 + US-2 ✅ S-277/S-278).
+_Total_ : ~22 pts, 6 US + cadrage (7/7 — EPIC TERMINÉ S-279 : US-0 S-277, US-1/US-2 S-278, US-3→6 S-279).
 *Non-goals* : pas de refonte du pivot de
 traduction, pas de génération de contenu, pas de modification de `bookPipeline`
 (D12). *Backward compat* : défaut `OFF` — sans knobs, conversions et pipeline
@@ -2650,20 +2650,21 @@ JRuby nuls → accès défensifs — S-278).
 
 '''
 
-== 🟡 EPIC PUB 0.0.20 — Distribution du HEAD post-S-278 (à planifier, S-279)
+== 🟡 EPIC PUB 0.0.20 — Distribution du HEAD post-S-279 (à planifier, S-280)
 
-_Origine_ : S-278 a livré `DOC-SEMANTIC-1` (domaine pur + 35 UT) + `DOC-SEMANTIC-2`
-(adapter AST + 8 UT) — **code non distribué** (aucun bump cette session : la
+_Origine_ : S-278 (US-1 domaine pur + US-2 adapter AST) puis S-279 (US-3 tâche +
+DSL + N3, US-4 validation, US-5 BDD, US-6 dogfooding) ont livré l'**EPIC
+DOC-SEMANTIC-TABLE complet** — **code non distribué** (aucun bump : la
 publication est un acte de release distinct, sur accord pilote explicite).
 _Type_ : PUB cross-borough — chaîne DAG N0→N2 **MEMPHIS-first**, baby-step TDD strict.
 _Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
 
 *Contenu distribué (delta depuis 0.0.19)* :
 
-* `DOC-SEMANTIC-TABLE` (US-1 domaine pur + US-2 port/adapter AST) — 5 fichiers
-  prod `document.semantic` + extension `AsciidoctorHolder.load`.
-* (cumulable si livré d'ici là) `DOC-SEMANTIC-3/4/5/6` — tâche/DSL/N3, validation
-  rôles requis, BDD `@table-semantic`, dogfooding.
+* `DOC-SEMANTIC-TABLE` **6/6 US** — domaine pur `document.semantic` (`Semantic*`,
+  `TableSemanticsMode`, `TableSemanticsReport`) + port/adapter `AsciidoctorTableReader`
+  + extension `AsciidoctorHolder.load` + tâche `collectTableSemantics` + DSL
+  `semantic { }` + N3 additif `DocumentMetadata.tableSemanticsPath`.
 
 *Chaîne de publication (ordre DAG, ne pas inverser)* :
 
@@ -2688,4 +2689,4 @@ _Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
 _Pièges à surveiller_ : #5 (anti-collision repo1 — vérifier 404 avant bump),
 #11 (polling POM), #13 (drift catalogue ws → garde RED), #26 (commit sélectif WIP),
 #44 (signature non appliquée sous `CI=true` sans `CCCP_PUBLISH`).
-_Statut_ : 🟡 À PLANIFIER (S-279, sur accord pilote).
+_Statut_ : 🟡 À PLANIFIER (S-280, sur accord pilote).

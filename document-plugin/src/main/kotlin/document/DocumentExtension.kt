@@ -15,6 +15,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 import document.ValidationMode
 import document.security.IncludeGuardMode
+import document.semantic.TableSemanticsMode
 import document.xref.XrefValidationMode
 import org.asciidoctor.SafeMode
 
@@ -204,6 +205,19 @@ abstract class DocumentExtension {
         internal set
 
     /**
+     * Nested DSL block `semantic { }` (EPIC DOC-SEMANTIC-TABLE, US-3).
+     * Declares the consumer schemas projected from annotated tables.
+     */
+    lateinit var semantic: SemanticDsl
+        private set
+
+    /**
+     * Semantic lifting strictness (EPIC DOC-SEMANTIC-TABLE, US-3). [TableSemanticsMode.OFF]
+     * by default (backward-compatible, zero AST read). Mirrors [semantic].tableSemantics.
+     */
+    abstract val tableSemantics: Property<TableSemanticsMode>
+
+    /**
      * HTML link linting mode (DOC-HTML-LINT). Mirrors [converter].htmlLinkLint.
      */
     abstract val htmlLinkLint: Property<HtmlLinkLintMode>
@@ -233,6 +247,7 @@ abstract class DocumentExtension {
         translation: TranslationDsl,
         converter: ConverterDsl,
         verification: VerificationDsl,
+        semantic: SemanticDsl,
     ) {
         this.enrich = enrich
         this.outputs = outputs
@@ -244,6 +259,7 @@ abstract class DocumentExtension {
         this.translation = translation
         this.converter = converter
         this.verification = verification
+        this.semantic = semantic
     }
 
     /**
@@ -308,6 +324,13 @@ abstract class DocumentExtension {
      */
     fun converter(action: Action<ConverterDsl>) {
         action.execute(converter)
+    }
+
+    /**
+     * Nested DSL block `semantic { }` (EPIC DOC-SEMANTIC-TABLE, US-3).
+     */
+    fun semantic(action: Action<SemanticDsl>) {
+        action.execute(semantic)
     }
 
     fun formats(vararg formats: DocumentFormat) {

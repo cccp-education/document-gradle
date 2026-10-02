@@ -52,6 +52,17 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
     abstract val validationReportPath: Property<String>
 
     /**
+     * DOC-SEMANTIC-TABLE (D10) — path of the `table-semantics.json` artifact
+     * produced by `collectTableSemantics`. Read-only snapshot (Économie d'Encre,
+     * no re-lifting): a plain optional string path, never a declared
+     * `@InputFile`, so an absent artifact never fails the build before the
+     * action runs (S-232 pitfall).
+     */
+    @get:Input
+    @get:Optional
+    abstract val tableSemanticsPath: Property<String>
+
+    /**
      * S-236 — the collect follows the live `outputFileName` knob (S-235):
      * conversion tasks write `docs/document/${outputFileName}.${ext}`, so the
      * scan must use the same name to index the real artifacts in
@@ -110,6 +121,12 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
                 ?.overallStatus()
         }
 
+        // DOC-SEMANTIC-TABLE (D10) — carry the semantic-lifting artifact path when
+        // it exists (read-only snapshot, no re-lifting). Absent → omitted from
+        // metadata.json (NON_NULL, backward-compatible).
+        val tableSemanticsFile: File? = tableSemanticsPath.orNull?.let { File(it) }
+            ?.takeIf { it.exists() && it.isFile }
+
         val primaryReleaseNotes = releaseNotesEntries.firstOrNull()
         val metadata = DocumentMetadata.forNewOrleans(
             type = "retrieve",
@@ -118,6 +135,7 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
             releaseNotesPath = primaryReleaseNotes?.path,
             releaseNotesRenderer = primaryReleaseNotes?.rendererType,
             validationStatus = validationStatus,
+            tableSemanticsPath = tableSemanticsFile?.path,
         )
         DocumentMetadata.writeTo(dir, metadata)
 

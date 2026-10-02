@@ -32,6 +32,9 @@ import java.time.Instant
  * @property validationStatus overall composite validation status (DOC-METADATA-VALIDATION,
  *           nullable — "PASS"/"FAIL" derived from DocumentValidationReport.overallStatus();
  *           absent when no composite validation ran, backward-compatible NON_NULL)
+ * @property tableSemanticsPath absolute path of the semantic-lifting artifact
+ *           (`table-semantics.json`, DOC-SEMANTIC-TABLE D10, nullable — present
+ *           only when `collectTableSemantics` ran, backward-compatible NON_NULL)
  */
 data class DocumentMetadata(
     val source: String,
@@ -44,6 +47,7 @@ data class DocumentMetadata(
     val releaseNotesPath: String? = null,
     val releaseNotesRenderer: String? = null,
     val validationStatus: String? = null,
+    val tableSemanticsPath: String? = null,
 ) {
     companion object {
         private val mapper: ObjectMapper = ObjectMapper()
@@ -76,6 +80,7 @@ data class DocumentMetadata(
          * @param releaseNotesPath absolute path of the release-notes file (DOC-8.3, default: null)
          * @param releaseNotesRenderer renderer type of the release-notes file (DOC-8.3, default: null)
          * @param validationStatus overall composite validation status (DOC-METADATA-VALIDATION, default: null)
+         * @param tableSemanticsPath path of the semantic-lifting artifact (DOC-SEMANTIC-TABLE, default: null)
          * @return a new [DocumentMetadata] with source set to "new-orleans"
          */
         fun forNewOrleans(
@@ -86,6 +91,7 @@ data class DocumentMetadata(
             releaseNotesPath: String? = null,
             releaseNotesRenderer: String? = null,
             validationStatus: String? = null,
+            tableSemanticsPath: String? = null,
         ): DocumentMetadata = DocumentMetadata(
             source = "new-orleans",
             type = type,
@@ -97,6 +103,7 @@ data class DocumentMetadata(
             releaseNotesPath = releaseNotesPath,
             releaseNotesRenderer = releaseNotesRenderer,
             validationStatus = validationStatus,
+            tableSemanticsPath = tableSemanticsPath,
         )
     }
 }

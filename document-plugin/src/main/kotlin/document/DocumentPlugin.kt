@@ -17,6 +17,8 @@ import document.validation.HtmlLinkLinter
 import document.validation.HtmlLinkLintResult
 import org.asciidoctor.SafeMode
 import document.security.IncludeGuardMode
+import document.semantic.SemanticTableSchema
+import document.semantic.TableSemanticsMode
 import document.xref.XrefValidationMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -154,6 +156,10 @@ class DocumentPlugin : Plugin<Project> {
                  pdfCheck = project.objects.property(PdfValidationMode::class.java),
              ),
               verification = VerificationDsl(project.objects.property(Boolean::class.java)),
+             semantic = SemanticDsl(
+                 tableSemantics = project.objects.property(TableSemanticsMode::class.java),
+                 schemas = project.objects.listProperty(SemanticTableSchema::class.java),
+             ),
         )
 
          // Conventions (defauts)
@@ -230,8 +236,13 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-PDF-CHECK — converter pdfCheck default OFF (backward-compatible) + mirror flat property
         ext.converter.pdfCheck.convention(PdfValidationMode.OFF)
         ext.pdfCheck.convention(ext.converter.pdfCheck)
-        // Verification DSL conventions
-        ext.verification.htmlLinks.convention(false)
+         // Verification DSL conventions
+         ext.verification.htmlLinks.convention(false)
+         // EPIC DOC-SEMANTIC-TABLE — semantic table lifting. OFF by default
+         // (backward-compatible: no AST read, no artifact) + mirror flat property.
+         ext.semantic.tableSemantics.convention(TableSemanticsMode.OFF)
+         ext.tableSemantics.convention(ext.semantic.tableSemantics)
+         ext.semantic.schemas.convention(emptyList())
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -297,6 +308,7 @@ class DocumentPlugin : Plugin<Project> {
         registerValidateDocument(project, ext)
         registerLintHtmlDocument(project, ext)
         registerVerifyHtmlLinksTask(project, ext)
+        registerCollectTableSemantics(project, ext)
     }
 
     private fun cliProp(project: Project, key: String) =
@@ -383,6 +395,10 @@ class DocumentPlugin : Plugin<Project> {
             // DOC-METADATA-VALIDATION — snapshot the composite validation report if present
             // (emitted by `validateDocument`); absent → validationStatus omitted from metadata.json.
             task.validationReportPath.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json").map { it.asFile.absolutePath })
+            // DOC-SEMANTIC-TABLE (D10) — index the semantic-lifting artifact if present
+            // (emitted by `collectTableSemantics`); absent → tableSemanticsPath omitted
+            // from metadata.json. Same-directory snapshot, zero task dependence.
+            task.tableSemanticsPath.set(project.layout.buildDirectory.file("docs/document/table-semantics.json").map { it.asFile.absolutePath })
             // S-236 — the collect follows the same `outputFileName` knob as the conversion
             // (live since S-235), so composite-context.json indexes the real artifacts.
             // Same-knob derivation, zero task dependence (S-232 pitfall respected).
@@ -1029,6 +1045,29 @@ class DocumentPlugin : Plugin<Project> {
                     }
                 }
             }
+        }
+    }
+
+    private fun registerCollectTableSemantics(project: Project, ext: DocumentExtension) {
+        project.tasks.register("collectTableSemantics", CollectTableSemanticsTask::class.java) { task ->
+            task.group = "document"
+            task.description = "Lifts opt-in annotated AsciiDoc tables into typed records and exports table-semantics.json. — DOC-SEMANTIC-TABLE"
+            task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
+            // D9 precedence — CLI `-Pdocument.tableSemantics` > DSL > default OFF.
+            task.tableSemantics.set(
+                cliProp(project, "tableSemantics").map { TableSemanticsMode.valueOf(it.uppercase()) }
+                    .orElse(ext.tableSemantics),
+            )
+            // Schemas are a structured consumer declaration — DSL only (a CSV CLI
+            // cannot express index/header/required columns). Mode stays CLI-overridable.
+            task.schemas.set(ext.semantic.schemas)
+            task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/table-semantics.json"))
+            // The report lands inside `collectDocumentRetrieve`'s @OutputDirectory
+            // (build/docs/document) — same shape as the converters (S-233). Ordering
+            // (never a coupling/dependsOn) keeps both usable standalone: when both
+            // are requested, the collect snapshot indexes the fresh artifact.
+            project.tasks.named("collectDocumentRetrieve").configure { it.mustRunAfter("collectTableSemantics") }
         }
     }
 }

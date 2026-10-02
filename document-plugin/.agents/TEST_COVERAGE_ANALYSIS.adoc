@@ -1,6 +1,34 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-09-29
-:session: 278
+:date: 2026-10-02
+:session: 279
+
+== Session 279 — DOC-SEMANTIC-TABLE US-3→6 (20 tests : 10 UT + 5 FT + 5 BDD)
+
+*Périmètre* : clôture de l'EPIC DOC-SEMANTIC-TABLE (tâche + DSL + N3 +
+validation + BDD + dogfooding).
+*Note méthodo* : règle **Local = Build, Tests = CI** — les suites ne sont pas
+exécutées en local ; elles s'exécutent en CI (GitHub Actions) après push.
+
+*Nouveaux tests* :
+
+- `document.semantic.TableSemanticsReportTest` — **6 UT** : table extraite
+  (records + findings), rôle requis blanc → finding, table annotée sans schéma
+  conservée en `skipped` (jamais de drop muet), ordre du `Map` = ordre du schéma,
+  `empty(mode)`, `toJson` (mode + nom + valeur, NON_NULL).
+- `document.DocumentMetadataTest` (étendu) — **4 UT** : `tableSemanticsPath`
+  défaut null, accepté, écrit dans `metadata.json`, omis si null.
+- `document.CollectTableSemanticsFunctionalTest` — **4 FT TestKit** : LENIENT
+  extrait un tableau annoté, tableau non annoté ignoré, STRICT rejette (rapport
+  écrit), OFF skip (aucun rapport).
+- `document.TableSemanticContentFunctionalTest` — **1 FT dogfooding** : page
+  réelle FPA `scans/110.adoc`, table `Durée | Perte` → `20 min`/`42%`, source
+  non mutée (SHA-256, Règle 7).
+- `document.tablesemantic` — **5 BDD** (`@table-semantic`, **28e runner**) :
+  LENIENT extrait, non annoté ignoré, required blanc toléré (LENIENT), STRICT
+  rejette, OFF skip.
+
+*Tests modifiés* : `DocumentMetadataTest` étendu (4 UT additifs). Zéro test
+historique cassé. `bookPipeline`/convertisseurs/pivot intacts (D12).
 
 == Session 278 — DOC-SEMANTIC-1 + US-2 (43 UT, domaine pur + adapter AST)
 

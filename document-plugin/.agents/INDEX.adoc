@@ -6,7 +6,31 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-09-29 (session 278 — **DOC-SEMANTIC-1 + US-2
+_Derniere mise a jour_ : 2026-10-02 (session 279 — **EPIC DOC-SEMANTIC-TABLE
+TERMINÉ 6/6 US** (baby-step DDD/TDD/BDD strict unit → functional → cucumber).
+US-3 **tâche + DSL + export + N3** : `TableSemanticsMode` (`OFF`/`LENIENT`/
+`STRICT`) + `TableSemanticsReport` (Jackson, `fromExtractions`/`empty`, zéro
+re-lecture de l'AST) ; DSL `semantic { tableSemantics.set(…) ; schema("<name>") {
+column(index|header, role, required) } }` (`SemanticDsl`/`SemanticSchemaDsl`,
+zéro mot métier — D4) câblé dans `DocumentExtension`/`DocumentPlugin` ; tâche thin
+`collectTableSemantics` (délègue l'AST au port `AsciidoctorTableReader`, la
+projection à `SemanticExtractor`) exportant `table-semantics.json` ; N3 additif
+`DocumentMetadata.tableSemanticsPath` (NON_NULL) + snapshot lecture seule dans
+`collectDocumentRetrieve` (D10). US-4 **validation** rôles `required`
+`OFF`/`LENIENT`/`STRICT` intégrée à la tâche (symétrique `document.xref` —
+rapport écrit puis fail-fast en STRICT). US-5 **BDD** `@table-semantic` (5
+scénarios + `TableSemanticSteps` + `TableSemanticCucumberRunner`, **28e runner
+dédié** câblé `additionalTasksInCheck`). US-6 **dogfooding lecture seule** (Règle
+7) : page réelle FPA `scans/110.adoc` (table `Durée | Perte`) → enregistrements
+`20 min`/`42%`, source jamais mutée (SHA-256 avant/après). Tests : **6 UT**
+rapport + **4 UT** `DocumentMetadata` + **4 FT** TestKit tâche + **1 FT**
+dogfooding + **5 BDD**. Gates (Local = Build) : compiles VERT (3 source sets) +
+`validatePlugins` VERT ; **aucun test local** (Local = Build, Tests = CI). Zéro
+bump/publication, zéro secret. Additif pur (D12 : `bookPipeline`/convertisseurs/
+pivot intacts ; défaut `OFF` byte-identique). Rapport :
+`.agents/sessions/279-semantic-task-dsl-bdd-dogfood.adoc`.)
+
+|_Derniere mise a jour_ : 2026-09-29 (session 278 — **DOC-SEMANTIC-1 + US-2
 TERMINÉES** (baby-step DDD/TDD strict RED → GREEN → REFACTOR) — implémentation de
 l'EPIC DOC-SEMANTIC-TABLE : le document devient une **source de données typée**.
 *US-1* — domaine pur `document.semantic` (Gradle-free) : `SemanticColumnSpec`

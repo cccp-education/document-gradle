@@ -1,0 +1,27 @@
+= COMPLETED_TASKS_ARCHIVE — Octobre 2026
+
+== Document-gradle (New Orleans 🟢)
+
+=== Session 279 (2026-10-02) — EPIC DOC-SEMANTIC-TABLE TERMINÉ 6/6 US (US-3→6)
+
+*Type* : feature — baby-step DDD/TDD/BDD strict (unit → functional → cucumber)
+*Mission* : clore l'EPIC DOC-SEMANTIC-TABLE (cadré S-277, US-1/2 livrées S-278).
+*Livrables* :
+- US-3 — `TableSemanticsMode` + `TableSemanticsReport` (domaine pur Jackson) ;
+  DSL `semantic { tableSemantics.set(…); schema("<name>") { column(…) } }`
+  (`SemanticDsl`/`SemanticSchemaDsl`, zéro mot métier) ; tâche thin
+  `collectTableSemantics` → `table-semantics.json` ; N3 additif
+  `DocumentMetadata.tableSemanticsPath` + snapshot `collectDocumentRetrieve`.
+- US-4 — sévérité `OFF`/`LENIENT`/`STRICT` (rapport écrit puis fail-fast).
+- US-5 — `table_semantic.feature` 5 scénarios `@table-semantic` + 28e runner
+  dédié câblé `additionalTasksInCheck`.
+- US-6 — dogfooding lecture seule (Règle 7) : page réelle FPA `scans/110.adoc`
+  (table `Durée | Perte`) → `20 min`/`42%`, source jamais mutée (SHA-256).
+- Tests : 6 UT + 4 UT + 4 FT + 1 FT dogfooding + 5 BDD.
+*Décisions notables* : `TableSemanticsReport` construit depuis les
+`SemanticExtraction` déjà produites (zéro re-lecture AST, Économie d'Encre) ;
+défaut `OFF` (byte-identique, D12) ; schémas DSL-only (un CSV ne peut exprimer
+index/header/required) tandis que le mode reste CLI-overridable.
+*Gates* : compiles VERT (3 source sets) + `validatePlugins` VERT ; aucun test
+local (Local = Build, Tests = CI). Zéro bump/publication/secret.
+*Rapport* : `.agents/sessions/279-semantic-task-dsl-bdd-dogfood.adoc`.

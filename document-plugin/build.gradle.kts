@@ -263,6 +263,12 @@ cucumberConventions {
             tags = listOf("@release-gate"),
             runnerClass = "document.ci.ReleaseGateCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "tableSemanticCucumberTest",
+            features = listOf("src/test/resources/features/table_semantic.feature"),
+            tags = listOf("@table-semantic"),
+            runnerClass = "document.tablesemantic.TableSemanticCucumberRunner",
+        ),
     )
 }
 

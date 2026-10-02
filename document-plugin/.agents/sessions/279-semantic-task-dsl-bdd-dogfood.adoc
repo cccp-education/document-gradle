@@ -1,0 +1,192 @@
+= Session 279 — DOC-SEMANTIC-TABLE US-3→6 (tâche + DSL + N3 + validation + BDD + dogfooding)
+
+:date: 2026-10-02
+:borough: New Orleans (document-gradle)
+:epic: DOC-SEMANTIC-TABLE (US-3 + US-4 + US-5 + US-6)
+:type: feature — baby-step DDD/TDD/BDD strict (unit → functional → cucumber)
+:session_precedente: 278 — DOC-SEMANTIC-1/2 (domaine pur + port/adapter AST)
+
+== Mission
+
+À l'ouverture, le `PROMPT_REPRISE` S-278 (fichier canonique
+`.agents/PROMPT_REPRISE.adoc`) proposait `DOC-SEMANTIC-3` *si le pilote valide*.
+Le pilote a acté « on attaque ce que tu as mis à nu » — reliquat actionnable sans
+accord externe ni coût LLM. Mission retenue : **clore l'EPIC DOC-SEMANTIC-TABLE**
+en implémentant US-3 (tâche + DSL + export + N3), US-4 (validation rôles requis),
+US-5 (BDD `@table-semantic`) et US-6 (dogfooding lecture seule), en baby-step
+DDD/TDD/BDD strict (unit → functional → cucumber), méthode agile software
+craftmanship du borough.
+
+== Audit d'ouverture
+
+* `git status` propre, branche `main`, HEAD `ccc79d2` (S-278).
+* `PROMPT_REPRISE` S-278 lu ; garde « Local = Build, Tests = CI » rappelée par le
+  pilote en cours de session (aucun test local, `build` en CI).
+* Compiles VERT (`compileKotlin` / `compileTestKotlin`
+  `compileFunctionalTestKotlin`), JDK 25.
+* **0.0.19** publiée Central ; catalogue ws **0.0.60** == pin document.
+* Cadrage S-277 + rapport S-278 lus (US-1 domaine, US-2 port/adapter livrées).
+* Pattern sœur étudié : `document.xref` (`ValidateDocumentXrefTask`,
+  `XrefValidationMode`, `XrefValidationReport`, FT TestKit, runner dédié).
+
+== Livrable — US-3 (DOC-SEMANTIC-3, tâche + DSL + export + N3)
+
+Baby-step TDD strict :
+
+. *Domaine (RED → GREEN)* — `document.semantic` enrichi (3 fichiers prod) :
+* `TableSemanticsMode.kt` — `OFF`/`LENIENT`/`STRICT` (défaut `OFF`,
+  backward-compat, zéro lecture AST ; symétrique `XrefValidationMode`, D8).
+* `TableSemanticsReport.kt` — valeur sérialisable Jackson :
+  `SemanticExtractedTableReport`, `SemanticSkippedReport`,
+  `SemanticFindingReport`, `TableSemanticsReport.fromExtractions(mode, schemas,
+  extractions)` + `empty(mode)` + `toJson()` (`@JsonInclude(NON_NULL)`). **Aucune
+  re-lecture de l'AST** — construit depuis les `SemanticExtraction` déjà
+  produites (Loi de l'Économie d'Encre).
+* `SemanticTableSchema`/`SemanticColumnSpec` — `java.io.Serializable` (requis
+  par `ListProperty<>` Gradle).
+
+. *DSL (GREEN)* — `SemanticDsl.kt` : bloc `semantic { }` (pattern
+  `BookDsl`/`DocumentEnrichDsl`) — `tableSemantics` (`Property<TableSemanticsMode>`)
+  + `schemas` (`ListProperty<SemanticTableSchema>`) + `schema("<name>") { … }`
+  via `SemanticSchemaDsl` (`column(index|header, role, required)`), **zéro mot
+  métier** (D4, gate RENAME). Câblé dans `DocumentExtension`
+  (`semantic` + mirror plat `tableSemantics`, `initNested`, `semantic { }`) et
+  `DocumentPlugin` (`SemanticDsl`, conventions `OFF`/`emptyList()`, mirror).
+
+. *Tâche (RED → GREEN)* — `CollectTableSemanticsTask` (thin, groupe `document`) :
+  délègue l'AST au port `AsciidoctorTableReader` (D6) et la projection à
+  `SemanticExtractor` (D5) ; `@InputFile` source + `@Input` mode/schemas/safeMode
+  + `@OutputFile table-semantics.json` ; enregistrée par `registerCollectTableSemantics`
+  (précédence CLI `-Pdocument.tableSemantics` > DSL > `OFF`). Ordre avec
+  `collectDocumentRetrieve` via `mustRunAfter` (jamais de couplage).
+
+. *N3 additif (D10)* — `DocumentMetadata.tableSemanticsPath` (nullable,
+  `forNewOrleans` + `@property`) + `CollectDocumentRetrieveTask.tableSemanticsPath`
+  (`@Input @Optional Property<String>`, snapshot lecture seule, jamais
+  `@InputFile` → pas d'échec si l'artefact est absent, piège S-232).
+
+== Livrable — US-4 (DOC-SEMANTIC-4, validation rôles requis)
+
+La sévérité est **intégrée à la tâche** (symétrique `document.xref`) :
+
+* `OFF`  — no-op (défaut, aucun rapport, zéro lecture AST) ;
+* `LENIENT` — findings + tableaux non résolus journalisés en `warn`, rapport
+  écrit, build vert ;
+* `STRICT` — rapport écrit **puis** `GradleException` (fail-fast) si findings.
+
+Domain pur : `SemanticTable.projection` (S-278) **enregistre** les findings
+(`required` blanc) sans jamais lever — la tâche décide de la sévérité.
+
+== Livrable — US-5 (DOC-SEMANTIC-5, BDD `@table-semantic`)
+
+* `table_semantic.feature` — 5 scénarios `@table-semantic` (LENIENT extrait,
+  non annoté ignoré, required blanc toléré en LENIENT, STRICT rejette via
+  TestKit + rapport, OFF skip).
+* `TableSemanticSteps` (steps préfixés « table-semantic », pattern S-088/S-223)
+  + `TableSemanticCucumberRunner` (glue `document.tablesemantic`) —
+  **28e runner dédié** câblé `build.gradle.kts` (`additionalTasksInCheck = true`,
+  sinon test fantôme — leçon S-269).
+
+== Livrable — US-6 (DOC-SEMANTIC-6, dogfooding lecture seule)
+
+`TableSemanticContentFunctionalTest` (FT TestKit) : copie une page **réelle**
+privée (`office/metiers/FPA/.../scans/110.adoc`, table `Durée | Perte`), l'annote
+`[.semantic-perte,options="header"]` **sur la copie seule**, déclare un schéma
+`duration`/`loss`, asserte les enregistrements réels (`20 min`/`42%`) et échoue
+si l'original est muté (SHA-256 avant/après, **Règle 7**). Self-skip
+(`assumeTrue`) hors corpus.
+
+== Tests (baby-step DDD/TDD/BDD — unit → functional → cucumber)
+
+[cols="1,2,1,2", options="header"]
+|===
+| Niveau | Fichier | Nouv. | Nature
+
+| Unit
+| `TableSemanticsReportTest`
+| 6
+| Rapport pur (shape, findings, skip, ordre, empty, `toJson`)
+| Unit
+| `DocumentMetadataTest` (étendu)
+| 4
+| `tableSemanticsPath` (défaut null, accepté, écrit, omis)
+| Functional
+| `CollectTableSemanticsFunctionalTest`
+| 4
+| TestKit : LENIENT extrait, non annoté ignoré, STRICT rejette, OFF skip
+| Functional
+| `TableSemanticContentFunctionalTest`
+| 1
+| Dogfooding lecture seule (hash source, Règle 7)
+| Cucumber
+| `table_semantic.feature` + steps + runner
+| 5
+| BDD `@table-semantic` (28e runner)
+|===
+
+*Exécution* : **CI uniquement** (Local = Build, Tests = CI) — décision pilote
+réaffirmée en session. Les compiles des 3 source sets + `validatePlugins` sont
+VERT locaux ; le comportement (JRuby réel, TestKit réel) est prouvé par le run CI
+du commit poussé.
+
+== Gates de session
+
+[cols="2,4", options="header"]
+|===
+| Gate | Résultat
+
+| `git status` ouverture | propre — `main`, HEAD `ccc79d2`
+| Compiles (3 source sets) | VERT (JDK 25)
+| `validatePlugins` | VERT
+| Domaine (US-3) | `TableSemanticsMode` + `TableSemanticsReport` (+2 fichiers)
+| DSL (US-3) | `SemanticDsl`/`SemanticSchemaDsl` + extension/plugin câblés
+| Tâche (US-3) | `CollectTableSemanticsTask` + `registerCollectTableSemantics`
+| N3 (D10) | `DocumentMetadata.tableSemanticsPath` additif (NON_NULL)
+| Validation (US-4) | `OFF`/`LENIENT`/`STRICT` dans la tâche
+| BDD (US-5) | 5 scénarios + 28e runner câblé
+| Dogfooding (US-6) | FT lecture seule + hash (Règle 7)
+| Tests locaux exécutés | **aucun** (Local = Build, Tests = CI)
+| Preuve CI | run du commit de clôture (à confirmer post-push)
+| Bump / publication | aucun (acte de release distinct, accord pilote)
+| Secrets | RAS
+|===
+
+== Méthode et non-régression
+
+* Baby-step DDD/TDD/BDD strict RED → GREEN → REFACTOR (unit → functional →
+  cucumber), 1 fichier à la fois.
+* `bookPipeline`, les 5 convertisseurs, la traduction et le pivot
+  `document.translation.Table` sont **inchangés** (D12). Additif pur :
+  nouveaux fichiers + extension/plugin par ajout ; `DocumentMetadata` gagne un
+  champ nullable NON_NULL (backward-compatible) ; `CollectDocumentRetrieveTask`
+  gagne un `@Input @Optional` (snapshot lecture seule).
+* Default `OFF` → sans knobs, aucune lecture AST, aucun artefact : le pipeline
+  livre et les conversions sont byte-identiques.
+* English only code/tests/features ; gouvernance `.adoc` en français. Zéro
+  Python. Règle 7 respectée (source jamais mutée).
+
+== Suite
+
+* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-279 (DOC-SEMANTIC-1→6 :
+  domaine, adapter, tâche, DSL, N3) — chaîne DAG MEMPHIS-first, tag `v0.0.20`,
+  preuve consommateur tiers Central (accord pilote).
+* *DOC-FPA-PUBLISH-0* (STANDBY) — attend la convergence A1 Tombouctou.
+* *DOC-SEMANTIC-3bis* (optionnel) — entrée CLI CSV des schémas (`schema`
+  structuré DSL-only pour l'instant : un CSV ne peut exprimer index/header/
+  required).
+* *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
+
+== Pièges / notes
+
+* *`ListProperty<Custom>` exige `Serializable`* — `SemanticTableSchema` /
+  `SemanticColumnSpec` l'implémentent (sinon `IllegalStateException` à la
+  configuration Gradle).
+* *Runner non câblé = test fantôme* — le 28e runner devait être enregistré dans
+  `build.gradle.kts` (`additionalTasksInCheck = true`) pour s'exécuter en CI
+  (leçon S-269).
+* *`logger`, pas `log.lifecycle`* — `log` est un SLF4J `Logger` (pas de
+  `lifecycle`) ; les messages de cycle de vie passent par `logger.lifecycle`.
+* *Le dogfooding annote une copie, jamais l'original* — `replaceFirst("|===", …)`
+  sur une copie du fichier privé (Règle 7), hash vérifié.
+* *Deux modèles tabulaires parallèles* (piège #47) — l'AST (lifting) et le pivot
+  regex (traduction) cohabitent, nommage sans ambiguïté.
