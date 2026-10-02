@@ -49,7 +49,10 @@ class TableSemanticSteps {
             }
             """.trimIndent(),
         )
-        projectDir.resolve("doc.adoc").writeText(source)
+        // Cucumber `{string}` does not decode `\n` — the feature passes it
+        // literally. AsciiDoc table parsing needs real line breaks, so the step
+        // interprets the escape itself (pattern shared with the other steps).
+        projectDir.resolve("doc.adoc").writeText(source.replace("\\n", "\n"))
         reportFile = projectDir.resolve("build/docs/document/table-semantics.json")
     }
 

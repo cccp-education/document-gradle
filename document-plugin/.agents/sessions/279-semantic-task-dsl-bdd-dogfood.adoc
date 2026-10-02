@@ -208,5 +208,10 @@ La première CI de clôture a **échoué** (`functionalTest` : 13 échecs, dont 
   `lifecycle`) ; les messages de cycle de vie passent par `logger.lifecycle`.
 * *Le dogfooding annote une copie, jamais l'original* — `replaceFirst("|===", …)`
   sur une copie du fichier privé (Règle 7), hash vérifié.
+* *Cucumber `{string}` ne décode PAS `\n`* — la feature passe l'échappement
+  littéral ; le step doit le convertir (`replace("\\n", "\n")`) sinon le texte
+  écrit n'a pas de vrais sauts de ligne et l'AST ne voit aucun tableau. Les
+  steps sœurs (`xref`) ne l'exigeaient pas (leurs assertions ne dépendent pas du
+  découpage ligne) ; le parsing tabulaire, si. Nouveau piège **#54**.
 * *Deux modèles tabulaires parallèles* (piège #47) — l'AST (lifting) et le pivot
   regex (traduction) cohabitent, nommage sans ambiguïté.
