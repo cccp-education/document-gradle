@@ -146,10 +146,17 @@ du commit poussé.
 | BDD (US-5) | 5 scénarios + 28e runner câblé
 | Dogfooding (US-6) | FT lecture seule + hash (Règle 7)
 | Tests locaux exécutés | **aucun** (Local = Build, Tests = CI)
-| Preuve CI | run `37051193960` **ROUGE** (13 FT) → cause unique corrigée (commits suivants)
+| Preuve CI | run `37054856108` (commit `cbee77c`) — **Build & Test ✅ VERT**
 | Bump / publication | aucun (acte de release distinct, accord pilote)
 | Secrets | RAS
 |===
+
+*Historique CI de clôture* : run `37051193960` ROUGE (13 FT, configuration du
+plugin cassée) → correctif `a279ed9` ; run `37052359020` ROUGE (3 BDD, `\n`
+littéral) → correctif `cbee77c` ; run **`37054856108` VERT** (Build & Test
+complet, 5831 scénarios co-découverts dont les 5 `@table-semantic` + tous les
+FT). La CI rouge n'a révélé que des défauts de *mon* delta, jamais de
+régression préexistante — les itérations successives sont la preuve du baby-step.
 
 === Découverte CI (run `37051193960`, commit `2b3451d`) — bug de configuration
 
