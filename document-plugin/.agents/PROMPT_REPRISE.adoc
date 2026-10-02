@@ -63,6 +63,10 @@ L'EPIC DOC-SEMANTIC-TABLE est clos. Candidats (Règle 2 — accord pilote) :
 *52.* (S-279) *Un runner Cucumber non câblé est un test fantôme* — tout nouveau
     `CucumberTaskSpec` doit être enregistré dans `build.gradle.kts`
     (`additionalTasksInCheck = true`).
+*53.* (S-279) *`named(…).configure` est interdit DANS une action `tasks.register`*
+    — « NamedDomainObjectProvider.configure(Action) … cannot be executed in the
+    current context ». Le `configure` doit vivre au configuration time, hors
+    action. Une CI rouge à la **configuration** invalide *tous* les FT.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 

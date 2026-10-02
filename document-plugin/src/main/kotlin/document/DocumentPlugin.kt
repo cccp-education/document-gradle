@@ -1063,11 +1063,15 @@ class DocumentPlugin : Plugin<Project> {
             task.schemas.set(ext.semantic.schemas)
             task.safeMode.set(cliProp(project, "safeMode").map { SafeMode.valueOf(it.uppercase()) }.orElse(ext.safeMode))
             task.reportFile.set(project.layout.buildDirectory.file("docs/document/table-semantics.json"))
-            // The report lands inside `collectDocumentRetrieve`'s @OutputDirectory
-            // (build/docs/document) — same shape as the converters (S-233). Ordering
-            // (never a coupling/dependsOn) keeps both usable standalone: when both
-            // are requested, the collect snapshot indexes the fresh artifact.
-            project.tasks.named("collectDocumentRetrieve").configure { it.mustRunAfter("collectTableSemantics") }
         }
+        // The report lands inside `collectDocumentRetrieve`'s @OutputDirectory
+        // (build/docs/document) — same shape as the converters (S-233). Ordering
+        // (never a coupling/dependsOn) keeps both usable standalone: when both
+        // are requested, the collect snapshot indexes the fresh artifact.
+        // NOTE: the `configure` MUST run at configuration time OUTSIDE the
+        // `tasks.register` action (a nested `named(…).configure` in the register
+        // action throws "NamedDomainObjectProvider.configure … cannot be executed
+        // in the current context").
+        project.tasks.named("collectDocumentRetrieve").configure { it.mustRunAfter("collectTableSemantics") }
     }
 }

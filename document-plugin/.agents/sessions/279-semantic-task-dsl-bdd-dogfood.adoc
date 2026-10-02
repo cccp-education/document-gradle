@@ -146,10 +146,30 @@ du commit poussé.
 | BDD (US-5) | 5 scénarios + 28e runner câblé
 | Dogfooding (US-6) | FT lecture seule + hash (Règle 7)
 | Tests locaux exécutés | **aucun** (Local = Build, Tests = CI)
-| Preuve CI | run du commit de clôture (à confirmer post-push)
+| Preuve CI | run `37051193960` **ROUGE** (13 FT) → cause unique corrigée (commits suivants)
 | Bump / publication | aucun (acte de release distinct, accord pilote)
 | Secrets | RAS
 |===
+
+=== Découverte CI (run `37051193960`, commit `2b3451d`) — bug de configuration
+
+La première CI de clôture a **échoué** (`functionalTest` : 13 échecs, dont les
+4 nouveaux `CollectTableSemanticsFunctionalTest` + des FT préexistants
+`DocumentPluginFunctionalTest`/`AssembleBookTaskFunctionalTest`/…). La cause est
+**unique et systémique** : le plugin ne se **configure** plus du tout.
+
+* Erreur : `Could not create task ':collectTableSemantics' > DefaultTaskContainer#NamedDomainObjectProvider.configure(Action) on task set cannot be executed in the current context.`
+* Cause : `registerCollectTableSemantics` appelait
+  `project.tasks.named("collectDocumentRetrieve").configure { … }` **à
+  l'intérieur** de l'action passée à `tasks.register("collectTableSemantics")`.
+  Une action de `register` s'exécute en différé ; y imbriquer un
+  `named(…).configure` viole le contrat de cycle de vie Gradle.
+* Correctif : déplacer le `named("collectDocumentRetrieve").configure { … }`
+  **hors** de l'action `register` (configuration time). Le reste du registre
+  (task wiring) est inchangé ; `compileKotlin` VERT revérifié.
+* *Leçon* : une CI rouge à la **configuration** (pas à l'exécution) invalide
+  *tous* les FT — le diagnostic se fait par la première exception, pas par le
+  compteur d'échecs. Nouveau piège **#53**.
 
 == Méthode et non-régression
 
