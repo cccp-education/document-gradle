@@ -29,7 +29,12 @@ Conclusion : le correctif doit être **apparié** — block-level (document-grad
 
 Gates locaux (Local = Build, Tests = CI) : `compileKotlin`/`compileTestKotlin`/
 `compileFunctionalTestKotlin` VERT sur les 2 boroughs, `assemble` +
-`validatePlugins` VERT. **Aucun test local** — run CI du commit = preuve.
+`validatePlugins` VERT. **Aucun test local**.
+
+**Preuve CI (Locale = Build, Tests = CI)** : run CI document-gradle `Test`
+**37440640886** (commit `5175178`) → **success** (30 min). CI bakery `Test`
+**37443100752** (commit `68d776c5`) → **success** ; `Publish website`
+**37443100696** → success.
 
 == Décisions
 
