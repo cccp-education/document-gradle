@@ -1,0 +1,54 @@
+= Session 281 — PUB 0.0.20 : distribution du fix DOC-TRANSLATE-RESILIENCE
+
+:date: 2026-10-06
+:borough: New Orleans (document-gradle) + MEMPHIS (workspace-bom)
+:epic: PUB / propagation DAG
+:type: PUB cross-borough (accord pilote explicite)
+
+== Mission
+
+Propager le fix cross-borough S-280 (DOC-TRANSLATE-RESILIENCE — un échec LLM
+n'est plus gelé `TRANSLATED`) jusqu'à cheroliv.com, à la demande du pilote.
+
+== Chaîne DAG N0→N2 exécutée
+
+. *MEMPHIS* — bump toml `workspace-bom 0.0.63 → 0.0.65` +
+   `document-plugin 0.0.19 → 0.0.20` + `bakery-plugin 0.0.22 → 0.0.23`.
+   Bundle `f9faa2fc` (AUTOMATIC), propagation repo1 HTTP 200.
+. *document* — re-pin catalog/BOM `0.0.60 → 0.0.65` + toml `document = 0.0.20`.
+   Version dérivée **0.0.20**. `publishToMavenLocal` VERT. Central bundle
+   `abdd46e8`.
+
+== Découverte P0 — `kotlin-stdlib-jdk8` muet
+
+Central rejetait la publication : `Dependency version information is missing for
+dependency: org.jetbrains.kotlin:kotlin-stdlib-jdk8`.
+
+* Cause : le BOM ne contraignait pas `kotlin-stdlib-jdk8`, consommé sans version
+  par `implementation(kotlin("stdlib-jdk8"))`.
+* Question pilote utile (« est-ce indispensable sous JDK 25 ? ») : **non** —
+  l'artefact `-jdk8` est un **shim vide de 953 octets** (0 classe hors
+  `module-info.class`) depuis Kotlin 1.8, les extensions JDK7/8 étant fusionnées
+  dans `kotlin-stdlib`.
+* Correctif : **retrait** de `kotlin("stdlib-jdk8")` (le `kotlin-stdlib`
+  transitif, épinglé par le BOM, suffit). Le BOM 0.0.65 épingle malgré tout
+  l'alias toml par cohérence de famille.
+* Le BOM fraîchement publié doit être **propagé** (repo1 HTTP 200) avant de
+  publier un plugin qui importe ses contraintes (1er essai sous 0.0.64 → 404).
+
+== Preuves
+
+[cols="2,3",options="header"]
+|===
+| Gate | Résultat
+
+| Compiles (3 source sets) | VERT
+| Version dérivée | `0.0.20`
+| Garde publication | VERT (pin 0.0.65, toml document 0.0.20)
+| Central `document-plugin/0.0.20` | bundle `abdd46e8`, POM + JAR 200, propagation repo1 200
+|===
+
+== Suite
+
+Publication consommée par le runner N3 (catalog 0.0.65 → bakery 0.0.23 →
+document 0.0.20) ; la re-convergence cheroliv (S-064) utilise le retry `PENDING`.

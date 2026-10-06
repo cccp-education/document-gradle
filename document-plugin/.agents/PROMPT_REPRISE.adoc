@@ -1,27 +1,23 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 281
+:session: 282
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-280 (2026-10-06) — **DOC-TRANSLATE-RESILIENCE ✅** (fix cross-borough) : un échec LLM n'est plus gelé `TRANSLATED` (bloc `PENDING` document + retry fichier bakery). Local = Build VERT, Tests = CI.
+:etat: S-281 (2026-10-06) — **PUB 0.0.20 ✅** : distribution du fix DOC-TRANSLATE-RESILIENCE (chaine DAG MEMPHIS 0.0.65 → document 0.0.20 → bakery 0.0.23). Central bundle `abdd46e8`. Local = Build VERT, Tests = CI.
 
-== Mission session 281 — sur décision pilote
+== Mission session 282 — sur décision pilote
 
-Le fix de résilience de traduction (priorité 2 de la dette cheroliv S-052) est
-livré. Candidats (Règle 2 — accord pilote) :
+Le fix de résilience est **publié** et atteint cheroliv.com. Candidats (Règle 2) :
 
-* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-280 (DOC-SEMANTIC-TABLE +
-  DOC-TRANSLATE-RESILIENCE) : chaîne DAG N0→N2 MEMPHIS-first, tag `v0.0.20` →
-  publication CI. **Requis pour que le fix atteigne cheroliv.com.**
-* *Propagation bakery 0.0.23* — le guard `TemplateStructureGuard` S-250
-  (balises multi-lignes) **et** le fix `PendingBlockRetry` doivent être publiés
-  Central + bump BOM MEMPHIS (accord pilote). Priorité 3 cheroliv S-063.
-* *Preuve consommateur tiers 0.0.19* (`/tmp`, Central sans mavenLocal).
+* *EPIC PUB 0.0.21* — distribuer un futur HEAD (DOC-SEMANTIC-3 si validé).
+* *Vérifier la CI verte* du commit S-281.
+* *Preuve consommateur tiers 0.0.20* (`/tmp`, Central sans mavenLocal).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
-* *Vérifier la CI verte* du commit S-280 (run GitHub Actions `build`).
 
-== État du code (S-280)
+== État du code (S-281)
 
-* *0.0.19* : Central OK ; catalogue ws **0.0.60** (pas de drift).
+* *0.0.20* : Central OK ; catalogue ws **0.0.65** (pas de drift).
+* *Fix P0* : `kotlin-stdlib-jdk8` versionless retiré (shim vide depuis Kotlin 1.8,
+  inutile sous JDK 25) ; BOM 0.0.65 épingle l'alias. Central accepte.
 * *Nouveau domaine* : `document.translation.delta.BlockChecksum.resolveStatuses`
   (pur) — échecs LLM → `PENDING`.
 * *DocumentTranslator* : `translationFailures` + `clearTranslationFailures()`,

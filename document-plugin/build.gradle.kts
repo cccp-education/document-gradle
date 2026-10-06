@@ -12,9 +12,12 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.60"))
+    implementation(platform("education.cccp:workspace-bom:0.0.65"))
 
-    implementation(kotlin("stdlib-jdk8"))
+    // kotlin-stdlib is pulled transitively (and pinned by the BOM). The
+    // kotlin-stdlib-jdk8 shim is an empty 953-byte artifact since Kotlin 1.8
+    // (JDK7/8 extensions merged into kotlin-stdlib) and pointless on JDK 25 —
+    // publishing it versionless to Central is rejected. Removed.
 
     // DOC-METADATA-VALIDATION — Jackson Kotlin module for data-class deserialization
     // (DocumentValidationReport.fromJson). Version constrained by workspace-bom.
