@@ -26,11 +26,28 @@ class DocumentTranslator(
     val tableValidationResults: MutableList<TableValidationResult.Invalid> = mutableListOf()
     val plantUmlValidationResults: MutableList<PlantUmlValidationResult.Invalid> = mutableListOf()
 
+    /**
+     * DOC-TRANSLATE-RESILIENCE — indices (as `String`, matching [BlockChecksum]
+     * keys) of the top-level blocks whose LLM call returned a
+     * [TranslationResult.Failure]. Such a block must NOT be persisted as
+     * `TRANSLATED`: [ContentTranslationService] maps these indices to
+     * `PENDING` so the next batch re-attempts them instead of freezing the
+     * silent French fallback forever.
+     */
+    val translationFailures: MutableSet<String> = linkedSetOf()
+
+    private var currentTopLevelIndex: String? = null
+
+    fun clearTranslationFailures() {
+        translationFailures.clear()
+    }
+
     override fun translate(
         asciidoc: String,
         sourceLanguage: String,
         targetLanguage: String
     ): String {
+        clearTranslationFailures()
         val article = parser.parse(asciidoc)
         val translated = translateArticle(article, sourceLanguage, targetLanguage)
         val outputRenderer = if (article.frontmatter.isJbakeNative) jbakeRenderer else renderer
@@ -67,19 +84,24 @@ class DocumentTranslator(
     ): List<PivotBlock> {
         var tableIndex = 0
         var plantUmlIndex = 0
-        return blocks.map { block ->
-            when {
-                block is PivotBlock.Table -> {
-                    val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, tableIndex)
-                    tableIndex++
-                    result
+        return blocks.mapIndexed { index, block ->
+            currentTopLevelIndex = index.toString()
+            try {
+                when {
+                    block is PivotBlock.Table -> {
+                        val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, tableIndex)
+                        tableIndex++
+                        result
+                    }
+                    block is PivotBlock.Source && block.language == "plantuml" -> {
+                        val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex = plantUmlIndex)
+                        plantUmlIndex++
+                        result
+                    }
+                    else -> translateBlock(block, sourceLanguage, targetLanguage)
                 }
-                block is PivotBlock.Source && block.language == "plantuml" -> {
-                    val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex = plantUmlIndex)
-                    plantUmlIndex++
-                    result
-                }
-                else -> translateBlock(block, sourceLanguage, targetLanguage)
+            } finally {
+                currentTopLevelIndex = null
             }
         }
     }
@@ -112,16 +134,21 @@ class DocumentTranslator(
             if (idx.toString() in preservedIndices) {
                 previousTranslated.blocks.getOrNull(idx) ?: translateBlock(block, sourceLanguage, targetLanguage)
             } else {
-                when {
-                    block is PivotBlock.Table -> {
-                        val ti = tableIndexByOriginalIndex[idx] ?: 0
-                        translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, ti)
+                currentTopLevelIndex = idx.toString()
+                try {
+                    when {
+                        block is PivotBlock.Table -> {
+                            val ti = tableIndexByOriginalIndex[idx] ?: 0
+                            translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, ti)
+                        }
+                        block is PivotBlock.Source && block.language == "plantuml" -> {
+                            val pi = plantUmlIndexByOriginalIndex[idx] ?: 0
+                            translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, plantUmlIndex = pi)
+                        }
+                        else -> translateBlock(block, sourceLanguage, targetLanguage)
                     }
-                    block is PivotBlock.Source && block.language == "plantuml" -> {
-                        val pi = plantUmlIndexByOriginalIndex[idx] ?: 0
-                        translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, plantUmlIndex = pi)
-                    }
-                    else -> translateBlock(block, sourceLanguage, targetLanguage)
+                } finally {
+                    currentTopLevelIndex = null
                 }
             }
         }
@@ -293,7 +320,13 @@ class DocumentTranslator(
         val request = TranslationRequest(text, sourceLanguage, targetLanguage)
         return when (val result = translationService.translate(request)) {
             is TranslationResult.Success -> result.translatedText
-            is TranslationResult.Failure -> text
+            is TranslationResult.Failure -> {
+                // DOC-TRANSLATE-RESILIENCE — the silent French fallback is kept
+                // (the rendered article stays complete), but the owning top-level
+                // block is remembered so it is stored as PENDING, never TRANSLATED.
+                currentTopLevelIndex?.let { translationFailures.add(it) }
+                text
+            }
         }
     }
 

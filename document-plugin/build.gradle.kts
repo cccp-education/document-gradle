@@ -98,6 +98,14 @@ tasks.named<Test>("test") {
     systemProperty("document.publishedCatalog.bomVersion", ws.versions.workspace.bom.get())
 }
 
+// DOC-TRANSLATE-RESILIENCE — the resilience proof runs the production
+// ContentTranslationService (real files, real parser, real renderer) with a
+// controllable failing LLM, so it needs the plugin's own classes on the
+// functionalTest classpath (TestKit-only FTs never referenced them before).
+configurations.named("functionalTestImplementation") {
+    dependencies.add(project.dependencies.create(project.files(sourceSets.main.get().output)))
+}
+
 cucumberConventions {
     // DOC-CI-ISOLATION — the dedicated runners below must run in `check` (and
     // therefore in CI). With conventions-plugin 0.0.7+ the additional Cucumber
@@ -268,6 +276,12 @@ cucumberConventions {
             features = listOf("src/test/resources/features/table_semantic.feature"),
             tags = listOf("@table-semantic"),
             runnerClass = "document.tablesemantic.TableSemanticCucumberRunner",
+        ),
+        CucumberTaskSpec(
+            name = "translationResilienceCucumberTest",
+            features = listOf("src/test/resources/features/translation_resilience.feature"),
+            tags = listOf("@translation-resilience"),
+            runnerClass = "document.translation.resilience.TranslationResilienceCucumberRunner",
         ),
     )
 }

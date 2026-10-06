@@ -2,6 +2,27 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 280 (2026-10-06) — DOC-TRANSLATE-RESILIENCE (fix cross-borough)
+
+*Type* : fix cross-borough — baby-step DDD/TDD/BDD strict (unit → functional → cucumber)
+*Mission* : traiter le fix `document-gradle` priorité 2 de la dette cheroliv S-052
+(un échec LLM gelé `TRANSLATED`).
+*Livrables* :
+- US-1 — `BlockChecksum.resolveStatuses` (domaine pur : échecs → `PENDING`).
+- US-2 — `DocumentTranslator.translationFailures` + index top-level courant +
+  `doTranslate` enregistre l'échec ; `ContentTranslationService` dérive les statuts.
+- US-3 — `@translation-resilience` 2 scénarios + steps + **29e runner**.
+- US-4 — `TranslationResilienceFunctionalTest` (fichiers réels, 2 runs) +
+  **cross-borough bakery** `PendingBlockRetry` + FT convergence.
+- Tests : 6 UT + 2 FT + 2 BDD (document) + 4 UT + 1 FT (bakery).
+*Décisions notables* : le fix est **apparié** bloc (document) + fichier (bakery),
+sinon le fallback silencieux reste gelé (piège #55) ; classpath `functionalTest`
+étendu avec `sourceSets.main.output` (piège #56).
+*Gates* : compiles VERT (3 source sets ×2 boroughs) + `assemble`/`validatePlugins`
+VERT ; aucun test local (Local = Build, Tests = CI).
+*Prochaine session* : PUB 0.0.20 + propagation bakery 0.0.23 (accord pilote).
+*Rapport* : `.agents/sessions/280-translate-resilience.adoc`.
+
 === Session 279 (2026-10-02) — EPIC DOC-SEMANTIC-TABLE TERMINÉ 6/6 US (US-3→6)
 
 *Type* : feature — baby-step DDD/TDD/BDD strict (unit → functional → cucumber)

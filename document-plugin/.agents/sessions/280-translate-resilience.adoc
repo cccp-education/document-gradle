@@ -1,0 +1,138 @@
+= Session 280 — DOC-TRANSLATE-RESILIENCE : l'échec LLM n'est plus gelé
+
+_Date_ : 2026-10-06
+_Borough_ : New Orleans — document-gradle (N2, WRITE + PUBLISH) + cross-borough bakery
+_Type_ : fix cross-borough (domaine pur + tâche + BDD + FT), baby-step DDD/TDD/BDD
+
+== Mission d'ouverture
+
+Décision pilote (S-063 cheroliv.com) : traiter le **fix cross-borough
+`document-gradle`** — priorité 2 de la dette S-052. Cause racine documentée :
+`DocumentTranslator.doTranslate` retourne la **source FR** sur
+`TranslationResult.Failure`, et `ContentTranslationService.translateSingleFileWithBlockDelta`
+marque malgré tout le bloc `TRANSLATED`. Un échec LLM (quota épuisé) est donc
+**gelé** — le `BlockDelta` préserve tout bloc `TRANSLATED` dont le hash source
+est inchangé — et le batch rapporte `0 erreur` sans jamais converger.
+
+== Audit mesuré (ouverture)
+
+* `DocumentTranslator.doTranslate` (`DocumentTranslator.kt:291`) : `is Failure -> text`.
+* `ContentTranslationService.translateSingleFileWithBlockDelta` : retourne
+  inconditionnellement `BlockChecksumEntry(hash, TRANSLATED)` (3 sites).
+* `BlockDelta.compute` : un bloc `TRANSLATED` à hash inchangé est **préservé**.
+* Côté **bakery** (`MigrateContentI18nTask`) : `I18nDeltaApplier` préserve un
+  fichier cible dont la source est byte-identique → même si le bloc était
+  marqué `PENDING`, le fichier ne serait **jamais ré-entré** (gate fichier).
+
+Conclusion : le correctif doit être **apparié** — block-level (document-gradle)
+**et** file-level (bakery), sinon le fallback silencieux reste gelé.
+
+Gates locaux (Local = Build, Tests = CI) : `compileKotlin`/`compileTestKotlin`/
+`compileFunctionalTestKotlin` VERT sur les 2 boroughs, `assemble` +
+`validatePlugins` VERT. **Aucun test local** — run CI du commit = preuve.
+
+== Décisions
+
+[cols="1,5"]
+|===
+| # | Décision
+
+| D1
+| **Un bloc dont l'appel LLM échoue n'est jamais `TRANSLATED`.** Le fallback
+FR silencieux reste émis (l'article rendu demeure complet), mais l'index du bloc
+top-level fautif est mémorisé et stocké `PENDING` (`BlockChecksum.resolveStatuses`).
+Le prochain delta re-tente **ce bloc seul** (Économie d'Encre).
+
+| D2
+| **La connaissance est portée par le domaine pur.** `BlockChecksum.resolveStatuses`
+(map hash → statut, échecs → `PENDING`) est un objet Gradle-free/LLM-free,
+testable en unit pur. `DocumentTranslator.translationFailures` est un `MutableSet`
+alimenté par `doTranslate` via l'index top-level courant.
+
+| D3
+| **Le correctif est apparié file-level.** `bakery.i18n.PendingBlockRetry.filesWithPendingBlocks`
+retourne les fichiers dont les checksums de blocs contiennent un `PENDING` ;
+`MigrateContentI18nTask` les **retire de `toPreserve` et ajoute à `toTranslate`**.
+Sans ce complément, le `PENDING` block-level serait gelé au gate fichier.
+
+| D4
+| **Baby-step DDD/TDD/BDD strict** : unit (domaine) → functional (fichiers
+réels, 2 runs) → BDD (feature `@translation-resilience`). RED → GREEN →
+REFACTOR. Un runner Cucumber non câblé est un test fantôme (piège #52) →
+`translationResilienceCucumberTest` enregistré dans `additionalTasksInCheck`.
+
+| D5
+| **Zéro affaiblissement de garde.** Aucun contrat de validation
+(table/plantuml/déploiement) n'est touché ; le correctif est additif.
+|===
+
+=== Options écartées
+
+* **Corriger document seul** — insuffisant : le gate fichier bakery gèle le
+  fichier byte-inchangé, le `PENDING` bloc n'est jamais re-tenté.
+* **Corriger bakery seul** — insuffisant : sans `PENDING`, le bloc reste
+  `TRANSLATED` et le delta bloc le préserve.
+* **Re-traduire le fichier entier à chaque échec** — contredit l'Économie
+  d'Encre et le delta par blocs (D7 CHE-I18N-QUALITY).
+* **Marquer le fichier en erreur et arrêter le batch** — un échec LLM transitoire
+  (quota) ne doit pas bloquer 111 articles ; le retry delta est la voie.
+
+== Implémentation (baby-step)
+
+. **US-1 — `BlockChecksum.resolveStatuses` (domaine pur)**
+   * `resolveStatuses(currentHashes, failedBlockKeys)` : échecs → `PENDING`,
+     le reste → `TRANSLATED`.
+   * Tests unit : `TranslationResilienceTest` (6 tests).
+
+. **US-2 — `DocumentTranslator` + `ContentTranslationService`**
+   * `DocumentTranslator` : `translationFailures` + `clearTranslationFailures()`,
+     index top-level courant posé dans `translateBlocks` et
+     `translateArticleWithDelta` (via `try/finally`), `doTranslate` enregistre
+     l'index fautif (le fallback FR reste émis).
+   * `ContentTranslationService.translateSingleFileWithBlockDelta` : remet le set
+     à zéro avant traduction, retourne `resolveStatuses(hashes, failures)`.
+
+. **US-3 — BDD `@translation-resilience`**
+   * `translation_resilience.feature` 2 scénarios ; `TranslationResilienceSteps`
+     (fixture LLM contrôlable, 2 runs) ; `TranslationResilienceCucumberRunner`
+     (**29e runner dédié**) câblé `additionalTasksInCheck`.
+
+. **US-4 — Functional + paired bakery**
+   * `TranslationResilienceFunctionalTest` (functionalTest, fichiers réels,
+     parser + renderer réels, 2 runs convergence) ; ajout de `sourceSets.main.output`
+     au classpath `functionalTest` (les FT TestKit n'y référençaient aucune classe).
+   * bakery : `PendingBlockRetry.kt` (domaine pur) + `PendingBlockRetryTest` (4 UT)
+     + câblage `MigrateContentI18nTask` + FT `PendingBlockRetryConvergence`
+     (2 runs, source inchangée, `PENDING` puis convergence).
+
+== Fichiers
+
+* `document-plugin/src/main/kotlin/document/translation/delta/BlockChecksum.kt`
+* `document-plugin/src/main/kotlin/document/translation/DocumentTranslator.kt`
+* `document-plugin/src/main/kotlin/document/translation/ContentTranslationService.kt`
+* `document-plugin/src/test/kotlin/document/translation/TranslationResilienceTest.kt` (nouveau)
+* `document-plugin/src/test/kotlin/document/translation/resilience/TranslationResilienceCucumberRunner.kt` (nouveau)
+* `document-plugin/src/test/scenarios/document/translation/resilience/TranslationResilienceSteps.kt` (nouveau)
+* `document-plugin/src/test/resources/features/translation_resilience.feature` (nouveau)
+* `document-plugin/src/functionalTest/kotlin/document/translation/TranslationResilienceFunctionalTest.kt` (nouveau)
+* `document-plugin/build.gradle.kts` (runner + classpath FT)
+* bakery : `bakery.i18n.PendingBlockRetry` + `PendingBlockRetryTest` +
+  `MigrateContentI18nTask` + `MigrateContentI18nDeltaFunctionalTest` (nested)
+
+== Boundary
+
+* **document-gradle** possède : `doTranslate`, `BlockChecksum`,
+  `ContentTranslationService` — le grain **bloc**.
+* **bakery** possède : `MigrateContentI18nTask`, `I18nDeltaApplier` — le grain
+  **fichier**.
+* Les deux correctifs sont nécessaires et complémentaires ; aucun contrat N0
+  n'est touché (pas de bump BOM).
+
+== Reste
+
+* `./gradlew check` VERT (preuve CI) — le commit poussé.
+* Publication document-plugin 0.0.20 / bakery 0.0.23 (accord pilote) incluant
+  ce fix (le guard `TemplateStructureGuard` bakery S-250 doit aussi être
+  publié — propagation Central 0.0.23, priorité 3 cheroliv S-063).
+* Re-convergence cheroliv.com : le pool vivant peut désormais réparer les blocs
+  gelés (le `PENDING` ouvre le retry).

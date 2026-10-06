@@ -1,46 +1,39 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 280
+:session: 281
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-279 (2026-10-02) — **EPIC DOC-SEMANTIC-TABLE TERMINÉ 6/6 US** (US-3 tâche+DSL+N3, US-4 validation, US-5 BDD, US-6 dogfooding). Local = Build VERT, Tests = CI.
+:etat: S-280 (2026-10-06) — **DOC-TRANSLATE-RESILIENCE ✅** (fix cross-borough) : un échec LLM n'est plus gelé `TRANSLATED` (bloc `PENDING` document + retry fichier bakery). Local = Build VERT, Tests = CI.
 
-== Mission session 280 — sur décision pilote
+== Mission session 281 — sur décision pilote
 
-L'EPIC DOC-SEMANTIC-TABLE est clos. Candidats (Règle 2 — accord pilote) :
+Le fix de résilience de traduction (priorité 2 de la dette cheroliv S-052) est
+livré. Candidats (Règle 2 — accord pilote) :
 
-* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-279 : chaîne DAG N0→N2
-  MEMPHIS-first (catalogue ws **0.0.61** + document **0.0.20**), tag `v0.0.20`
-  → publication CI, preuve consommateur tiers Central (sans mavenLocal,
-  pattern S-264). Cadré au BACKLOG (S-279, section « 🟡 EPIC PUB 0.0.20 »).
-* *Vérifier la propagation Central 0.0.19* (polling 7-27 min — Piège #11).
+* *EPIC PUB 0.0.20* — distribuer le HEAD post-S-280 (DOC-SEMANTIC-TABLE +
+  DOC-TRANSLATE-RESILIENCE) : chaîne DAG N0→N2 MEMPHIS-first, tag `v0.0.20` →
+  publication CI. **Requis pour que le fix atteigne cheroliv.com.**
+* *Propagation bakery 0.0.23* — le guard `TemplateStructureGuard` S-250
+  (balises multi-lignes) **et** le fix `PendingBlockRetry` doivent être publiés
+  Central + bump BOM MEMPHIS (accord pilote). Priorité 3 cheroliv S-063.
 * *Preuve consommateur tiers 0.0.19* (`/tmp`, Central sans mavenLocal).
 * *DOC-FPA-PUBLISH-0 (1 pt) — STANDBY* : bloqué (`[ILLISIBLE]`, A1 Tombouctou).
-* *Rollout conventions 0.0.8* aux autres consommateurs (session dédiée).
-* *Bump koog/langchain4j* (cadrage MEMPHIS `CADRAGE_EPIC_BUMP_KOOG_LANGCHAIN4J.adoc`).
+* *Vérifier la CI verte* du commit S-280 (run GitHub Actions `build`).
 
-== État du code (S-279)
+== État du code (S-280)
 
 * *0.0.19* : Central OK ; catalogue ws **0.0.60** (pas de drift).
-* *Conventions* : **0.0.8** (signature sur CI release via `CCCP_PUBLISH`).
-* *Domaine* : `document.semantic` — Gradle-free sauf l'adapter AST
-  (`AsciidoctorTableReader`) : `SemanticColumnSpec`, `SemanticTableSchema`,
-  `RawTable`, `SemanticRow`, `SemanticFinding`, `SemanticTable`,
-  `SemanticExtraction`, `SemanticExtractor`, `SemanticTableReader`,
-  `TableSemanticsMode`, `TableSemanticsReport`.
-* *Tâche* : `collectTableSemantics` (groupe `document`,
-  `table-semantics.json`) ; défaut `OFF`.
-* *DSL* : `document { semantic { tableSemantics.set(…); schema("<name>") { … } } }`.
-* *Backlog* : `DOC-FPA-PUBLISH-0` (STANDBY) ; `EPIC PUB 0.0.20` 🟡 cadré.
+* *Nouveau domaine* : `document.translation.delta.BlockChecksum.resolveStatuses`
+  (pur) — échecs LLM → `PENDING`.
+* *DocumentTranslator* : `translationFailures` + `clearTranslationFailures()`,
+  index top-level courant, `doTranslate` enregistre l'échec.
+* *ContentTranslationService* : statuts dérivés de `resolveStatuses`.
+* *BDD* : `@translation-resilience` (**29e runner** `translationResilienceCucumberTest`).
+* *FT* : `TranslationResilienceFunctionalTest` (classpath `functionalTest` étendu
+  avec `sourceSets.main.output`).
+* *Cross-borough bakery* : `bakery.i18n.PendingBlockRetry` + câblage
+  `MigrateContentI18nTask` (retry fichier byte-inchangé portant un bloc PENDING).
 
-== EPIC DOC-SEMANTIC-TABLE (S-277→S-279) — TERMINÉ 6/6
-
-* US-0 cadrage (S-277) · US-1 domaine (S-278) · US-2 port/adapter (S-278) ·
-  US-3 tâche+DSL+N3 (S-279) · US-4 validation (S-279) · US-5 BDD (S-279) ·
-  US-6 dogfooding (S-279).
-* Doc : `.agents/CADRAGE_EPIC_DOC_SEMANTIC_TABLE.adoc`.
-* Rapports : `278-semantic-domain-adapter.adoc`, `279-semantic-task-dsl-bdd-dogfood.adoc`.
-
-== Pièges Gradle à retenir (S-232..S-279)
+== Pièges retenus (S-232..S-280)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en
@@ -57,26 +50,24 @@ L'EPIC DOC-SEMANTIC-TABLE est clos. Candidats (Règle 2 — accord pilote) :
 47. *L'AST AsciidoctorJ et le pivot regex tabulaire sont deux modèles parallèles*.
 48. *Une note visionnaire trackée peut rester hors backlog des mois*.
 49. *Un premier rang de tableau n'est un en-tête que si `options="header"`*.
-50. *`Cell.getText()`/`getRoles()` renvoient des types plateforme nuls* — accès défensifs.
-*51.* (S-279) *`ListProperty<Custom>` exige `Serializable`* — `SemanticTableSchema`/
-    `SemanticColumnSpec` l'implémentent.
-*52.* (S-279) *Un runner Cucumber non câblé est un test fantôme* — tout nouveau
-    `CucumberTaskSpec` doit être enregistré dans `build.gradle.kts`
-    (`additionalTasksInCheck = true`).
-*53.* (S-279) *`named(…).configure` est interdit DANS une action `tasks.register`*
-    — « NamedDomainObjectProvider.configure(Action) … cannot be executed in the
-    current context ». Le `configure` doit vivre au configuration time, hors
-    action. Une CI rouge à la **configuration** invalide *tous* les FT.
-*54.* (S-279) *Cucumber `{string}` ne décode PAS `\n`* — la feature passe
-    l'échappement littéral ; un step qui écrit un AsciiDoc doit convertir
-    (`replace("\\n", "\n")`), sinon aucun tableau n'est parsé par l'AST.
+50. *`Cell.getText()`/`getRoles()` renvoient des types plateforme nuls*.
+51. *`ListProperty<Custom>` exige `Serializable`*.
+52. *Un runner Cucumber non câblé est un test fantôme* — `additionalTasksInCheck`.
+53. *`named(…).configure` interdit DANS une action `tasks.register`*.
+54. *Cucumber `{string}` ne décode PAS `\n`* — convertir `replace("\\n", "\n")`.
+55. *(S-280) Un fix de gel doit être APPARIÉ (bloc + fichier).* Marquer un bloc
+    `PENDING` (document-gradle) est **inerte** si le delta fichier (bakery)
+    préserve le fichier byte-inchangé : l'un sans l'autre ne converge pas.
+56. *(S-280) Le `functionalTest` source set ne voit pas `main` par défaut* — un
+    FT qui exerce la production (au lieu de TestKit) doit ajouter
+    `sourceSets.main.output` à `functionalTestImplementation`.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. Le runner global (glue
 `document.scenarios`) ne découvre que `document.feature` + `release-notes.feature`
-+ `frontmatter_retranslate.feature`. **28 runners dédiés** au total (dont
-`tableSemanticCucumberTest`, le dernier).
++ `frontmatter_retranslate.feature`. **29 runners dédiés** au total (dont
+`translationResilienceCucumberTest`, le dernier).
 
 == Méthode
 
@@ -84,7 +75,7 @@ Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), unit → functional �
 cucumber, économie d'encre. CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build,
 Tests = CI* (GitHub Actions `build`). English only code/tests/features
 (gouvernance .adoc en français). Zéro secret en clair, commit/push sur accord
-pilote (donné S-279).
+pilote.
 
 == À vérifier en ouverture
 
@@ -92,12 +83,5 @@ pilote (donné S-279).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT
    (dans `document-plugin/`).
-4. CI verte du commit S-279 (les UT/FT/BDD US-3→6 s'exécutent en CI).
-5. Décision pilote — PUB 0.0.20, preuve consommateur tiers, PUBLISH-0.
-
-== Vision « livre content SERVER »
-
-Le produit est servable, auditable, documenté, illustré, distribué, multi-langue,
-multi-format, testé en CI **et publié depuis la CI** sur tag. S-279 achève le
-lifting sémantique : un tableau AsciiDoc annoté devient une **source de données
-typée** exportée en JSON, consommable par une application web / une fiche LMS.
+4. CI verte du commit S-280 (les UT/FT/BDD s'exécutent en CI).
+5. Décision pilote — PUB 0.0.20, propagation bakery 0.0.23, preuve tiers.

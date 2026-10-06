@@ -159,22 +159,33 @@ class ContentTranslationService(
         val sourceText = sourceFile.readText()
         val sourceArticle = parser.parse(sourceText)
         val currentBlockHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
-        if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
-            val rendered = documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
-            targetFile.writeText(rendered)
-            return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
+        documentTranslator.clearTranslationFailures()
+        val rendered: String = if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
+            documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
+        } else {
+            val previousTranslatedArticle = parser.parse(targetFile.readText())
+            val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
+            if (delta.isEmpty()) {
+                // No block changed: the previous statuses are carried over by the
+                // caller (the stored map is compared hash-by-hash) — but a PENDING
+                // block with an unchanged hash is re-translated by BlockDelta, so
+                // an empty delta means every block is genuinely TRANSLATED.
+                return currentBlockHashes.mapValues {
+                    BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED)
+                }
+            }
+            val translatedArticle = documentTranslator.translateArticleWithDelta(
+                sourceArticle, previousTranslatedArticle, delta, sourceLanguage, targetLanguage
+            )
+            val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+            outputRenderer.render(translatedArticle)
         }
-        val previousTranslatedArticle = parser.parse(targetFile.readText())
-        val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
-        if (delta.isEmpty()) {
-            return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
-        }
-        val translatedArticle = documentTranslator.translateArticleWithDelta(
-            sourceArticle, previousTranslatedArticle, delta, sourceLanguage, targetLanguage
-        )
-        val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
-        targetFile.writeText(outputRenderer.render(translatedArticle))
-        return currentBlockHashes.mapValues { BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED) }
+        targetFile.writeText(rendered)
+        // DOC-TRANSLATE-RESILIENCE — a block whose LLM call failed is stored as
+        // PENDING, never TRANSLATED: the next delta re-attempts it instead of
+        // freezing the silent French fallback (BlockDelta preserves a TRANSLATED
+        // block whose hash is unchanged).
+        return BlockChecksum.resolveStatuses(currentBlockHashes, documentTranslator.translationFailures.toSet())
     }
 
     fun retranslateFrontmatter(

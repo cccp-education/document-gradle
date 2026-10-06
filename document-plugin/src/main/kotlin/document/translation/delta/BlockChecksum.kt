@@ -45,6 +45,29 @@ object BlockChecksum {
         return result
     }
 
+    /**
+     * DOC-TRANSLATE-RESILIENCE — a block whose LLM call failed must stay
+     * `PENDING`, never be promoted to `TRANSLATED`. Otherwise the delta freezes
+     * the silent French fallback forever (`BlockDelta` preserves a
+     * `TRANSLATED` block with an unchanged hash) and the batch reports "0 errors"
+     * without ever converging.
+     *
+     * Pure: the translator reports the offending top-level block indices, this
+     * maps them to `PENDING`; every other current block is `TRANSLATED`.
+     */
+    fun resolveStatuses(
+        currentHashes: Map<String, String>,
+        failedBlockKeys: Set<String>
+    ): Map<String, BlockChecksumEntry> =
+        currentHashes.mapValues { (key, hash) ->
+            val status = if (key in failedBlockKeys) {
+                BlockTranslationStatus.PENDING
+            } else {
+                BlockTranslationStatus.TRANSLATED
+            }
+            BlockChecksumEntry(hash, status)
+        }
+
     private fun isChecksumRelevant(block: PivotBlock): Boolean = when (block) {
         is PivotBlock.Hr -> false
         is PivotBlock.BlockMacro -> false

@@ -1,6 +1,16 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Date revision_ : 2026-10-06 (session 280 — **DOC-TRANSLATE-RESILIENCE ✅**
+(fix cross-borough, priorité 2 dette cheroliv S-052). Un échec LLM n'est plus
+**gelé** `TRANSLATED`. **US-1** domaine pur `BlockChecksum.resolveStatuses`
+(échecs → `PENDING`) ; **US-2** `DocumentTranslator.translationFailures` + index
+top-level courant + `doTranslate` enregistre l'échec, `ContentTranslationService`
+dérive les statuts ; **US-3** BDD `@translation-resilience` (**29e runner**) ;
+**US-4** FT fichiers réels + **cross-borough bakery** `PendingBlockRetry` (retry
+fichier byte-inchangé portant un bloc `PENDING`). Découverte : le fix doit être
+**apparié** bloc+fichier (piège #55). Gates : compiles VERT (3 source sets ×2
+boroughs) + `assemble`/`validatePlugins` VERT ; aucun test local. Zero bump.)
 _Date revision_ : 2026-09-29 (session 278 — **DOC-SEMANTIC-1 + US-2 ✅**
 (baby-step DDD/TDD strict) — implémentation des 2 premières US de code de l'EPIC
 DOC-SEMANTIC-TABLE. **US-1** domaine pur `document.semantic` (4 fichiers prod +
@@ -2650,12 +2660,53 @@ JRuby nuls → accès défensifs — S-278).
 
 '''
 
-== 🟡 EPIC PUB 0.0.20 — Distribution du HEAD post-S-279 (à planifier, S-280)
+== ✅ EPIC DOC-TRANSLATE-RESILIENCE — l'échec LLM n'est plus gelé (S-280 TERMINÉ)
 
-_Origine_ : S-278 (US-1 domaine pur + US-2 adapter AST) puis S-279 (US-3 tâche +
-DSL + N3, US-4 validation, US-5 BDD, US-6 dogfooding) ont livré l'**EPIC
-DOC-SEMANTIC-TABLE complet** — **code non distribué** (aucun bump : la
-publication est un acte de release distinct, sur accord pilote explicite).
+_Origine_ : priorité 2 de la dette cross-borough cheroliv S-052. `DocumentTranslator.doTranslate`
+retournait la **source FR** sur `TranslationResult.Failure` et
+`ContentTranslationService.translateSingleFileWithBlockDelta` marquait malgré
+tout le bloc `TRANSLATED`. Le `BlockDelta` préserve un bloc `TRANSLATED` à hash
+inchangé → un échec LLM (quota) est **gelé pour toujours** (batch `0 erreur`
+sans convergence).
+_Type_ : fix cross-borough — baby-step DDD/TDD/BDD strict.
+
+|===
+| US | Description | Pts | Statut
+
+| DOC-TRANSLATE-RESILIENCE-1
+| Domaine pur `BlockChecksum.resolveStatuses(currentHashes, failedBlockKeys)` — échecs → `PENDING`, reste → `TRANSLATED` ; 6 UT
+| 1
+| ✅ TERMINÉ (S-280)
+
+| DOC-TRANSLATE-RESILIENCE-2
+| `DocumentTranslator.translationFailures` + `clearTranslationFailures()` + index top-level courant (`try/finally`) ; `doTranslate` enregistre l'échec ; `ContentTranslationService` retourne `resolveStatuses`
+| 2
+| ✅ TERMINÉ (S-280)
+
+| DOC-TRANSLATE-RESILIENCE-3
+| BDD `translation_resilience.feature` 2 scénarios `@translation-resilience` + `TranslationResilienceSteps` + **29e runner** `translationResilienceCucumberTest` câblé `additionalTasksInCheck`
+| 1
+| ✅ TERMINÉ (S-280)
+
+| DOC-TRANSLATE-RESILIENCE-4
+| FT `TranslationResilienceFunctionalTest` (fichiers réels, 2 runs) + **cross-borough bakery** `bakery.i18n.PendingBlockRetry` (retry fichier byte-inchangé portant un bloc `PENDING`, câblé `MigrateContentI18nTask`) + FT `PendingBlockRetryConvergence`
+| 2
+| ✅ TERMINÉ (S-280)
+|===
+
+*Boundary* : document-gradle possède le grain **bloc** (`doTranslate`,
+`BlockChecksum`, `ContentTranslationService`) ; bakery possède le grain
+**fichier** (`MigrateContentI18nTask`, `I18nDeltaApplier`). Les deux correctifs
+sont nécessaires et complémentaires (piège #55) ; aucun contrat N0 touché.
+*Rapport* : `.agents/sessions/280-translate-resilience.adoc`.
+
+== 🟡 EPIC PUB 0.0.20 — Distribution du HEAD post-S-280 (à planifier, S-281)
+
+_Origine_ : S-278 (US-1 domaine pur + US-2 adapter AST), S-279 (US-3 tâche +
+DSL + N3, US-4 validation, US-5 BDD, US-6 dogfooding) et S-280 (DOC-TRANSLATE-RESILIENCE)
+ont livré **DOC-SEMANTIC-TABLE complet** + **le fix de résilience de traduction**
+— **code non distribué** (aucun bump : la publication est un acte de release
+distinct, sur accord pilote explicite).
 _Type_ : PUB cross-borough — chaîne DAG N0→N2 **MEMPHIS-first**, baby-step TDD strict.
 _Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
 
@@ -2665,6 +2716,17 @@ _Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
   `TableSemanticsMode`, `TableSemanticsReport`) + port/adapter `AsciidoctorTableReader`
   + extension `AsciidoctorHolder.load` + tâche `collectTableSemantics` + DSL
   `semantic { }` + N3 additif `DocumentMetadata.tableSemanticsPath`.
+* `DOC-TRANSLATE-RESILIENCE` **✅ S-280** — `BlockChecksum.resolveStatuses`
+  (échecs LLM → `PENDING`) + `DocumentTranslator.translationFailures` +
+  `ContentTranslationService` (statuts dérivés) + BDD `@translation-resilience`
+  (**29e runner**) + FT fichiers réels. **Requis pour que le fix atteigne
+  cheroliv.com** (le gel des échecs LLM y est la cause racine de la
+  non-convergence, dette S-052).
+
+*Cross-borough (bakery)* : le fix apparié `bakery.i18n.PendingBlockRetry`
+(voir bakery BACKLOG EPIC `BKY-PENDING-RETRY`) doit être publié avec
+`TemplateStructureGuard` S-250 → **bakery 0.0.23** (accord pilote, priorité 3
+cheroliv S-063).
 
 *Chaîne de publication (ordre DAG, ne pas inverser)* :
 
@@ -2689,4 +2751,4 @@ _Prérequis_ : accord pilote explicite (Règle 2) ; CI verte du HEAD courant.
 _Pièges à surveiller_ : #5 (anti-collision repo1 — vérifier 404 avant bump),
 #11 (polling POM), #13 (drift catalogue ws → garde RED), #26 (commit sélectif WIP),
 #44 (signature non appliquée sous `CI=true` sans `CCCP_PUBLISH`).
-_Statut_ : 🟡 À PLANIFIER (S-280, sur accord pilote).
+_Statut_ : 🟡 À PLANIFIER (S-281, sur accord pilote).
