@@ -1,6 +1,42 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+== 🟡 EPIC DOC-PLANTUML-DELEGATE — document délègue le bloc PlantUML (GBL-007)
+
+*GBL* : EPIC transverse **GBL-007** (BACKLOG racine workspace) — propriété du
+pipeline PlantUML. Décision pilote S-068/S-219 : le borough plantuml **possède** le
+bloc PlantUML ; document **extrait** et **délègue** (il ne réimplémente plus).
+
+*Contexte* : document a réimplémenté une logique PlantUML pauvre
+(`PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter`) alors que
+plantuml-gradle possède un domaine `boundary` riche **jamais consommé** (grep=0).
+Deux défauts en production : **D1** SVG blancs (résolu, cause Saxon 11.4) et
+**D2** variantes non rendues (traduction casse `\n`).
+
+*Cadrage* : `foundry/public/plantuml-gradle/plantuml-plugin/.agents/CADRAGE_EPIC_PLT_DIAGRAM_OWNERSHIP.adoc`
+
+[cols="1,4,1,2", options="header"]
+|===
+| US | Description | Pts | Statut
+
+| DOC-PLT-1 | **Type de validation N0** — `PlantUmlSyntaxValidator` +
+`PlantumlServiceAvailabilityTest` importent `contracts.plantuml.SyntaxValidationResult`
++ `plantuml-contracts:0.0.1` ajouté | 1 | ✅ S-282
+| DOC-PLT-2 | **Fix D2 a priori** — `PlantUmlTranslationAdapter.translateLabels`
+re-échappe `\n` (`escapeNewlines`) : un retour-ligne réel du traducteur ne casse
+plus PlantUML | 1 | ✅ S-282 (livré 0.0.21)
+| DOC-PLT-3 | **Délégation complète au port** — suppression
+`PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter` privés ;
+`DocumentTranslator` appelle `PlantUmlTranslationPort` (question d'injection A/B à
+trancher) | 4 | 🟡 À FAIRE
+| DOC-PLT-4 | **D2 corpus** — re-générer les variantes gelées (`@startuml` bruts) :
+purge ciblée du store delta + re-traduction (le fix a priori ne répare pas
+l'existant) | 3 | 🟡 À FAIRE (+ bakery)
+| DOC-PLT-5 | **Chaîne E2E** — bakery → document → port → plantuml, rendu non blanc | 3 | 🟡 À FAIRE
+|===
+
+*Total restant* : ~10 pts. *Dépend de* : `plantuml-contracts` (N0) ✅, `bakery`.
+
 _Date revision_ : 2026-10-06 (session 280 — **DOC-TRANSLATE-RESILIENCE ✅**
 (fix cross-borough, priorité 2 dette cheroliv S-052). Un échec LLM n'est plus
 **gelé** `TRANSLATED`. **US-1** domaine pur `BlockChecksum.resolveStatuses`
