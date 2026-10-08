@@ -81,8 +81,13 @@ class PlantUmlTranslationAdapter(
         val labels = PlantUmlBlock(content).labels()
         var translated = content
         for (label in labels.distinct()) {
-            val replacement = doTranslate(label, sourceLanguage, targetLanguage) ?: continue
-            if (replacement == label) continue
+            val rawReplacement = doTranslate(label, sourceLanguage, targetLanguage) ?: continue
+            if (rawReplacement == label) continue
+            // CHE-DIAGRAM D2 / PLT-DIAGRAM-OWNERSHIP US-4 — a translator may return
+            // a real line break where the source carried the PlantUML escape `\n`
+            // (e.g. `rectangle "a\nb"`). A raw break makes PlantUML fail
+            // (`Syntax Error?`) and the block degrades to a listing. Re-escape it.
+            val replacement = escapeNewlines(rawReplacement)
             // Quoted label (`class "Utilisateur"`) — replace the quoted form only.
             translated = translated.replace("\"$label\"", "\"$replacement\"")
             // Unquoted directive value (`title Évolution…`, `header …`) — the
@@ -110,6 +115,14 @@ class PlantUmlTranslationAdapter(
             is TranslationResult.Failure -> null
         }
     }
+
+    /**
+     * CHE-DIAGRAM D2 (PLT-DIAGRAM-OWNERSHIP US-4) — converts a raw line break
+     * produced by the translator back to the PlantUML escape `\n`. Without this,
+     * a label spanning two lines breaks the diagram (`Syntax Error?`).
+     */
+    private fun escapeNewlines(text: String): String =
+        text.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
 
     private companion object {
         /**

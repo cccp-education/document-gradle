@@ -266,4 +266,28 @@ class PlantUmlTranslationAdapterTest {
         val result = adapter.translate(block, "fr", "en")
         assertThat(result.language).isEqualTo("plantuml")
     }
+
+    @Test
+    fun `a raw newline returned by the translator is re-escaped for PlantUML`() {
+        // The LLM may return a real line break where the source had `\n`:
+        //   `rectangle "CLI de vibe coding\nOpen source, gratuit"` becomes two
+        // lines and PlantUML fails (`Syntax Error?`, CHE-DIAGRAM D2). The
+        // adapter must convert the raw break back to the `\n` escape.
+        val multilineTranslator = object : TranslationService {
+            override fun translate(request: TranslationRequest): TranslationResult =
+                TranslationResult.Success(request.sourceText.replace("CLI", "vibe coding CLI\nOpen source"))
+        }
+        val adapter = PlantUmlTranslationAdapter(multilineTranslator)
+        val block = plantumlSource(
+            """
+            @startuml
+            rectangle "CLI as CLI"
+            @enduml
+            """.trimIndent()
+        )
+        val result = adapter.translate(block, "fr", "en")
+        assertThat(result.content).contains("vibe coding CLI\\nOpen source")
+        assertThat(result.content).doesNotContain("vibe coding CLI\nOpen source")
+            .withFailMessage("a raw line break must not survive in a translated PlantUML label")
+    }
 }

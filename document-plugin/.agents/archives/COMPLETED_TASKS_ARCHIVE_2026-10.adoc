@@ -1,0 +1,17 @@
+= COMPLETED_TASKS_ARCHIVE — 2026-10 (document-gradle)
+
+== Session 282 (2026-10-08) — US-4 option C : re-échappement `\n` (fin du bug D2) ✅
+
+EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (décision pilote : option C, fix minimal).
+
+=== Fait
+- [x] `PlantUmlTranslationAdapter.translateLabels` : `escapeNewlines(...)` (`\r\n`/`\n`/`\r` → `\n`) avant insertion du label traduit
+- [x] Test TDD RED → GREEN (`a raw newline returned by the translator is re-escaped`)
+- [x] 15/15 `PlantUmlTranslationAdapterTest` PASS
+- [x] Piège S-282 consigné : `publishToMavenLocal` d'une version déjà Central écrase le local
+- [x] Rapport + INDEX + PROMPT_REPRISE + SESSIONS_HISTORY
+
+=== Prochaine session (283)
+- **Publication DAG document 0.0.21** (distribuer le fix D2 jusqu'au site)
+- **US-4 complet** (délégation au port N0, question d'injection A/B)
+- **US-5** (version toolchain — résout D1)

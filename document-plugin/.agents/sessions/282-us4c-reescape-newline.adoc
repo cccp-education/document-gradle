@@ -1,0 +1,64 @@
+= Session 282 — US-4 (option C) : re-échappement `\n` — fin du bug D2 CHE-DIAGRAM
+
+_Date_ : 2026-10-08
+_Borough_ : document-gradle (New Orleans 🟢)
+_Type_ : fix cross-borough / DDD-TDD
+
+== Mission d'ouverture
+
+Suite de l'EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (cadrage plantuml S-219,
+contrat N0 `plantuml-contracts` + port implémenté par plantuml S-220/S-221).
+Décision pilote : **option C** (fix minimal) — document garde son adaptateur mais
+**re-échappe** les retours-ligne produits par le traducteur. C'est ce fix qui
+**résout le défaut D2 de CHE-DIAGRAM** (les variantes ne rendent pas les
+diagrammes).
+
+== Constat
+
+`PlantUmlTranslationAdapter.translateLabels` remplace les labels par regex
+`"([^"]+)"`. Or le traducteur LLM restitue un **retour-ligne réel** là où la
+source portait l'échappement PlantUML `\n` :
+
+[source]
+----
+FR : rectangle "CLI de vibe coding\nOpen source, gratuit" as CLI
+EN : rectangle "vibe coding CLI
+     Open source, free" as CLI        ← saut de ligne réel
+----
+
+PlantUML échoue (`Syntax Error?`), asciidoctor-diagram **dégrade le bloc en
+listing brut** (EN 0125 = 0 `<img>` / 5 `@startuml` déployés).
+
+== Livré (baby-step TDD)
+
+* `PlantUmlTranslationAdapter.translateLabels` : le remplacement passe par
+  `escapeNewlines(...)` avant insertion — `\r\n`/`\n`/`\r` → `\n`.
+* Test RED d'abord (`a raw newline returned by the translator is re-escaped for
+  PlantUML`) → GREEN.
+* **15/15 tests** `PlantUmlTranslationAdapterTest` PASS (dont le nouveau).
+
+== Piège découvert (S-282) — pollution mavenLocal par `publishToMavenLocal`
+
+En recompilant document, le build a cassé (`Unresolved reference
+'SyntaxValidationResult'`) : le `publishToMavenLocal` **plantuml 0.0.5** exécuté
+en US-2 (avant bump du catalogue) avait **écrasé** le `0.0.5` local avec le code
+de HEAD (type `SyntaxValidationResult` supprimé), alors que le `0.0.5` **Central**
+le contient encore. Document résout `mavenLocal()` en premier → build cassé.
+
+**Remède** : restaurer `0.0.5` depuis Central (jar/pom/module) dans
+`~/.m2` → build VERT. **Leçon** : ne **jamais** `publishToMavenLocal` une version
+**déjà publiée Central** sans bump — cela écrase silencieusement la release locale
+et crée un split code↔Central. (Nouveau piège à consigner.)
+
+== Gates (Local = Build, Tests = CI)
+
+* `compileTestKotlin` VERT (JAVA_HOME 25).
+* `test --tests PlantUmlTranslationAdapterTest` → **15/15 PASS**.
+* Zéro secret, zéro Python.
+
+== Reste
+
+* Publication DAG document 0.0.21 (pour atteindre le site) — session suivante.
+* US-4 complet (suppression du domaine privé document + délégation au port) — la
+  question d'injection reste ouverte (options A/B).
+* US-5 (version toolchain) ; US-6/7 (E2E + dogfooding).
