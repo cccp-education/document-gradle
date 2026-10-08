@@ -1,7 +1,7 @@
 package document.translation.validation
 
+import contracts.plantuml.SyntaxValidationResult
 import plantuml.service.PlantumlService
-import plantuml.validation.SyntaxValidationResult
 
 interface PlantUmlSyntaxValidator {
     fun validate(

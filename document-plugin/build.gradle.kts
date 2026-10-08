@@ -12,7 +12,7 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.65"))
+    implementation(platform("education.cccp:workspace-bom:0.0.69"))
 
     // kotlin-stdlib is pulled transitively (and pinned by the BOM). The
     // kotlin-stdlib-jdk8 shim is an empty 953-byte artifact since Kotlin 1.8
@@ -45,6 +45,12 @@ dependencies {
 
     // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
     implementation(libs.plantuml.plugin)
+
+    // N0 contract — PlantUML diagram block types (EPIC PLT-DIAGRAM-OWNERSHIP).
+    // The validation type (SyntaxValidationResult) lives in the contract, not the
+    // plugin: document consumes the N0 contract directly (D2 — ends the N2→N2 type
+    // coupling; the plugin is kept only for PlantumlService, the native parser).
+    implementation(libs.plantuml.contracts)
 
     // N0 contracts — i18n (internationalisation documents)
     // + opencode-session (traçabilité release notes, vision MEM-4 — non implémenté, gardé pour roadmap)

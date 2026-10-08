@@ -62,3 +62,26 @@ et crée un split code↔Central. (Nouveau piège à consigner.)
 * US-4 complet (suppression du domaine privé document + délégation au port) — la
   question d'injection reste ouverte (options A/B).
 * US-5 (version toolchain) ; US-6/7 (E2E + dogfooding).
+
+== Migration du type vers le N0 + publication (S-282, suite)
+
+Le bump catalogue (détail DAG ci-dessous) a fait résoudre `plantuml-plugin:0.0.7`,
+qui a **retiré** `plantuml.validation.SyntaxValidationResult` (migration US-2) →
+document ne compilait plus. Migration minimale (avance US-4 — fin du couplage de
+**type** N2→N2) :
+
+* `PlantUmlSyntaxValidator` + `PlantumlServiceAvailabilityTest` importent
+  `contracts.plantuml.SyntaxValidationResult` (N0) au lieu de l'ancien package.
+* `plantuml-contracts = "0.0.1"` ajouté au toml document + `implementation(libs.plantuml.contracts)`.
+  `plantuml-plugin` reste (pour `PlantumlService`, le parser natif), mais le
+  **type** vient du contrat.
+
+=== Publication DAG (pilote autorisé)
+
+1. MEMPHIS BOM/catalog `0.0.69` (bundle `8b9ed6e6`, `document-plugin = "0.0.21"`).
+2. `document-plugin:0.0.21` Central (bundle `89c3a957`, AUTOMATIC) — porte le fix
+   `escapeNewlines` (D2) + la consommation du contrat N0.
+
+Gates : garde `DocumentPluginPublicationTest` **4/4 PASS** ; compiles VERT (3
+source sets). Reste : bump **bakery** (DAG aval) pour que le fix atteigne
+effectivement cheroliv.com.

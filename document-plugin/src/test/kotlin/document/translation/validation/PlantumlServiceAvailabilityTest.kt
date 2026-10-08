@@ -2,7 +2,7 @@ package document.translation.validation
 
 import org.junit.jupiter.api.Test
 import plantuml.service.PlantumlService
-import plantuml.validation.SyntaxValidationResult
+import contracts.plantuml.SyntaxValidationResult
 import kotlin.test.assertIs
 
 class PlantumlServiceAvailabilityTest {
