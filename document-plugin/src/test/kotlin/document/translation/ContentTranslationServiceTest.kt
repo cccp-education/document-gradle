@@ -279,8 +279,8 @@ User -> Service: Requête
     @Test
     fun `plantuml source block is translated through adapter when wired`() {
         val fake = FakeTranslationService(" [EN]")
-        val adapter = document.translation.plantuml.PlantUmlTranslationAdapter(fake)
-        val service = ContentTranslationService(fake, parser, renderer, plantUmlAdapter = adapter)
+        val port = FakePlantUmlPort(fake)
+        val service = ContentTranslationService(fake, parser, renderer, plantUmlPort = port)
 
         val article = parser.parse("""title=Test
 date=2026-06-26
@@ -306,8 +306,8 @@ User -> Service: Requête
     @Test
     fun `non-plantuml source block is not dispatched to adapter`() {
         val fake = FakeTranslationService(" [EN]")
-        val adapter = document.translation.plantuml.PlantUmlTranslationAdapter(fake)
-        val service = ContentTranslationService(fake, parser, renderer, plantUmlAdapter = adapter)
+        val port = FakePlantUmlPort(fake)
+        val service = ContentTranslationService(fake, parser, renderer, plantUmlPort = port)
 
         val article = parser.parse("""title=Test
 date=2026-06-26
@@ -330,8 +330,8 @@ public class Hello {}
     @Test
     fun `concurrent translation of articles with plantuml blocks is thread-safe`() {
         val fake = FakeTranslationService(" [EN]")
-        val adapter = document.translation.plantuml.PlantUmlTranslationAdapter(fake)
-        val service = ContentTranslationService(fake, parser, renderer, plantUmlAdapter = adapter)
+        val port = FakePlantUmlPort(fake)
+        val service = ContentTranslationService(fake, parser, renderer, plantUmlPort = port)
 
         val langDir = tempDir.resolve("i18n/en")
         langDir.mkdirs()

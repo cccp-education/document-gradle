@@ -4,9 +4,9 @@ import document.translation.delta.BlockChecksum
 import document.translation.delta.BlockChecksumEntry
 import document.translation.delta.BlockDelta
 import document.translation.delta.BlockTranslationStatus
-import document.translation.plantuml.PlantUmlTranslationAdapter
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableValidationResult
+import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
@@ -28,19 +28,33 @@ class ContentTranslationService(
     private val renderer: ArticleRenderer = AsciiDocRenderer(),
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
     private val parallelism: Int = 1,
-    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
     /**
      * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — the N0 PlantUML translation port,
-     * built by the orchestrator (bakery) and injected here. When wired, document
-     * delegates PlantUML blocks to the plantuml borough (precedence over the
-     * legacy private [plantUmlAdapter]).
+     * built by the orchestrator (bakery) and injected here. document delegates
+     * PlantUML blocks to the plantuml borough.
      */
     private val plantUmlPort: PlantUmlTranslationPort? = null,
+    /**
+     * US-4 PLT-DIAGRAM-OWNERSHIP — PlantUML/table validation strictness. The mode
+     * was carried by the (now removed) private adapter; it is exposed here so the
+     * orchestrator (bakery) keeps controlling `contentI18nValidation`
+     * (STRICT/LENIENT/OFF) for the document-side validation report.
+     */
+    private val plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT,
+    private val tableValidationMode: ValidationMode = ValidationMode.LENIENT,
 ) {
     private val log = LoggerFactory.getLogger(ContentTranslationService::class.java)
 
     private val documentTranslator: DocumentTranslator by lazy {
-        DocumentTranslator(translationService, parser, renderer, jbakeRenderer, plantUmlAdapter, plantUmlPort = plantUmlPort)
+        DocumentTranslator(
+            translationService,
+            parser,
+            renderer,
+            jbakeRenderer,
+            tableValidationMode = tableValidationMode,
+            plantUmlValidationMode = plantUmlValidationMode,
+            plantUmlPort = plantUmlPort,
+        )
     }
 
     fun translate(

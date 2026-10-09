@@ -1,6 +1,5 @@
 package document.translation
 
-import document.translation.plantuml.PlantUmlTranslationAdapter
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
@@ -260,8 +259,8 @@ Alice -> Bob: "Bonjour"
 ----
 """
 
-        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
-        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+        val plantUmlPort = FakePlantUmlPort(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlPort = plantUmlPort)
 
         val result = translatorWithPlantUml.translate(source, "fr", "en")
 
@@ -460,8 +459,8 @@ OrderService --> PaymentGateway
 ----
 """
 
-        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
-        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+        val plantUmlPort = FakePlantUmlPort(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlPort = plantUmlPort)
 
         val result = translatorWithPlantUml.translate(source, "fr", "en")
 
@@ -492,8 +491,8 @@ endlegend
 ----
 """
 
-        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
-        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+        val plantUmlPort = FakePlantUmlPort(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlPort = plantUmlPort)
 
         val result = translatorWithPlantUml.translate(source, "fr", "en")
 
@@ -520,8 +519,8 @@ class "Utilisateur"
 ----
 """
 
-        val plantUmlAdapter = document.translation.plantuml.PlantUmlTranslationAdapter(fakeService)
-        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlAdapter = plantUmlAdapter)
+        val plantUmlPort = FakePlantUmlPort(fakeService)
+        val translatorWithPlantUml = DocumentTranslator(fakeService, plantUmlPort = plantUmlPort)
 
         val result = translatorWithPlantUml.translate(source, "fr", "en")
 

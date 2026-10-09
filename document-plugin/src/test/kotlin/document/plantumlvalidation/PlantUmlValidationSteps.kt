@@ -1,9 +1,9 @@
 package document.plantumlvalidation
 
 import document.translation.DocumentTranslator
+import document.translation.FakePlantUmlPort
 import document.translation.FakeTranslationService
 import document.translation.TranslationException
-import document.translation.plantuml.PlantUmlTranslationAdapter
 import document.translation.validation.PlantUmlSyntaxValidator
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.ValidationMode
@@ -45,15 +45,11 @@ class PlantUmlValidationSteps {
         } else {
             PlantUmlSyntaxValidator.create()
         }
-        val plantUmlAdapter = PlantUmlTranslationAdapter(
-            translationService = translationService,
-            plantUmlValidator = validator,
-            plantUmlValidationMode = plantUmlValidationMode,
-        )
         return DocumentTranslator(
             translationService = translationService,
-            plantUmlAdapter = plantUmlAdapter,
+            plantUmlPort = FakePlantUmlPort(translationService),
             plantUmlValidationMode = plantUmlValidationMode,
+            plantUmlSyntaxValidator = validator,
         )
     }
 

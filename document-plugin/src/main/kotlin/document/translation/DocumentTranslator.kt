@@ -1,7 +1,6 @@
 package document.translation
 
 import document.translation.delta.BlockDelta
-import document.translation.plantuml.PlantUmlTranslationAdapter
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.PlantUmlSyntaxValidator
 import document.translation.validation.TableSyntaxValidator
@@ -11,7 +10,6 @@ import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
 import contracts.plantuml.PlantUmlBlock
-import contracts.plantuml.PlantUmlStrategy
 import contracts.plantuml.PlantUmlTranslationOutcome
 import contracts.plantuml.PlantUmlTranslationPort
 import contracts.plantuml.PlantUmlTranslationRequest
@@ -22,15 +20,14 @@ class DocumentTranslator(
     private val parser: AsciiDocParser = AsciiDocParser(),
     private val renderer: ArticleRenderer = AsciiDocRenderer(),
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
-    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
     private val tableValidationMode: ValidationMode = ValidationMode.LENIENT,
     private val plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT,
     /**
-     * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — bakery (the orchestrator) builds the
-     * N0 [PlantUmlTranslationPort] implementation and injects it here so document
-     * delegates PlantUML label translation to the plantuml borough's port. When
-     * wired, the port takes precedence over the legacy private [plantUmlAdapter]
-     * (backward compat: existing callers keep working unchanged).
+     * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — the N0 [PlantUmlTranslationPort],
+     * implemented by the plantuml borough and injected by the orchestrator
+     * (bakery). document **delegates** PlantUML label translation to the port and
+     * no longer reimplements it (D1/D3). When null, `[plantuml]` blocks are
+     * passed through unchanged.
      */
     private val plantUmlPort: PlantUmlTranslationPort? = null,
     /** Document-side syntax validation for the port path (report `DOC-PLANTUML-VALIDATE`). */
@@ -242,11 +239,6 @@ class DocumentTranslator(
         is PivotBlock.Source -> {
             if (block.language == "plantuml" && plantUmlPort != null) {
                 translatePlantUmlWithPort(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
-            } else if (block.language == "plantuml" && plantUmlAdapter != null) {
-                val result = plantUmlAdapter.translate(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
-                plantUmlValidationResults.addAll(plantUmlAdapter.plantUmlValidationResults)
-                plantUmlAdapter.plantUmlValidationResults.clear()
-                result
             } else {
                 block
             }
@@ -316,13 +308,16 @@ class DocumentTranslator(
                 targetLanguage = targetLanguage,
             )
         val outcome = plantUmlPort!!.translate(request)
-        val translated =
-            when (outcome) {
-                is PlantUmlTranslationOutcome.Translated -> block.copy(content = outcome.block.raw)
-                is PlantUmlTranslationOutcome.Preserved -> block
+        return when (outcome) {
+            is PlantUmlTranslationOutcome.Translated -> {
+                val translated = block.copy(content = outcome.block.raw)
+                // Validate only a translated block (the source was validated upstream
+                // by the port's round-trip gate; a preserved block carries no new risk).
+                validateTranslatedPlantUml(translated.content, articleTitle, blockIndex, strategy = "n0-port")
+                translated
             }
-        validateTranslatedPlantUml(translated.content, articleTitle, blockIndex, strategy = "n0-port")
-        return translated
+            is PlantUmlTranslationOutcome.Preserved -> block
+        }
     }
 
     private fun validateTranslatedPlantUml(
