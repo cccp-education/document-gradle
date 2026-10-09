@@ -10,6 +10,7 @@ import document.translation.validation.TableValidationResult
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import contracts.plantuml.PlantUmlTranslationPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -27,12 +28,19 @@ class ContentTranslationService(
     private val renderer: ArticleRenderer = AsciiDocRenderer(),
     private val jbakeRenderer: ArticleRenderer = JbakeNativeRenderer(),
     private val parallelism: Int = 1,
-    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null
+    private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
+    /**
+     * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — the N0 PlantUML translation port,
+     * built by the orchestrator (bakery) and injected here. When wired, document
+     * delegates PlantUML blocks to the plantuml borough (precedence over the
+     * legacy private [plantUmlAdapter]).
+     */
+    private val plantUmlPort: PlantUmlTranslationPort? = null,
 ) {
     private val log = LoggerFactory.getLogger(ContentTranslationService::class.java)
 
     private val documentTranslator: DocumentTranslator by lazy {
-        DocumentTranslator(translationService, parser, renderer, jbakeRenderer, plantUmlAdapter)
+        DocumentTranslator(translationService, parser, renderer, jbakeRenderer, plantUmlAdapter, plantUmlPort = plantUmlPort)
     }
 
     fun translate(

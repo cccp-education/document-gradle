@@ -3,12 +3,18 @@ package document.translation
 import document.translation.delta.BlockDelta
 import document.translation.plantuml.PlantUmlTranslationAdapter
 import document.translation.validation.PlantUmlValidationResult
+import document.translation.validation.PlantUmlSyntaxValidator
 import document.translation.validation.TableSyntaxValidator
 import document.translation.validation.TableValidationResult
 import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import contracts.plantuml.PlantUmlBlock
+import contracts.plantuml.PlantUmlStrategy
+import contracts.plantuml.PlantUmlTranslationOutcome
+import contracts.plantuml.PlantUmlTranslationPort
+import contracts.plantuml.PlantUmlTranslationRequest
 import org.slf4j.LoggerFactory
 
 class DocumentTranslator(
@@ -19,6 +25,16 @@ class DocumentTranslator(
     private val plantUmlAdapter: PlantUmlTranslationAdapter? = null,
     private val tableValidationMode: ValidationMode = ValidationMode.LENIENT,
     private val plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT,
+    /**
+     * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — bakery (the orchestrator) builds the
+     * N0 [PlantUmlTranslationPort] implementation and injects it here so document
+     * delegates PlantUML label translation to the plantuml borough's port. When
+     * wired, the port takes precedence over the legacy private [plantUmlAdapter]
+     * (backward compat: existing callers keep working unchanged).
+     */
+    private val plantUmlPort: PlantUmlTranslationPort? = null,
+    /** Document-side syntax validation for the port path (report `DOC-PLANTUML-VALIDATE`). */
+    private val plantUmlSyntaxValidator: PlantUmlSyntaxValidator = PlantUmlSyntaxValidator.create(),
 ) : ArticleTranslator {
 
     private val log = LoggerFactory.getLogger(DocumentTranslator::class.java)
@@ -224,7 +240,9 @@ class DocumentTranslator(
             )
         }
         is PivotBlock.Source -> {
-            if (block.language == "plantuml" && plantUmlAdapter != null) {
+            if (block.language == "plantuml" && plantUmlPort != null) {
+                translatePlantUmlWithPort(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
+            } else if (block.language == "plantuml" && plantUmlAdapter != null) {
                 val result = plantUmlAdapter.translate(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
                 plantUmlValidationResults.addAll(plantUmlAdapter.plantUmlValidationResults)
                 plantUmlAdapter.plantUmlValidationResults.clear()
@@ -275,6 +293,55 @@ class DocumentTranslator(
             } else inline
         }
         is PivotInline.LineBreak -> inline
+    }
+
+    /**
+     * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — delegates a `[plantuml]` block to the
+     * N0 [PlantUmlTranslationPort] (implemented by the plantuml borough, injected by
+     * bakery). The pivot block is projected to a N0 [PlantUmlBlock]; a
+     * [PlantUmlTranslationOutcome.Preserved] keeps the source block verbatim.
+     * Validation stays document-side (the `DOC-PLANTUML-VALIDATE` report must not regress).
+     */
+    private fun translatePlantUmlWithPort(
+        block: PivotBlock.Source,
+        sourceLanguage: String,
+        targetLanguage: String,
+        articleTitle: String,
+        blockIndex: Int,
+    ): PivotBlock.Source {
+        val request =
+            PlantUmlTranslationRequest(
+                block = PlantUmlBlock(raw = block.content),
+                sourceLanguage = sourceLanguage,
+                targetLanguage = targetLanguage,
+            )
+        val outcome = plantUmlPort!!.translate(request)
+        val translated =
+            when (outcome) {
+                is PlantUmlTranslationOutcome.Translated -> block.copy(content = outcome.block.raw)
+                is PlantUmlTranslationOutcome.Preserved -> block
+            }
+        validateTranslatedPlantUml(translated.content, articleTitle, blockIndex, strategy = "n0-port")
+        return translated
+    }
+
+    private fun validateTranslatedPlantUml(
+        plantumlCode: String,
+        articleTitle: String,
+        blockIndex: Int,
+        strategy: String,
+    ) {
+        if (plantUmlValidationMode == ValidationMode.OFF) return
+        val result = plantUmlSyntaxValidator.validate(plantumlCode, articleTitle, blockIndex, strategy)
+        if (result is PlantUmlValidationResult.Invalid) {
+            plantUmlValidationResults.add(result)
+            val msg = "PlantUML validation failed in article '$articleTitle' block #$blockIndex (strategy=$strategy): ${result.reason}"
+            when (plantUmlValidationMode) {
+                ValidationMode.STRICT -> throw TranslationException(msg)
+                ValidationMode.LENIENT -> log.warn(msg)
+                ValidationMode.OFF -> {}
+            }
+        }
     }
 
     private fun validateTranslatedTable(
