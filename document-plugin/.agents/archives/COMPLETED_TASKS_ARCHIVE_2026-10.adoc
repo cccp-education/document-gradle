@@ -1,5 +1,22 @@
 = COMPLETED_TASKS_ARCHIVE — 2026-10 (document-gradle)
 
+== Session 284 (2026-10-09) — US-4b : délégation complète au port N0 ✅
+
+EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (option A).
+
+=== Fait
+- [x] **US-4b-1** : suppression `PlantUmlBlock`/`PlantUmlStrategy`/`PlantUmlClassifier` privés (58 l.) + `PlantUmlClassifierTest` (309 l.) ; repointage `contracts.plantuml.*` (D4)
+- [x] **US-4b-2** : suppression `PlantUmlTranslationAdapter` + 2 tests ; `DocumentTranslator`/`ContentTranslationService` = `plantUmlPort` (N0) seul
+- [x] `plantUmlValidationMode`/`tableValidationMode` remontés sur `ContentTranslationService` (piège #58)
+- [x] `FakePlantUmlPort` (test) ; 6 fichiers de test migrés
+- [x] bakery : port construit + injecté (2 sites `MigrateContentI18nTask`)
+- [x] Release chain Central : MEMPHIS 0.0.72/0.0.73/0.0.74 + document 0.0.22/0.0.23 + bakery 0.0.25
+- [x] CI document `37869889978` + bakery `37876162815` VERTES ; `ktlintCheck` VERT
+
+=== Prochaine session (285)
+- **DOC-PLT-4** : re-générer les variantes gelées (D2 corpus). Sinon **DOC-PLT-5** (E2E)
+- **Fichier à lire en priorité** : `.agents/CADRAGE_EPIC_PLT_DIAGRAM_OWNERSHIP.adoc`
+
 == Session 283 (2026-10-09) — US-4 option A (seam) : délégation au port N0 ✅
 
 EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (décision pilote : option A).

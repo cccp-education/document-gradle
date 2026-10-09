@@ -1,28 +1,25 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 284
+:session: 285
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-283 (2026-10-09) — **US-4 option A (seam) : délégation au port N0 PlantUmlTranslationPort** ✅. Décision pilote : bakery construit l'implémentation du port (borough plantuml) et l'injecte dans document. Seam **additif** : `DocumentTranslator` + `ContentTranslationService` acceptent `plantUmlPort: PlantUmlTranslationPort?` (défaut null, préséance sur l'adaptateur privé). Validation syntaxique **document-side** préservée (rapport `DOC-PLANTUML-VALIDATE`). 2 UT. CI verte run `37866614388` (29m45s).
+:etat: S-284 (2026-10-09) — **US-4b : délégation COMPLÈTE au port N0 PlantUmlTranslationPort** ✅ + release chain. Document ne réimplémente plus la traduction PlantUML : les 3 types privés (`PlantUmlBlock`/`PlantUmlStrategy`/`PlantUmlClassifier`) + l'`PlantUmlTranslationAdapter` sont **supprimés** ; `DocumentTranslator`/`ContentTranslationService` n'ont que `plantUmlPort` (N0). Validation document-side préservée (`DOC-PLANTUML-VALIDATE`). `plantUmlValidationMode`/`tableValidationMode` remontés sur le service. `libs.plantuml.plugin` retiré des usages de traduction.
 
-== Mission session 284 — sur décision pilote
+== Mission session 285 — sur décision pilote
 
-* **US-4b** — délégation **complète** : (1) bakery construit `PlantumlTranslationPortAdapter`
-  et l'injecte (2 sites `MigrateContentI18nTask`) ; (2) document supprime
-  `PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter` privés +
-  migre `SiteTranslationPlan` + 6 fichiers de test + retire `libs.plantuml.plugin`.
-  **Cross-borough**, ~1 session.
-* **Publication DAG document 0.0.21** — distribuer le fix D2 (US-4-C S-282) + le
-  seam jusqu'au site (bump catalog MEMPHIS + document + propagation bakery/runner).
-* **DOC-PLT-4** — D2 corpus : re-générer les variantes gelées (purge delta + re-traduction).
-* **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml.
+* **DOC-PLT-4** — D2 corpus : re-générer les variantes gelées (`@startuml` bruts,
+  delta qui préserve) — purge ciblée + re-traduction (+ bakery).
+* **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml (rendu non blanc).
+* **US-7** (plantuml) — dogfooding + non-régression re-bake cheroliv.com.
+* Vérifier la non-régression complète des runners Cucumber document en CI.
 
-== État du code (S-283)
+== État du code (S-284)
 
-* *0.0.20* : Central OK ; le seam US-4a non publié (session code, pas release).
-* *US-4a* : `plantUmlPort` additif dans `DocumentTranslator`/`ContentTranslationService`.
-* *Non-régression* : adaptateur privé conservé (fallback) ; rapport validation intact.
+* *0.0.23* : Central OK (bundle `c6f30a60`).
+* *Traduction* : 100 % déléguée au port N0 (bakery injecte `PlantumlTranslationPortAdapter`).
+* *Validation* : document-side (`PlantUmlSyntaxValidator` sur le bloc traduit).
+* *Non-régression* : `FakePlantUmlPort` (test) ; features migrées.
 
-== Pièges retenus (S-232..S-283)
+== Pièges retenus (S-232..S-284)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en `@Input @Optional Property<String>`.
@@ -31,13 +28,17 @@
 13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
 43. *Une CI verte n'est pas une CI couvrante* (S-274).
 55. *Un correctif cross-borough doit être apparié* (bloc + fichier, S-280).
-57. *US-4 est large* : seam (US-4a) puis suppression big-bang (US-4b) — ne jamais
-    tenter de tout vérifier d'un coup sans CI isolée.
-
-33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
-56. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local* —
-    document ne compile plus si un type a été retiré au HEAD. Bumper AVANT de
-    publier en local, ou restaurer depuis Central.
+56. *`publishToMavenLocal` d'une version déjà Central écrase le local*.
+57. *US-4 est large* : seam (US-4a) → kill split-brain (US-4b-1) → délégation
+    complète (US-4b-2) → release chain (MEMPHIS/document/bakery). Ne jamais tenter
+    de tout vérifier en un coup.
+58. *(S-284) Supprimer un adaptateur qui portait un paramètre de config le fait
+    perdre* : `plantUmlValidationMode` était porté par `PlantUmlTranslationAdapter`
+    → remonté sur `ContentTranslationService`. Toujours tracer les params de
+    config attachés à un type supprimé.
+59. *(S-284) Un consommateur Central ne voit pas le HEAD* : document 0.0.22/0.0.23
+    doivent être publiés AVANT que bakery (qui consomme Central) compile contre
+    le nouveau seam. DAG strict N0→N1→N2.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 

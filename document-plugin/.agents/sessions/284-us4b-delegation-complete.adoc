@@ -1,0 +1,60 @@
+= Session 284 — US-4b : délégation complète au port N0 PlantUmlTranslationPort (+ release chain)
+:session: 284
+:date: 2026-10-09
+:type: refactor cross-borough (DDD) + publication DAG
+:statut: ✅ TERMINÉ (document-side + release)
+
+== Mission
+
+EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (GBL-007), **US-4b** — délégation
+complète au port N0 (option A). Document ne réimplémente plus la traduction
+PlantUML ; bakery (orchestrateur) construit et injecte le port.
+
+== Livrable document (2 incréments)
+
+=== US-4b-1 — kill split-brain (D4, constat C-5)
+
+Suppression des 3 types privés dupliqués (`PlantUmlBlock`/`PlantUmlStrategy`/
+`PlantUmlClassifier`, 58 lignes) + tests redondants (309 lignes) ; repointage vers
+`contracts.plantuml.*` (vocabulaire `TRANSLATE`/`BORROW`/`PRESERVE`). Un concept,
+un nom, un propriétaire.
+
+=== US-4b-2 — délégation complète (D1/D3)
+
+* Suppression de `document.translation.plantuml.PlantUmlTranslationAdapter` + ses
+  2 fichiers de test. document n'est plus propriétaire de la traduction.
+* `DocumentTranslator` / `ContentTranslationService` : uniquement `plantUmlPort`
+  (N0). Le port prend le bloc, retourne `Translated`/`Preserved`.
+* **Validation document-side préservée** : `validateTranslatedPlantUml` +
+  `PlantUmlSyntaxValidator` (rapport `DOC-PLANTUML-VALIDATE`) — validé seulement sur
+  un bloc `Translated` (un `Preserved` n'introduit aucun risque).
+* **Régression évitée** : `plantUmlValidationMode`/`tableValidationMode` étaient
+  portés par l'adaptateur supprimé → remontés sur `ContentTranslationService` pour
+  que bakery conserve le contrôle `contentI18nValidation`.
+* `FakePlantUmlPort` (test) : port N0 in-JVM déterministe.
+
+== Preuve CI
+
+* document run **`37869889978`** (US-4b-1) — VERT.
+* document (US-4b-2, via release) — compiles VERT 3 source sets.
+* bakery run **`37876162815`** — VERT (résout document 0.0.23 + plantuml depuis Central).
+
+== Fichiers
+
+[cols="1,3"]
+|===
+| Type | Fichier
+
+| prod (supprimé) | `PlantUmlClassifier.kt`, `PlantUmlTranslationAdapter.kt`
+| prod (modifié) | `DocumentTranslator.kt`, `ContentTranslationService.kt`, `plan/SiteTranslationPlan.kt`
+| test (supprimé) | `PlantUmlClassifierTest.kt`, `PlantUmlTranslationAdapterTest.kt`, `PlantUmlTranslationAdapterValidationTest.kt`
+| test (nouveau) | `FakePlantUmlPort.kt`
+| test (modifié) | `DocumentTranslatorTest.kt`, `DocumentTranslatorPlantUmlValidationTest.kt`, `ContentTranslationServiceTest.kt`, `PlantUmlValidationSteps.kt`, features
+| build | `libs.versions.toml` (0.0.23), `build.gradle.kts`/`settings.gradle.kts` (BOM/catalog 0.0.73)
+|===
+
+== Release chain (DAG)
+
+MEMPHIS `0.0.72`/`0.0.73`/`0.0.74` + document `0.0.22`/`0.0.23` (bundles
+`34e13aeb`/`35241063`/`e53fcacb`/`9c614f2e`/`c6f30a60`). document 0.0.23 porte la
+délégation complète + le paramètre `plantUmlValidationMode` sur le service.
