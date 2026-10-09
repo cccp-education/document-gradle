@@ -214,6 +214,6 @@ class PlantUmlTranslationAdapterValidationTest {
         val invalid = adapter.plantUmlValidationResults.first()
         assertEquals("Specific Article", invalid.articleTitle)
         assertEquals(3, invalid.blockIndex)
-        assertTrue(invalid.strategy.contains("TranslateLabels"))
+        assertTrue(invalid.strategy.contains("TRANSLATE"))
     }
 }

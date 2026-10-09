@@ -7,6 +7,9 @@ import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import contracts.plantuml.PlantUmlBlock
+import contracts.plantuml.PlantUmlClassifier
+import contracts.plantuml.PlantUmlStrategy
 import org.slf4j.LoggerFactory
 
 class PlantUmlTranslationAdapter(
@@ -34,11 +37,11 @@ class PlantUmlTranslationAdapter(
         if (block.language != "plantuml") return block
         val strategy = classifier.classify(PlantUmlBlock(block.content, borrowedVocabulary))
         val result = when (strategy) {
-            PlantUmlStrategy.PreserveTechnical -> block
-            PlantUmlStrategy.TranslateLabels -> translateLabels(block, sourceLanguage, targetLanguage, preserveVocabulary = false)
-            PlantUmlStrategy.BorrowVocabulary -> translateLabels(block, sourceLanguage, targetLanguage, preserveVocabulary = true)
+            PlantUmlStrategy.PRESERVE -> block
+            PlantUmlStrategy.TRANSLATE -> translateLabels(block, sourceLanguage, targetLanguage, preserveVocabulary = false)
+            PlantUmlStrategy.BORROW -> translateLabels(block, sourceLanguage, targetLanguage, preserveVocabulary = true)
         }
-        if (strategy != PlantUmlStrategy.PreserveTechnical) {
+        if (strategy != PlantUmlStrategy.PRESERVE) {
             validateTranslatedPlantUml(result.content, articleTitle, blockIndex, strategy.toString())
         }
         return result

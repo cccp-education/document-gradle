@@ -36,7 +36,7 @@ Feature: PlantUML Validation Pipeline
     And the plantUML validation error should mention "Simulated corruption"
 
   @preserve-technical
-  Scenario: PreserveTechnical strategy skips validation
+  Scenario: PRESERVE strategy skips validation
     Given a document translator with plantUML validation mode "LENIENT"
     And the plantUML validator always returns invalid
     Given an AsciiDoc article with a PlantUML diagram having no translatable labels

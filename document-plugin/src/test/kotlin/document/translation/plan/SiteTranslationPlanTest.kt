@@ -1,6 +1,6 @@
 package document.translation.plan
 
-import document.translation.plantuml.PlantUmlStrategy
+import contracts.plantuml.PlantUmlStrategy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -140,7 +140,7 @@ class SiteTranslationPlanTest {
             sourceLanguage = "fr",
             targetLanguages = setOf("en")
         )
-        assertEquals(PlantUmlStrategy.PreserveTechnical, plan.defaultPlantUmlStrategy)
+        assertEquals(PlantUmlStrategy.PRESERVE, plan.defaultPlantUmlStrategy)
     }
 
     @Test
@@ -149,9 +149,9 @@ class SiteTranslationPlanTest {
             siteName = "site",
             sourceLanguage = "fr",
             targetLanguages = setOf("en"),
-            defaultPlantUmlStrategy = PlantUmlStrategy.TranslateLabels
+            defaultPlantUmlStrategy = PlantUmlStrategy.TRANSLATE
         )
-        assertEquals(PlantUmlStrategy.TranslateLabels, plan.defaultPlantUmlStrategy)
+        assertEquals(PlantUmlStrategy.TRANSLATE, plan.defaultPlantUmlStrategy)
     }
 
     @Test

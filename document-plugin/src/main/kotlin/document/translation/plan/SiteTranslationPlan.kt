@@ -1,13 +1,13 @@
 package document.translation.plan
 
-import document.translation.plantuml.PlantUmlStrategy
+import contracts.plantuml.PlantUmlStrategy
 import contracts.i18n.LanguageCatalog
 
 data class SiteTranslationPlan(
     val siteName: String,
     val sourceLanguage: String,
     val targetLanguages: Set<String>,
-    val defaultPlantUmlStrategy: PlantUmlStrategy = PlantUmlStrategy.PreserveTechnical
+    val defaultPlantUmlStrategy: PlantUmlStrategy = PlantUmlStrategy.PRESERVE
 ) {
     init {
         require(siteName.isNotBlank()) {
