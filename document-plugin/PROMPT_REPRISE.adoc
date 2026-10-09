@@ -1,35 +1,41 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 283
+:session: 284
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-282 (2026-10-08) — **US-4 option C : re-échappement `\n` — fin du bug D2 CHE-DIAGRAM** ✅. Le traducteur restituait un retour-ligne réel (`rectangle "a\nb"` → 2 lignes) → PlantUML `Syntax Error?` → bloc dégradé en listing. Fix chirurgical `escapeNewlines` dans `PlantUmlTranslationAdapter.translateLabels`. 15/15 tests. Piège S-282 : `publishToMavenLocal` d'une version déjà Central **écrase** l'artefact local.
+:etat: S-283 (2026-10-09) — **US-4 option A (seam) : délégation au port N0 PlantUmlTranslationPort** ✅. Décision pilote : bakery construit l'implémentation du port (borough plantuml) et l'injecte dans document. Seam **additif** : `DocumentTranslator` + `ContentTranslationService` acceptent `plantUmlPort: PlantUmlTranslationPort?` (défaut null, préséance sur l'adaptateur privé). Validation syntaxique **document-side** préservée (rapport `DOC-PLANTUML-VALIDATE`). 2 UT. CI verte run `37866614388` (29m45s).
 
-== Mission session 283 — sur décision pilote
+== Mission session 284 — sur décision pilote
 
-* **Publication DAG document 0.0.21** — distribuer le fix US-4-C jusqu'au site
-  (bump catalog MEMPHIS + document + propagation bakery/runner). **Priorité** : le
-  fix D2 n'atteint cheroliv.com qu'après publication.
-* **US-4 complet** (suppression du domaine privé document + délégation au port
-  N0) — question d'injection du port à trancher (options A/B).
-* **US-5** (version toolchain, cross-borough bakery) — résout D1 (SVG blancs).
-* *EPIC PUB 0.0.21* si le pilote préfère bundler d'autres changements.
+* **US-4b** — délégation **complète** : (1) bakery construit `PlantumlTranslationPortAdapter`
+  et l'injecte (2 sites `MigrateContentI18nTask`) ; (2) document supprime
+  `PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter` privés +
+  migre `SiteTranslationPlan` + 6 fichiers de test + retire `libs.plantuml.plugin`.
+  **Cross-borough**, ~1 session.
+* **Publication DAG document 0.0.21** — distribuer le fix D2 (US-4-C S-282) + le
+  seam jusqu'au site (bump catalog MEMPHIS + document + propagation bakery/runner).
+* **DOC-PLT-4** — D2 corpus : re-générer les variantes gelées (purge delta + re-traduction).
+* **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml.
 
-== État du code (S-282)
+== État du code (S-283)
 
-* *0.0.20* : Central OK ; catalogue ws **0.0.65** (pin) — à re-pin 0.0.68/0.0.69 si bump.
-* *Nouveau fix* : `PlantUmlTranslationAdapter.escapeNewlines` (D2 CHE-DIAGRAM).
-* *Piège S-282* : ne jamais `publishToMavenLocal` une version déjà Central
-  (écrase le local → split code↔Central). Restaurer depuis Central si mordu.
+* *0.0.20* : Central OK ; le seam US-4a non publié (session code, pas release).
+* *US-4a* : `plantUmlPort` additif dans `DocumentTranslator`/`ContentTranslationService`.
+* *Non-régression* : adaptateur privé conservé (fallback) ; rapport validation intact.
 
-== Pièges retenus (S-232..S-282)
+== Pièges retenus (S-232..S-283)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
 6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en `@Input @Optional Property<String>`.
 7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
 11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM.
 13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
+43. *Une CI verte n'est pas une CI couvrante* (S-274).
+55. *Un correctif cross-borough doit être apparié* (bloc + fichier, S-280).
+57. *US-4 est large* : seam (US-4a) puis suppression big-bang (US-4b) — ne jamais
+    tenter de tout vérifier d'un coup sans CI isolée.
+
 33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
-57. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local* —
+56. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local* —
     document ne compile plus si un type a été retiré au HEAD. Bumper AVANT de
     publier en local, ou restaurer depuis Central.
 

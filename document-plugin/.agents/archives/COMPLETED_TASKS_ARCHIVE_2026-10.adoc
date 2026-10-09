@@ -1,5 +1,21 @@
 = COMPLETED_TASKS_ARCHIVE — 2026-10 (document-gradle)
 
+== Session 283 (2026-10-09) — US-4 option A (seam) : délégation au port N0 ✅
+
+EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (décision pilote : option A).
+
+=== Fait
+- [x] `DocumentTranslator` + `ContentTranslationService` : paramètre additif `plantUmlPort: PlantUmlTranslationPort?` (défaut null, préséance sur l'adaptateur privé legacy)
+- [x] Projection pivot↔N0 (`PlantUmlBlock`/`PlantUmlTranslationRequest`/`PlantUmlTranslationOutcome`) ; `Preserved` garde la source verbatim
+- [x] Validation syntaxique **document-side** préservée (rapport `DOC-PLANTUML-VALIDATE` non régressé)
+- [x] Baby-step TDD strict : RED prouvé (`No parameter with name 'plantUmlPort'`) → GREEN
+- [x] 2 UT `DocumentTranslatorPlantUmlPortTest`
+- [x] CI verte run `37866614388` (29m45s, `Build & Test` + `publishToMavenLocal` VERT)
+- [x] Rapport + INDEX + PROMPT_REPRISE + SESSIONS_HISTORY + coverage
+
+=== Prochaine session (284)
+- **US-4b** : délégation **complète** (bakery construit/injecte `PlantumlTranslationPortAdapter` ; document supprime les types privés + migre 6 tests + retire `libs.plantuml.plugin`)
+
 == Session 282 (2026-10-08) — US-4 option C : re-échappement `\n` (fin du bug D2) ✅
 
 EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (décision pilote : option C, fix minimal).

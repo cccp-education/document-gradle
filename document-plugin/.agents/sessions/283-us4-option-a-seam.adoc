@@ -1,0 +1,79 @@
+= Session 283 — US-4 option A : seam de délégation au port N0 PlantUmlTranslationPort
+:session: 283
+:date: 2026-10-09
+:type: feat (DDD/TDD) — cross-borough document ↔ plantuml
+:statut: ✅ TERMINÉ (US-4a — seam)
+
+== Mission
+
+EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (GBL-007), **US-4** — décision
+pilote **option A** (bakery, l'orchestrateur, construit l'implémentation du port
+N0 `PlantumlTranslationPortAdapter` du borough plantuml et l'injecte dans
+document). Cette session livre le **seam additif** (US-4a).
+
+== Contexte — US-4 est plus large que l'estimation
+
+L'audit a montré que la « délégation complète au port » touche deux boroughs :
+* **document** : `PlantUmlClassifier` / `PlantUmlStrategy` /
+  `PlantUmlTranslationAdapter` privés + `DocumentTranslator` +
+  `ContentTranslationService` + `SiteTranslationPlan` + 6 fichiers de test ;
+* **bakery** : construction/injection (2 sites `MigrateContentI18nTask.kt:186,223`).
+
+Supprimer les types privés est un **big-bang non vérifiable en local** (les tests
+s'exécutent en CI, ~30 min/run). On livre donc par incréments vérifiables : le
+**seam** cette session, la migration complète en US-4b.
+
+== Livrable — seam de délégation (US-4a, additif)
+
+Baby-step **TDD** strict (RED → GREEN). Local = Build, Tests = CI.
+
+=== RED (prouvé)
+
+`DocumentTranslatorPlantUmlPortTest` écrit **avant** le code → `compileTestKotlin`
+échoue : `No parameter with name 'plantUmlPort' found`.
+
+=== GREEN
+
+* `DocumentTranslator` gagne `plantUmlPort: PlantUmlTranslationPort? = null`.
+  Quand il est câblé, il a **préséance** sur l'adaptateur privé legacy ; sinon
+  comportement **inchangé** (backward compat).
+  * `translatePlantUmlWithPort(...)` projette le bloc pivot (`PivotBlock.Source`)
+    vers un N0 `PlantUmlBlock`, appelle le port, reprojette l'issue
+    (`Translated` → contenu traduit ; `Preserved` → bloc source verbatim).
+  * La **validation syntaxique reste document-side** (`validateTranslatedPlantUml`
+    + `PlantUmlSyntaxValidator` + `PlantUmlValidationResult`) → le rapport
+    `DOC-PLANTUML-VALIDATE` **ne régresse pas** (contrat existant).
+* `ContentTranslationService` gagne `plantUmlPort: PlantUmlTranslationPort? = null`
+  et le transmet au `DocumentTranslator`.
+* `src/test/kotlin/document/translation/DocumentTranslatorPlantUmlPortTest.kt` —
+  2 tests (délégation au port ; `Preserved` garde la source).
+
+== Preuve CI
+
+Run **`37866614388`** — `BUILD SUCCESSFUL` **29m45s** :
+* `DocumentTranslatorPlantUmlPortTest` **2/2** PASSED ;
+* job `Build & Test` + `Verify publishToMavenLocal (POM)` VERTS.
+
+== Fichiers
+
+[cols="1,3"]
+|===
+| Type | Fichier
+
+| prod (modifié) | `src/main/kotlin/document/translation/DocumentTranslator.kt`
+| prod (modifié) | `src/main/kotlin/document/translation/ContentTranslationService.kt`
+| test (nouveau) | `src/test/kotlin/document/translation/DocumentTranslatorPlantUmlPortTest.kt`
+|===
+
+Zéro secret, zéro Python. Commit/push `c1cf0a7`.
+
+== Suite — US-4b (session dédiée)
+
+. **bakery** : construire `PlantumlTranslationPortAdapter` (dépendance
+   `plantuml-plugin`, N2→N2 assumée orchestrateur) et l'injecter dans
+   `ContentTranslationService` (2 sites `MigrateContentI18nTask`).
+. **document** : supprimer `PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter`
+   privés ; migrer `SiteTranslationPlan` + les 6 fichiers de test ; retirer la
+   dépendance `libs.plantuml.plugin` (ne garder que `plantuml-contracts` + le
+   validateur N0).
+. Vérifier la non-régression des 25+ runners Cucumber document et le rendu.

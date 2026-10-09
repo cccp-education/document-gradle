@@ -27,8 +27,11 @@ re-échappe `\n` (`escapeNewlines`) : un retour-ligne réel du traducteur ne cas
 plus PlantUML | 1 | ✅ S-282 (livré 0.0.21)
 | DOC-PLT-3 | **Délégation complète au port** — suppression
 `PlantUmlClassifier`/`PlantUmlStrategy`/`PlantUmlTranslationAdapter` privés ;
-`DocumentTranslator` appelle `PlantUmlTranslationPort` (question d'injection A/B à
-trancher) | 4 | 🟡 À FAIRE
+`DocumentTranslator` appelle `PlantUmlTranslationPort` (décision pilote **option A** :
+bakery construit/injecte l'adaptateur). **US-4a ✅ S-283** : seam additif
+(`plantUmlPort` dans `DocumentTranslator`/`ContentTranslationService`, préséance sur
+l'adaptateur privé). Reste **US-4b** : suppression des types privés + wiring bakery +
+migration 6 fichiers de test + retrait `libs.plantuml.plugin` | 4 | 🟡 À FAIRE (US-4a ✅ S-283)
 | DOC-PLT-4 | **D2 corpus** — re-générer les variantes gelées (`@startuml` bruts) :
 purge ciblée du store delta + re-traduction (le fix a priori ne répare pas
 l'existant) | 3 | 🟡 À FAIRE (+ bakery)

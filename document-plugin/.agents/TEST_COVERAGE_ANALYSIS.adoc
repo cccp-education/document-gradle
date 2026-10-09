@@ -1,6 +1,15 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-10-02
-:session: 279
+:date: 2026-10-09
+:session: 283
+
+== Session 283 — US-4 option A (seam) (2 UT)
+
+*Périmètre* : seam de délégation PlantUML au port N0.
+*Note méthodo* : règle **Local = Build, Tests = CI**.
+
+*Nouveaux tests* : `DocumentTranslatorPlantUmlPortTest` (2 UT : délégation au port ;
+`Preserved` garde la source verbatim). Aucun fichier de production retiré ; backward
+compat (adaptateur privé conservé).
 
 == Session 279 — DOC-SEMANTIC-TABLE US-3→6 (20 tests : 10 UT + 5 FT + 5 BDD)
 
