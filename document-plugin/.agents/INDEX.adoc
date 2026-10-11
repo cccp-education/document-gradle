@@ -6,7 +6,17 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-10-11 (session 285 — **Cadrage GBL-010 : arbre de traduction, branche Data** ✅).
+_Derniere mise a jour_ : 2026-10-11 (session 286 — **GBL-010 G-2 : arbre du document AsciiDoc** ✅).
+Document possède la **branche Data** de l'arbre de traduction (EPIC transverse
+`GBL-010`) et livre l'**arbre du document AsciiDoc** : `document.translation.tree.ArticleTreeAudit`
+(`ArticleNode` = `Section`/`Leaf`, `ArticleLeafOwner` DOCUMENT/PLANTUML) construit
+l'arbre interne depuis le pivot plat (sections par titre + feuilles regroupées) et
+inventorie les feuilles (`translatableLeaves`, `plantumlLeaves`, `hasDiagrams`,
+`render()` déterministe). Un `Source("plantuml")` = feuille **owner=PLANTUML**.
+Runner `ArticleTreeCucumberRunner` + `articleTreeCucumberTest`. 5 unit + BDD
+`@article-tree` (3 scénarios). RED compile → GREEN compile (3 source sets).
+Rapport `.agents/sessions/286-gbl010-g2-article-tree.adoc`.
+_Derniere mise a jour (anterieure)_ : 2026-10-11 (session 285 — **Cadrage GBL-010 : arbre de traduction, branche Data** ✅).
 Document possède la **branche Data** de l'arbre de traduction du site (EPIC transverse
 `GBL-010`) : chaque article EST un document, chaque document a l'**arbre du document
 AsciiDoc (AST)** dedans ; la balise `[plantuml]` est une feuille **déléguée** au

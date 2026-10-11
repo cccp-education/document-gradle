@@ -1,55 +1,53 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 286
+:session: 287
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-285 (2026-10-11) — **Cadrage GBL-010 : branche Data (article → document → AST → feuille plantuml)**. Reformulation persistée dans `BACKLOG.adoc` § EPIC GBL-010 (G-2/G-2b). Gouvernance pure, zéro code.
+:etat: S-286 (2026-10-11) — **GBL-010 G-2 : arbre du document AsciiDoc** ✅ (`document.translation.tree.ArticleTreeAudit` — article → AST → feuilles `owner=document|plantuml` ; runner `articleTreeCucumberTest`).
 
 == Vision (GBL-010)
 
 La traduction d'un site est un **arbre à deux branches** ; document possède la
 **branche Data** : chaque article EST un document, chaque document a l'**arbre du
-document AsciiDoc (AST)** dedans. document **extrait** le pivot, **traduit la
-prose**, et pour la balise `[plantuml,…]` (feuille spéciale) **délègue** au port N0
-`PlantUmlTranslationPort` — il ne réimplémente jamais la logique PlantUML. Il
-expose, par nœud de l'AST, un **statut** (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`).
-Cadrage racine : `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
+document AsciiDoc (AST)** dedans ; la balise `[plantuml]` est une feuille déléguée au
+borough plantuml (port N0). Cadrage racine :
+`CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
 
-== Mission session 286 — sur décision pilote
+== Mission session 287 — sur décision pilote
 
-* **G-2** — audit de l'arbre article→AST (`document.tree.ArticleTreeAudit` : walk
-  `article → nœud AST → statut`, surface les blocs `[plantuml]`) ; rapport
-  `article-tree` ; BDD `@article-tree`. Réutilise `DocumentTranslator` +
-  `BlockChecksum` (prose) + le port N0 (feuille plantuml).
-* **G-2b** — statut de feuille délégué (jamais recalculé par document).
+* **G-2 (reste)** — brancher le rapport `article-tree` sur le **statut de
+  traduction** (prose `PENDING`/`TRANSLATED` via `BlockChecksum`, feuille plantuml
+  via le port) et l'exposer à l'audit d'arbre unifié (G-4).
 * **DOC-PLT-4** — D2 corpus : re-générer les variantes gelées (`@startuml` bruts) —
   purge ciblée + re-traduction (+ bakery).
 * **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml (rendu non blanc).
-* Vérifier la non-régression complète des runners Cucumber document en CI.
+* Vérifier la non-régression complète des runners Cucumber document en CI (le
+  nouveau `articleTreeCucumberTest` s'exécute dans `check`).
 
-== État du code (S-284)
+== État du code (S-286)
 
 * *0.0.23* : Central OK (bundle `c6f30a60`).
 * *Traduction* : 100 % déléguée au port N0 (bakery injecte `PlantumlTranslationPortAdapter`).
-* *Validation* : document-side (`PlantUmlSyntaxValidator` sur le bloc traduit).
-* *Non-régression* : `FakePlantUmlPort` (test) ; features migrées.
+* *Arbre du document* : `document.translation.tree.ArticleTreeAudit` (nouveau).
 
-== Pièges retenus (S-232..S-285)
+== Pièges retenus (S-232..S-286)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-2. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en `@Input @Optional Property<String>`.
+2. *`@InputFile` valide l'existence AVANT l'action* — `@Input @Optional Property<String>`.
 3. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
 4. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM.
 5. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
 6. *Une CI verte n'est pas une CI couvrante* (S-274).
 7. *Un correctif cross-borough doit être apparié* (bloc + fichier, S-280).
 8. *`publishToMavenLocal` d'une version déjà Central écrase le local*.
-9. *US large* : seam → kill split-brain → délégation complète → release chain. Ne jamais tout vérifier en un coup.
-10. *(S-284) Supprimer un adaptateur qui portait un paramètre de config le fait perdre* — remonter les params supprimés.
+9. *US large* : seam → kill split-brain → délégation complète → release chain.
+10. *(S-284) Supprimer un adaptateur qui portait un paramètre de config le fait perdre*.
 11. *(S-284) Un consommateur Central ne voit pas le HEAD* : publier N0→N1→N2 dans l'ordre.
+12. *(S-274) `additionalTasksInCheck = true`* : tout nouveau runner Cucumber doit y être
+    enregistré, sinon il ne tourne jamais en CI.
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
-Chaque feature a UN runner propriétaire. **29 runners dédiés** (dernier :
-`translationResilienceCucumberTest`).
+Chaque feature a UN runner propriétaire. **30 runners dédiés** (dernier :
+`articleTreeCucumberTest`).
 
 == Méthode
 
@@ -62,4 +60,4 @@ Tests = CI*. English only code/tests/features (gouvernance .adoc en français).
 1. `git status` (document-gradle).
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT.
-4. Décision pilote — G-2/G-2b, DOC-PLT-4/5.
+4. Décision pilote — G-2 (reste), DOC-PLT-4/5.

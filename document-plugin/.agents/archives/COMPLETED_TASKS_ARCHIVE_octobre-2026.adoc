@@ -2,6 +2,14 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 286 (2026-10-11) — GBL-010 G-2 : arbre du document AsciiDoc
+
+* [x] `ArticleNode` (`Section`/`Leaf`, `ArticleLeafOwner` DOCUMENT/PLANTUML) + `ArticleTreeAudit` (build article→AST, inventaire, `render()` déterministe)
+* [x] Un `Source("plantuml")` = feuille `owner=PLANTUML` (surface les feuilles du borough plantuml)
+* [x] 5 unit `ArticleTreeAuditTest` + BDD `@article-tree` (3 scénarios) + runner `articleTreeCucumberTest`
+* [x] RED compile prouvé → GREEN compile (3 source sets)
+* [x] Zéro secret, zéro Python
+
 === Session 285 (2026-10-11) — Cadrage GBL-010 : arbre de traduction (branche Data)
 
 * [x] Modèle d'arbre : document possède la **branche Data** (article → document → AST AsciiDoc)

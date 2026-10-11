@@ -1,6 +1,20 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-10-09
-:session: 283
+:date: 2026-10-11
+:session: 286
+
+== Session 286 — GBL-010 G-2 : arbre du document AsciiDoc (5 UT + 3 scénarios BDD)
+
+*Périmètre* : `document.translation.tree.ArticleTreeAudit` — l'arbre interne de
+l'article (sections par titre + feuilles regroupées), feuilles plantuml surface.
+*Note méthodo* : règle **Local = Build, Tests = CI**.
+
+*Nouveaux tests* : `ArticleTreeAuditTest` (5 UT : titres→sections imbriquées,
+`Source("plantuml")`→feuille `PLANTUML`, source non-plantuml→feuille `DOCUMENT`,
+comptage des feuilles traduisibles, `render()` déterministe) + BDD
+`article_tree.feature` `@article-tree` (3 scénarios) + `ArticleTreeSteps` (glue
+`document.translation.tree`) + runner `ArticleTreeCucumberRunner` +
+`CucumberTaskSpec("articleTreeCucumberTest")` (`additionalTasksInCheck = true`).
+RED compile prouvé → GREEN compile (3 source sets).
 
 == Session 283 — US-4 option A (seam) (2 UT)
 

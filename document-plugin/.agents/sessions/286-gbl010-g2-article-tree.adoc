@@ -1,0 +1,75 @@
+= Session 286 — GBL-010 G-4/G-2 : arbre du document AsciiDoc (article → AST → feuilles plantuml)
+
+_Date_ : 2026-10-11
+_Borough_ : document-gradle (New Orleans 🟢, N2)
+_Type_ : feat (DDD/TDD/BDD) — branche Data de l'arbre de traduction
+_Méthode_ : baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), unit → cucumber
+
+== Mission
+
+EPIC transverse **GBL-010** (arbre de traduction du site), branche Data, **G-2** :
+document possède l'article comme document et son **arbre AsciiDoc (AST)**. Le pivot
+`document.translation` est une **liste plate** de blocs ; l'arbre est la forme
+manquante qui les regroupe sous leurs titres et **surface les feuilles** que le
+borough plantuml possède (`PivotBlock.Source(language = "plantuml")`).
+
+Vision pilote : *« chaque article est à prendre comme un document, et chaque document
+a l'arbre du document AsciiDoc (AST) dedans. On y trouvera des balises plantuml, et
+ce sera le borough plantuml qui gérera sa traduction. »*
+
+== Livrable — domaine pur `document.translation.tree.ArticleTreeAudit`
+
+* `ArticleNode.kt` — `sealed interface ArticleNode` : `Section(level, title, children)`
+  + `Leaf(kind, translatable, owner)` ; `ArticleLeafOwner` (`DOCUMENT`/`PLANTUML`).
+* `ArticleTreeAudit.kt` — `build(content)` : construit l'arbre interne (sections par
+  niveau de titre via une pile, feuilles regroupées sous leur section) ;
+  `of(content)` → `ArticleTreeReport` (racine, `blocks`, `translatableLeaves`,
+  `plantumlLeaves`, `hasDiagrams`, `render()` **déterministe** — aucun horodatage).
+  Classification des blocs : `heading`/`paragraph`/`list`/`table`/`admonition`/
+  `description-list`/`source`/`block-macro`/`hr` ; un `Source("plantuml")` est une
+  feuille **`owner = PLANTUML`**.
+* Runner dédié `ArticleTreeCucumberRunner` + `articleTreeCucumberTest` (conventions
+  0.0.8, `additionalTasksInCheck = true`).
+
+== Tests (Local = Build, Tests = CI)
+
+* **RED** : `compileTestKotlin` échoue (`Unresolved reference 'ArticleTreeAudit'`/
+  `'ArticleNode'`).
+* **GREEN** : `compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT ;
+  tâche `articleTreeCucumberTest` enregistrée.
+* **Unit** — `ArticleTreeAuditTest` (5) : titres → sections imbriquées ; bloc
+  plantuml → feuille `PLANTUML` ; source non-plantuml → feuille `DOCUMENT` ;
+  comptage des feuilles traduisibles ; rendu déterministe (`plantuml`, aucun `2026-`).
+* **BDD** — `article_tree.feature` `@article-tree` (3 scénarios) + `ArticleTreeSteps`
+  (glue `document.translation.tree`, steps uniques — contrôle statique `grep` = 1).
+
+== Fichiers
+
+[cols="1,3"]
+|===
+| Type | Fichier
+
+| prod (nouveau) | `src/main/kotlin/document/translation/tree/ArticleNode.kt`
+| prod (nouveau) | `src/main/kotlin/document/translation/tree/ArticleTreeAudit.kt`
+| test (nouveau) | `src/test/kotlin/document/translation/tree/ArticleTreeAuditTest.kt`
+| test (nouveau) | `src/test/kotlin/document/translation/tree/ArticleTreeSteps.kt`
+| test (nouveau) | `src/test/kotlin/document/translation/tree/ArticleTreeCucumberRunner.kt`
+| test (nouveau) | `src/test/resources/features/article_tree.feature`
+| build (modifié) | `build.gradle.kts` (CucumberTaskSpec `articleTreeCucumberTest`)
+|===
+
+== Notes
+
+* Baby-step DDD/TDD/BDD strict : RED compile prouvé → GREEN compile. Aucun test local.
+* Zéro secret, zéro Python. Build compile 3 source sets VERT.
+* Réutilise l'infra existante (`Content`, `PivotBlock`, `SiteTree`) — pas de second
+  modèle.
+
+== Reste EPIC GBL-010
+
+* **G-1** — audit de l'arbre templates (bakery).
+* **G-3 (reste)** — statut par bloc + correction IA (plantuml).
+* **G-4** — l'audit unifié cheroliv agrège déjà l'arbre (US-2 ✅) ; brancher les
+  rapports borough (G-1/G-2/G-3) sur le nœud correspondant.
+* **G-5** — reprise économie d'encre + dogfooding.
+* **Fichier à lire en priorité** : `PROMPT_REPRISE.adoc` (session 287).

@@ -292,6 +292,12 @@ cucumberConventions {
             tags = listOf("@translation-resilience"),
             runnerClass = "document.translation.resilience.TranslationResilienceCucumberRunner",
         ),
+        CucumberTaskSpec(
+            name = "articleTreeCucumberTest",
+            features = listOf("src/test/resources/features/article_tree.feature"),
+            tags = listOf("@article-tree"),
+            runnerClass = "document.translation.tree.ArticleTreeCucumberRunner",
+        ),
     )
 }
 

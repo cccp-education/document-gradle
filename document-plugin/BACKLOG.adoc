@@ -38,7 +38,7 @@ document a l'ARBRE du document AsciiDoc (AST) dedans.
 `article-tree` ; BDD `@article-tree`. Réutilise `DocumentTranslator` +
 `BlockChecksum` (statut de prose) + le port N0 (statut des feuilles plantuml).
 | 3
-| 🟡 À FAIRE
+| ✅ S-286 — `document.translation.tree.ArticleTreeAudit` (arbre article→AST : sections par titre + feuilles `owner=document\|plantuml`, rapport + `render()` déterministe ; runner `articleTreeCucumberTest`)
 
 | G-2b
 | **Statut de feuille délégué.** Le statut d'un bloc `[plantuml]` provient du port
