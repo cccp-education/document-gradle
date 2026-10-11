@@ -1,0 +1,51 @@
+= Session 285 — Cadrage GBL-010 : arbre de traduction (branche Data : article → document → AST)
+
+_Date_ : 2026-10-11
+_Borough_ : document-gradle (New Orleans 🟢, N2)
+_Type_ : cadrage / gouvernance pure (pattern S-057/S-063)
+
+== Mission
+
+Demande pilote (S-069, reprise cheroliv.com) : la traduction d'un site est **un
+arbre à deux branches** ; document possède la **branche Data** — chaque article EST
+un document, chaque document a l'**arbre du document AsciiDoc (AST)** dedans, et la
+balise `[plantuml]` est une feuille déléguée au borough plantuml. Persister la
+**reformulation spécifique document** dans le backlog, avec vision + roadmap.
+Gouvernance pure : **zéro code**.
+
+== Livrable
+
+* **`BACKLOG.adoc` § EPIC GBL-010** — prompt reformulé (document possède article →
+  document → AST, prose, et **délègue** la feuille plantuml au port N0) ; 2 US :
+  * **G-2** — `document.tree.ArticleTreeAudit` (walk `article → nœud AST → statut`,
+    surface les blocs `[plantuml]`) ; rapport `article-tree` ; BDD `@article-tree`.
+  * **G-2b** — statut de feuille délégué au port N0 (jamais recalculé par document).
+* **PROMPT_REPRISE** (session 286) / **INDEX** / **SESSIONS_HISTORY** / archive —
+  synchronisés.
+
+== Vision (GBL-010)
+
+[source]
+----
+RACINE — le site translatable
+├── BRANCHE A — Templates (jbake/Thymeleaf, les pages)   → bakery
+└── BRANCHE B — Data (les articles)                      → document
+    └── Article == un document → AST AsciiDoc
+        ├── prose (titres, paragraphes, tables, listes)  → document (traduit)
+        └── blocs `[plantuml]` (feuille)                 → plantuml (traduit/corrige/valide)
+----
+
+Un nœud, un propriétaire, un **statut** (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`).
+Cadrage racine : `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
+
+== Notes
+
+* Gouvernance pure : zéro code, zéro test, zéro publication.
+* `DOC-PLANTUML-DELEGATE` : DOC-PLT-1/2 ✅ + DOC-PLT-3 ✅ S-283/S-284 (délégation).
+* Zéro secret, zéro Python.
+
+== Reste (S-286→)
+
+* **G-2** audit de l'arbre article→AST ; **G-2b** statut de feuille délégué.
+* **DOC-PLT-4** re-génération variantes gelées ; **DOC-PLT-5** chaîne E2E.
+* **Fichier à lire en priorité** : `PROMPT_REPRISE.adoc` (session 286).

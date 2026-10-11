@@ -1,6 +1,55 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+== 🟡 EPIC GBL-010 — Arbre de traduction (branche Data : article → document → AST)
+
+*GBL* : EPIC transverse **GBL-010** (`CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`,
+racine workspace). Demande pilote S-069 : la traduction d'un site est un **arbre à
+deux branches** ; document possède la **branche Data**.
+
+*Prompt reformulé (spécifique document)* :
+
+[quote]
+----
+document possède la BRANCHE DATA : chaque article EST un document, et chaque
+document a l'ARBRE du document AsciiDoc (AST) dedans.
+
+- Extrait le pivot AsciiDoc (AST) d'un article : `AsciiDocParser` →
+  `PivotBlock`/`PivotInline` (titres, paragraphes, listes, tables, `Source`).
+- Traduit la PROSE de l'AST (delta par bloc ; statut `PENDING`/`TRANSLATED` ;
+  `BlockChecksum`, `DocumentTranslator`, `ContentTranslationService`).
+- Dans l'AST, la balise `[plantuml,…]` est une FEUILLE SPÉCIALE : document
+  l'EXTRAIT et la DÉLÈGUE au port N0 `PlantUmlTranslationPort` — il ne
+  réimplémente JAMAIS la traduction/correction PlantUML.
+- Expose, par nœud de l'AST, un STATUT (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`)
+  agrégé par document, pour l'audit d'arbre unifié et la reprise en économie d'encre.
+----
+
+*Cadrage* : `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc` (racine) ; lien
+`EPIC DOC-PLANTUML-DELEGATE` (feuille plantuml, `GBL-007`).
+
+[cols="1,4,1,2", options="header"]
+|===
+| US | Description | Pts | Statut
+
+| G-2
+| **Branche B — audit de l'arbre article→AST.** Domaine pur `document.tree.ArticleTreeAudit`
+(walk `article → nœud AST → statut`, surface les blocs `[plantuml]`) ; rapport
+`article-tree` ; BDD `@article-tree`. Réutilise `DocumentTranslator` +
+`BlockChecksum` (statut de prose) + le port N0 (statut des feuilles plantuml).
+| 3
+| 🟡 À FAIRE
+
+| G-2b
+| **Statut de feuille délégué.** Le statut d'un bloc `[plantuml]` provient du port
+N0 plantuml (jamais recalculé par document) ; `MISSING`/`PENDING`/`BROKEN` par bloc.
+| 2
+| 🟡 À FAIRE
+|===
+
+*Dépend de* : `plantuml-contracts` (N0, ✅ 0.0.1), `plantuml-gradle` (implémentation
+du port, ✅ `GBL-007` US-2/3). *Relie* : `DOC-PLANTUML-DELEGATE` (délégation).
+
 == 🟡 EPIC DOC-PLANTUML-DELEGATE — document délègue le bloc PlantUML (GBL-007)
 
 *GBL* : EPIC transverse **GBL-007** (BACKLOG racine workspace) — propriété du

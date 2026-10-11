@@ -2,6 +2,14 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 285 (2026-10-11) — Cadrage GBL-010 : arbre de traduction (branche Data)
+
+* [x] Modèle d'arbre : document possède la **branche Data** (article → document → AST AsciiDoc)
+* [x] Feuille `[plantuml]` **déléguée** au port N0 plantuml (jamais réimplémentée)
+* [x] Statut par nœud (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`) + reprise économie d'encre
+* [x] `BACKLOG.adoc` § EPIC GBL-010 : prompt reformulé document + **G-2** (`ArticleTreeAudit`) + **G-2b** (statut délégué)
+* [x] Cadrage racine `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc` ; gouvernance pure, zéro code
+
 === Session 280 (2026-10-06) — DOC-TRANSLATE-RESILIENCE (fix cross-borough)
 
 *Type* : fix cross-borough — baby-step DDD/TDD/BDD strict (unit → functional → cucumber)

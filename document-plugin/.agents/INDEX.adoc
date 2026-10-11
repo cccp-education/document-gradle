@@ -6,7 +6,17 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-10-09 (session 284 — **US-4b : délégation COMPLÈTE au port N0 `PlantUmlTranslationPort`** ✅).
+_Derniere mise a jour_ : 2026-10-11 (session 285 — **Cadrage GBL-010 : arbre de traduction, branche Data** ✅).
+Document possède la **branche Data** de l'arbre de traduction du site (EPIC transverse
+`GBL-010`) : chaque article EST un document, chaque document a l'**arbre du document
+AsciiDoc (AST)** dedans ; la balise `[plantuml]` est une feuille **déléguée** au
+borough plantuml (port N0 `PlantUmlTranslationPort`). Un nœud, un propriétaire, un
+**statut** (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`) ; reprise en **économie
+d'encre**. `BACKLOG.adoc` § EPIC GBL-010 : **G-2** (`document.tree.ArticleTreeAudit`)
++ **G-2b** (statut de feuille délégué). Cadrage racine
+`CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`. Gouvernance pure, zéro code.
+Rapport `.agents/sessions/285-gbl010-arbre-traduction.adoc`.
+_Derniere mise a jour (anterieure)_ : 2026-10-09 (session 284 — **US-4b : délégation COMPLÈTE au port N0 `PlantUmlTranslationPort`** ✅).
 Document ne réimplémente plus la traduction PlantUML : les 3 types privés
 (`PlantUmlBlock`/`PlantUmlStrategy`/`PlantUmlClassifier`) + l'`PlantUmlTranslationAdapter`
 sont **supprimés** ; `DocumentTranslator`/`ContentTranslationService` n'ont que
