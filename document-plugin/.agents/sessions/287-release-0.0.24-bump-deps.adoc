@@ -1,0 +1,48 @@
+= Session 287 — Release 0.0.24 : bump + dépendances + publication Central
+
+_Date_ : 2026-10-11
+_Borough_ : document-gradle (New Orleans 🟢, N2)
+_Type_ : release / bump (accord pilote)
+
+== Mission
+
+Accord pilote : publier l'arbre du document (`ArticleTreeAudit`, S-286) + bump
+dépendances.
+
+== Bump
+
+[cols="2,2,2"]
+|===
+| Élément | Avant | Après
+| `document` (plugin) | 0.0.23 | **0.0.24**
+| `plantuml-plugin` | 0.0.5 | **0.0.9**
+| `asciidoctorj-diagram` | 3.2.0 | **3.2.1**
+| `asciidoctorj-diagram-plantuml` | 1.2025.3 | **1.2026.2**
+| pins catalog/BOM | 0.0.73 | **0.0.78**
+|===
+
+== Publication
+
+* `publishToMavenLocal` VERT.
+* Central : bundle **`6ec72078-8921-4c3a-a1f2-3a2ddbc79cab`** (AUTOMATIC),
+  propagation repo1 HTTP 200. POM importe `workspace-bom:0.0.78`.
+
+== Gates locaux (Local = Build)
+
+`compileKotlin compileTestKotlin compileFunctionalTestKotlin` **VERT** contre
+plantuml `0.0.9` + BOM `0.0.78`.
+
+== Fichiers
+
+`gradle/libs.versions.toml` · `settings.gradle.kts` (pin 0.0.73→0.0.78) ·
+`build.gradle.kts` (platform 0.0.73→0.0.78).
+
+== Notes
+
+* Ordre DAG respecté : publication plantuml `0.0.9` propagée AVANT ce bump (document
+  dépend de `libs.plantuml.plugin`).
+* Zéro Python, zéro secret.
+
+== Reste
+
+* DOC-PLT-4 (re-génération variantes D2) / DOC-PLT-5 (E2E) ; G-2 statut de traduction.

@@ -2,6 +2,14 @@
 
 == Document-gradle (New Orleans 🟢)
 
+=== Session 287 (2026-10-11) — Release 0.0.24 (bump + dépendances + Central)
+
+* [x] Bump `document 0.0.23 → 0.0.24`, `plantuml-plugin 0.0.5 → 0.0.9`, pins catalog/BOM `0.0.73 → 0.0.78`
+* [x] Dépendances : `asciidoctorj-diagram 3.2.1`, `asciidoctorj-diagram-plantuml 1.2026.2`
+* [x] `publishToMavenLocal` + Central bundle `6ec72078-8921-4c3a-a1f2-3a2ddbc79cab`, propagation HTTP 200
+* [x] Compile 3 source sets VERT ; ordre DAG respecté (plantuml 0.0.9 propagé avant)
+* [x] Zéro secret, zéro Python
+
 === Session 286 (2026-10-11) — GBL-010 G-2 : arbre du document AsciiDoc
 
 * [x] `ArticleNode` (`Section`/`Leaf`, `ArticleLeafOwner` DOCUMENT/PLANTUML) + `ArticleTreeAudit` (build article→AST, inventaire, `render()` déterministe)

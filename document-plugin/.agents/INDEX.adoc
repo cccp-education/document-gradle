@@ -6,7 +6,12 @@ _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)
 _Dependances_ : AsciidoctorJ (implementation directe), Asciidoctor Diagram (implementation), planner-gradle (compileOnly, LLM bridge), plantuml-gradle (compileOnly, composition diagramme)
 
-_Derniere mise a jour_ : 2026-10-11 (session 286 — **GBL-010 G-2 : arbre du document AsciiDoc** ✅).
+_Derniere mise a jour_ : 2026-10-11 (session 287 — **Release 0.0.24 (bump + dépendances + Central)** ✅).
+Accord pilote : `document 0.0.23 → 0.0.24`, `plantuml-plugin 0.0.5 → 0.0.9`, pins
+catalog/BOM `0.0.73 → 0.0.78`, `asciidoctorj-diagram 3.2.0 → 3.2.1`,
+`-plantuml 1.2025.3 → 1.2026.2`. Publication Central bundle `6ec72078-8921-4c3a-a1f2-3a2ddbc79cab`,
+propagation repo1 200 ; compile 3 source sets VERT. Rapport `.agents/sessions/287-release-0.0.24-bump-deps.adoc`.
+_Derniere mise a jour (anterieure)_ : 2026-10-11 (session 286 — **GBL-010 G-2 : arbre du document AsciiDoc** ✅).
 Document possède la **branche Data** de l'arbre de traduction (EPIC transverse
 `GBL-010`) et livre l'**arbre du document AsciiDoc** : `document.translation.tree.ArticleTreeAudit`
 (`ArticleNode` = `Section`/`Leaf`, `ArticleLeafOwner` DOCUMENT/PLANTUML) construit
