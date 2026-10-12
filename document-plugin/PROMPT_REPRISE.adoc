@@ -1,7 +1,7 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 288
+:session: 289
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-287 (2026-10-11) — **Release 0.0.24** ✅ (bump + dépendances + Central : `plantuml-plugin 0.0.9`, pins `0.0.78`, `asciidoctorj-diagram 3.2.1`, `-plantuml 1.2026.2` ; bundle `6ec72078`). Livré S-286 : arbre du document `ArticleTreeAudit`.
+:etat: S-288 (2026-10-13) — **Consommation `plantuml-plugin 0.0.10`** ✅ (toml `0.0.9 → 0.0.10`, pins `workspace-bom`/`catalog 0.0.78 → 0.0.87`, `compileKotlin` VERT). Livré S-287 : Release 0.0.24 ; S-286 : arbre du document `ArticleTreeAudit`.
 
 == Vision (GBL-010)
 

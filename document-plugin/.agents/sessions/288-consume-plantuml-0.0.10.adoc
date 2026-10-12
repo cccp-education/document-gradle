@@ -1,0 +1,26 @@
+= Session 288 — Consommation `plantuml-plugin 0.0.10`
+:session: 288
+:date: 2026-10-13
+:borough: New Orleans — document-gradle
+:type: release / consumer
+:statut: TERMINÉ
+
+== Mission
+
+Aligner `document-gradle` sur la release **plantuml 0.0.10** (PLT-MAINTAIN) —
+dernier maillon du DAG MEMPHIS → plantuml → document.
+
+== Livré
+
+* `gradle/libs.versions.toml` : `plantuml-plugin 0.0.9 → 0.0.10`.
+* Pins `workspace-bom` / `workspace-catalog 0.0.78 → 0.0.87`
+  (`build.gradle.kts`, `settings.gradle.kts`).
+* `compileKotlin` VERT (3 source sets) contre plantuml 0.0.10 + BOM 0.0.87.
+
+== DAG / prérequis
+
+* MEMPHIS catalog `0.0.87` (bundle `01b2eb65`) + plantuml `0.0.10` Central
+  (bundle `68b00422`), propagation repo1 HTTP 200 avant alignement.
+* Zéro secret, zéro Python.
+
+_Score : 9/10 (consommation DAG, zéro régression)._
