@@ -21,3 +21,27 @@ Feature: Article AST tree — a document and its plantuml leaves
     Given an article with a java source block
     When the article tree is audited
     Then the article tree counts 0 plantuml leaves
+
+  Scenario: An empty plantuml block is missing
+    Given an empty plantuml block
+    When the article tree is audited
+    Then the article tree counts 1 plantuml leaves with status MISSING
+    And the article tree reports the plantuml leaf status MISSING
+
+  Scenario: A plantuml block with translatable labels is pending
+    Given a plantuml block with translatable labels
+    When the article tree is audited
+    Then the article tree counts 1 plantuml leaves with status PENDING
+    And the report renders the plantuml status PENDING
+
+  Scenario: A plantuml block with no translatable labels is translated
+    Given an article with a plantuml block
+    When the article tree is audited
+    Then the article tree counts 1 plantuml leaves with status TRANSLATED
+    And the article tree reports the plantuml leaf status TRANSLATED
+
+  Scenario: An invalid plantuml block is broken
+    Given an invalid plantuml block
+    When the article tree is audited
+    Then the article tree counts 1 plantuml leaves with status BROKEN
+    And the article tree reports the plantuml leaf status BROKEN

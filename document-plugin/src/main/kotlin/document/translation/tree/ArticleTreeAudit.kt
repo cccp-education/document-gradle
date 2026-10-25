@@ -142,6 +142,7 @@ data class ArticleTreeReport(
     val blocks: Int,
     val translatableLeaves: Int,
     val plantumlLeaves: Int,
+    val plantumlStatusCounts: Map<ArticleLeafStatus, Int> = emptyMap(),
 ) {
     val hasDiagrams: Boolean get() = plantumlLeaves > 0
 
@@ -153,6 +154,18 @@ data class ArticleTreeReport(
             appendLine(
                 "Blocks: $blocks · translatable: $translatableLeaves · plantuml: $plantumlLeaves",
             )
+            if (plantumlStatusCounts.isNotEmpty()) {
+                val statuses =
+                    ArticleLeafStatus.entries
+                        .mapNotNull { status ->
+                            plantumlStatusCounts[status]
+                                ?.takeIf { it > 0 }
+                                ?.let { "$status=$it" }
+                        }
+                if (statuses.isNotEmpty()) {
+                    appendLine("PlantUML status: ${statuses.joinToString(" · ")}")
+                }
+            }
             appendLine()
             root.children.forEach { renderNode(it, 1) }
         }
@@ -165,7 +178,10 @@ data class ArticleTreeReport(
                 node.children.forEach { renderNode(it, depth + 1) }
             }
 
-            is ArticleNode.Leaf -> appendLine("$indent- ${node.kind} (${node.owner.name.lowercase()})")
+            is ArticleNode.Leaf -> {
+                val status = node.status?.let { " [$it]" } ?: ""
+                appendLine("$indent- ${node.kind} (${node.owner.name.lowercase()})$status")
+            }
         }
     }
 }

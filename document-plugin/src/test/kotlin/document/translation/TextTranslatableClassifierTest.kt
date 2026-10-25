@@ -51,6 +51,12 @@ class TextTranslatableClassifierTest {
     }
 
     @Test
+    fun `a sentence with a technical token is prose, a bare fragment is not`() {
+        assertTrue(TextTranslatableClassifier.isTranslatable("Le processeur embarque 128 Go de mémoire unifiée"))
+        assertFalse(TextTranslatableClassifier.isTranslatable("128 Go HBM"))
+    }
+
+    @Test
     fun `plain prose stays translatable`() {
         assertTrue(TextTranslatableClassifier.isTranslatable("Bonjour le monde"))
     }
