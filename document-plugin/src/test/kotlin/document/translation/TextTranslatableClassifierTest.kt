@@ -20,6 +20,12 @@ class TextTranslatableClassifierTest {
     fun `a short disk-size fragment stays technical`() {
         assertFalse(TextTranslatableClassifier.isTranslatable("128 Go"))
         assertFalse(TextTranslatableClassifier.isTranslatable("~64 Go sur 128 Go"))
+        assertFalse(TextTranslatableClassifier.isTranslatable("64 Mo"))
+    }
+
+    @Test
+    fun `a short sentence mentioning a disk size is prose`() {
+        assertTrue(TextTranslatableClassifier.isTranslatable("La mémoire est de 64 Mo"))
     }
 
     @Test

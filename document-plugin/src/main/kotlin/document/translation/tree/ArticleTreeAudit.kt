@@ -21,19 +21,40 @@ object ArticleTreeAudit {
 
     const val PLANTUML = "plantuml"
 
-    fun of(content: Content): ArticleTreeReport {
-        val root = build(content)
+    /**
+     * Builds and audits the article tree, resolving each PlantUML leaf status
+     * through the N0 plantuml contracts (GBL-010 G-2b).
+     */
+    fun of(content: Content, statusResolver: PlantUmlLeafStatusResolver): ArticleTreeReport {
+        val root = build(content, statusResolver)
         val leaves = leavesOf(root)
+        val plantumlStatuses =
+            leaves
+                .filter { it.owner == ArticleLeafOwner.PLANTUML }
+                .mapNotNull { it.status }
         return ArticleTreeReport(
             root = root,
             blocks = content.blocs().size,
             translatableLeaves = leaves.count { it.translatable },
             plantumlLeaves = leaves.count { it.owner == ArticleLeafOwner.PLANTUML },
+            plantumlStatusCounts =
+                ArticleLeafStatus.entries.associateWith { status ->
+                    plantumlStatuses.count { it == status }
+                },
         )
     }
 
-    /** Builds the article tree; the root section has level 0 and an empty title. */
-    fun build(content: Content): ArticleNode.Section {
+    /**
+     * Builds the article tree without resolving leaf statuses; the root section
+     * has level 0 and an empty title. Used when only the shape is needed.
+     */
+    fun build(content: Content): ArticleNode.Section = build(content, statusResolver = null)
+
+    /**
+     * Builds the article tree, resolving each PlantUML leaf status when a
+     * [statusResolver] is supplied.
+     */
+    internal fun build(content: Content, statusResolver: PlantUmlLeafStatusResolver?): ArticleNode.Section {
         val root = Building.Section(0, "")
         val stack = ArrayDeque<Building.Section>()
         stack.addLast(root)
@@ -47,7 +68,7 @@ object ArticleTreeAudit {
                 stack.last().children += section
                 stack.addLast(section)
             } else {
-                stack.last().children += Building.Leaf(leafOf(block))
+                stack.last().children += Building.Leaf(leafOf(block, statusResolver))
             }
         }
 
@@ -60,7 +81,7 @@ object ArticleTreeAudit {
             is ArticleNode.Section -> node.children.flatMap { leavesOf(it) }
         }
 
-    private fun leafOf(block: PivotBlock): ArticleNode.Leaf =
+    private fun leafOf(block: PivotBlock, statusResolver: PlantUmlLeafStatusResolver?): ArticleNode.Leaf =
         when (block) {
             is PivotBlock.Heading ->
                 ArticleNode.Leaf("heading", block.translatable, ArticleLeafOwner.DOCUMENT)
@@ -82,7 +103,12 @@ object ArticleTreeAudit {
 
             is PivotBlock.Source ->
                 if (block.language.equals(PLANTUML, ignoreCase = true)) {
-                    ArticleNode.Leaf(PLANTUML, false, ArticleLeafOwner.PLANTUML)
+                    ArticleNode.Leaf(
+                        kind = PLANTUML,
+                        translatable = false,
+                        owner = ArticleLeafOwner.PLANTUML,
+                        status = statusResolver?.resolve(block),
+                    )
                 } else {
                     ArticleNode.Leaf("source", false, ArticleLeafOwner.DOCUMENT)
                 }

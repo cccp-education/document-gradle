@@ -20,15 +20,23 @@ object TextTranslatableClassifier {
     private val PACKAGE_LIST_PATTERN = Regex("^[a-z][a-z0-9+.-]*(?:,\\s*[a-z][a-z0-9+.-]*){2,}$")
 
     /**
-     * A technical fragment is *short*. The unanchored `\d+\s*Go` pattern matched
-     * anywhere in a sentence, so an ordinary French paragraph mentioning
-     * `120+ Go de VRAM` (cheroliv.com 0119) was classified non-translatable and
-     * shipped in French in every language. A sentence is prose, never a
-     * disk-size label.
+     * A technical *fragment* is short and carries no sentence structure. The
+     * unanchored `\d+\s*Go` pattern matched anywhere in a sentence, so an ordinary
+     * French paragraph mentioning `120+ Go de VRAM` (cheroliv.com 0119) was
+     * classified non-translatable and shipped in French in every language. A run
+     * carrying French function words is prose, never a disk-size label.
      */
-    private const val MAX_TECHNICAL_WORDS = 6
+    private val FRENCH_FUNCTION_WORDS =
+        setOf(
+            "le", "la", "les", "de", "des", "du", "un", "une", "est", "et", "ou",
+            "pour", "avec", "dans", "sur", "pas", "qui", "que", "ce", "cette",
+            "au", "aux", "il", "elle", "nous", "vous", "on", "par", "plus", "mais",
+        )
 
-    private fun wordCount(text: String): Int = text.split(Regex("\\s+")).count { it.isNotBlank() }
+    private fun isProse(text: String): Boolean {
+        val words = text.lowercase().split(Regex("[^\\p{L}]+")).filter { it.isNotBlank() }
+        return words.size >= 4 && words.any { it in FRENCH_FUNCTION_WORDS }
+    }
 
     fun isTranslatable(text: String): Boolean {
         val trimmed = text.trim()
@@ -42,7 +50,7 @@ object TextTranslatableClassifier {
         if (trimmed == "-") return false
         if (trimmed == "reste") return false
 
-        if (TECHNICAL_PATTERNS.any { it.containsMatchIn(trimmed) } && wordCount(trimmed) <= MAX_TECHNICAL_WORDS) {
+        if (!isProse(trimmed) && TECHNICAL_PATTERNS.any { it.containsMatchIn(trimmed) }) {
             return false
         }
 

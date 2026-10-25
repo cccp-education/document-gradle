@@ -23,11 +23,19 @@ sealed interface ArticleNode {
         override val owner: ArticleLeafOwner get() = ArticleLeafOwner.DOCUMENT
     }
 
-    /** A concrete block: prose (document) or a diagram (plantuml). */
+    /**
+     * A concrete block: prose (document) or a diagram (plantuml).
+     *
+     * [status] is reserved for leaves whose status is delegated to another
+     * borough — today the plantuml leaf (GBL-010 G-2b). Prose leaves keep it
+     * `null`: their translation status is already carried by [translatable]
+     * and the block delta.
+     */
     data class Leaf(
         val kind: String,
         val translatable: Boolean,
         override val owner: ArticleLeafOwner,
+        val status: ArticleLeafStatus? = null,
     ) : ArticleNode
 }
 
