@@ -19,6 +19,17 @@ object TextTranslatableClassifier {
 
     private val PACKAGE_LIST_PATTERN = Regex("^[a-z][a-z0-9+.-]*(?:,\\s*[a-z][a-z0-9+.-]*){2,}$")
 
+    /**
+     * A technical fragment is *short*. The unanchored `\d+\s*Go` pattern matched
+     * anywhere in a sentence, so an ordinary French paragraph mentioning
+     * `120+ Go de VRAM` (cheroliv.com 0119) was classified non-translatable and
+     * shipped in French in every language. A sentence is prose, never a
+     * disk-size label.
+     */
+    private const val MAX_TECHNICAL_WORDS = 6
+
+    private fun wordCount(text: String): Int = text.split(Regex("\\s+")).count { it.isNotBlank() }
+
     fun isTranslatable(text: String): Boolean {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return true
@@ -31,7 +42,9 @@ object TextTranslatableClassifier {
         if (trimmed == "-") return false
         if (trimmed == "reste") return false
 
-        if (TECHNICAL_PATTERNS.any { it.containsMatchIn(trimmed) }) return false
+        if (TECHNICAL_PATTERNS.any { it.containsMatchIn(trimmed) } && wordCount(trimmed) <= MAX_TECHNICAL_WORDS) {
+            return false
+        }
 
         if (PACKAGE_LIST_PATTERN.matches(trimmed)) return false
 
