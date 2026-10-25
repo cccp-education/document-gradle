@@ -31,7 +31,8 @@
   `ArticleTreeReport.plantumlStatusCounts`.
 * **Preuve CI** : run `40230767305` — 10/10 UT + 7/7 BDD `@article-tree` PASSED.
   L'unique échec global (`DocumentPluginPublicationTest`, drift toml `0.0.24` vs
-  ws `0.0.25`) est corrigé ; la CI du commit de clôture doit confirmer le vert.
+  ws `0.0.25`) est corrigé ; **CI de clôture VERTE** run `40233298431`
+  (commit `c87d9c3`, `Build & Test` success, `Publish` skipped sans tag).
 * **Historique** : trois commits `DOC-TRANSLATE` (`04ea837`, `4d002e4`, `d11b33c`)
   d'une session parallèle ont embarqué des fichiers G-2b en cours (`git add -A`) ;
   `4d002e4` est une photo intermédiaire non compilable, `d11b33c` est l'état complet.

@@ -17,6 +17,8 @@ EPIC transverse **GBL-010** (arbre de traduction, branche Data).
 === Réserve
 - Le run global était rouge sur **1 test hors G-2b** : `DocumentPluginPublicationTest`
   (drift toml local `0.0.24` vs ws `0.0.101`). Corrigé S-289 (`document = "0.0.25"`).
+- **CI de clôture** run `40233298431` (commit `c87d9c3`) : `Build & Test` **success**,
+  `Publish` skipped.
 
 === Prochaine session (290)
 - **bakery G-1b** : orchestration delta par sous-arbre, désormais débloquée par G-2b

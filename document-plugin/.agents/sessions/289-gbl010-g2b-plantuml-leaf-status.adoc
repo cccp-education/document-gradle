@@ -62,6 +62,10 @@ alors que le catalogue ws `0.0.101` (release concurrente) déclare `0.0.25`.
 platform/catalog était déjà à `0.0.101`). Aucun test de `document.translation.tree`
 n'était en échec.
 
+**CI de clôture** : run `40233298431` (commit `c87d9c3`) — `Build & Test`
+**success**, `Publish to Maven Central` skipped (pas de tag). La session est
+prouvée verte sur le commit de clôture.
+
 Gates locales : `compileKotlin` / `compileTestKotlin` /
 `compileFunctionalTestKotlin` VERT, `assemble` + `validatePlugins` VERT.
 Aucun test local (règle Local = Build, Tests = CI). Zéro secret.

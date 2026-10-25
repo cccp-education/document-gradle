@@ -29,7 +29,8 @@ exécutées en local ; preuve = run CI `40230767305` (commit `d11b33c`).
 `DocumentPluginPublicationTest > plugin version matches root consumer catalog
 version` (drift toml local `0.0.24` vs ws `0.0.101`), **corrigé S-289**
 (`gradle/libs.versions.toml` `document = "0.0.25"`). Aucun test de
-`document.translation.tree` n'était en échec.
+`document.translation.tree` n'était en échec. **CI de clôture** : run
+`40233298431` (commit `c87d9c3`) — `Build & Test` **success**, `Publish` skipped.
 
 == Session 286 — GBL-010 G-2 : arbre du document AsciiDoc (5 UT + 3 scénarios BDD)
 
