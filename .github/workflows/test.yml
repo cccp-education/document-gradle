@@ -26,10 +26,35 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build and Test
+        id: build
         run: ./gradlew build
         working-directory: document-plugin
+        continue-on-error: true
+
+      # DOC-CI-DIAG — a red run must be diagnosable from the outside: the job
+      # logs require admin rights, but check-run annotations are public. One
+      # annotation per failing test case, then fail the job.
+      - name: Report failing tests
+        if: steps.build.outcome == 'failure'
+        working-directory: document-plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            while IFS= read -r test; do
+              echo "::error title=${file##*/}::${test}"
+              found=1
+            done < <(awk '/<testcase /{n=$0; sub(/.*name="/,"",n); sub(/".*/,"",n)} /<failure/{print n}' "$file")
+          done < <(grep -rl '<failure' build/test-results 2>/dev/null || true)
+          if [ "$found" -eq 0 ]; then
+            echo "::error title=build::Build failed without a test failure (see the Gradle log)"
+          fi
+          exit 1
 
       - name: Verify publishToMavenLocal (POM)
+        if: steps.build.outcome == 'success'
         run: ./gradlew publishToMavenLocal
         working-directory: document-plugin
 
