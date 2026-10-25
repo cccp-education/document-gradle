@@ -1,63 +1,9 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
-:session: 289
+
+:session: 290
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-288 (2026-10-13) — **Consommation `plantuml-plugin 0.0.10`** ✅ (toml `0.0.9 → 0.0.10`, pins `workspace-bom`/`catalog 0.0.78 → 0.0.87`, `compileKotlin` VERT). Livré S-287 : Release 0.0.24 ; S-286 : arbre du document `ArticleTreeAudit`.
+:etat: S-289 (2026-10-25) — **GBL-010 G-2b : statut de feuille PlantUML délégué aux contrats N0** ✅. `ArticleLeafStatus` + `PlantUmlLeafStatusResolver` (`PlantUmlClassifier` + `PlantUmlSyntaxValidator`), `ArticleNode.Leaf.status`, `plantumlStatusCounts` + `render()`. 10 UT + 7 scénarios `@article-tree`. Drift catalogue concurrent corrigé (`document = 0.0.25`, pins ws `0.0.101`). Zéro bump, zéro publication.
+:epic_actif: GBL-010 — branche Data côté document **close** (`G-2` S-286 + `G-2b` S-289).
+:epic_suivant: **bakery G-1b** (delta par sous-arbre, désormais débloqué) → **G-4** (audit unifié cheroliv.com) → **G-5** (reprise économie d'encre).
 
-== Vision (GBL-010)
-
-La traduction d'un site est un **arbre à deux branches** ; document possède la
-**branche Data** : chaque article EST un document, chaque document a l'**arbre du
-document AsciiDoc (AST)** dedans ; la balise `[plantuml]` est une feuille déléguée au
-borough plantuml (port N0). Cadrage racine :
-`CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
-
-== Mission session 287 — sur décision pilote
-
-* **G-2 (reste)** — brancher le rapport `article-tree` sur le **statut de
-  traduction** (prose `PENDING`/`TRANSLATED` via `BlockChecksum`, feuille plantuml
-  via le port) et l'exposer à l'audit d'arbre unifié (G-4).
-* **DOC-PLT-4** — D2 corpus : re-générer les variantes gelées (`@startuml` bruts) —
-  purge ciblée + re-traduction (+ bakery).
-* **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml (rendu non blanc).
-* Vérifier la non-régression complète des runners Cucumber document en CI (le
-  nouveau `articleTreeCucumberTest` s'exécute dans `check`).
-
-== État du code (S-286)
-
-* *0.0.23* : Central OK (bundle `c6f30a60`).
-* *Traduction* : 100 % déléguée au port N0 (bakery injecte `PlantumlTranslationPortAdapter`).
-* *Arbre du document* : `document.translation.tree.ArticleTreeAudit` (nouveau).
-
-== Pièges retenus (S-232..S-286)
-
-1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-2. *`@InputFile` valide l'existence AVANT l'action* — `@Input @Optional Property<String>`.
-3. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
-4. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM.
-5. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
-6. *Une CI verte n'est pas une CI couvrante* (S-274).
-7. *Un correctif cross-borough doit être apparié* (bloc + fichier, S-280).
-8. *`publishToMavenLocal` d'une version déjà Central écrase le local*.
-9. *US large* : seam → kill split-brain → délégation complète → release chain.
-10. *(S-284) Supprimer un adaptateur qui portait un paramètre de config le fait perdre*.
-11. *(S-284) Un consommateur Central ne voit pas le HEAD* : publier N0→N1→N2 dans l'ordre.
-12. *(S-274) `additionalTasksInCheck = true`* : tout nouveau runner Cucumber doit y être
-    enregistré, sinon il ne tourne jamais en CI.
-
-== Anti-glue Cucumber (règle de propriété — S-238)
-
-Chaque feature a UN runner propriétaire. **30 runners dédiés** (dernier :
-`articleTreeCucumberTest`).
-
-== Méthode
-
-Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), unit → functional →
-cucumber, économie d'encre. CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build,
-Tests = CI*. English only code/tests/features (gouvernance .adoc en français).
-
-== À vérifier en ouverture
-
-1. `git status` (document-gradle).
-2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
-3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT.
-4. Décision pilote — G-2 (reste), DOC-PLT-4/5.
+La source canonique de ce prompt est `.agents/PROMPT_REPRISE.adoc` (même contenu).

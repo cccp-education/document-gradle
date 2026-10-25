@@ -1,5 +1,28 @@
 = COMPLETED_TASKS_ARCHIVE — 2026-10 (document-gradle)
 
+== Session 289 (2026-10-25) — GBL-010 G-2b : statut de feuille PlantUML délégué ✅
+
+EPIC transverse **GBL-010** (arbre de traduction, branche Data).
+
+=== Fait
+- [x] `ArticleLeafStatus` (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`)
+- [x] `PlantUmlLeafStatusResolver` — mapping des faits N0 (`PlantUmlClassifier` + `PlantUmlSyntaxValidator`) ; zéro ré-implémentation
+- [x] `ArticleNode.Leaf.status` (feuilles PlantUML uniquement)
+- [x] `ArticleTreeReport.plantumlStatusCounts` + `render()` par feuille / synthèse
+- [x] `ArticleTreeAudit.of(content, statusResolver)` ; `build(content)` conservé pour la forme seule
+- [x] 5 UT + 4 scénarios BDD (10 UT + 7 scénarios au total sur `@article-tree`)
+- [x] Preuve run `40230767305` : 10/10 UT + 7/7 BDD PASSED
+- [x] Zéro nouveau contrat N0, zéro bump, zéro publication
+
+=== Réserve
+- Le run global était rouge sur **1 test hors G-2b** : `DocumentPluginPublicationTest`
+  (drift toml local `0.0.24` vs ws `0.0.101`). Corrigé S-289 (`document = "0.0.25"`).
+
+=== Prochaine session (290)
+- **bakery G-1b** : orchestration delta par sous-arbre, désormais débloquée par G-2b
+- Puis **G-4** (audit unifié cheroliv.com) et **G-5** (reprise économie d'encre)
+- Côté document : `DOC-PLT-4` (re-générer les variantes gelées) ou `DOC-PLT-5` (E2E), sur accord pilote
+
 == Session 284 (2026-10-09) — US-4b : délégation complète au port N0 ✅
 
 EPIC cross-borough **PLT-DIAGRAM-OWNERSHIP** (option A).

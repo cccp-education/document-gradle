@@ -1,0 +1,101 @@
+= Session 289 — GBL-010 G-2b : statut de feuille PlantUML délégué aux contrats N0
+:session: 289
+:date: 2026-10-25
+:borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
+:epic: GBL-010 (arbre de traduction — branche Data)
+:statut: ✅ TERMINÉE (G-2b prouvé ; drift catalogue concurrent corrigé)
+
+'''
+== Contexte
+
+`GBL-010 G-2` (S-286) a livré `document.translation.tree.ArticleTreeAudit` :
+l'arbre article → AST, avec les feuilles `owner=document|plantuml`. Il restait
+`G-2b` : **le statut d'une feuille PlantUML ne doit pas être recalculé par
+document**, il provient des contrats N0 du borough plantuml.
+
+Le HEAD d'ouverture était `f31340f` (S-288, document 0.0.24, pins ws 0.0.87).
+Pendant la session, une session parallèle `DOC-TRANSLATE` a poussé trois commits
+(`04ea837`, `4d002e4`, `d11b33c`) — dont deux ont embarqué, via `git add -A`, des
+fichiers G-2b encore en cours d'écriture. Le commit `4d002e4` est une **photo
+intermédiaire non compilable** (`plantumlStatusCounts` utilisé avant son ajout au
+data class) ; `d11b33c` contient l'état complet et compile. L'historique poussé
+n'est pas réécrit : ce rapport est la trace de propriété du G-2b.
+
+'''
+== Livré (DDD/TDD/BDD strict)
+
+* `document.translation.tree.ArticleLeafStatus` — vocabulaire de **rapport** :
+  `MISSING`, `PENDING`, `TRANSLATED`, `BROKEN`.
+* `document.translation.tree.PlantUmlLeafStatusResolver` — délègue les faits aux
+  contrats N0 :
+  ** bloc vide → `MISSING` ;
+  ** `PlantUmlSyntaxValidator.validate` → `SyntaxValidationResult.Invalid` →
+     `BROKEN` ;
+  ** `PlantUmlClassifier.classify` → `PRESERVE` → `TRANSLATED` (rien à faire,
+     économie d'encre) ; `TRANSLATE`/`BORROW` → `PENDING`.
+  Aucune ré-implémentation de l'extraction de labels, du classifieur ou du parseur.
+* `ArticleNode.Leaf.status: ArticleLeafStatus?` — renseigné uniquement pour les
+  feuilles PlantUML ; les feuilles de prose conservent leur statut de bloc.
+* `ArticleTreeAudit.of(content, statusResolver)` — construit l'arbre et agrège
+  `plantumlStatusCounts` ; `render()` expose le statut par feuille
+  (`plantuml (plantuml) [PENDING]`) et la synthèse (`PlantUML status: PENDING=1`).
+  `build(content)` reste l'API « forme seule » (statuts `null`).
+* Zéro nouveau contrat N0, zéro bump de version, zéro publication.
+
+'''
+== Tests
+
+* `ArticleTreeAuditTest` — **10 UT** (5 historiques + 5 G-2b : missing, pending,
+  translated, broken, rendu du statut délégué).
+* `article_tree.feature` — **7 scénarios** `@article-tree` (3 historiques +
+  4 G-2b), runner existant `articleTreeCucumberTest` (pas de 30e runner).
+* `ArticleTreeSteps` — validateur N0 factice injecté (`SyntaxValidationResult.Valid`
+  par défaut, `Invalid` pour le scénario broken) ; aucun réseau, aucun LLM.
+
+Preuve `run 40230767305` (commit `d11b33c`) :
+**10/10 `ArticleTreeAuditTest` PASSED**, **7/7 scénarios `@article-tree` PASSED**.
+Le run global termine sur `7009 tests completed, 1 failed` ; l'unique échec est
+identifié : `DocumentPluginPublicationTest > plugin version matches root
+consumer catalog version` — le toml local portait encore `document = "0.0.24"`
+alors que le catalogue ws `0.0.101` (release concurrente) déclare `0.0.25`.
+**Corrigé en S-289** : `gradle/libs.versions.toml` `document = "0.0.25"` (le pin
+platform/catalog était déjà à `0.0.101`). Aucun test de `document.translation.tree`
+n'était en échec.
+
+Gates locales : `compileKotlin` / `compileTestKotlin` /
+`compileFunctionalTestKotlin` VERT, `assemble` + `validatePlugins` VERT.
+Aucun test local (règle Local = Build, Tests = CI). Zéro secret.
+
+'''
+== Collision cross-session (leçon)
+
+La session parallèle a utilisé `git add -A` et a embarqué des fichiers non finis :
+
+[cols="1,2,2"]
+|===
+| Commit | Contenu G-2b | État
+
+| `04ea837`
+| aucun
+| DOC-TRANSLATE (classifier)
+| `4d002e4`
+| `ArticleLeafStatus`, `PlantUmlLeafStatusResolver`, `ArticleNode.Leaf.status`,
+  première moitié d'`ArticleTreeAudit` | **compileKotlin rouge** (photo
+  intermédiaire) — message de commit DOC-TRANSLATE
+| `d11b33c`
+| `plantumlStatusCounts` + `render()`, tests, steps, feature BDD
+| **compile VERT**, 17 tests G-2b PASSED — message de commit « test classifier »
+|===
+
+Règle réaffirmée : **jamais `git add -A` quand plusieurs sessions partagent un
+working tree** ; indexer explicitement les fichiers de sa session (piège #26).
+
+'''
+== Suite
+
+* **bakery G-1b** (orchestration delta par sous-arbre) est désormais débloqué :
+  le statut de feuille est exposé par `ArticleTreeAudit`.
+* Puis **G-4** (audit d'arbre unifié, cheroliv.com) et **G-5** (reprise économie
+  d'encre, preuve second passage no-op).
+* Côté document, `G-2`/`G-2b` sont clos ; restent `DOC-PLT-4` (re-générer les
+  variantes gelées, cross-borough) et `DOC-PLT-5` (chaîne E2E), sur accord pilote.

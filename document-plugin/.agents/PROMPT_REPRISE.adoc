@@ -1,42 +1,65 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 283
+:session: 290
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-282 (2026-10-08) — **US-4 option C : re-échappement `\n` — fin du bug D2 CHE-DIAGRAM** ✅. Le traducteur restituait un retour-ligne réel (`rectangle "a\nb"` → 2 lignes) → PlantUML `Syntax Error?` → bloc dégradé en listing. Fix chirurgical `escapeNewlines` dans `PlantUmlTranslationAdapter.translateLabels`. 15/15 tests. Piège S-282 : `publishToMavenLocal` d'une version déjà Central **écrase** l'artefact local.
+:etat: S-289 (2026-10-25) — **GBL-010 G-2b : statut de feuille PlantUML délégué aux contrats N0** ✅. `ArticleLeafStatus` + `PlantUmlLeafStatusResolver` (`PlantUmlClassifier` + `PlantUmlSyntaxValidator`), `ArticleNode.Leaf.status`, `plantumlStatusCounts` + `render()`. 10 UT + 7 scénarios `@article-tree`. Drift catalogue concurrent corrigé (`document = 0.0.25`, pins ws `0.0.101`). Zéro bump, zéro publication.
+:epic_actif: GBL-010 — branche Data côté document **close** (`G-2` S-286 + `G-2b` S-289).
+:epic_suivant: **bakery G-1b** (delta par sous-arbre, désormais débloqué) → **G-4** (audit unifié cheroliv.com) → **G-5** (reprise économie d'encre).
 
-== Mission session 283 — sur décision pilote
+== Mission session 290 — sur décision pilote
 
-* **Publication DAG document 0.0.21** — distribuer le fix US-4-C jusqu'au site
-  (bump catalog MEMPHIS + document + propagation bakery/runner). **Priorité** : le
-  fix D2 n'atteint cheroliv.com qu'après publication.
-* **US-4 complet** (suppression du domaine privé document + délégation au port
-  N0) — question d'injection du port à trancher (options A/B).
-* **US-5** (version toolchain, cross-borough bakery) — résout D1 (SVG blancs).
-* *EPIC PUB 0.0.21* si le pilote préfère bundler d'autres changements.
+. **bakery G-1b** (recommandé) — câbler l'audit de statut dans `MigrateContentI18nTask` /
+   `translateTemplates` : ne re-traiter que les nœuds non-verts, preuve second
+   passage no-op. Le statut des feuilles PlantUML vient maintenant de document.
+. **G-4** — audit d'arbre unifié (`translation-tree.json`) côté cheroliv.com,
+   fusion des rapports templates (bakery), article→AST (document) et feuilles
+   PlantUML.
+. **G-5** — reprise économie d'encre : purge/retry ciblés des nœuds non-verts,
+   preuve second passage no-op, `check` VERT.
+. **DOC-PLT-4** — re-générer les variantes gelées (`@startuml` bruts) — cross-borough
+   bakery/plantuml, coût LLM, **accord pilote requis**.
+. **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml (rendu non blanc).
+6. **DOC-FPA-PUBLISH-0** — STANDBY (déclenché par le livrable A1 Tombouctou).
 
-== État du code (S-282)
+== État du code (S-289)
 
-* *0.0.20* : Central OK ; catalogue ws **0.0.65** (pin) — à re-pin 0.0.68/0.0.69 si bump.
-* *Nouveau fix* : `PlantUmlTranslationAdapter.escapeNewlines` (D2 CHE-DIAGRAM).
-* *Piège S-282* : ne jamais `publishToMavenLocal` une version déjà Central
-  (écrase le local → split code↔Central). Restaurer depuis Central si mordu.
+* **Version** : `0.0.25` (dérivée du catalogue ws `0.0.101`) ; toml local aligné.
+* **Pins** : `workspace-bom`/`workspace-catalog` `0.0.101`, `plantuml-plugin` `0.0.10`,
+  `plantuml-contracts` `0.0.1`.
+* **G-2b** : `document.translation.tree` — `ArticleLeafStatus`,
+  `PlantUmlLeafStatusResolver`, `ArticleNode.Leaf.status`,
+  `ArticleTreeReport.plantumlStatusCounts`.
+* **Preuve CI** : run `40230767305` — 10/10 UT + 7/7 BDD `@article-tree` PASSED.
+  L'unique échec global (`DocumentPluginPublicationTest`, drift toml `0.0.24` vs
+  ws `0.0.25`) est corrigé ; la CI du commit de clôture doit confirmer le vert.
+* **Historique** : trois commits `DOC-TRANSLATE` (`04ea837`, `4d002e4`, `d11b33c`)
+  d'une session parallèle ont embarqué des fichiers G-2b en cours (`git add -A`) ;
+  `4d002e4` est une photo intermédiaire non compilable, `d11b33c` est l'état complet.
 
-== Pièges retenus (S-232..S-282)
+== Pièges retenus (S-232..S-289)
 
 1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-6. *`@InputFile` valide l'existence AVANT l'action* — chemins audités en `@Input @Optional Property<String>`.
-7. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
-11. *Polling Central* : `<latest>` peut rester périmé ~27 min — tester le POM.
-13. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
-33. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
-57. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local* —
-    document ne compile plus si un type a été retiré au HEAD. Bumper AVANT de
-    publier en local, ou restaurer depuis Central.
+2. *`@InputFile` valide l'existence AVANT l'action* — `@Input @Optional Property<String>`.
+3. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
+4. *Polling Central* : `<latest>` peut rester périmé — tester le POM.
+5. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
+6. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
+7. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local.*
+8. *(S-289) `git add -A` cross-session embarque des fichiers non finis — indexer
+   explicitement les fichiers de sa session (piège #26).*
+9. *(S-289) `ArticleLeafStatus` est un vocabulaire de **rapport** document ; ne pas
+   le promouvoir en N0 (éviter un bump MEMPHIS). Les faits viennent de
+   `PlantUmlClassifier`/`PlantUmlSyntaxValidator`.*
+10. *(S-289) `PRESERVE` du classifieur N0 = `TRANSLATED` (terminal, économie
+    d'encre) — ce n'est pas une traduction sémantique.*
+11. *(S-289) Le validateur N0 est injecté ; aucun défaut silencieux « tout valide ».
+    Un futur appelant doit fournir l'adaptateur plantuml.*
 
 == Anti-glue Cucumber (règle de propriété — S-238)
 
 Chaque feature a UN runner propriétaire. **29 runners dédiés** (dernier :
-`translationResilienceCucumberTest`).
+`translationResilienceCucumberTest`). G-2b étend le runner existant
+`articleTreeCucumberTest` — aucun 30e runner.
 
 == Méthode
 
@@ -46,7 +69,7 @@ Tests = CI*. English only code/tests/features (gouvernance .adoc en français).
 
 == À vérifier en ouverture
 
-1. `git status` (document-gradle).
+1. `git status` (document-gradle) — working tree propre attendu.
 2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
 3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT.
-4. Décision pilote — publication DAG 0.0.21, US-4 complet, US-5.
+4. Lire `BACKLOG.adoc` § GBL-010 ; ne pas relancer les tests localement.

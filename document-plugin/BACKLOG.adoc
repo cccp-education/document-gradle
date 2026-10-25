@@ -44,11 +44,16 @@ document a l'ARBRE du document AsciiDoc (AST) dedans.
 | **Statut de feuille délégué.** Le statut d'un bloc `[plantuml]` provient du port
 N0 plantuml (jamais recalculé par document) ; `MISSING`/`PENDING`/`BROKEN` par bloc.
 | 2
-| 🟡 À FAIRE
+| ✅ S-289 — `ArticleLeafStatus` + `PlantUmlLeafStatusResolver` (N0 `PlantUmlClassifier` + `PlantUmlSyntaxValidator`) + `ArticleNode.Leaf.status` + `plantumlStatusCounts`/`render()` ; 10 UT + 7 scénarios `@article-tree` (runner existant).
 |===
 
 *Dépend de* : `plantuml-contracts` (N0, ✅ 0.0.1), `plantuml-gradle` (implémentation
 du port, ✅ `GBL-007` US-2/3). *Relie* : `DOC-PLANTUML-DELEGATE` (délégation).
+
+*Statut branche Data* : `G-2` ✅ S-286 + `G-2b` ✅ S-289 — document expose
+désormais l'arbre article→AST et le statut délégué de ses feuilles PlantUML.
+La suite de l'EPIC est **cross-borough** : `bakery G-1b` (delta par sous-arbre),
+puis `G-4` (audit unifié, cheroliv.com) et `G-5` (reprise économie d'encre).
 
 == 🟡 EPIC DOC-PLANTUML-DELEGATE — document délègue le bloc PlantUML (GBL-007)
 
