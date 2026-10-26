@@ -55,6 +55,65 @@ désormais l'arbre article→AST et le statut délégué de ses feuilles PlantUM
 La suite de l'EPIC est **cross-borough** : `bakery G-1b` (delta par sous-arbre),
 puis `G-4` (audit unifié, cheroliv.com) et `G-5` (reprise économie d'encre).
 
+== 🟡 EPIC DOC-I18N-OUTPUT — Le contrat de sortie de l'AST traduit (CADRÉ S-077, revue i18n S-263)
+
+*Source* : revue externe `foundry/public/bakery-gradle/bakery-plugin/.agents/i18n_review.adoc`
+(S-263) ; mesure cheroliv.com S-077 (`section-count-drift` 318, `duplicated-content` 81,
+`language-refusal` 124, `wrong-script` 35).
+
+*Constat* : document possède le pivot AST et le delta par bloc, mais trois
+défauts de sortie lui sont imputables :
+. `TextTranslatableClassifier` est **trop naïf** — il laisse passer des macros
+  AsciiDoc (`toc::[]` traduit en `tik::[]`) et rate des blocs de prose ;
+. le store de blocs permet une **réinsertion multiple** → duplication du contenu
+  (EN 0108 +123 %, jusqu'à 9 fichiers en `hi`) ;
+. un échec LLM peut encore produire un statut `TRANSLATED` alors que la sortie
+  est un refus, une troncature ou une langue source — le store dit vert, l'artefact
+  ne l'est pas.
+
+*Boundary* : document possède le **classifieur et le writer** ; la règle « ce qui
+ne se traduit jamais » vient de MEMPHIS (`MEM-I18N-PRESERVE`) et la validation de
+sortie vient de codebase (`CB-I18N-SAFETY`). La feuille `[plantuml]` reste déléguée.
+
+*DAG* : `MEM-I18N-PRESERVE → CB-I18N-SAFETY → DOC-I18N-OUTPUT` ; prolonge
+`DOC-PLANTUML-DELEGATE`/`GBL-010`, ne les remplace pas.
+
+[cols="1,4,1,2", options="header"]
+|===
+| US | Description | Pts | Statut
+
+| DOC-OUT-1
+| **Classifieur sur `PreserveRule` N0** — `TextTranslatableClassifier` consomme le
+catalogue N0 : macros, attributs de bloc, specs de tableau, fences, identifiants
+et placeholders ne sont **jamais** envoyés au LLM ; tests RED sur `toc::[]`,
+`options="header"`, `include::`, `image::`
+| 3
+| 🟡 À FAIRE
+
+| DOC-OUT-2
+| **Identité de bloc `(article, index, hash)` + writer strictement idempotent** —
+une clé de bloc ne peut être réinsérée qu'une fois ; assertion `taille(variante) < 1,2 × taille(référence)` au grain document ; déduplication prouvée par deux passes
+| 3
+| 🟡 À FAIRE
+
+| DOC-OUT-3
+| **Statut réel de sortie** — un refus LLM, un placeholder `__` restitué, une
+troncature ou une langue source ≠ cible force `PENDING` (jamais `TRANSLATED`),
+via le verdict `CB-I18N-SAFETY` ; fin du faux vert du store
+| 2
+| 🟡 À FAIRE
+
+| DOC-OUT-4
+| **Preuve** — BDD `@translation-output` (classifieur, dédup, statut) + FT deux
+passes sur fichiers réels + dogfooding corpus cheroliv.com (0 défaut non documenté
+sur la branche Data)
+| 2
+| 🟡 À FAIRE
+|===
+
+*Total* : 4 US ~10 pts. *Dépend de* : `MEM-I18N-PRESERVE` (N0), `CB-I18N-SAFETY`
+(N1). *Doc* : `.agents/i18n_review.adoc` (S-263), `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
+
 == 🟡 EPIC DOC-PLANTUML-DELEGATE — document délègue le bloc PlantUML (GBL-007)
 
 *GBL* : EPIC transverse **GBL-007** (BACKLOG racine workspace) — propriété du
