@@ -26,5 +26,6 @@ traduite).
 
 == Reste
 
-* BDD `@preserve` + vecteurs partagés avec plantuml (PRESERVE-2 côté MEMPHIS).
+* BDD `@preserve` livrée (5 scénarios, runner `PreserveCucumberRunner`, spec `preserveCucumberTest` dans `check`) + vecteurs partagés byte-identiques (12 cas).
+* Release `plantuml 0.0.14` faite (S-244).
 * Release `plantuml 0.0.14` (adoption identique, code livré, publication à faire).

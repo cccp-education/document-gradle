@@ -2,7 +2,7 @@
 
 :session: 291
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-290 (2026-10-31) — **DOC-I18N-PRESERVE** ✅ : le classifieur consomme `contracts.i18n.PreserveCatalog` (i18n-contracts 0.0.5) — pur markup jamais traduit, prose citant un marqueur toujours traduite ; 4 UT (11/11), pins ws `0.0.110`, **document 0.0.26 publié** (bundle `50f717a0`).
+:etat: S-290 (2026-10-31) — **DOC-I18N-PRESERVE** ✅ : le classifieur consomme `contracts.i18n.PreserveCatalog` (i18n-contracts 0.0.5) — pur markup jamais traduit, prose citant un marqueur toujours traduite ; 4 UT (11/11) + 5 scénarios BDD `@preserve`, pins ws `0.0.110`, **document 0.0.26 publié** (bundle `50f717a0`).
 :epic_actif: GBL-010 — branche Data côté document **close** (`G-2` S-286 + `G-2b` S-289).
 :epic_suivant: **bakery G-1b** (delta par sous-arbre, désormais débloqué) → **G-4** (audit unifié cheroliv.com) → **G-5** (reprise économie d'encre).
 

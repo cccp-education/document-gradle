@@ -125,6 +125,12 @@ cucumberConventions {
     additionalTasksInCheck = true
     additionalTasks = listOf(
         CucumberTaskSpec(
+            name = "preserveCucumberTest",
+            features = listOf("src/test/resources/features/preserve_n0.feature"),
+            tags = listOf("@preserve"),
+            runnerClass = "document.translation.PreserveCucumberRunner",
+        ),
+        CucumberTaskSpec(
             name = "tableTranslationCucumberTest",
             features = listOf("src/test/resources/features/table_translation.feature"),
             tags = listOf("@table"),
