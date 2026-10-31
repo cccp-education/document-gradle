@@ -57,6 +57,28 @@ class TextTranslatableClassifierTest {
     }
 
     @Test
+    fun `a pure asciidoc macro is never translatable`() {
+        assertFalse(TextTranslatableClassifier.isTranslatable("toc::[]"))
+        assertFalse(TextTranslatableClassifier.isTranslatable("image::schema.png[]"))
+    }
+
+    @Test
+    fun `a pure inline code span is never translatable`() {
+        assertFalse(TextTranslatableClassifier.isTranslatable("`gradle build`"))
+    }
+
+    @Test
+    fun `an anchor and an attribute reference alone are never translatable`() {
+        assertFalse(TextTranslatableClassifier.isTranslatable("[[page-10]]"))
+        assertFalse(TextTranslatableClassifier.isTranslatable("[cols=\"1,1\"]"))
+    }
+
+    @Test
+    fun `prose carrying a macro stays translatable`() {
+        assertTrue(TextTranslatableClassifier.isTranslatable("Voir toc::[] pour la table des matières"))
+    }
+
+    @Test
     fun `plain prose stays translatable`() {
         assertTrue(TextTranslatableClassifier.isTranslatable("Bonjour le monde"))
     }

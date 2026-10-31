@@ -1,5 +1,7 @@
 package document.translation
 
+import contracts.i18n.PreserveCatalog
+
 object TextTranslatableClassifier {
 
     private val TECHNICAL_PATTERNS = listOf(
@@ -41,6 +43,11 @@ object TextTranslatableClassifier {
     fun isTranslatable(text: String): Boolean {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return true
+        // MEM-I18N-PRESERVE (N0) — a fragment whose every letter belongs to a
+        // preserved marker (macro, fence, inline code, anchor, attribute reference,
+        // URL) is markup, never prose: the shared catalog replaces the local
+        // re-implementation and can no longer drift from plantuml.
+        if (PreserveCatalog.isFullyPreserved(trimmed)) return false
         if (!trimmed.any { it.isLetterOrDigit() }) {
             if (trimmed.matches(Regex("^[,\\s]*$"))) return false
             if (trimmed == "-") return false

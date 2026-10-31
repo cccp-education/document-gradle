@@ -1,0 +1,30 @@
+= Session 290 — DOC-I18N-PRESERVE : le classifieur consomme le contrat N0
+:session: 290
+:date: 2026-10-31
+:statut: ✅ TERMINÉ
+
+== Contexte
+
+MEMPHIS S-312 a livré `contracts.i18n.PreserveRule` + `PreserveCatalog`
+(`i18n-contracts 0.0.5`) : la règle « ce qui ne se traduit jamais ». Le classifieur
+de document portait sa propre politique ; un fragment de pur markup pouvait être
+classé traduisible et partir au modèle (142 fichiers publiés portent une macro
+traduite).
+
+== Livré
+
+* `TextTranslatableClassifier.isTranslatable` — **premier test** :
+  `PreserveCatalog.isFullyPreserved(trimmed)` → non traduisible. Un fragment dont
+  chaque lettre appartient à un marqueur préservé (macro, fence, code inline,
+  ancre, référence d'attribut, URL) n'est jamais du texte. La prose qui *cite* un
+  marqueur reste traduisible.
+* Les règles **métier** restent locales (tailles disque, listes de paquets, `-`,
+  `reste`) : faits de corpus, pas marqueurs de syntaxe.
+* Dépendance `i18n-contracts 0.0.4 → 0.0.5`, pins `workspace-catalog/BOM
+  0.0.105 → 0.0.110`.
+* **4 UT** (11/11 verts) ; version `0.0.25 → 0.0.26` publiée (bundle `50f717a0`).
+
+== Reste
+
+* BDD `@preserve` + vecteurs partagés avec plantuml (PRESERVE-2 côté MEMPHIS).
+* Release `plantuml 0.0.14` (adoption identique, code livré, publication à faire).

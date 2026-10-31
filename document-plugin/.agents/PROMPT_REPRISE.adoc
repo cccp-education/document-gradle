@@ -1,8 +1,8 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 290
+:session: 291
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-289 (2026-10-25) — **GBL-010 G-2b : statut de feuille PlantUML délégué aux contrats N0** ✅. `ArticleLeafStatus` + `PlantUmlLeafStatusResolver` (`PlantUmlClassifier` + `PlantUmlSyntaxValidator`), `ArticleNode.Leaf.status`, `plantumlStatusCounts` + `render()`. 10 UT + 7 scénarios `@article-tree`. Drift catalogue concurrent corrigé (`document = 0.0.25`, pins ws `0.0.101`). Zéro bump, zéro publication.
+:etat: S-290 (2026-10-31) — **DOC-I18N-PRESERVE** ✅ : le classifieur consomme `contracts.i18n.PreserveCatalog` (i18n-contracts 0.0.5) — pur markup jamais traduit, prose citant un marqueur toujours traduite ; 4 UT (11/11), pins ws `0.0.110`, **document 0.0.26 publié** (bundle `50f717a0`).
 :epic_actif: GBL-010 — branche Data côté document **close** (`G-2` S-286 + `G-2b` S-289).
 :epic_suivant: **bakery G-1b** (delta par sous-arbre, désormais débloqué) → **G-4** (audit unifié cheroliv.com) → **G-5** (reprise économie d'encre).
 

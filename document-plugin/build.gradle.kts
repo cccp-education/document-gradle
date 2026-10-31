@@ -12,7 +12,7 @@ group = "education.cccp"
 version = ws.versions.document.plugin.get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.105"))
+    implementation(platform("education.cccp:workspace-bom:0.0.110"))
 
     // kotlin-stdlib is pulled transitively (and pinned by the BOM). The
     // kotlin-stdlib-jdk8 shim is an empty 953-byte artifact since Kotlin 1.8
