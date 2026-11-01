@@ -75,9 +75,15 @@ object BlockChecksum {
 
     private fun isChecksumRelevant(block: PivotBlock): Boolean =
         when (block) {
-            is PivotBlock.Hr -> false
+            is PivotBlock.Heading -> true
+            is PivotBlock.Paragraph -> true
+            is PivotBlock.ListBlock -> true
+            is PivotBlock.Table -> true
+            is PivotBlock.Admonition -> true
+            is PivotBlock.Source -> true
+            is PivotBlock.DescriptionList -> true
             is PivotBlock.BlockMacro -> false
-            else -> true
+            PivotBlock.Hr -> false
         }
 
     private fun serialize(block: PivotBlock): String =
