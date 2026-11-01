@@ -2901,3 +2901,62 @@ _Pièges à surveiller_ : #5 (anti-collision repo1 — vérifier 404 avant bump)
 #11 (polling POM), #13 (drift catalogue ws → garde RED), #26 (commit sélectif WIP),
 #44 (signature non appliquée sous `CI=true` sans `CCCP_PUBLISH`).
 _Statut_ : 🟡 À PLANIFIER (S-281, sur accord pilote).
+
+== Observations — audit chaîne de livraison & accessibilité (2026-11-01)
+
+_Constat mesuré sur disque (grep sur `src/main`)._
+
+[cols="1,4,2", options="header"]
+|===
+| # | Constat | Recommandation
+
+| O-1
+| `epubcheck` valide l'EPUB **structurellement**, mais aucune exigence d'accessibilité n'est imposée : pas de `:lang:`, pas de `epub:type`, pas de contrôle des alternatives textuelles, pas d'en-têtes de tableau sémantiques.
+| Ajouter une tâche de validation d'accessibilité distincte de `epubcheck` (validité ≠ accessibilité) et un rapport versionné.
+
+| O-2
+| Asciidoctor PDF ne produit pas de **PDF balisé** (PDF/UA) : un PDF généré ne peut pas être déclaré accessible.
+| Déclarer explicitement la limite PDF dans la documentation et les livrables ; orienter le livrable aveugle vers **HTML/EPUB**.
+
+| O-3
+| `DOC-SEMANTIC-TABLE` existe (données typées) mais ne porte pas encore les en-têtes de tableau comme exigence d'accessibilité.
+| Renforcer `DOC-SEMANTIC-TABLE` : `<th scope>` en HTML, en-têtes de tableau en EPUB, vérification automatique.
+
+| O-4
+| Aucun rapport d'audit d'accessibilité n'est produit par la chaîne.
+| Ajouter `reportDocumentAccessibility` (JSON versionné) consommé par la porte d'acceptation d'academy (`GBL-011-5`).
+|===
+
+== EPIC DOC-A11Y — Accessibilité HTML/EPUB (~9 pts)
+
+*Statut* : 🔴 À FAIRE. *Dépend de* : `GBL-011` (EPIC transverse).
+*Principe* : l'accessibilité se contrôle au **rendu**, pas à la validité. Le PDF reste
+hors périmètre et sa limite est déclarée.
+
+|===
+| US | Contenu | Pts | Statut
+
+| DOC-A11Y-1
+| Rendu HTML accessible : `lang` par document et par changement de langue, hiérarchie de titres contiguë, `alt` obligatoire sur toute image, en-têtes de tableau (`<th scope>`), liens explicites
+| 3
+| 🔴 À FAIRE
+
+| DOC-A11Y-2
+| EPUB 3 accessible : `:lang:`, `epub:type` sur les sections, alternatives textuelles, `landmarks`, métadonnées `schema.org/accessMode`/`accessibilityFeature`
+| 3
+| 🔴 À FAIRE
+
+| DOC-A11Y-3
+| Tâche `reportDocumentAccessibility` (rapport JSON versionné) + porte de non-régression + déclaration explicite des limites PDF
+| 2
+| 🔴 À FAIRE
+
+| DOC-A11Y-4
+| BDD `@a11y` : alternatives manquantes, hiérarchie de titres cassée, tableau sans en-têtes, EPUB sans métadonnées d'accessibilité
+| 1
+| 🔴 À FAIRE
+|===
+
+*Critère de sortie* : un document de référence (livre FPA nettoyé) produit un HTML et
+un EPUB conformes WCAG 2.1 AA sur le périmètre texte, avec rapport versionné et limites
+PDF déclarées.
