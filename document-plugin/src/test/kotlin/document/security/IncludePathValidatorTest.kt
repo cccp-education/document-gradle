@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
  * RED d'abord (classes absentes), puis GREEN (implémentation).
  */
 class IncludePathValidatorTest {
-
     private val baseDir = File("/tmp/doc-cr4-base").also { it.mkdirs() }
 
     @Test

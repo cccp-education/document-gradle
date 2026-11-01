@@ -7,19 +7,25 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BlockDeltaTest {
-
     private fun heading(text: String) = PivotBlock.Heading(1, text, translatable = true)
-    private fun paragraph(vararg inlines: PivotInline) =
-        PivotBlock.Paragraph(inlines.toList())
+
+    private fun paragraph(vararg inlines: PivotInline) = PivotBlock.Paragraph(inlines.toList())
+
     private fun text(value: String) = PivotInline.Text(value, translatable = true)
+
     private fun plantumlBlock() = PivotBlock.Source("plantuml", "@startuml\nA --> B\n@enduml")
-    private fun table(headerCell: String, rowCell: String) = PivotBlock.Table(
+
+    private fun table(
+        headerCell: String,
+        rowCell: String,
+    ) = PivotBlock.Table(
         cols = null,
         header = listOf(listOf(text(headerCell))),
-        rows = listOf(listOf(listOf(text(rowCell))))
+        rows = listOf(listOf(listOf(text(rowCell)))),
     )
 
     private fun translated(hash: String) = BlockChecksumEntry(hash, BlockTranslationStatus.TRANSLATED)
+
     private fun pending(hash: String) = BlockChecksumEntry(hash, BlockTranslationStatus.PENDING)
 
     @Test
@@ -57,16 +63,18 @@ class BlockDeltaTest {
 
     @Test
     fun `diagram block preserved when surrounding text changes`() {
-        val previous = mapOf(
-            "0" to translated("hash-h1"),
-            "1" to translated("hash-diagram"),
-            "2" to translated("hash-p1")
-        )
-        val current = mapOf(
-            "0" to "hash-h1-modified",
-            "1" to "hash-diagram",
-            "2" to "hash-p1-modified"
-        )
+        val previous =
+            mapOf(
+                "0" to translated("hash-h1"),
+                "1" to translated("hash-diagram"),
+                "2" to translated("hash-p1"),
+            )
+        val current =
+            mapOf(
+                "0" to "hash-h1-modified",
+                "1" to "hash-diagram",
+                "2" to "hash-p1-modified",
+            )
         val delta = BlockDelta.compute(previous, current)
         assertEquals(setOf("0", "2"), delta.modifiedBlocks.toSet())
         assertEquals(setOf("1"), delta.preservedBlocks.toSet())
@@ -145,11 +153,12 @@ class BlockDeltaTest {
 
     @Test
     fun `computeForBlocks produces index-keyed checksums map`() {
-        val blocks = listOf(
-            heading("Title"),
-            paragraph(text("Body")),
-            plantumlBlock()
-        )
+        val blocks =
+            listOf(
+                heading("Title"),
+                paragraph(text("Body")),
+                plantumlBlock(),
+            )
         val checksums = BlockChecksum.computeForBlocks(blocks)
         assertEquals(3, checksums.size)
         assertEquals(BlockChecksum.sha256(heading("Title")), checksums["0"])
@@ -159,11 +168,12 @@ class BlockDeltaTest {
 
     @Test
     fun `computeForBlocks skips hr and non-translatable block macro`() {
-        val blocks = listOf<PivotBlock>(
-            heading("Title"),
-            PivotBlock.Hr,
-            PivotBlock.BlockMacro("image", "diagram.png")
-        )
+        val blocks =
+            listOf<PivotBlock>(
+                heading("Title"),
+                PivotBlock.Hr,
+                PivotBlock.BlockMacro("image", "diagram.png"),
+            )
         val checksums = BlockChecksum.computeForBlocks(blocks)
         assertEquals(1, checksums.size)
         assertTrue(checksums.containsKey("0"))

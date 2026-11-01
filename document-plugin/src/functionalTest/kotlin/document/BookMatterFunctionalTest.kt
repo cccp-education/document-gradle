@@ -20,7 +20,6 @@ import java.io.File
  * the `LEGACY` mode (opt-in), and the matter separators are opt-in.
  */
 class BookMatterFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -62,17 +61,21 @@ class BookMatterFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
-    private fun runExpectingFailure(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .buildAndFail()
+    private fun runExpectingFailure(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .buildAndFail()
 
     @Test
     fun `a body-only TOC passes STRICT validation under the derived policy`() {

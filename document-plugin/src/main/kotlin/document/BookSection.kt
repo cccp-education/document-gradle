@@ -17,7 +17,6 @@ data class BookSection(
     val page: Int,
     val pdfFile: String,
 ) {
-
     init {
         require(ref.isNotBlank()) { "BookSection ref must not be blank" }
         require(title.isNotBlank()) { "BookSection title must not be blank" }

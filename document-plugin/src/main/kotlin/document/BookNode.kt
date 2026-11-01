@@ -22,7 +22,6 @@ data class BookNode(
     val children: List<BookNode> = emptyList(),
     val source: BookSection? = null,
 ) {
-
     init {
         require(ref == "" || REF_PATTERN.matches(ref)) {
             "BookNode ref must be blank (root) or a dotted numeric ref, got: '$ref'"

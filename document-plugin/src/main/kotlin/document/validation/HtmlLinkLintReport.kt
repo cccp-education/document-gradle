@@ -27,19 +27,23 @@ data class HtmlLinkLintReport(
     }
 
     companion object {
-        fun fromResult(result: HtmlLinkLintResult, tocPresent: Boolean): HtmlLinkLintReport {
-            val entries = when (result) {
-                is HtmlLinkLintResult.Valid ->
-                    listOf(HtmlLinkLintReportEntry(ref = "*", status = "VALID"))
-                is HtmlLinkLintResult.Invalid ->
-                    result.deadLinks.map {
-                        HtmlLinkLintReportEntry(
-                            ref = it,
-                            status = "DEAD",
-                            reason = "internal link '#$it' has no matching anchor (id/name)",
-                        )
-                    }
-            }
+        fun fromResult(
+            result: HtmlLinkLintResult,
+            tocPresent: Boolean,
+        ): HtmlLinkLintReport {
+            val entries =
+                when (result) {
+                    is HtmlLinkLintResult.Valid ->
+                        listOf(HtmlLinkLintReportEntry(ref = "*", status = "VALID"))
+                    is HtmlLinkLintResult.Invalid ->
+                        result.deadLinks.map {
+                            HtmlLinkLintReportEntry(
+                                ref = it,
+                                status = "DEAD",
+                                reason = "internal link '#$it' has no matching anchor (id/name)",
+                            )
+                        }
+                }
             return HtmlLinkLintReport(tocPresent = tocPresent, entries = entries)
         }
 

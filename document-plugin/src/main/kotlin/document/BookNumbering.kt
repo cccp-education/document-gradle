@@ -17,7 +17,6 @@ package document
  * no I/O, no Gradle dependency, fully unit-testable in isolation.
  */
 object BookNumbering {
-
     /**
      * Computes the hierarchical number of every non-root node in [tree].
      *
@@ -39,6 +38,7 @@ object BookNumbering {
      */
     fun numbers(tree: BookTree): Map<String, String> {
         val map = LinkedHashMap<String, String>()
+
         fun walk(node: BookNode) {
             if (node.ref.isNotEmpty()) map[node.ref] = node.ref
             node.children.forEach { walk(it) }
@@ -51,7 +51,10 @@ object BookNumbering {
      * Returns the hierarchical number of the node with [ref] in [tree], or
      * `null` when the node does not exist (or is the synthetic root).
      */
-    fun number(tree: BookTree, ref: String): String? = numbers(tree)[ref]
+    fun number(
+        tree: BookTree,
+        ref: String,
+    ): String? = numbers(tree)[ref]
 
     /**
      * Emits the AsciiDoc cross-reference anchor for [ref] (`[[ref]]`).
@@ -79,7 +82,10 @@ object BookNumbering {
      * with [ref], in document order (see [emittedNodes]). When [ref] is not an
      * emitted section, both sides are `null`.
      */
-    fun navigation(tree: BookTree, ref: String): BookNavigation {
+    fun navigation(
+        tree: BookTree,
+        ref: String,
+    ): BookNavigation {
         val emitted = emittedNodes(tree)
         val idx = emitted.indexOfFirst { it.ref == ref }
         if (idx < 0) return BookNavigation(null, null)

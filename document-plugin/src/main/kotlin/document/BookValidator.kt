@@ -25,7 +25,6 @@ import java.io.File
  * twice on the same inputs produces the same result. It never mutates any file.
  */
 object BookValidator {
-
     private val LEADING_DIGITS = Regex("""^(\d+)""")
 
     /**
@@ -149,10 +148,12 @@ object BookValidator {
         }
 
         // Rule S2: uniqueness — same ref on distinct pages is a legit multi-page section
-        val duplicatedPairs = sections.map { it.ref to it.page }
-            .groupBy { it }
-            .filterValues { it.size > 1 }
-            .keys
+        val duplicatedPairs =
+            sections
+                .map { it.ref to it.page }
+                .groupBy { it }
+                .filterValues { it.size > 1 }
+                .keys
         for ((ref, page) in duplicatedPairs) {
             reasons.add("duplicate section: ref '$ref' appears more than once for page $page")
         }
@@ -196,7 +197,10 @@ object BookValidator {
      * Ink Economy Law: deterministic — the same (mode, reasons) always produces
      * the same outcome (silent return or identical exception).
      */
-    fun enforce(validationMode: ValidationMode, reasons: List<String>) {
+    fun enforce(
+        validationMode: ValidationMode,
+        reasons: List<String>,
+    ) {
         if (validationMode == ValidationMode.STRICT && reasons.isNotEmpty()) {
             throw GradleException(
                 "book validation failed (${reasons.size} finding(s)):\n" +
@@ -207,7 +211,8 @@ object BookValidator {
 
     private fun loadAdocFiles(pagesDir: File): List<File> {
         if (!pagesDir.exists() || !pagesDir.isDirectory) return emptyList()
-        return pagesDir.listFiles { f -> f.isFile && f.extension.equals("adoc", ignoreCase = true) }
+        return pagesDir
+            .listFiles { f -> f.isFile && f.extension.equals("adoc", ignoreCase = true) }
             .orEmpty()
             .toList()
     }

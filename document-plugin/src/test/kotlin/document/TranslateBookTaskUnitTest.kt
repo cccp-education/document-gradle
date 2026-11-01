@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * tests pin the task's action with a deterministic fake LLM (`llmMode=fake`).
  */
 class TranslateBookTaskUnitTest {
-
     private lateinit var tempDir: File
     private lateinit var project: Project
 
@@ -34,21 +33,26 @@ class TranslateBookTaskUnitTest {
         File(pages, "001-part.adoc").writeText("Part body sentence.")
         File(pages, "002-chapter.adoc").writeText("Chapter body sentence.")
         File(pages, "003-chapter2.adoc").writeText("Second chapter body sentence.")
-        val toc = File(tempDir, "toc.adoc").apply {
-            writeText(
-                """
-                | Référence | Sujet / Titre | Page | Fichier
-                | 1 | Part I | 1 | 001-part.adoc
-                | 1.1 | Chapter One | 2 | 002-chapter.adoc
-                | 1.2 | Chapter Two | 3 | 003-chapter2.adoc
-                """.trimIndent(),
-            )
-        }
+        val toc =
+            File(tempDir, "toc.adoc").apply {
+                writeText(
+                    """
+                    | Référence | Sujet / Titre | Page | Fichier
+                    | 1 | Part I | 1 | 001-part.adoc
+                    | 1.1 | Chapter One | 2 | 002-chapter.adoc
+                    | 1.2 | Chapter Two | 3 | 003-chapter2.adoc
+                    """.trimIndent(),
+                )
+            }
         val output = File(tempDir, "book-en.adoc")
         return Triple(pages, toc, output)
     }
 
-    private fun task(pages: File, toc: File, output: File): TranslateBookTask {
+    private fun task(
+        pages: File,
+        toc: File,
+        output: File,
+    ): TranslateBookTask {
         val task = project.tasks.getByName("translateBook") as TranslateBookTask
         task.pagesDir.set(pages)
         task.tocFile.set(toc)

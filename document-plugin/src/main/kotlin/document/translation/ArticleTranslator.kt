@@ -8,5 +8,9 @@ package document.translation
  *  - [TreeTranslationAdapter] : whole-article tree (one LLM call per document, YAML round-trip)
  */
 interface ArticleTranslator {
-    fun translate(asciidoc: String, sourceLanguage: String, targetLanguage: String): String
+    fun translate(
+        asciidoc: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): String
 }

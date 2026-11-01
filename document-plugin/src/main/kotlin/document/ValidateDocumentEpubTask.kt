@@ -36,7 +36,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "EPUB validation severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class ValidateDocumentEpubTask : DefaultTask() {
-
     /**
      * Path of the EPUB artifact audited by this guard, carried as an [@Input]
      * string (NOT an [@InputFile]) — the exact [ValidateDocumentTask.htmlFilePath]
@@ -70,9 +69,10 @@ abstract class ValidateDocumentEpubTask : DefaultTask() {
             // Mirror of the S-232 HTML rule: visibility over silence — a missing
             // EPUB under a non-OFF mode is an audit finding, never a silent skip.
             val label = epub?.name ?: "document.epub"
-            val report = EpubValidationReport.fromResult(
-                EpubValidationResult.Invalid(listOf("<epub-file-missing> $label")),
-            )
+            val report =
+                EpubValidationReport.fromResult(
+                    EpubValidationResult.Invalid(listOf("<epub-file-missing> $label")),
+                )
             writeReport(report)
             val message = message(mode, "<epub-file-missing> $label")
             if (mode == EpubValidationMode.STRICT) {
@@ -105,6 +105,8 @@ abstract class ValidateDocumentEpubTask : DefaultTask() {
         }
     }
 
-    private fun message(mode: EpubValidationMode, detail: String): String =
-        "epub validation failed ($mode): $detail"
+    private fun message(
+        mode: EpubValidationMode,
+        detail: String,
+    ): String = "epub validation failed ($mode): $detail"
 }

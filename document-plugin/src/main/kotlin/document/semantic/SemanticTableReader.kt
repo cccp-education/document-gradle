@@ -16,7 +16,6 @@ import java.io.File
  * not throw for a missing file — an absent document yields an empty list.
  */
 fun interface SemanticTableReader {
-
     /**
      * Reads [source] (an AsciiDoc file) and returns the annotated tables in
      * document order, as Gradle-free [RawTable] values.

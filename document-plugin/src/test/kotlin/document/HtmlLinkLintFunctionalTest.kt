@@ -1,7 +1,7 @@
 package document
 
-import document.validation.HtmlLinkLinter
 import document.validation.HtmlLinkLintResult
+import document.validation.HtmlLinkLinter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -21,12 +21,12 @@ import java.io.File
  * [document.BookPipelineContentFunctionalTest].
  */
 class HtmlLinkLintFunctionalTest {
-
     companion object {
-        private val CONTENT_BOOK_HTML = File(
-            "/home/cheroliv/workspace/office/metiers/FPA",
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.html",
-        )
+        private val CONTENT_BOOK_HTML =
+            File(
+                "/home/cheroliv/workspace/office/metiers/FPA",
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.html",
+            )
     }
 
     @Test
@@ -50,13 +50,15 @@ class HtmlLinkLintFunctionalTest {
         assumeTrue(CONTENT_BOOK_HTML.isFile) {
             "scanned-content book.html not found at ${CONTENT_BOOK_HTML.absolutePath}"
         }
-        val html = CONTENT_BOOK_HTML.readText() +
-            """<a href="#this-anchor-does-not-exist-in-the-content-book">broken</a>"""
+        val html =
+            CONTENT_BOOK_HTML.readText() +
+                """<a href="#this-anchor-does-not-exist-in-the-content-book">broken</a>"""
         val result = HtmlLinkLinter.validate(html)
         assertTrue(result is HtmlLinkLintResult.Invalid)
         assertTrue(
             (result as HtmlLinkLintResult.Invalid)
-                .deadLinks.contains("this-anchor-does-not-exist-in-the-content-book"),
+                .deadLinks
+                .contains("this-anchor-does-not-exist-in-the-content-book"),
         )
     }
 }

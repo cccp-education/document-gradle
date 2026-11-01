@@ -19,7 +19,6 @@ import java.io.File
  * fake LLM (`translateLlmMode=fake`) so the run is metered-free.
  */
 class BookPublishFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -64,11 +63,13 @@ class BookPublishFunctionalTest {
         writePages()
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     private fun docsDir(): File = projectDir.resolve("build/docs/document")
 

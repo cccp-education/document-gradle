@@ -19,21 +19,20 @@ import kotlin.test.assertTrue
  * (anti-glue-collision pattern, S-088/S-223).
  */
 class BookPublishSteps {
-
     private var languages: List<BookLanguageTarget> = emptyList()
     private var formats: List<String> = emptyList()
     private var baseName: String = "book"
     private var includeSource: Boolean = false
     private var plan: List<BookPublicationTarget> = emptyList()
 
-    private fun quoted(text: String): List<String> =
-        Regex("\"([^\"]*)\"").findAll(text).map { it.groupValues[1] }.toList()
+    private fun quoted(text: String): List<String> = Regex("\"([^\"]*)\"").findAll(text).map { it.groupValues[1] }.toList()
 
     @Given("^book-publish the languages (.+)$")
     fun `book-publish the languages`(listText: String) {
-        languages = quoted(listText).map {
-            BookLanguageTarget(code = it, name = it, nativeName = it, rtl = false)
-        }
+        languages =
+            quoted(listText).map {
+                BookLanguageTarget(code = it, name = it, nativeName = it, rtl = false)
+            }
     }
 
     @Given("^book-publish the requested formats (.+)$")
@@ -53,13 +52,14 @@ class BookPublishSteps {
 
     @When("^book-publish the publication plan is resolved$")
     fun `book-publish the publication plan is resolved`() {
-        plan = BookPublicationPlanner.plan(
-            languages,
-            baseName,
-            formats,
-            sourceLanguage = "fr",
-            includeSource = includeSource,
-        )
+        plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName,
+                formats,
+                sourceLanguage = "fr",
+                includeSource = includeSource,
+            )
     }
 
     @Then("^book-publish the outputs are (.+)$")
@@ -73,13 +73,21 @@ class BookPublishSteps {
     }
 
     @Then("^book-publish the source of \"([^\"]*)\" in \"([^\"]*)\" is \"([^\"]*)\"$")
-    fun `book-publish the source of a language in a format`(lang: String, format: String, expected: String) {
+    fun `book-publish the source of a language in a format`(
+        lang: String,
+        format: String,
+        expected: String,
+    ) {
         val target = plan.first { it.language == lang && it.format == DocumentFormat.valueOf(format.uppercase()) }
         assertEquals(expected, target.sourceFileName, "the source file name must follow the convention")
     }
 
     @Then("^book-publish the output of \"([^\"]*)\" in \"([^\"]*)\" is \"([^\"]*)\"$")
-    fun `book-publish the output of a language in a format`(lang: String, format: String, expected: String) {
+    fun `book-publish the output of a language in a format`(
+        lang: String,
+        format: String,
+        expected: String,
+    ) {
         val target = plan.first { it.language == lang && it.format == DocumentFormat.valueOf(format.uppercase()) }
         assertEquals(expected, target.outputFileName, "the output file name must follow the convention")
     }

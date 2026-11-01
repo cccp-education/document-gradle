@@ -15,5 +15,7 @@ sealed class HtmlLinkLintResult {
      *
      * @param deadLinks the sorted, deduplicated list of unresolved fragment ids
      */
-    data class Invalid(val deadLinks: List<String>) : HtmlLinkLintResult()
+    data class Invalid(
+        val deadLinks: List<String>,
+    ) : HtmlLinkLintResult()
 }

@@ -28,7 +28,6 @@ import java.io.File
  * returned byte-identical (no-op).
  */
 object BookImageRewriter {
-
     // Covers both the block macro `image::target[]` and the inline macro
     // `image:target[]` (the inline form is used by the real corpus, S-252).
     private val IMAGE_DIRECTIVE = Regex("""image::?([^\[\s]+)\[""")
@@ -43,22 +42,27 @@ object BookImageRewriter {
      *   (`null` when the page has no scan → ghosts are dropped)
      * @return the repaired content; byte-identical to [text] when no ghost
      */
-    fun repair(text: String, dir: File, pageScan: File?): String {
+    fun repair(
+        text: String,
+        dir: File,
+        pageScan: File?,
+    ): String {
         val lines = text.split("\n")
         var changed = false
-        val rewritten = lines.map { line ->
-            val match = IMAGE_DIRECTIVE.find(line) ?: return@map line
-            val target = match.groupValues[1]
-            if (File(dir, target).isFile) return@map line
+        val rewritten =
+            lines.map { line ->
+                val match = IMAGE_DIRECTIVE.find(line) ?: return@map line
+                val target = match.groupValues[1]
+                if (File(dir, target).isFile) return@map line
 
-            changed = true
-            if (pageScan == null) {
-                ""
-            } else {
-                val targetStart = match.range.first + match.value.length - target.length - 1
-                line.replaceRange(targetStart, targetStart + target.length, pageScan.name)
+                changed = true
+                if (pageScan == null) {
+                    ""
+                } else {
+                    val targetStart = match.range.first + match.value.length - target.length - 1
+                    line.replaceRange(targetStart, targetStart + target.length, pageScan.name)
+                }
             }
-        }
         return if (changed) rewritten.joinToString("\n") else text
     }
 
@@ -68,7 +72,8 @@ object BookImageRewriter {
      * materialised next to the assembled book.
      */
     fun targets(text: String): Set<String> =
-        text.lineSequence()
+        text
+            .lineSequence()
             .mapNotNull { IMAGE_DIRECTIVE.find(it)?.groupValues?.getOrNull(1) }
             .toCollection(LinkedHashSet())
 }

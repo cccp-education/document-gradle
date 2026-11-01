@@ -21,24 +21,27 @@ import org.junit.jupiter.api.Test
  * findings, it never throws.
  */
 class SemanticExtractionTest {
+    private val raw =
+        RawTable(
+            name = "planning",
+            header = listOf("Ref", "Titre", "Objectif"),
+            rows =
+                listOf(
+                    listOf("1.0", "Introduction", "Situer le cadre"),
+                    listOf("1.1", "Objectifs", "   "),
+                ),
+        )
 
-    private val raw = RawTable(
-        name = "planning",
-        header = listOf("Ref", "Titre", "Objectif"),
-        rows = listOf(
-            listOf("1.0", "Introduction", "Situer le cadre"),
-            listOf("1.1", "Objectifs", "   "),
-        ),
-    )
-
-    private val schema = SemanticTableSchema(
-        name = "planning",
-        columns = listOf(
-            SemanticColumnSpec(index = 0, role = "reference"),
-            SemanticColumnSpec(header = "Titre", role = "title"),
-            SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
-        ),
-    )
+    private val schema =
+        SemanticTableSchema(
+            name = "planning",
+            columns =
+                listOf(
+                    SemanticColumnSpec(index = 0, role = "reference"),
+                    SemanticColumnSpec(header = "Titre", role = "title"),
+                    SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
+                ),
+        )
 
     @Test
     fun `an annotated table with a declared schema is extracted`() {
@@ -95,13 +98,15 @@ class SemanticExtractionTest {
 
     @Test
     fun `an optional blank role yields no finding`() {
-        val optionalSchema = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(
-                SemanticColumnSpec(index = 0, role = "reference"),
-                SemanticColumnSpec(header = "Objectif", role = "objective"),
-            ),
-        )
+        val optionalSchema =
+            SemanticTableSchema(
+                name = "planning",
+                columns =
+                    listOf(
+                        SemanticColumnSpec(index = 0, role = "reference"),
+                        SemanticColumnSpec(header = "Objectif", role = "objective"),
+                    ),
+            )
         val filled = raw.copy(rows = listOf(listOf("1.0", "Introduction", "   ")))
 
         val table = (SemanticExtractor.extract(listOf(filled), listOf(optionalSchema)).single() as SemanticExtraction.Extracted).table
@@ -111,21 +116,25 @@ class SemanticExtractionTest {
 
     @Test
     fun `findings are ordered by row then schema column order`() {
-        val twoColumnSchema = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(
-                SemanticColumnSpec(index = 0, role = "reference", required = true),
-                SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
-            ),
-        )
-        val ragged = RawTable(
-            name = "planning",
-            header = listOf("Ref", "Objectif"),
-            rows = listOf(
-                listOf("   ", "   "),
-                listOf("1.1", "   "),
-            ),
-        )
+        val twoColumnSchema =
+            SemanticTableSchema(
+                name = "planning",
+                columns =
+                    listOf(
+                        SemanticColumnSpec(index = 0, role = "reference", required = true),
+                        SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
+                    ),
+            )
+        val ragged =
+            RawTable(
+                name = "planning",
+                header = listOf("Ref", "Objectif"),
+                rows =
+                    listOf(
+                        listOf("   ", "   "),
+                        listOf("1.1", "   "),
+                    ),
+            )
 
         val table = (SemanticExtractor.extract(listOf(ragged), listOf(twoColumnSchema)).single() as SemanticExtraction.Extracted).table
 
@@ -139,8 +148,9 @@ class SemanticExtractionTest {
         assertTrue(results.single() is SemanticExtraction.Skipped)
     }
 
-    private fun SemanticExtraction.name(): String = when (this) {
-        is SemanticExtraction.Extracted -> table.name
-        is SemanticExtraction.Skipped -> name
-    }
+    private fun SemanticExtraction.name(): String =
+        when (this) {
+            is SemanticExtraction.Extracted -> table.name
+            is SemanticExtraction.Skipped -> name
+        }
 }

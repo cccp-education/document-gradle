@@ -17,7 +17,6 @@ data class BookTree(
     val nodesByRef: Map<String, BookNode>,
     val leaves: List<BookSection>,
 ) {
-
     /**
      * Returns the node with the given [ref], or `null` if no such node exists
      * (neither real nor synthetic) in the tree.

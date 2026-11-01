@@ -43,7 +43,6 @@ data class BookPublicationTarget(
  * touching the filesystem nor AsciidoctorJ (the task layer converts).
  */
 object BookPublicationPlanner {
-
     /**
      * @param languages the translated languages of the book (already resolved,
      *   source language excluded); each yields `<base>-<code>.adoc`
@@ -59,40 +58,43 @@ object BookPublicationPlanner {
         sourceLanguage: String = "",
         includeSource: Boolean = false,
     ): List<BookPublicationTarget> {
-        val formats = requestedFormats
-            .mapNotNull { name -> DocumentFormat.ALL.firstOrNull { it.name.equals(name, ignoreCase = true) } }
-            .distinct()
+        val formats =
+            requestedFormats
+                .mapNotNull { name -> DocumentFormat.ALL.firstOrNull { it.name.equals(name, ignoreCase = true) } }
+                .distinct()
 
         if (formats.isEmpty()) return emptyList()
 
         // DOC-BOOK-PUBLISH (US-5) — the assembled source book is opt-in and
         // emitted first: `<base>.adoc` -> `<base>.<ext>` (no language suffix).
-        val sourceTargets = if (includeSource) {
-            formats.map { format ->
-                BookPublicationTarget(
-                    language = sourceLanguage,
-                    format = format,
-                    sourceFileName = "$baseName.adoc",
-                    outputFileName = "$baseName.${format.extension}",
-                    isSource = true,
-                )
-            }
-        } else {
-            emptyList()
-        }
-
-        val translatedTargets = languages
-            .filter { it.code.isNotBlank() }
-            .flatMap { language ->
+        val sourceTargets =
+            if (includeSource) {
                 formats.map { format ->
                     BookPublicationTarget(
-                        language = language.code,
+                        language = sourceLanguage,
                         format = format,
-                        sourceFileName = "$baseName-${language.code}.adoc",
-                        outputFileName = "$baseName-${language.code}.${format.extension}",
+                        sourceFileName = "$baseName.adoc",
+                        outputFileName = "$baseName.${format.extension}",
+                        isSource = true,
                     )
                 }
+            } else {
+                emptyList()
             }
+
+        val translatedTargets =
+            languages
+                .filter { it.code.isNotBlank() }
+                .flatMap { language ->
+                    formats.map { format ->
+                        BookPublicationTarget(
+                            language = language.code,
+                            format = format,
+                            sourceFileName = "$baseName-${language.code}.adoc",
+                            outputFileName = "$baseName-${language.code}.${format.extension}",
+                        )
+                    }
+                }
 
         return sourceTargets + translatedTargets
     }

@@ -14,7 +14,11 @@ object TableSyntaxValidator {
         val colCount = table.cols.size
 
         if (colCount > 0) {
-            val headerColCount = table.header.firstOrNull()?.cells?.size ?: 0
+            val headerColCount =
+                table.header
+                    .firstOrNull()
+                    ?.cells
+                    ?.size ?: 0
             if (headerColCount > 0 && headerColCount != colCount) {
                 return TableValidationResult.Invalid(
                     articleTitle = articleTitle,
@@ -33,7 +37,11 @@ object TableSyntaxValidator {
             }
         }
 
-        val headerColCount = table.header.firstOrNull()?.cells?.size ?: 0
+        val headerColCount =
+            table.header
+                .firstOrNull()
+                ?.cells
+                ?.size ?: 0
         if (headerColCount > 0) {
             table.body.forEachIndexed { rowIdx, row ->
                 if (row.cells.size != headerColCount) {
@@ -49,15 +57,16 @@ object TableSyntaxValidator {
         val allRows = table.allRows
         allRows.forEachIndexed { rowIdx, row ->
             row.cells.forEachIndexed { cellIdx, cell ->
-                val cellText = cell.inline.joinToString("") {
-                    when (it) {
-                        is document.translation.PivotInline.Text -> it.text
-                        is document.translation.PivotInline.Bold -> it.text
-                        is document.translation.PivotInline.Code -> it.text
-                        is document.translation.PivotInline.Link -> it.label
-                        is document.translation.PivotInline.LineBreak -> ""
+                val cellText =
+                    cell.inline.joinToString("") {
+                        when (it) {
+                            is document.translation.PivotInline.Text -> it.text
+                            is document.translation.PivotInline.Bold -> it.text
+                            is document.translation.PivotInline.Code -> it.text
+                            is document.translation.PivotInline.Link -> it.label
+                            is document.translation.PivotInline.LineBreak -> ""
+                        }
                     }
-                }
                 if (cellText.contains("|===")) {
                     return TableValidationResult.Invalid(
                         articleTitle = articleTitle,
@@ -70,15 +79,16 @@ object TableSyntaxValidator {
 
         if (table.header.isNotEmpty()) {
             table.header.first().cells.forEachIndexed { cellIdx, cell ->
-                val cellText = cell.inline.joinToString("") {
-                    when (it) {
-                        is document.translation.PivotInline.Text -> it.text
-                        is document.translation.PivotInline.Bold -> it.text
-                        is document.translation.PivotInline.Code -> it.text
-                        is document.translation.PivotInline.Link -> it.label
-                        is document.translation.PivotInline.LineBreak -> ""
+                val cellText =
+                    cell.inline.joinToString("") {
+                        when (it) {
+                            is document.translation.PivotInline.Text -> it.text
+                            is document.translation.PivotInline.Bold -> it.text
+                            is document.translation.PivotInline.Code -> it.text
+                            is document.translation.PivotInline.Link -> it.label
+                            is document.translation.PivotInline.LineBreak -> ""
+                        }
                     }
-                }
                 if (cellText.isBlank()) {
                     log.warn(
                         "TableSyntaxValidator: header cell [$cellIdx] is empty in article '{}' table #{}",

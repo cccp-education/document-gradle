@@ -1,6 +1,5 @@
 package document.releasenotes
 
-import contracts.pipeline.ConventionalCommit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -8,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ConventionalCommitParserTest {
-
     private val parser = ConventionalCommitParser()
 
     @Test
@@ -65,11 +63,12 @@ class ConventionalCommitParserTest {
     @Test
     fun `parseLines filters out non-conventional commits and keeps valid ones`() {
         val lines = listOf("feat: first feature", "random commit", "fix(core): bug fix", "")
-        val commits = parser.parseLines(
-            lines,
-            hashes = listOf("h1", "h2", "h3", "h4"),
-            dates = listOf("d1", "d2", "d3", "d4"),
-        )
+        val commits =
+            parser.parseLines(
+                lines,
+                hashes = listOf("h1", "h2", "h3", "h4"),
+                dates = listOf("d1", "d2", "d3", "d4"),
+            )
         assertEquals(2, commits.size)
         assertEquals("feat", commits[0].type)
         assertEquals("fix", commits[1].type)

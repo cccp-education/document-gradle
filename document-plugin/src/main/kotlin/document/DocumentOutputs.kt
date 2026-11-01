@@ -16,16 +16,16 @@ data class DocumentOutputs(
     val docbook: Boolean = false,
     val manpage: Boolean = false,
 ) {
-
     /**
      * Returns the list of [DocumentFormat]s enabled by the toggles,
      * in the canonical enum order (HTML, PDF, EPUB, DOCBOOK, MANPAGE).
      */
-    fun enabledFormats(): List<DocumentFormat> = buildList {
-        if (html) add(DocumentFormat.HTML)
-        if (pdf) add(DocumentFormat.PDF)
-        if (epub) add(DocumentFormat.EPUB)
-        if (docbook) add(DocumentFormat.DOCBOOK)
-        if (manpage) add(DocumentFormat.MANPAGE)
-    }
+    fun enabledFormats(): List<DocumentFormat> =
+        buildList {
+            if (html) add(DocumentFormat.HTML)
+            if (pdf) add(DocumentFormat.PDF)
+            if (epub) add(DocumentFormat.EPUB)
+            if (docbook) add(DocumentFormat.DOCBOOK)
+            if (manpage) add(DocumentFormat.MANPAGE)
+        }
 }

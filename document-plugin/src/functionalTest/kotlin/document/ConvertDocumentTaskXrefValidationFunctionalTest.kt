@@ -11,11 +11,13 @@ import java.io.File
  * guard wired into [ConvertDocumentTask] (parallel to DOC-CR4 include guard).
  */
 class ConvertDocumentTaskXrefValidationFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
-    private fun writeBuild(converterBlock: String, sourceContent: String) {
+    private fun writeBuild(
+        converterBlock: String,
+        sourceContent: String,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-xref\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -32,19 +34,23 @@ class ConvertDocumentTaskXrefValidationFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(sourceContent)
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `STRICT xref validation fails the build on unresolved reference`() {

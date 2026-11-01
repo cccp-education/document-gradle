@@ -8,19 +8,19 @@ import java.io.File
 import java.nio.file.Files
 
 class DocumentConfigSerializerTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-cfg-ser").toFile()
 
     @Test
     fun `serialize writes a json file with source enrich outputs and metadata`() {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
-        val config = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            enrich = DocumentEnrichConfig(plantuml = true, images = true, passthrough = false),
-            outputs = DocumentOutputs(html = true, pdf = true, epub = false),
-            frontMatter = DocumentFrontMatter(title = "Mon Livre", author = "Auteur", language = "fr"),
-        )
+        val config =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                enrich = DocumentEnrichConfig(plantuml = true, images = true, passthrough = false),
+                outputs = DocumentOutputs(html = true, pdf = true, epub = false),
+                frontMatter = DocumentFrontMatter(title = "Mon Livre", author = "Auteur", language = "fr"),
+            )
         val serializer = DocumentConfigSerializer()
 
         val file = serializer.serialize(dir, config)
@@ -84,10 +84,11 @@ class DocumentConfigSerializerTest {
         val sourceFile = File(dir, "x.adoc").apply { writeText("= X") }
         val css = File(dir, "talaria.css").apply { writeText("body {}") }
         val theme = DocumentTheme(htmlStylesheet = css)
-        val config = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            theme = theme,
-        )
+        val config =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                theme = theme,
+            )
         val serializer = DocumentConfigSerializer()
 
         val file = serializer.serialize(dir, config)
@@ -105,15 +106,17 @@ class DocumentConfigSerializerTest {
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
         val photosDir = File(dir, "photos").apply { mkdirs() }
-        val config = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                photosDir = photosDir,
-                title = "Mon Livre",
-                author = "Auteur",
-            ),
-        )
+        val config =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        photosDir = photosDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
 
         val file = serializer.serialize(dir, config)
@@ -145,12 +148,13 @@ class DocumentConfigSerializerTest {
     fun `deserialize reads back a serialized config preserving source enrich outputs and metadata`() {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            enrich = DocumentEnrichConfig(plantuml = true, images = true, passthrough = false),
-            outputs = DocumentOutputs(html = true, pdf = true, epub = false),
-            frontMatter = DocumentFrontMatter(title = "Mon Livre", author = "Auteur", language = "fr"),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                enrich = DocumentEnrichConfig(plantuml = true, images = true, passthrough = false),
+                outputs = DocumentOutputs(html = true, pdf = true, epub = false),
+                frontMatter = DocumentFrontMatter(title = "Mon Livre", author = "Auteur", language = "fr"),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -185,10 +189,11 @@ class DocumentConfigSerializerTest {
         val dir = tempDir()
         val sourceFile = File(dir, "x.adoc").apply { writeText("= X") }
         val css = File(dir, "talaria.css").apply { writeText("body {}") }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            theme = DocumentTheme(htmlStylesheet = css),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                theme = DocumentTheme(htmlStylesheet = css),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -203,15 +208,17 @@ class DocumentConfigSerializerTest {
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
         val photosDir = File(dir, "photos").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                photosDir = photosDir,
-                title = "Mon Livre",
-                author = "Auteur",
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        photosDir = photosDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -229,17 +236,19 @@ class DocumentConfigSerializerTest {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                title = "Mon Livre",
-                author = "Auteur",
-                sourceLanguage = "fr",
-                translateToAll = true,
-                targetLanguages = listOf("en", "de"),
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                        sourceLanguage = "fr",
+                        translateToAll = true,
+                        targetLanguages = listOf("en", "de"),
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -255,16 +264,18 @@ class DocumentConfigSerializerTest {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                title = "Mon Livre",
-                author = "Auteur",
-                translateToAll = true,
-                publishFormats = listOf("html", "pdf"),
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                        translateToAll = true,
+                        publishFormats = listOf("html", "pdf"),
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -275,20 +286,23 @@ class DocumentConfigSerializerTest {
     }
 
     @Test
-    fun `deserialize reads back the matter policy and breaks of the book block`() {        val dir = tempDir()
+    fun `deserialize reads back the matter policy and breaks of the book block`() {
+        val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                title = "Mon Livre",
-                author = "Auteur",
-                matterPolicy = "LEGACY",
-                matterBreaks = true,
-                navigation = true,
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                        matterPolicy = "LEGACY",
+                        matterBreaks = true,
+                        navigation = true,
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -306,16 +320,18 @@ class DocumentConfigSerializerTest {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                title = "Mon Livre",
-                author = "Auteur",
-                sourceLanguage = "fr",
-                targetLanguage = "en",
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                        sourceLanguage = "fr",
+                        targetLanguage = "en",
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -331,17 +347,19 @@ class DocumentConfigSerializerTest {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
         val pagesDir = File(dir, "pages").apply { mkdirs() }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            book = BookConfig(
-                pagesDir = pagesDir,
-                title = "Mon Livre",
-                author = "Auteur",
-                translateToAll = true,
-                publishFormats = listOf("html"),
-                includeSource = true,
-            ),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                book =
+                    BookConfig(
+                        pagesDir = pagesDir,
+                        title = "Mon Livre",
+                        author = "Auteur",
+                        translateToAll = true,
+                        publishFormats = listOf("html"),
+                        includeSource = true,
+                    ),
+            )
         val serializer = DocumentConfigSerializer()
         val file = serializer.serialize(dir, original)
 
@@ -355,12 +373,13 @@ class DocumentConfigSerializerTest {
     fun `round-trip serialize then deserialize is idempotent`() {
         val dir = tempDir()
         val sourceFile = File(dir, "livre.adoc").apply { writeText("= Livre") }
-        val original = DocumentPipelineConfig(
-            source = DocumentSource(sourceFile),
-            enrich = DocumentEnrichConfig(plantuml = true, images = false, passthrough = true),
-            outputs = DocumentOutputs(html = true, pdf = true, epub = true, docbook = false, manpage = false),
-            frontMatter = DocumentFrontMatter(title = "Round Trip", author = "RT", language = "en"),
-        )
+        val original =
+            DocumentPipelineConfig(
+                source = DocumentSource(sourceFile),
+                enrich = DocumentEnrichConfig(plantuml = true, images = false, passthrough = true),
+                outputs = DocumentOutputs(html = true, pdf = true, epub = true, docbook = false, manpage = false),
+                frontMatter = DocumentFrontMatter(title = "Round Trip", author = "RT", language = "en"),
+            )
         val serializer = DocumentConfigSerializer()
         val file1 = serializer.serialize(dir, original)
         val first = serializer.deserialize(file1, baseDir = dir)

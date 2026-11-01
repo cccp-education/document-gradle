@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BookTocParserTest {
-
     private fun writeToc(content: String): File {
         val file = File.createTempFile("toc-", ".adoc")
         file.writeText(content)
@@ -16,17 +15,18 @@ class BookTocParserTest {
 
     @Test
     fun `parse une ligne a page unique en une section`() {
-        val toc = writeToc(
-            """
-            = Livre
+        val toc =
+            writeToc(
+                """
+                = Livre
 
-            |===
-            | Référence | Sujet | Page | Fichier
+                |===
+                | Référence | Sujet | Page | Fichier
 
-            | 1.0.1 | Introduction | 5 | 005.pdf
-            |===
-            """.trimIndent()
-        )
+                | 1.0.1 | Introduction | 5 | 005.pdf
+                |===
+                """.trimIndent(),
+            )
 
         val sections = BookTocParser.parse(toc)
 
@@ -39,15 +39,16 @@ class BookTocParserTest {
 
     @Test
     fun `parse une ligne multi-pages en une section par page avec pdf aligne`() {
-        val toc = writeToc(
-            """
-            |===
-            | Référence | Sujet | Page | Fichier
+        val toc =
+            writeToc(
+                """
+                |===
+                | Référence | Sujet | Page | Fichier
 
-            | 1.0.1 | Introduction | 5, 6, 7, 8 | 005.pdf, 006.pdf, 007.pdf, 008.pdf
-            |===
-            """.trimIndent()
-        )
+                | 1.0.1 | Introduction | 5, 6, 7, 8 | 005.pdf, 006.pdf, 007.pdf, 008.pdf
+                |===
+                """.trimIndent(),
+            )
 
         val sections = BookTocParser.parse(toc)
 
@@ -60,15 +61,16 @@ class BookTocParserTest {
 
     @Test
     fun `parse repete le dernier pdf quand il y a plus de pages que de pdf`() {
-        val toc = writeToc(
-            """
-            |===
-            | Référence | Sujet | Page | Fichier
+        val toc =
+            writeToc(
+                """
+                |===
+                | Référence | Sujet | Page | Fichier
 
-            | 2.2.6 | Dossier Professionnel | 89 | 089.pdf, 090.pdf
-            |===
-            """.trimIndent()
-        )
+                | 2.2.6 | Dossier Professionnel | 89 | 089.pdf, 090.pdf
+                |===
+                """.trimIndent(),
+            )
 
         val sections = BookTocParser.parse(toc)
 
@@ -79,18 +81,19 @@ class BookTocParserTest {
 
     @Test
     fun `parse ignore la ligne d en tete et les lignes vides`() {
-        val toc = writeToc(
-            """
-            [cols="1,3,1,1", options="header"]
-            |===
-            | Référence | Sujet / Titre de la section | Page | Fichier
+        val toc =
+            writeToc(
+                """
+                [cols="1,3,1,1", options="header"]
+                |===
+                | Référence | Sujet / Titre de la section | Page | Fichier
 
-            | 1.0.1 | Section A | 5 | 005.pdf
+                | 1.0.1 | Section A | 5 | 005.pdf
 
-            | 1.0.2 | Section B | 14 | 014.pdf
-            |===
-            """.trimIndent()
-        )
+                | 1.0.2 | Section B | 14 | 014.pdf
+                |===
+                """.trimIndent(),
+            )
 
         val sections = BookTocParser.parse(toc)
 
@@ -110,16 +113,17 @@ class BookTocParserTest {
 
     @Test
     fun `parse ignore les lignes de tableau mal formees (moins de 4 cellules)`() {
-        val toc = writeToc(
-            """
-            |===
-            | Référence | Sujet | Page | Fichier
+        val toc =
+            writeToc(
+                """
+                |===
+                | Référence | Sujet | Page | Fichier
 
-            | 1.0.1 | Section A | 5 | 005.pdf
-            | cellule orpheline
-            |===
-            """.trimIndent()
-        )
+                | 1.0.1 | Section A | 5 | 005.pdf
+                | cellule orpheline
+                |===
+                """.trimIndent(),
+            )
 
         val sections = BookTocParser.parse(toc)
 

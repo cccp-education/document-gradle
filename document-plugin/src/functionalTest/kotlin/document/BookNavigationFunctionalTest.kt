@@ -18,7 +18,6 @@ import java.io.File
  * default (backward compatible).
  */
 class BookNavigationFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -58,11 +57,13 @@ class BookNavigationFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     @Test
     fun `navigation links are emitted when enabled`() {

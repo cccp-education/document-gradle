@@ -1,6 +1,5 @@
 package document
 
-import org.asciidoctor.SafeMode
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -15,11 +14,13 @@ import java.io.File
  * (`document-validation-report.json`), severity STRICT fail-fast / LENIENT warn / OFF skip.
  */
 class ValidateDocumentTaskHtmlLintFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
-    private fun writeBuild(converterBlock: String, sourceContent: String) {
+    private fun writeBuild(
+        converterBlock: String,
+        sourceContent: String,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-validate-html-lint\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -41,19 +42,23 @@ class ValidateDocumentTaskHtmlLintFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(sourceContent)
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     private val reportPath get() = projectDir.resolve("build/docs/document/document-validation-report.json")
 

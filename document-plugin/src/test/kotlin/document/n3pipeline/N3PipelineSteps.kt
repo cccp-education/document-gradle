@@ -19,7 +19,6 @@ import java.nio.file.Files
  * pattern from S-223).
  */
 class N3PipelineSteps {
-
     private lateinit var projectDir: File
     private lateinit var metadataFile: File
 
@@ -47,16 +46,19 @@ class N3PipelineSteps {
                     htmlLinkLint = HtmlLinkLintMode.STRICT
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
-        projectDir.resolve("pages").apply { mkdirs() }
+        projectDir
+            .resolve("pages")
+            .apply { mkdirs() }
             .resolve("001-chapter.adoc")
             .writeText("== Chapter One\n\nN3 pipeline content with a [[section-anchor]] anchor.\n")
     }
 
     @When("the bookPipeline task runs")
     fun `the book pipeline task runs`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("bookPipeline")
             .withPluginClasspath()
@@ -65,7 +67,8 @@ class N3PipelineSteps {
 
     @When("the validateDocument task runs in a second build")
     fun `the validate document task runs in a second build`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("validateDocument")
             .withPluginClasspath()
@@ -74,7 +77,8 @@ class N3PipelineSteps {
 
     @When("the collectDocumentRetrieve task runs in a third build")
     fun `the collect document retrieve task runs in a third build`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("collectDocumentRetrieve")
             .withPluginClasspath()

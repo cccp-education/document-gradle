@@ -1,37 +1,40 @@
 package document
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentEnricherTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-enrich").toFile()
 
-    private fun adocSource(dir: File, name: String = "source.adoc", content: String): DocumentSource {
-        return DocumentSource(File(dir, name).apply { writeText(content) })
-    }
+    private fun adocSource(
+        dir: File,
+        name: String = "source.adoc",
+        content: String,
+    ): DocumentSource = DocumentSource(File(dir, name).apply { writeText(content) })
 
     @Test
     fun `enrich preserves inline plantuml blocks without escaping`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document with Diagram
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document with Diagram
 
-            == Architecture
+                    == Architecture
 
-            [plantuml]
-            ----
-            @startuml
-            Alice -> Bob: hello
-            @enduml
-            ----
-            """.trimIndent()
-        )
+                    [plantuml]
+                    ----
+                    @startuml
+                    Alice -> Bob: hello
+                    @enduml
+                    ----
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 
@@ -43,18 +46,20 @@ class DocumentEnricherTest {
     @Test
     fun `enrich preserves raw HTML passthrough blocks without escaping`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document with raw HTML
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document with raw HTML
 
-            ++++
-            <iframe src="https://example.com" width="600" height="400"></iframe>
-            ++++
+                    ++++
+                    <iframe src="https://example.com" width="600" height="400"></iframe>
+                    ++++
 
-            Next paragraph.
-            """.trimIndent()
-        )
+                    Next paragraph.
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 
@@ -66,14 +71,16 @@ class DocumentEnricherTest {
     fun `enrich recursively resolves AsciiDoc includes`() {
         val dir = tempDir()
         File(dir, "chapter.adoc").writeText("== Included Chapter\n\nText of the included chapter.")
-        val source = adocSource(
-            dir,
-            content = """
-            = Document with Include
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document with Include
 
-            include::chapter.adoc[]
-            """.trimIndent()
-        )
+                    include::chapter.adoc[]
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 
@@ -84,20 +91,22 @@ class DocumentEnricherTest {
     @Test
     fun `enrich preserves the title and sections of the source document`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Training Book
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Training Book
 
-            == Chapter 1
+                    == Chapter 1
 
-            Chapter content.
+                    Chapter content.
 
-            == Chapter 2
+                    == Chapter 2
 
-            Other content.
-            """.trimIndent()
-        )
+                    Other content.
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 
@@ -109,9 +118,10 @@ class DocumentEnricherTest {
     @Test
     fun `enrich does not mutate the source file`() {
         val dir = tempDir()
-        val sourceFile = File(dir, "source.adoc").apply {
-            writeText("= Source Document\n\n== Section\n\nContent.")
-        }
+        val sourceFile =
+            File(dir, "source.adoc").apply {
+                writeText("= Source Document\n\n== Section\n\nContent.")
+            }
         val source = DocumentSource(sourceFile)
         val originalContent = sourceFile.readText()
 
@@ -123,18 +133,20 @@ class DocumentEnricherTest {
     @Test
     fun `enrich preserves image directives without escaping`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document with Image
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document with Image
 
-            == Illustration
+                    == Illustration
 
-            image::photo.png[]
+                    image::photo.png[]
 
-            Paragraph after the image.
-            """.trimIndent()
-        )
+                    Paragraph after the image.
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 
@@ -145,16 +157,18 @@ class DocumentEnricherTest {
     @Test
     fun `enrich preserves inline image syntax with alt text`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document with Captioned Image
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document with Captioned Image
 
-            image::diagram.png[Architecture diagram]
+                    image::diagram.png[Architecture diagram]
 
-            Next paragraph.
-            """.trimIndent()
-        )
+                    Next paragraph.
+                    """.trimIndent(),
+            )
 
         val enriched = DocumentEnricher.enrich(source)
 

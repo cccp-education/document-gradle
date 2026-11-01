@@ -19,7 +19,6 @@ import java.io.File
  * canonical `document.*` names (all pre-existing tests unaffected).
  */
 class ConvertDocumentTaskOutputFileNameFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -41,12 +40,14 @@ class ConvertDocumentTaskOutputFileNameFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(sourceContent)
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
     @Test
     fun `custom output file name drives the HTML conversion output path`() {

@@ -28,16 +28,16 @@ import kotlin.test.assertTrue
  * no I/O, no Gradle dependency, fully deterministic.
  */
 class BookValidatorStructureTest {
-
-    private fun validSections() = listOf(
-        BookSection(ref = "0", title = "Front Matter", page = 1, pdfFile = "000.adoc"),
-        BookSection(ref = "0.1", title = "Preface", page = 2, pdfFile = "001.adoc"),
-        BookSection(ref = "1", title = "Part I", page = 3, pdfFile = "002.adoc"),
-        BookSection(ref = "1.1", title = "Chapter 1", page = 4, pdfFile = "003.adoc"),
-        BookSection(ref = "1.2", title = "Chapter 2", page = 5, pdfFile = "004.adoc"),
-        BookSection(ref = "9", title = "Back Matter", page = 6, pdfFile = "005.adoc"),
-        BookSection(ref = "9.1", title = "Glossary", page = 7, pdfFile = "006.adoc"),
-    )
+    private fun validSections() =
+        listOf(
+            BookSection(ref = "0", title = "Front Matter", page = 1, pdfFile = "000.adoc"),
+            BookSection(ref = "0.1", title = "Preface", page = 2, pdfFile = "001.adoc"),
+            BookSection(ref = "1", title = "Part I", page = 3, pdfFile = "002.adoc"),
+            BookSection(ref = "1.1", title = "Chapter 1", page = 4, pdfFile = "003.adoc"),
+            BookSection(ref = "1.2", title = "Chapter 2", page = 5, pdfFile = "004.adoc"),
+            BookSection(ref = "9", title = "Back Matter", page = 6, pdfFile = "005.adoc"),
+            BookSection(ref = "9.1", title = "Glossary", page = 7, pdfFile = "006.adoc"),
+        )
 
     @Test
     fun `a complete well ordered structure is valid`() {
@@ -49,10 +49,11 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a child ref whose parent ref is missing breaks ref continuity`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1.1", title = "Jumped section", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1.1", title = "Jumped section", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -65,10 +66,11 @@ class BookValidatorStructureTest {
 
     @Test
     fun `top level refs need no parent`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -84,12 +86,13 @@ class BookValidatorStructureTest {
 
     @Test
     fun `two sections sharing the same ref and page are flagged as duplicates`() {
-        val sections = listOf(
-            BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "9.1", title = "Glossary", page = 3, pdfFile = "003.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "9.1", title = "Glossary", page = 3, pdfFile = "003.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -102,15 +105,16 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a multi page section sharing its ref across distinct pages is not a duplicate`() {
-        val sections = listOf(
-            BookSection(ref = "0", title = "Front Matter", page = 1, pdfFile = "000.adoc"),
-            BookSection(ref = "0.1", title = "Preface", page = 2, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Chapter", page = 3, pdfFile = "002.adoc"),
-            BookSection(ref = "1.1", title = "Section", page = 4, pdfFile = "003.adoc"),
-            BookSection(ref = "1.1", title = "Section", page = 5, pdfFile = "004.adoc"),
-            BookSection(ref = "9", title = "Back Matter", page = 6, pdfFile = "005.adoc"),
-            BookSection(ref = "9.1", title = "Glossary", page = 7, pdfFile = "006.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0", title = "Front Matter", page = 1, pdfFile = "000.adoc"),
+                BookSection(ref = "0.1", title = "Preface", page = 2, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Chapter", page = 3, pdfFile = "002.adoc"),
+                BookSection(ref = "1.1", title = "Section", page = 4, pdfFile = "003.adoc"),
+                BookSection(ref = "1.1", title = "Section", page = 5, pdfFile = "004.adoc"),
+                BookSection(ref = "9", title = "Back Matter", page = 6, pdfFile = "005.adoc"),
+                BookSection(ref = "9.1", title = "Glossary", page = 7, pdfFile = "006.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -120,11 +124,12 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a page order regression is flagged`() {
-        val sections = listOf(
-            BookSection(ref = "0.1", title = "Preface", page = 3, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "9.1", title = "Glossary", page = 4, pdfFile = "003.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0.1", title = "Preface", page = 3, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "9.1", title = "Glossary", page = 4, pdfFile = "003.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -137,10 +142,11 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a structure without back matter is flagged`() {
-        val sections = listOf(
-            BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -155,17 +161,19 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a body-only TOC is valid when the derived policy requires no matter`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1", title = "Chapter 1", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "2", title = "Part II", page = 3, pdfFile = "003.adoc"),
-            BookSection(ref = "2.1", title = "Chapter 2", page = 4, pdfFile = "004.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1", title = "Chapter 1", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "2", title = "Part II", page = 3, pdfFile = "003.adoc"),
+                BookSection(ref = "2.1", title = "Chapter 2", page = 4, pdfFile = "004.adoc"),
+            )
 
-        val result = BookValidator.validateStructure(
-            sections,
-            matterPolicy = MatterPolicy.derive(sections),
-        )
+        val result =
+            BookValidator.validateStructure(
+                sections,
+                matterPolicy = MatterPolicy.derive(sections),
+            )
 
         assertTrue(
             result is BookValidationResult.Valid,
@@ -175,15 +183,17 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a policy that requires BACK still reports a missing BACK`() {
-        val sections = listOf(
-            BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+            )
 
-        val result = BookValidator.validateStructure(
-            sections,
-            matterPolicy = MatterPolicy(frontRoots = setOf("0"), backRoots = setOf("9")),
-        )
+        val result =
+            BookValidator.validateStructure(
+                sections,
+                matterPolicy = MatterPolicy(frontRoots = setOf("0"), backRoots = setOf("9")),
+            )
 
         assertTrue(result is BookValidationResult.Invalid)
         assertTrue(
@@ -194,10 +204,11 @@ class BookValidatorStructureTest {
 
     @Test
     fun `a NONE policy never reports a missing matter`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections, matterPolicy = MatterPolicy.NONE)
 
@@ -209,10 +220,11 @@ class BookValidatorStructureTest {
 
     @Test
     fun `the default policy keeps the legacy 0_9 requirement`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1", title = "Chapter", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 
@@ -221,11 +233,12 @@ class BookValidatorStructureTest {
 
     @Test
     fun `every finding is reported at once`() {
-        val sections = listOf(
-            BookSection(ref = "1.1.1", title = "Jumped section", page = 5, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1.1", title = "Jumped section", page = 5, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1.1", title = "Jumped section", page = 2, pdfFile = "002.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1.1.1", title = "Jumped section", page = 5, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1.1", title = "Jumped section", page = 5, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1.1", title = "Jumped section", page = 2, pdfFile = "002.adoc"),
+            )
 
         val result = BookValidator.validateStructure(sections)
 

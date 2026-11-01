@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class DocumentFrontMatterTest {
-
     @Test
     fun `DocumentFrontMatter default has sensible defaults`() {
         val fm = DocumentFrontMatter()

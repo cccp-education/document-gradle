@@ -13,32 +13,40 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class TableTranslationSteps {
-
     private var table: Table? = null
     private var segments: List<TranslatableSegment> = emptyList()
     private var asciiDocOutput: String = ""
     private var htmlOutput: String = ""
 
     @Given("a table with cols {string} and header {string}")
-    fun `a table with cols and header`(cols: String, header: String) {
+    fun `a table with cols and header`(
+        cols: String,
+        header: String,
+    ) {
         val colSpecs = if (cols.isBlank()) emptyList() else cols.split(",").map { ColSpec(width = it.toIntOrNull()) }
         val headerCells = header.split(",").map { Cell(listOf(PivotInline.Text(it, translatable = true))) }
         table = Table(colSpecs, listOf(Row(headerCells)), emptyList())
     }
 
     @And("a body row with cells {string} and {string}")
-    fun `a body row with cells`(cell1: String, cell2: String) {
+    fun `a body row with cells`(
+        cell1: String,
+        cell2: String,
+    ) {
         val c1 = parseCell(cell1)
         val c2 = parseCell(cell2)
         table = table!!.copy(body = listOf(Row(listOf(c1, c2))))
     }
 
     @And("a body row with cells {string}, {string} and {string}")
-    fun `a body row with three cells`(cell1: String, cell2: String, cell3: String) {
+    fun `a body row with three cells`(
+        cell1: String,
+        cell2: String,
+        cell3: String,
+    ) {
         val c1 = parseCell(cell1)
         val c2 = parseCell(cell2)
         val c3 = parseCell(cell3)
@@ -56,8 +64,9 @@ class TableTranslationSteps {
 
     private fun parseCellContent(raw: String): List<PivotInline> {
         val parser = AsciiDocParser()
-        val stripped = raw
-            .replace(Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?\\|"), "")
+        val stripped =
+            raw
+                .replace(Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?\\|"), "")
         return parser.parseInline(stripped)
     }
 
@@ -77,17 +86,22 @@ class TableTranslationSteps {
     }
 
     @And("segment {int} should have text {string}")
-    fun `segment should have text`(index: Int, text: String) {
+    fun `segment should have text`(
+        index: Int,
+        text: String,
+    ) {
         assertTrue(index < segments.size, "Segment $index not found, only ${segments.size} segments")
         assertEquals(text, segments[index].text)
     }
 
     @When("I translate all segments with prefix {string}")
     fun `i translate all segments with prefix`(prefix: String) {
-        val translations = segments.mapIndexed { idx, seg ->
-            val key = (seg.rowIndex * 10000) + (seg.cellIndex * 100) + seg.inlineIndex
-            key to "$prefix${seg.text}"
-        }.toMap()
+        val translations =
+            segments
+                .mapIndexed { idx, seg ->
+                    val key = (seg.rowIndex * 10000) + (seg.cellIndex * 100) + seg.inlineIndex
+                    key to "$prefix${seg.text}"
+                }.toMap()
         table = table!!.reinject(translations)
     }
 
@@ -96,7 +110,11 @@ class TableTranslationSteps {
     }
 
     @Then("cell {int},{int} should contain text {string}")
-    fun `cell should contain text`(row: Int, col: Int, text: String) {
+    fun `cell should contain text`(
+        row: Int,
+        col: Int,
+        text: String,
+    ) {
         val allRows = table!!.header + table!!.body
         val cell = allRows[row].cells[col]
         val hasText = cell.inline.any { it is PivotInline.Text && it.text == text }
@@ -104,7 +122,11 @@ class TableTranslationSteps {
     }
 
     @Then("cell {int},{int} should contain code {string}")
-    fun `cell should contain code`(row: Int, col: Int, code: String) {
+    fun `cell should contain code`(
+        row: Int,
+        col: Int,
+        code: String,
+    ) {
         val allRows = table!!.header + table!!.body
         val cell = allRows[row].cells[col]
         val hasCode = cell.inline.any { it is PivotInline.Code && it.text == code }
@@ -137,14 +159,22 @@ class TableTranslationSteps {
     }
 
     @Then("cell {int},{int} should have colspan {string}")
-    fun `cell should have colspan`(row: Int, col: Int, colspan: String) {
+    fun `cell should have colspan`(
+        row: Int,
+        col: Int,
+        colspan: String,
+    ) {
         val allRows = table!!.header + table!!.body
         val cell = allRows[row].cells[col]
         assertEquals(colspan.toInt(), cell.colSpan)
     }
 
     @Then("cell {int},{int} should have style {string}")
-    fun `cell should have style`(row: Int, col: Int, style: String) {
+    fun `cell should have style`(
+        row: Int,
+        col: Int,
+        style: String,
+    ) {
         val allRows = table!!.header + table!!.body
         val cell = allRows[row].cells[col]
         val attrs = cell.htmlAttrs()

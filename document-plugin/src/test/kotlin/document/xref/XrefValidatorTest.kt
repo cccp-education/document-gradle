@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class XrefValidatorTest {
-
     @Test
     fun `extractAnchors finds block anchor`() {
         val anchors = XrefValidator.extractAnchors("[[intro]]Text\n")

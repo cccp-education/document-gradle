@@ -12,7 +12,6 @@ import java.io.File
  * deterministic function of the file).
  */
 fun interface PdfValidator {
-
     /**
      * Validates [file] (a PDF binary) and returns the [PdfValidationResult].
      * Implementations must not throw for a non-conforming file — a failed

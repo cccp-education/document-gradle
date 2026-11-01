@@ -21,7 +21,6 @@ import kotlin.text.Charsets.UTF_8
  * resolving `../workspace-bom`.
  */
 class SettingsCredentialIsolationTest {
-
     private val pluginDir = File(System.getProperty("user.dir")).absoluteFile
 
     private val settingsText: String

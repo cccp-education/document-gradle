@@ -29,9 +29,9 @@ import java.io.File
  * (the project directory hosting the JSON file).
  */
 class DocumentConfigSerializer {
-
-    private val mapper: ObjectMapper = ObjectMapper()
-        .enable(SerializationFeature.INDENT_OUTPUT)
+    private val mapper: ObjectMapper =
+        ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT)
 
     /**
      * Serialises [config] to `document-config.json` inside [dir].
@@ -40,7 +40,10 @@ class DocumentConfigSerializer {
      * @param config the pipeline configuration to serialise
      * @return the written file handle
      */
-    fun serialize(dir: File, config: DocumentPipelineConfig): File {
+    fun serialize(
+        dir: File,
+        config: DocumentPipelineConfig,
+    ): File {
         dir.mkdirs()
         val root: ObjectNode = mapper.createObjectNode()
 
@@ -117,75 +120,88 @@ class DocumentConfigSerializer {
      * @param baseDir the directory used to resolve relative paths (source, theme, book)
      * @return the reconstructed [DocumentPipelineConfig]
      */
-    fun deserialize(file: File, baseDir: File): DocumentPipelineConfig {
+    fun deserialize(
+        file: File,
+        baseDir: File,
+    ): DocumentPipelineConfig {
         val root = mapper.readTree(file)
 
-        val sourceName = root.get("source")?.asText()
-            ?: throw IllegalStateException("document-config.json is missing the 'source' field")
+        val sourceName =
+            root.get("source")?.asText()
+                ?: throw IllegalStateException("document-config.json is missing the 'source' field")
         val sourceFile = File(baseDir, sourceName)
         val source = DocumentSource(sourceFile)
 
-        val enrich = DocumentEnrichConfig(
-            plantuml = root.get("enrich")?.get("plantuml")?.asBoolean() ?: false,
-            images = root.get("enrich")?.get("images")?.asBoolean() ?: false,
-            passthrough = root.get("enrich")?.get("passthrough")?.asBoolean() ?: false,
-        )
+        val enrich =
+            DocumentEnrichConfig(
+                plantuml = root.get("enrich")?.get("plantuml")?.asBoolean() ?: false,
+                images = root.get("enrich")?.get("images")?.asBoolean() ?: false,
+                passthrough = root.get("enrich")?.get("passthrough")?.asBoolean() ?: false,
+            )
 
         val outputsNode = root.get("outputs")
-        val outputs = DocumentOutputs(
-            html = outputsNode?.get("html")?.asBoolean() ?: true,
-            pdf = outputsNode?.get("pdf")?.asBoolean() ?: false,
-            epub = outputsNode?.get("epub")?.asBoolean() ?: false,
-            docbook = outputsNode?.get("docbook")?.asBoolean() ?: false,
-            manpage = outputsNode?.get("manpage")?.asBoolean() ?: false,
-        )
+        val outputs =
+            DocumentOutputs(
+                html = outputsNode?.get("html")?.asBoolean() ?: true,
+                pdf = outputsNode?.get("pdf")?.asBoolean() ?: false,
+                epub = outputsNode?.get("epub")?.asBoolean() ?: false,
+                docbook = outputsNode?.get("docbook")?.asBoolean() ?: false,
+                manpage = outputsNode?.get("manpage")?.asBoolean() ?: false,
+            )
 
         val themeNode = root.get("theme")
-        val theme = DocumentTheme(
-            pdfTheme = themeNode?.get("pdfTheme")?.textValueOrNull()?.let { File(it) },
-            htmlStylesheet = themeNode?.get("htmlStylesheet")?.textValueOrNull()?.let { File(it) },
-            epubStylesheet = themeNode?.get("epubStylesheet")?.textValueOrNull()?.let { File(it) },
-            logo = themeNode?.get("logo")?.textValueOrNull()?.let { File(it) },
-        )
+        val theme =
+            DocumentTheme(
+                pdfTheme = themeNode?.get("pdfTheme")?.textValueOrNull()?.let { File(it) },
+                htmlStylesheet = themeNode?.get("htmlStylesheet")?.textValueOrNull()?.let { File(it) },
+                epubStylesheet = themeNode?.get("epubStylesheet")?.textValueOrNull()?.let { File(it) },
+                logo = themeNode?.get("logo")?.textValueOrNull()?.let { File(it) },
+            )
 
         val metadataNode = root.get("metadata")
-        val frontMatter = DocumentFrontMatter(
-            title = metadataNode?.get("title")?.textValueOrNull() ?: "Untitled Document",
-            author = metadataNode?.get("author")?.textValueOrNull() ?: "Unknown Author",
-            language = metadataNode?.get("language")?.textValueOrNull() ?: "fr",
-        )
+        val frontMatter =
+            DocumentFrontMatter(
+                title = metadataNode?.get("title")?.textValueOrNull() ?: "Untitled Document",
+                author = metadataNode?.get("author")?.textValueOrNull() ?: "Unknown Author",
+                language = metadataNode?.get("language")?.textValueOrNull() ?: "fr",
+            )
 
         val bookNode = root.get("book")
-        val book = if (bookNode != null && !bookNode.isNull) {
-            BookConfig(
-                pagesDir = bookNode.get("pagesDir")?.textValueOrNull()?.let { File(it) },
-                photosDir = bookNode.get("photosDir")?.textValueOrNull()?.let { File(it) },
-                title = bookNode.get("title")?.textValueOrNull(),
-                author = bookNode.get("author")?.textValueOrNull(),
-                tocFile = bookNode.get("tocFile")?.textValueOrNull()?.let { File(it) },
-                pdfsDir = bookNode.get("pdfsDir")?.textValueOrNull()?.let { File(it) },
-                validationMode = bookNode.get("validationMode")?.textValueOrNull(),
-                matterPolicy = bookNode.get("matterPolicy")?.textValueOrNull(),
-                matterBreaks = bookNode.get("matterBreaks")?.takeIf { !it.isNull }?.asBoolean(),
-                navigation = bookNode.get("navigation")?.takeIf { !it.isNull }?.asBoolean(),
-                sourceLanguage = bookNode.get("sourceLanguage")?.textValueOrNull(),
-                targetLanguage = bookNode.get("targetLanguage")?.textValueOrNull(),
-                translateToAll = bookNode.get("translateToAll")?.takeIf { !it.isNull }?.asBoolean(),
-                targetLanguages = bookNode.get("targetLanguages")
-                    ?.takeIf { it.isArray }
-                    ?.map { it.textValueOrNull() }
-                    ?.filterNotNull()
-                    ?.takeIf { it.isNotEmpty() },
-                publishFormats = bookNode.get("publishFormats")
-                    ?.takeIf { it.isArray }
-                    ?.map { it.textValueOrNull() }
-                    ?.filterNotNull()
-                    ?.takeIf { it.isNotEmpty() },
-                includeSource = bookNode.get("includeSource")?.takeIf { !it.isNull }?.asBoolean(),
-            )
-        } else {
-            BookConfig()
-        }
+        val book =
+            if (bookNode != null && !bookNode.isNull) {
+                BookConfig(
+                    pagesDir = bookNode.get("pagesDir")?.textValueOrNull()?.let { File(it) },
+                    photosDir = bookNode.get("photosDir")?.textValueOrNull()?.let { File(it) },
+                    title = bookNode.get("title")?.textValueOrNull(),
+                    author = bookNode.get("author")?.textValueOrNull(),
+                    tocFile = bookNode.get("tocFile")?.textValueOrNull()?.let { File(it) },
+                    pdfsDir = bookNode.get("pdfsDir")?.textValueOrNull()?.let { File(it) },
+                    validationMode = bookNode.get("validationMode")?.textValueOrNull(),
+                    matterPolicy = bookNode.get("matterPolicy")?.textValueOrNull(),
+                    matterBreaks = bookNode.get("matterBreaks")?.takeIf { !it.isNull }?.asBoolean(),
+                    navigation = bookNode.get("navigation")?.takeIf { !it.isNull }?.asBoolean(),
+                    sourceLanguage = bookNode.get("sourceLanguage")?.textValueOrNull(),
+                    targetLanguage = bookNode.get("targetLanguage")?.textValueOrNull(),
+                    translateToAll = bookNode.get("translateToAll")?.takeIf { !it.isNull }?.asBoolean(),
+                    targetLanguages =
+                        bookNode
+                            .get("targetLanguages")
+                            ?.takeIf { it.isArray }
+                            ?.map { it.textValueOrNull() }
+                            ?.filterNotNull()
+                            ?.takeIf { it.isNotEmpty() },
+                    publishFormats =
+                        bookNode
+                            .get("publishFormats")
+                            ?.takeIf { it.isArray }
+                            ?.map { it.textValueOrNull() }
+                            ?.filterNotNull()
+                            ?.takeIf { it.isNotEmpty() },
+                    includeSource = bookNode.get("includeSource")?.takeIf { !it.isNull }?.asBoolean(),
+                )
+            } else {
+                BookConfig()
+            }
 
         return DocumentPipelineConfig(
             source = source,
@@ -205,5 +221,4 @@ class DocumentConfigSerializer {
  * whereas this helper returns a Kotlin `null` so downstream `?.let { File(it) }`
  * chains do not create a `File("null")` pointing to a phantom path.
  */
-private fun JsonNode?.textValueOrNull(): String? =
-    if (this == null || isNull) null else textValue()
+private fun JsonNode?.textValueOrNull(): String? = if (this == null || isNull) null else textValue()

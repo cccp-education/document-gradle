@@ -3,21 +3,21 @@ package document.translation
 import contracts.i18n.PreserveCatalog
 
 object TextTranslatableClassifier {
-
-    private val TECHNICAL_PATTERNS = listOf(
-        Regex("\\d+\\s*Go\\b"),
-        Regex("\\d+\\s*Mo\\b"),
-        Regex("[a-z]{2}_[A-Z]{2}\\.UTF-\\d+"),
-        Regex("\\bext4\\b"),
-        Regex("\\bsquashfs\\b"),
-        Regex("\\bbs=\\d+[A-Z]"),
-        Regex("\\bconv=\\w+"),
-        Regex("^,\\s*$"),
-        Regex("^\\d+$"),
-        Regex("^-$"),
-        Regex("^reste$"),
-        Regex("~?\\d+\\s*Go(\\s+sur\\s+\\d+\\s*Go)?$")
-    )
+    private val TECHNICAL_PATTERNS =
+        listOf(
+            Regex("\\d+\\s*Go\\b"),
+            Regex("\\d+\\s*Mo\\b"),
+            Regex("[a-z]{2}_[A-Z]{2}\\.UTF-\\d+"),
+            Regex("\\bext4\\b"),
+            Regex("\\bsquashfs\\b"),
+            Regex("\\bbs=\\d+[A-Z]"),
+            Regex("\\bconv=\\w+"),
+            Regex("^,\\s*$"),
+            Regex("^\\d+$"),
+            Regex("^-$"),
+            Regex("^reste$"),
+            Regex("~?\\d+\\s*Go(\\s+sur\\s+\\d+\\s*Go)?$"),
+        )
 
     private val PACKAGE_LIST_PATTERN = Regex("^[a-z][a-z0-9+.-]*(?:,\\s*[a-z][a-z0-9+.-]*){2,}$")
 
@@ -30,9 +30,36 @@ object TextTranslatableClassifier {
      */
     private val FRENCH_FUNCTION_WORDS =
         setOf(
-            "le", "la", "les", "de", "des", "du", "un", "une", "est", "et", "ou",
-            "pour", "avec", "dans", "sur", "pas", "qui", "que", "ce", "cette",
-            "au", "aux", "il", "elle", "nous", "vous", "on", "par", "plus", "mais",
+            "le",
+            "la",
+            "les",
+            "de",
+            "des",
+            "du",
+            "un",
+            "une",
+            "est",
+            "et",
+            "ou",
+            "pour",
+            "avec",
+            "dans",
+            "sur",
+            "pas",
+            "qui",
+            "que",
+            "ce",
+            "cette",
+            "au",
+            "aux",
+            "il",
+            "elle",
+            "nous",
+            "vous",
+            "on",
+            "par",
+            "plus",
+            "mais",
         )
 
     private fun isProse(text: String): Boolean {
@@ -63,15 +90,18 @@ object TextTranslatableClassifier {
 
         if (PACKAGE_LIST_PATTERN.matches(trimmed)) return false
 
-        val words = trimmed.split(Regex("[\\s,()/:]+"))
-            .filter { it.length >= 3 && it.any { c -> c.isLetter() && c.lowercaseChar() in 'a'..'z' && c !in 'A'..'Z' || c.lowercaseChar() in 'a'..'z' } }
-        val naturalWords = words.filter { word ->
-            word.length >= 3 &&
-            word.any { it.isLetter() } &&
-            !word.matches(Regex("[A-Z]{1,3}")) &&
-            !word.matches(Regex("[a-z]{1,2}\\d.*")) &&
-            !TECHNICAL_PATTERNS.any { p -> p.matches(word) }
-        }
+        val words =
+            trimmed
+                .split(Regex("[\\s,()/:]+"))
+                .filter { it.length >= 3 && it.any { c -> c.isLetter() && c.lowercaseChar() in 'a'..'z' && c !in 'A'..'Z' || c.lowercaseChar() in 'a'..'z' } }
+        val naturalWords =
+            words.filter { word ->
+                word.length >= 3 &&
+                    word.any { it.isLetter() } &&
+                    !word.matches(Regex("[A-Z]{1,3}")) &&
+                    !word.matches(Regex("[a-z]{1,2}\\d.*")) &&
+                    !TECHNICAL_PATTERNS.any { p -> p.matches(word) }
+            }
         return naturalWords.isNotEmpty()
     }
 }

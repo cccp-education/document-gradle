@@ -17,7 +17,6 @@ data class DocumentFrontMatter(
     val author: String? = "Unknown Author",
     val language: String = "fr",
 ) {
-
     /**
      * Whether every field still holds its default value.
      */
@@ -35,9 +34,10 @@ data class DocumentFrontMatter(
      * - author -> `author`
      * - language -> `lang`
      */
-    fun toAsciiDocAttributes(): Map<String, String> = buildMap {
-        put("docname", title)
-        author?.let { put("author", it) }
-        put("lang", language)
-    }
+    fun toAsciiDocAttributes(): Map<String, String> =
+        buildMap {
+            put("docname", title)
+            author?.let { put("author", it) }
+            put("lang", language)
+        }
 }

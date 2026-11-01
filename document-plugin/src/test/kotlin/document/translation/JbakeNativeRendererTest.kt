@@ -5,13 +5,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class JbakeNativeRendererTest {
-
     private val parser = AsciiDocParser()
     private val renderer = JbakeNativeRenderer()
 
     @Test
     fun `renders jbake native header with document title author and date`() {
-        val adoc = """
+        val adoc =
+            """
             = Test Article
             @CherOliv
             2020-01-15
@@ -19,26 +19,37 @@ class JbakeNativeRendererTest {
             :jbake-status: published
 
             Body paragraph.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.startsWith("= Test Article"),
-            "Expected header to start with document title, got: ${rendered.take(50)}")
-        assertTrue(rendered.contains("@CherOliv"),
-            "Expected author line, got: ${rendered.take(100)}")
-        assertTrue(rendered.contains("2020-01-15"),
-            "Expected date line, got: ${rendered.take(100)}")
-        assertTrue(rendered.contains(":jbake-type: post"),
-            "Expected jbake-type attribute, got: ${rendered.take(200)}")
-        assertTrue(rendered.contains(":jbake-status: published"),
-            "Expected jbake-status attribute, got: ${rendered.take(200)}")
+        assertTrue(
+            rendered.startsWith("= Test Article"),
+            "Expected header to start with document title, got: ${rendered.take(50)}",
+        )
+        assertTrue(
+            rendered.contains("@CherOliv"),
+            "Expected author line, got: ${rendered.take(100)}",
+        )
+        assertTrue(
+            rendered.contains("2020-01-15"),
+            "Expected date line, got: ${rendered.take(100)}",
+        )
+        assertTrue(
+            rendered.contains(":jbake-type: post"),
+            "Expected jbake-type attribute, got: ${rendered.take(200)}",
+        )
+        assertTrue(
+            rendered.contains(":jbake-status: published"),
+            "Expected jbake-status attribute, got: ${rendered.take(200)}",
+        )
     }
 
     @Test
     fun `renders jbake native body blocks after header`() {
-        val adoc = """
+        val adoc =
+            """
             = Test Article
             @CherOliv
             2020-01-15
@@ -52,24 +63,33 @@ class JbakeNativeRendererTest {
             ----
             echo hello
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains("== First Section"),
-            "Expected heading in body, got: ${rendered.take(200)}")
-        assertTrue(rendered.contains("Paragraph text."),
-            "Expected paragraph in body, got: ${rendered.take(200)}")
-        assertTrue(rendered.contains("[source,bash]"),
-            "Expected source block delimiter, got: ${rendered.take(300)}")
-        assertTrue(rendered.contains("echo hello"),
-            "Expected source content, got: ${rendered.take(300)}")
+        assertTrue(
+            rendered.contains("== First Section"),
+            "Expected heading in body, got: ${rendered.take(200)}",
+        )
+        assertTrue(
+            rendered.contains("Paragraph text."),
+            "Expected paragraph in body, got: ${rendered.take(200)}",
+        )
+        assertTrue(
+            rendered.contains("[source,bash]"),
+            "Expected source block delimiter, got: ${rendered.take(300)}",
+        )
+        assertTrue(
+            rendered.contains("echo hello"),
+            "Expected source content, got: ${rendered.take(300)}",
+        )
     }
 
     @Test
     fun `jbake native roundtrip preserves header and body structure`() {
-        val adoc = """
+        val adoc =
+            """
             = Roundtrip Test
             @CherOliv
             2021-03-20
@@ -82,7 +102,7 @@ class JbakeNativeRendererTest {
             == Heading
 
             Paragraph with text.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
@@ -96,7 +116,8 @@ class JbakeNativeRendererTest {
 
     @Test
     fun `preserves extra jbake attributes like tags and summary`() {
-        val adoc = """
+        val adoc =
+            """
             = Article With Tags
             @CherOliv
             2022-06-10
@@ -108,92 +129,122 @@ class JbakeNativeRendererTest {
             :summary: A tagged article
 
             Body.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains(":jbake-tags: blog, kotlin, test"),
-            "Expected jbake-tags preserved, got: ${rendered.take(300)}")
-        assertTrue(rendered.contains(":summary: A tagged article"),
-            "Expected summary preserved, got: ${rendered.take(300)}")
+        assertTrue(
+            rendered.contains(":jbake-tags: blog, kotlin, test"),
+            "Expected jbake-tags preserved, got: ${rendered.take(300)}",
+        )
+        assertTrue(
+            rendered.contains(":summary: A tagged article"),
+            "Expected summary preserved, got: ${rendered.take(300)}",
+        )
     }
 
     @Test
     fun `renders translated title in jbake native header`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter(
-                title = "Translated Title",
-                date = "2020-01-15",
-                type = "post",
-                status = "published",
-                author = "CherOliv",
-                jbakeAttributes = mapOf(
-                    "title" to "Original Title",
-                    "type" to "post",
-                    "status" to "published",
-                    "date" to "2020-01-15",
-                    "tags" to "blog",
-                    "summary" to "Original summary"
-                )
-            ),
-            blocks = listOf(PivotBlock.Paragraph(listOf(PivotInline.Text("Translated body.", true))))
-        )
+        val article =
+            PivotArticle(
+                frontmatter =
+                    PivotFrontmatter(
+                        title = "Translated Title",
+                        date = "2020-01-15",
+                        type = "post",
+                        status = "published",
+                        author = "CherOliv",
+                        jbakeAttributes =
+                            mapOf(
+                                "title" to "Original Title",
+                                "type" to "post",
+                                "status" to "published",
+                                "date" to "2020-01-15",
+                                "tags" to "blog",
+                                "summary" to "Original summary",
+                            ),
+                    ),
+                blocks = listOf(PivotBlock.Paragraph(listOf(PivotInline.Text("Translated body.", true)))),
+            )
 
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains("= Translated Title"),
-            "Expected translated document title, got: ${rendered.take(80)}")
-        assertTrue(rendered.contains("@CherOliv"),
-            "Expected author preserved, got: ${rendered.take(100)}")
-        assertTrue(rendered.contains(":jbake-title: Translated Title"),
-            "Expected jbake-title translated, got: ${rendered.take(200)}")
-        assertTrue(rendered.contains("Translated body."),
-            "Expected translated body, got: ${rendered.take(300)}")
-        assertTrue(rendered.contains(":jbake-tags: blog"),
-            "Expected tags preserved, got: ${rendered.take(300)}")
+        assertTrue(
+            rendered.contains("= Translated Title"),
+            "Expected translated document title, got: ${rendered.take(80)}",
+        )
+        assertTrue(
+            rendered.contains("@CherOliv"),
+            "Expected author preserved, got: ${rendered.take(100)}",
+        )
+        assertTrue(
+            rendered.contains(":jbake-title: Translated Title"),
+            "Expected jbake-title translated, got: ${rendered.take(200)}",
+        )
+        assertTrue(
+            rendered.contains("Translated body."),
+            "Expected translated body, got: ${rendered.take(300)}",
+        )
+        assertTrue(
+            rendered.contains(":jbake-tags: blog"),
+            "Expected tags preserved, got: ${rendered.take(300)}",
+        )
     }
 
     @Test
     fun `renders paragraph with LineBreak as plus continuation lines`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter(
-                title = "LineBreak Test",
-                date = "2020-01-15",
-                type = "post",
-                status = "published",
-                author = "CherOliv",
-                jbakeAttributes = mapOf(
-                    "title" to "LineBreak Test",
-                    "type" to "post",
-                    "status" to "published",
-                    "date" to "2020-01-15"
-                )
-            ),
-            blocks = listOf(
-                PivotBlock.Paragraph(listOf(
-                    PivotInline.Text("depuis le dossier ou est le fichier", true),
-                    PivotInline.LineBreak,
-                    PivotInline.Text("ouvrir un terminal et copier coller", true),
-                    PivotInline.LineBreak,
-                    PivotInline.Text("resultat attendu.", true)
-                ))
+        val article =
+            PivotArticle(
+                frontmatter =
+                    PivotFrontmatter(
+                        title = "LineBreak Test",
+                        date = "2020-01-15",
+                        type = "post",
+                        status = "published",
+                        author = "CherOliv",
+                        jbakeAttributes =
+                            mapOf(
+                                "title" to "LineBreak Test",
+                                "type" to "post",
+                                "status" to "published",
+                                "date" to "2020-01-15",
+                            ),
+                    ),
+                blocks =
+                    listOf(
+                        PivotBlock.Paragraph(
+                            listOf(
+                                PivotInline.Text("depuis le dossier ou est le fichier", true),
+                                PivotInline.LineBreak,
+                                PivotInline.Text("ouvrir un terminal et copier coller", true),
+                                PivotInline.LineBreak,
+                                PivotInline.Text("resultat attendu.", true),
+                            ),
+                        ),
+                    ),
             )
-        )
 
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
-            "Expected first line with + continuation, got: ${rendered.take(300)}")
-        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
-            "Expected second line with + continuation, got: ${rendered.take(300)}")
-        assertTrue(rendered.contains("resultat attendu."),
-            "Expected last line without +, got: ${rendered.take(300)}")
+        assertTrue(
+            rendered.contains("depuis le dossier ou est le fichier +"),
+            "Expected first line with + continuation, got: ${rendered.take(300)}",
+        )
+        assertTrue(
+            rendered.contains("ouvrir un terminal et copier coller +"),
+            "Expected second line with + continuation, got: ${rendered.take(300)}",
+        )
+        assertTrue(
+            rendered.contains("resultat attendu."),
+            "Expected last line without +, got: ${rendered.take(300)}",
+        )
     }
 
     @Test
     fun `jbake native roundtrip preserves plus line continuations`() {
-        val adoc = """
+        val adoc =
+            """
             = Continuation Test
             @CherOliv
             2020-01-15
@@ -204,22 +255,29 @@ class JbakeNativeRendererTest {
             depuis le dossier ou est le fichier +
             ouvrir un terminal et copier coller +
             resultat attendu.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
-            "Roundtrip should preserve + continuation on first line")
-        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
-            "Roundtrip should preserve + continuation on second line")
-        assertTrue(rendered.contains("resultat attendu."),
-            "Roundtrip should preserve last line without +")
+        assertTrue(
+            rendered.contains("depuis le dossier ou est le fichier +"),
+            "Roundtrip should preserve + continuation on first line",
+        )
+        assertTrue(
+            rendered.contains("ouvrir un terminal et copier coller +"),
+            "Roundtrip should preserve + continuation on second line",
+        )
+        assertTrue(
+            rendered.contains("resultat attendu."),
+            "Roundtrip should preserve last line without +",
+        )
     }
 
     @Test
     fun `jbake native roundtrip preserves description list`() {
-        val adoc = """
+        val adoc =
+            """
             = DL Test
             @CherOliv
             2020-01-15
@@ -229,7 +287,7 @@ class JbakeNativeRendererTest {
 
             https://a.com[label]:: First definition.
             https://b.com[label]:: Second definition.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
@@ -241,7 +299,8 @@ class JbakeNativeRendererTest {
 
     @Test
     fun `jbake native roundtrip preserves block macro`() {
-        val adoc = """
+        val adoc =
+            """
             = Macro Test
             @CherOliv
             2020-01-15
@@ -250,7 +309,7 @@ class JbakeNativeRendererTest {
             :jbake-date: 2020-01-15
 
             image::diagram.png[Architecture]
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)
@@ -262,7 +321,8 @@ class JbakeNativeRendererTest {
 
     @Test
     fun `jbake native description list renders each item on its own line`() {
-        val adoc = """
+        val adoc =
+            """
             = DL Test
             @CherOliv
             2020-01-15
@@ -273,7 +333,7 @@ class JbakeNativeRendererTest {
             term1:: def1
             term2:: def2
             term3:: def3
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
         val rendered = renderer.render(article)

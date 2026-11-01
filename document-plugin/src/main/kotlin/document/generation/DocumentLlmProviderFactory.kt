@@ -11,10 +11,10 @@ package document.generation
  * avec le LLM fake sans cle API ni Ollama en cours d'execution.
  */
 object DocumentLlmProviderFactory {
-
-    fun create(mode: String = "ollama"): DocumentLlmProvider = when (mode.lowercase()) {
-        "fake" -> FakeDocumentLlmProvider()
-        "ollama" -> OllamaDocumentLlmProvider()
-        else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
-    }
+    fun create(mode: String = "ollama"): DocumentLlmProvider =
+        when (mode.lowercase()) {
+            "fake" -> FakeDocumentLlmProvider()
+            "ollama" -> OllamaDocumentLlmProvider()
+            else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
+        }
 }

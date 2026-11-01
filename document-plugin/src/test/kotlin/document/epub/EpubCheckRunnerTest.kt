@@ -11,8 +11,9 @@ import java.io.File
  * no epubcheck library, no I/O beyond [TempDir] fixtures.
  */
 class EpubCheckRunnerTest {
-
-    private class FakeEpubCheckRunner(private val result: EpubValidationResult) : EpubCheckRunner {
+    private class FakeEpubCheckRunner(
+        private val result: EpubValidationResult,
+    ) : EpubCheckRunner {
         var calledWith: File? = null
         var callCount: Int = 0
 

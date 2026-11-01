@@ -28,12 +28,18 @@ data class SemanticColumnSpec(
 
     companion object {
         /** Builds a column addressed by its zero-based [index]. */
-        fun byIndex(index: Int, role: String, required: Boolean = false): SemanticColumnSpec =
-            SemanticColumnSpec(index = index, role = role, required = required)
+        fun byIndex(
+            index: Int,
+            role: String,
+            required: Boolean = false,
+        ): SemanticColumnSpec = SemanticColumnSpec(index = index, role = role, required = required)
 
         /** Builds a column addressed by its [header] text (case-insensitive). */
-        fun byHeader(header: String, role: String, required: Boolean = false): SemanticColumnSpec =
-            SemanticColumnSpec(header = header, role = role, required = required)
+        fun byHeader(
+            header: String,
+            role: String,
+            required: Boolean = false,
+        ): SemanticColumnSpec = SemanticColumnSpec(header = header, role = role, required = required)
     }
 }
 
@@ -52,7 +58,13 @@ data class SemanticTableSchema(
     init {
         require(name.isNotBlank()) { "a schema name must not be blank" }
         require(columns.isNotEmpty()) { "a schema must declare at least one column" }
-        val duplicated = columns.map { it.role }.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+        val duplicated =
+            columns
+                .map { it.role }
+                .groupingBy { it }
+                .eachCount()
+                .filterValues { it > 1 }
+                .keys
         require(duplicated.isEmpty()) { "a schema must not declare a duplicated role: ${duplicated.sorted()}" }
     }
 }

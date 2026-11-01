@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
  * RED d'abord (classe absente), puis GREEN (implémentation).
  */
 class DocumentSecurityPolicyTest {
-
     @Test
     fun `UNSAFE plus OFF is Valid (backward-compatible default, both guards disabled)`() {
         val advice = DocumentSecurityPolicy.advise(SafeMode.UNSAFE, IncludeGuardMode.OFF)
@@ -85,11 +84,12 @@ class DocumentSecurityPolicyTest {
 
     @Test
     fun `SecurityAdvice is a sealed family with three variants`() {
-        val variants = listOf(
-            SecurityAdvice.Valid,
-            SecurityAdvice.Warn("x"),
-            SecurityAdvice.Reject("y"),
-        )
+        val variants =
+            listOf(
+                SecurityAdvice.Valid,
+                SecurityAdvice.Warn("x"),
+                SecurityAdvice.Reject("y"),
+            )
         assertEquals(3, variants.size)
         assertTrue(variants[0] is SecurityAdvice.Valid)
         assertTrue(variants[1] is SecurityAdvice.Warn)

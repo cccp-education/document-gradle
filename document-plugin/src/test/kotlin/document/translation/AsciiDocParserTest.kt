@@ -2,16 +2,15 @@ package document.translation
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AsciiDocParserTest {
-
     private val parser = AsciiDocParser()
 
     @Test
     fun `parses frontmatter header before tilde separator`() {
-        val adoc = """
+        val adoc =
+            """
             title=Guide de demarrage rapide
             date=2026-04-26
             type=page
@@ -19,7 +18,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             == Guide de demarrage rapide
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -31,7 +30,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses level 2 heading`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -39,7 +39,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             == Guide de demarrage rapide
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -52,7 +52,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses level 3 and level 4 headings`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -64,7 +65,7 @@ class AsciiDocParserTest {
             === Title 3
 
             ==== Title 4
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -76,7 +77,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses simple paragraph as single text inline`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -84,7 +86,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             Ce guide vous permet d'etre operationnel avec Magic Stick en quelques minutes.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -97,7 +99,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses paragraph with bold segment`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -105,7 +108,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             avec **balenaEtcher** (recommande) :
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -118,7 +121,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses paragraph with inline code`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -126,7 +130,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             Verifiez le device avec `lsblk` avant.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -140,7 +144,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses paragraph with link inline`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -148,7 +153,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             Pour le guide complet avec balenaEtcher et dd, consultez link:flash-guide.html[Guide d'installation et flashage USB].
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -163,7 +168,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses unordered list with single link item`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -171,7 +177,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             * https://sourceforge.net/projects/magic-stick/files/[magic-stick sur SourceForge]
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -185,7 +191,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses ordered list with multiple items`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -196,7 +203,7 @@ class AsciiDocParserTest {
             . **Flash from file** → selectionnez le fichier ISO `magic-stick_{version}.iso`
             . **Select target** → votre cle USB
             . **Flash!**
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -212,7 +219,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses source block with language`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -223,7 +231,7 @@ class AsciiDocParserTest {
             ----
             sudo dd if=magic-stick_{version}.iso of=/dev/sdX bs=4M status=progress && sync
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -234,7 +242,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses source block without language`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -246,7 +255,7 @@ class AsciiDocParserTest {
             /unicorn/home
             /unicorn/usr
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -257,7 +266,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses admonition with kind and paragraph`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -268,7 +278,7 @@ class AsciiDocParserTest {
             ====
             Cette operation **efface toutes les donnees** sur la cle USB. Verifiez le device avec `lsblk` avant.
             ====
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -282,7 +292,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses inline admonition without block delimiters`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -293,7 +304,7 @@ class AsciiDocParserTest {
             Le fine-tune n'est pas un remplacement du RAG. Il reste pertinent pour les donnees qui changent souvent.
 
             == Heading after
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -308,7 +319,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses hr separator`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -316,7 +328,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             ---
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -325,7 +337,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses table with cols spec header and rows`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -340,7 +353,7 @@ class AsciiDocParserTest {
             | ~8 Go
             | Systeme live Xubuntu actif (boote par defaut)
             |===
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -356,7 +369,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses table without cols spec as null cols`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -370,7 +384,7 @@ class AsciiDocParserTest {
             | `/dev/sdX1`
             | ~8 Go
             |===
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -384,7 +398,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses table cell with inline code and text`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -398,7 +413,7 @@ class AsciiDocParserTest {
             | `-c`, `--clean`
             | Nettoyer le repertoire de build avant de construire
             |===
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -412,7 +427,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses numbered ordered list with digit prefix`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -422,7 +438,7 @@ class AsciiDocParserTest {
             1. Laissez la cle USB inseree
             2. Redemarrez le PC
             3. Accedez au BIOS/UEFI
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -436,7 +452,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses level 4 heading with four equal signs and text`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -444,7 +461,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             ==== Fonctionnement
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -456,7 +473,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses source block closed by four equal signs instead of dashes`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -469,7 +487,7 @@ class AsciiDocParserTest {
             ====
 
             ==== Fonctionnement
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -484,7 +502,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `skips stray four-dashes line without infinite loop`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -496,7 +515,7 @@ class AsciiDocParserTest {
             ----
 
             Deuxieme paragraphe.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -507,7 +526,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses source block without closing delimiter reaches end of input`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -517,7 +537,7 @@ class AsciiDocParserTest {
             [source,bash]
             ----
             sudo scripts/unclosed.sh
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -528,7 +548,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses table cell spanning multiple lines as single cell`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -543,7 +564,7 @@ class AsciiDocParserTest {
             | Nettoyer le repertoire
             de build avant de construire
             |===
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -558,7 +579,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses nested unordered list with double asterisk sub-items`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -569,7 +591,7 @@ class AsciiDocParserTest {
             ** sous-item A
             ** sous-item B
             * autre parent
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -584,7 +606,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses plantuml block as source-like pass-through`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -597,7 +620,7 @@ class AsciiDocParserTest {
             A --> B
             @enduml
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -611,7 +634,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses plantuml block delimited by four dots`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -632,7 +656,7 @@ class AsciiDocParserTest {
             == Methodologie
 
             Texte apres le bloc.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -641,13 +665,16 @@ class AsciiDocParserTest {
         assertTrue(src.content.contains("@startuml"))
         assertTrue(src.content.contains("[Validator] as V"))
         assertTrue(src.content.contains("@enduml"))
-        assertTrue(article.blocks.any { it is PivotBlock.Heading && it.text == "Methodologie" },
-            "expected heading after the 4-dot plantuml block, got: ${article.blocks}")
+        assertTrue(
+            article.blocks.any { it is PivotBlock.Heading && it.text == "Methodologie" },
+            "expected heading after the 4-dot plantuml block, got: ${article.blocks}",
+        )
     }
 
     @Test
     fun `parses 4-dot plantuml block without swallowing following content`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -664,7 +691,7 @@ class AsciiDocParserTest {
             == Section suivante
 
             == Section encore apres
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -676,7 +703,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses source block with block title between header and delimiter`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -695,20 +723,23 @@ class AsciiDocParserTest {
             == Conclusion
 
             Texte final.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
         val src = article.blocks.filterIsInstance<PivotBlock.Source>().first()
         assertEquals("html", src.language)
         assertTrue(src.content.contains("hero-section"))
-        assertTrue(article.blocks.any { it is PivotBlock.Heading && it.text == "Conclusion" },
-            "expected heading after titled source block, got: ${article.blocks}")
+        assertTrue(
+            article.blocks.any { it is PivotBlock.Heading && it.text == "Conclusion" },
+            "expected heading after titled source block, got: ${article.blocks}",
+        )
     }
 
     @Test
     fun `parses multiple blocks in sequence`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -723,7 +754,7 @@ class AsciiDocParserTest {
 
             * item un
             * item deux
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -737,7 +768,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses jbake native header with document title and jbake attributes`() {
-        val adoc = """
+        val adoc =
+            """
             = Groovy: Caractères ASCII
             @CherOliv
             2019-07-10
@@ -749,7 +781,7 @@ class AsciiDocParserTest {
             :summary: du groovy, des boucles et de la manipulation de code ascii
 
             Voici un bout de code fonctionnel en Groovy.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -761,7 +793,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses jbake native body blocks after header section`() {
-        val adoc = """
+        val adoc =
+            """
             = Test Article
             @Author
             2020-01-15
@@ -778,12 +811,14 @@ class AsciiDocParserTest {
             ----
 
             Second paragraph.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
-        assertTrue(article.blocks.size >= 4,
-            "Expected at least 4 blocks, got ${article.blocks.size}: ${article.blocks}")
+        assertTrue(
+            article.blocks.size >= 4,
+            "Expected at least 4 blocks, got ${article.blocks.size}: ${article.blocks}",
+        )
         val heading = article.blocks[0] as PivotBlock.Heading
         assertEquals(2, heading.level)
         assertEquals("First Section", heading.text)
@@ -796,7 +831,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses markdown fenced code block as source block`() {
-        val adoc = """
+        val adoc =
+            """
             = Gradle cli: surcharger un paramètre
             @CherOliv
             2020-09-22
@@ -808,7 +844,7 @@ class AsciiDocParserTest {
             ```
             $ ./gradlew -Pparam_component=CUSTOM
             ```
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -816,13 +852,16 @@ class AsciiDocParserTest {
         assertTrue(blocks.any { it is PivotBlock.Source }, "expected a Source block for fenced markdown code, got: $blocks")
         val src = blocks.filterIsInstance<PivotBlock.Source>().first()
         assertTrue(src.content.contains("./gradlew -Pparam_component=CUSTOM"), "expected code content preserved, got: ${src.content}")
-        assertTrue(blocks.none { it is PivotBlock.Paragraph && (it.inline.joinToString("") { if (it is PivotInline.Text) it.text else "" }).contains("```") },
-            "fenced markers must not leak into paragraph text")
+        assertTrue(
+            blocks.none { it is PivotBlock.Paragraph && (it.inline.joinToString("") { if (it is PivotInline.Text) it.text else "" }).contains("```") },
+            "fenced markers must not leak into paragraph text",
+        )
     }
 
     @Test
     fun `parses paragraph with plus line continuation as LineBreak inline`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -832,7 +871,7 @@ class AsciiDocParserTest {
             depuis le dossier ou est le fichier +
             ouvrir un terminal et copier coller pour executer le script +
             resultat attendu.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -846,7 +885,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses paragraph with single plus at end of last line as literal text`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -854,7 +894,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             une seule ligne avec un plus a la fin +
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -867,7 +907,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses description list with link terms and text definitions`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -876,7 +917,7 @@ class AsciiDocParserTest {
 
             https://undraw.co/[undraw.co]:: Open source illustrations.
             https://absurd.design/[absurd.design]:: Absurd illustrations that make sense.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -893,7 +934,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses description list with plain text terms`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -902,7 +944,7 @@ class AsciiDocParserTest {
 
             Tools:: A collection of useful tools.
             Colors:: The super fast color palette generator.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -915,7 +957,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses description list with multi-word terms`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -924,7 +967,7 @@ class AsciiDocParserTest {
 
             Google Material Design:: Google's design system for unified interfaces.
             Apple Human Interface Guidelines:: Apple's recommendations for iOS and macOS.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -936,7 +979,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses description list with empty definition`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -944,7 +988,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             term::
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -956,7 +1000,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses block macro image`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -964,7 +1009,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             image::diagram.png[Architecture diagram]
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -977,7 +1022,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses block macro video`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -985,7 +1031,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             video::iSWjmVcfQGg[youtube]
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -997,7 +1043,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `parses block macro without attributes`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -1005,7 +1052,7 @@ class AsciiDocParserTest {
             ~~~~~~
 
             image::screenshot.png
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -1017,7 +1064,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `description list items are not merged into a single paragraph`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -1027,7 +1075,7 @@ class AsciiDocParserTest {
             https://a.com[label]:: First definition.
             https://b.com[label]:: Second definition.
             https://c.com[label]:: Third definition.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -1038,7 +1086,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `block macro lines are not merged into a single paragraph`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -1048,7 +1097,7 @@ class AsciiDocParserTest {
             image::a.png[First]
             image::b.png[Second]
             image::c.png[Third]
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -1058,7 +1107,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `description list followed by paragraph are separate blocks`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -1068,7 +1118,7 @@ class AsciiDocParserTest {
             term:: definition
 
             A regular paragraph after the description list.
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 
@@ -1079,7 +1129,8 @@ class AsciiDocParserTest {
 
     @Test
     fun `comment line with double colon is not a description list item`() {
-        val adoc = """
+        val adoc =
+            """
             title=Test
             date=2026-01-01
             type=page
@@ -1088,7 +1139,7 @@ class AsciiDocParserTest {
 
             // this is a comment with :: inside
             real:: definition
-        """.trimIndent()
+            """.trimIndent()
 
         val article = parser.parse(adoc)
 

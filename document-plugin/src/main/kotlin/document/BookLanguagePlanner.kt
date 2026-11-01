@@ -18,7 +18,6 @@ data class BookLanguageTarget(
     val nativeName: String,
     val rtl: Boolean,
 ) {
-
     /** `<baseName>-<code>.adoc` — mirrors the mono-language `translateBook` naming. */
     fun fileName(baseName: String): String = "$baseName-$code.adoc"
 
@@ -52,7 +51,6 @@ data class BookLanguageTarget(
  * pin the rules against a synthetic catalog.
  */
 object BookLanguagePlanner {
-
     /**
      * @param sourceLanguage the language the book is written in — always excluded
      * @param requested explicit target codes (may be empty)
@@ -69,11 +67,12 @@ object BookLanguagePlanner {
     ): List<BookLanguageTarget> {
         val byCode = catalog.associateBy { it.code }
 
-        val selection: List<SupportedLanguage> = when {
-            requested.isNotEmpty() -> requested.mapNotNull { byCode[it] }
-            translateToAll -> catalog
-            else -> emptyList()
-        }
+        val selection: List<SupportedLanguage> =
+            when {
+                requested.isNotEmpty() -> requested.mapNotNull { byCode[it] }
+                translateToAll -> catalog
+                else -> emptyList()
+            }
 
         return selection
             .filter { it.code != sourceLanguage }

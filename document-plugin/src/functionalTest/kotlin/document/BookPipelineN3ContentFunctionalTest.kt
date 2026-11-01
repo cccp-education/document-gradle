@@ -39,14 +39,14 @@ import java.io.File
  * filesystem-free guards proves zero dead link / unresolved xref in the real book.
  */
 class BookPipelineN3ContentFunctionalTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
         private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
     }
 
     @TempDir
@@ -101,18 +101,25 @@ class BookPipelineN3ContentFunctionalTest {
         val pagesDir = projectDir.resolve("content/pages").apply { mkdirs() }
         val tocText = CONTENT_TOC.readText()
         CONTENT_TOC.copyTo(projectDir.resolve("content/toc.adoc"), overwrite = true)
-        val referenced = tocText.lines()
-            .mapNotNull { line ->
-                val cells = line.trim().split("|").map { it.trim() }.drop(1)
-                if (cells.size < 4) return@mapNotNull null
-                val ref = cells[0]
-                val fileName = cells[3]
-                if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc")) {
-                    fileName
-                } else {
-                    null
+        val referenced =
+            tocText
+                .lines()
+                .mapNotNull { line ->
+                    val cells =
+                        line
+                            .trim()
+                            .split("|")
+                            .map { it.trim() }
+                            .drop(1)
+                    if (cells.size < 4) return@mapNotNull null
+                    val ref = cells[0]
+                    val fileName = cells[3]
+                    if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc")) {
+                        fileName
+                    } else {
+                        null
+                    }
                 }
-            }
         assumeTrue(referenced.isNotEmpty()) { "no .adoc page reference found in the content TOC" }
         referenced.forEach { name ->
             val page = File(CONTENT_SCANS, name)
@@ -120,11 +127,13 @@ class BookPipelineN3ContentFunctionalTest {
             page.copyTo(pagesDir.resolve(name), overwrite = true)
         }
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("bookPipeline")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("bookPipeline")
+                .withPluginClasspath()
+                .build()
         // The N3 status chain runs as two further builds: `validateDocument` audits
         // the rendered book (4 guards) and writes the composite report, then the
         // collect re-scans (snapshot contract: always executes, never up-to-date) and
@@ -132,16 +141,20 @@ class BookPipelineN3ContentFunctionalTest {
         // the two tasks would conflict — collect.outputDir covers the book.adoc
         // validateDocument audits — and Gradle forbids circular ordering; the staged
         // chain is the contract: produce, validate, then index.
-        val resultValidated = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("validateDocument")
-            .withPluginClasspath()
-            .build()
-        val resultCollect = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val resultValidated =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("validateDocument")
+                .withPluginClasspath()
+                .build()
+        val resultCollect =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         // --- the full N3 chain succeeds
         for (task in listOf(
@@ -168,8 +181,14 @@ class BookPipelineN3ContentFunctionalTest {
         // cross-reference), security WARN (DOC-CR5: LENIENT include guard × UNSAFE safe
         // mode — visibility advice, not a failure), htmlLint VALID (navigable HTML).
         assertTrue(report.contains("\"status\" : \"INVALID\"") == false, "include guard must not fail on the real scanned-content book — actual: $report")
-        assertTrue(report.contains("\"status\" : \"MISSING\"") == false, "xref must have no unresolved reference on the real scanned-content book — actual: $report")
-        assertTrue(report.contains("\"status\" : \"DEAD\"") == false, "htmlLint must find no dead internal link on the real scanned-content book — actual: $report")
+        assertTrue(
+            report.contains("\"status\" : \"MISSING\"") == false,
+            "xref must have no unresolved reference on the real scanned-content book — actual: $report",
+        )
+        assertTrue(
+            report.contains("\"status\" : \"DEAD\"") == false,
+            "htmlLint must find no dead internal link on the real scanned-content book — actual: $report",
+        )
         assertTrue(report.contains("\"advice\" : \"REJECT\"") == false, "security must not reject the N3 chain config — actual: $report")
         assertTrue(report.contains("\"htmlLint\""), "the fourth guard must be audited — actual: $report")
 

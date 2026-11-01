@@ -1,13 +1,13 @@
 package document.translation.plan
 
-import contracts.plantuml.PlantUmlStrategy
 import contracts.i18n.LanguageCatalog
+import contracts.plantuml.PlantUmlStrategy
 
 data class SiteTranslationPlan(
     val siteName: String,
     val sourceLanguage: String,
     val targetLanguages: Set<String>,
-    val defaultPlantUmlStrategy: PlantUmlStrategy = PlantUmlStrategy.PRESERVE
+    val defaultPlantUmlStrategy: PlantUmlStrategy = PlantUmlStrategy.PRESERVE,
 ) {
     init {
         require(siteName.isNotBlank()) {
@@ -32,8 +32,7 @@ data class SiteTranslationPlan(
         }
     }
 
-    fun rtlTargets(): Set<String> =
-        targetLanguages.filter { LanguageCatalog.findByCode(it)?.rtl == true }.toSet()
+    fun rtlTargets(): Set<String> = targetLanguages.filter { LanguageCatalog.findByCode(it)?.rtl == true }.toSet()
 
     fun ltrTargets(): Set<String> = targetLanguages - rtlTargets()
 
@@ -41,6 +40,5 @@ data class SiteTranslationPlan(
 
     fun isComplete(existing: Set<String>): Boolean = missingLanguages(existing).isEmpty()
 
-    fun withTargetLanguages(newTargets: Set<String>): SiteTranslationPlan =
-        copy(targetLanguages = newTargets)
+    fun withTargetLanguages(newTargets: Set<String>): SiteTranslationPlan = copy(targetLanguages = newTargets)
 }

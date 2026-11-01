@@ -1,25 +1,25 @@
 package document
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentArtifactEntryTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-entry").toFile()
 
     @Test
     fun `DocumentArtifactEntry stores path format and source adoc`() {
         val file = File(tempDir(), "document.html")
         file.writeText("<html></html>")
-        val entry = DocumentArtifactEntry(
-            path = file.absolutePath,
-            format = DocumentFormat.HTML,
-            sourceAdoc = "source.adoc",
-            exists = true
-        )
+        val entry =
+            DocumentArtifactEntry(
+                path = file.absolutePath,
+                format = DocumentFormat.HTML,
+                sourceAdoc = "source.adoc",
+                exists = true,
+            )
 
         assertEquals(file.absolutePath, entry.path)
         assertEquals(DocumentFormat.HTML, entry.format)
@@ -29,12 +29,13 @@ class DocumentArtifactEntryTest {
 
     @Test
     fun `DocumentArtifactEntry toMap produces N3-compatible entry`() {
-        val entry = DocumentArtifactEntry(
-            path = "/build/docs/document/document.html",
-            format = DocumentFormat.HTML,
-            sourceAdoc = "source.adoc",
-            exists = true
-        )
+        val entry =
+            DocumentArtifactEntry(
+                path = "/build/docs/document/document.html",
+                format = DocumentFormat.HTML,
+                sourceAdoc = "source.adoc",
+                exists = true,
+            )
 
         val map = entry.toMap()
 
@@ -48,12 +49,13 @@ class DocumentArtifactEntryTest {
 
     @Test
     fun `DocumentArtifactEntry toMap for PDF format produces correct fields`() {
-        val entry = DocumentArtifactEntry(
-            path = "/build/docs/document/document.pdf",
-            format = DocumentFormat.PDF,
-            sourceAdoc = "livre.adoc",
-            exists = true
-        )
+        val entry =
+            DocumentArtifactEntry(
+                path = "/build/docs/document/document.pdf",
+                format = DocumentFormat.PDF,
+                sourceAdoc = "livre.adoc",
+                exists = true,
+            )
 
         val map = entry.toMap()
 
@@ -63,19 +65,19 @@ class DocumentArtifactEntryTest {
 
     @Test
     fun `DocumentArtifactEntry marks non-existing file as exists false`() {
-        val entry = DocumentArtifactEntry(
-            path = "/build/docs/document/missing.html",
-            format = DocumentFormat.HTML,
-            sourceAdoc = "source.adoc",
-            exists = false
-        )
+        val entry =
+            DocumentArtifactEntry(
+                path = "/build/docs/document/missing.html",
+                format = DocumentFormat.HTML,
+                sourceAdoc = "source.adoc",
+                exists = false,
+            )
 
         assertEquals(false, entry.toMap()["exists"])
     }
 }
 
 class DocumentRetrieveResultTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-retrieve").toFile()
 
     @Test
@@ -87,10 +89,11 @@ class DocumentRetrieveResultTest {
 
     @Test
     fun `DocumentRetrieveResult count matches entries size`() {
-        val entries = listOf(
-            DocumentArtifactEntry("/p1.html", DocumentFormat.HTML, "s.adoc", true),
-            DocumentArtifactEntry("/p2.pdf", DocumentFormat.PDF, "s.adoc", true)
-        )
+        val entries =
+            listOf(
+                DocumentArtifactEntry("/p1.html", DocumentFormat.HTML, "s.adoc", true),
+                DocumentArtifactEntry("/p2.pdf", DocumentFormat.PDF, "s.adoc", true),
+            )
         val result = DocumentRetrieveResult(entries = entries)
 
         assertEquals(2, result.count)
@@ -105,9 +108,10 @@ class DocumentRetrieveResultTest {
 
     @Test
     fun `DocumentRetrieveResult toMap produces N3-compatible envelope`() {
-        val entries = listOf(
-            DocumentArtifactEntry("/p.html", DocumentFormat.HTML, "s.adoc", true)
-        )
+        val entries =
+            listOf(
+                DocumentArtifactEntry("/p.html", DocumentFormat.HTML, "s.adoc", true),
+            )
         val result = DocumentRetrieveResult(entries = entries)
 
         val map = result.toMap()
@@ -168,10 +172,11 @@ class DocumentRetrieveResultTest {
 
     @Test
     fun `DocumentRetrieveResult releaseNotesCount matches releaseNotes size`() {
-        val releaseNotes = listOf(
-            ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true),
-            ReleaseNotesArtifactEntry("/rn.md", "markdown", true),
-        )
+        val releaseNotes =
+            listOf(
+                ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true),
+                ReleaseNotesArtifactEntry("/rn.md", "markdown", true),
+            )
         val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
 
         assertEquals(2, result.releaseNotesCount)
@@ -186,9 +191,10 @@ class DocumentRetrieveResultTest {
 
     @Test
     fun `DocumentRetrieveResult toMap includes releaseNotes array`() {
-        val releaseNotes = listOf(
-            ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
-        )
+        val releaseNotes =
+            listOf(
+                ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
+            )
         val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
 
         val map = result.toMap()
@@ -204,10 +210,11 @@ class DocumentRetrieveResultTest {
 
     @Test
     fun `DocumentRetrieveResult toMap includes releaseNotesCount`() {
-        val result = DocumentRetrieveResult(
-            entries = emptyList(),
-            releaseNotes = listOf(ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true)),
-        )
+        val result =
+            DocumentRetrieveResult(
+                entries = emptyList(),
+                releaseNotes = listOf(ReleaseNotesArtifactEntry("/rn.adoc", "asciidoc", true)),
+            )
 
         val map = result.toMap()
 
@@ -217,9 +224,10 @@ class DocumentRetrieveResultTest {
     @Test
     fun `DocumentRetrieveResult writeTo creates composite-context json with release notes`() {
         val dir = tempDir()
-        val releaseNotes = listOf(
-            ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
-        )
+        val releaseNotes =
+            listOf(
+                ReleaseNotesArtifactEntry("/build/release-notes/rn.adoc", "asciidoc", true),
+            )
         val result = DocumentRetrieveResult(entries = emptyList(), releaseNotes = releaseNotes)
 
         val file = result.writeTo(dir)

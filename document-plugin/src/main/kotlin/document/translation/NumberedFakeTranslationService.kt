@@ -12,18 +12,18 @@ import contracts.i18n.TranslationService
 class NumberedFakeTranslationService(
     private val suffix: String = " [EN]",
 ) : TranslationService {
-
     override fun translate(request: TranslationRequest): TranslationResult {
-        val translated = request.sourceText.lines().joinToString("\n") { line ->
-            val m = LINE_PATTERN.matchEntire(line.trim())
-            if (m != null) {
-                val n = m.groupValues[1]
-                val text = m.groupValues[2].trim()
-                "$n: $text$suffix"
-            } else {
-                line
+        val translated =
+            request.sourceText.lines().joinToString("\n") { line ->
+                val m = LINE_PATTERN.matchEntire(line.trim())
+                if (m != null) {
+                    val n = m.groupValues[1]
+                    val text = m.groupValues[2].trim()
+                    "$n: $text$suffix"
+                } else {
+                    line
+                }
             }
-        }
         return TranslationResult.Success(translated)
     }
 

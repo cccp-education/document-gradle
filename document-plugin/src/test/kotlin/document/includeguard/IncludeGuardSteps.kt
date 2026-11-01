@@ -4,9 +4,9 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.gradle.testkit.runner.GradleRunner
-import kotlin.test.assertTrue
 import java.io.File
 import java.nio.file.Files
+import kotlin.test.assertTrue
 
 /**
  * Step definitions for the `@converter-include-guard` scenarios (DOC-CR4).
@@ -19,7 +19,6 @@ import java.nio.file.Files
  * argument.
  */
 class IncludeGuardSteps {
-
     private lateinit var projectDir: File
     private lateinit var buildOutput: String
 
@@ -70,24 +69,28 @@ class IncludeGuardSteps {
 
     @When("the plugin is applied and printIncludeGuard runs")
     fun `the plugin is applied and printIncludeGuard runs`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("printIncludeGuard", "-q")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("printIncludeGuard", "-q")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @When("the plugin is applied and printIncludeGuard runs with CLI {string}")
     fun `the plugin is applied and printIncludeGuard runs with CLI`(cliMode: String) {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("printIncludeGuard", "-q", "-Pdocument.includeGuard=$cliMode")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("printIncludeGuard", "-q", "-Pdocument.includeGuard=$cliMode")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @Then("the convertDocumentToHtml task includeGuard is {string}")

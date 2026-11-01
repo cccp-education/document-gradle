@@ -14,28 +14,31 @@ import org.junit.jupiter.api.Test
  * Law). Assertions cover the shape, the determinism and the JSON export.
  */
 class TableSemanticsReportTest {
+    private val schema =
+        SemanticTableSchema(
+            name = "planning",
+            columns =
+                listOf(
+                    SemanticColumnSpec.byIndex(0, "reference"),
+                    SemanticColumnSpec.byHeader("Title", "title"),
+                    SemanticColumnSpec.byIndex(2, "objective", required = true),
+                ),
+        )
 
-    private val schema = SemanticTableSchema(
-        name = "planning",
-        columns = listOf(
-            SemanticColumnSpec.byIndex(0, "reference"),
-            SemanticColumnSpec.byHeader("Title", "title"),
-            SemanticColumnSpec.byIndex(2, "objective", required = true),
-        ),
-    )
-
-    private fun raw(vararg rows: List<String>) = RawTable(
-        name = "planning",
-        header = listOf("Ref", "Title", "Objectif"),
-        rows = rows.toList(),
-    )
+    private fun raw(vararg rows: List<String>) =
+        RawTable(
+            name = "planning",
+            header = listOf("Ref", "Title", "Objectif"),
+            rows = rows.toList(),
+        )
 
     @Test
     fun `an extracted table is exported with its records and findings`() {
-        val extractions = SemanticExtractor.extract(
-            listOf(raw(listOf("1.0", "Intro", "Situer"))),
-            listOf(schema),
-        )
+        val extractions =
+            SemanticExtractor.extract(
+                listOf(raw(listOf("1.0", "Intro", "Situer"))),
+                listOf(schema),
+            )
 
         val report = TableSemanticsReport.fromExtractions(TableSemanticsMode.LENIENT, listOf(schema), extractions)
 
@@ -53,10 +56,11 @@ class TableSemanticsReportTest {
 
     @Test
     fun `a blank required role produces a finding in the report`() {
-        val extractions = SemanticExtractor.extract(
-            listOf(raw(listOf("1.0", "Intro", ""))),
-            listOf(schema),
-        )
+        val extractions =
+            SemanticExtractor.extract(
+                listOf(raw(listOf("1.0", "Intro", ""))),
+                listOf(schema),
+            )
 
         val report = TableSemanticsReport.fromExtractions(TableSemanticsMode.STRICT, listOf(schema), extractions)
 
@@ -77,18 +81,29 @@ class TableSemanticsReportTest {
         assertTrue(report.tables.isEmpty())
         assertEquals(1, report.skipped.size)
         assertEquals("unknown", report.skipped.single().name)
-        assertTrue(report.skipped.single().reason.contains("no schema"))
+        assertTrue(
+            report.skipped
+                .single()
+                .reason
+                .contains("no schema"),
+        )
     }
 
     @Test
     fun `the record map keeps the schema declaration order`() {
-        val extractions = SemanticExtractor.extract(
-            listOf(raw(listOf("1.0", "Intro", "Situer"))),
-            listOf(schema),
-        )
+        val extractions =
+            SemanticExtractor.extract(
+                listOf(raw(listOf("1.0", "Intro", "Situer"))),
+                listOf(schema),
+            )
 
-        val record = TableSemanticsReport.fromExtractions(TableSemanticsMode.LENIENT, listOf(schema), extractions)
-            .tables.single().records.single()
+        val record =
+            TableSemanticsReport
+                .fromExtractions(TableSemanticsMode.LENIENT, listOf(schema), extractions)
+                .tables
+                .single()
+                .records
+                .single()
 
         assertEquals(listOf("reference", "title", "objective"), record.keys.toList())
     }
@@ -106,10 +121,11 @@ class TableSemanticsReportTest {
 
     @Test
     fun `toJson serialises the records and the mode`() {
-        val extractions = SemanticExtractor.extract(
-            listOf(raw(listOf("1.0", "Intro", "Situer"))),
-            listOf(schema),
-        )
+        val extractions =
+            SemanticExtractor.extract(
+                listOf(raw(listOf("1.0", "Intro", "Situer"))),
+                listOf(schema),
+            )
 
         val json = TableSemanticsReport.fromExtractions(TableSemanticsMode.LENIENT, listOf(schema), extractions).toJson()
 

@@ -2,7 +2,7 @@ package document.translation.delta
 
 data class BlockDelta(
     val modifiedBlocks: List<String>,
-    val preservedBlocks: List<String>
+    val preservedBlocks: List<String>,
 ) {
     fun isEmpty(): Boolean = modifiedBlocks.isEmpty()
 
@@ -11,7 +11,7 @@ data class BlockDelta(
     companion object {
         fun compute(
             previous: Map<String, BlockChecksumEntry>,
-            current: Map<String, String>
+            current: Map<String, String>,
         ): BlockDelta {
             val modified = mutableListOf<String>()
             val preserved = mutableListOf<String>()

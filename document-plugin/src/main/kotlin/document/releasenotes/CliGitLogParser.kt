@@ -18,8 +18,10 @@ class CliGitLogParser(
     private val projectDir: File,
     private val commitParser: ConventionalCommitParser = ConventionalCommitParser(),
 ) : GitLogParser {
-
-    override fun parse(fromTag: String, toTag: String): List<ConventionalCommit> {
+    override fun parse(
+        fromTag: String,
+        toTag: String,
+    ): List<ConventionalCommit> {
         val range = if (fromTag.isBlank()) toTag else "$fromTag..$toTag"
         val output = runGit("log", "--format=%s%x09%H%x09%aI", range)
         if (output.isBlank()) return emptyList()
@@ -50,7 +52,10 @@ class CliGitLogParser(
         return null
     }
 
-    override fun detectFromTag(projectDir: File, toTag: String): String? {
+    override fun detectFromTag(
+        projectDir: File,
+        toTag: String,
+    ): String? {
         val tags = runGit("tag", "--sort=-v:refname").lines().filter { it.isNotBlank() }
         if (tags.isEmpty()) return null
         val toIndex = tags.indexOf(toTag)
@@ -59,10 +64,11 @@ class CliGitLogParser(
     }
 
     private fun runGit(vararg args: String): String {
-        val process = ProcessBuilder("git", *args)
-            .directory(projectDir)
-            .redirectErrorStream(false)
-            .start()
+        val process =
+            ProcessBuilder("git", *args)
+                .directory(projectDir)
+                .redirectErrorStream(false)
+                .start()
         val stdout = process.inputStream.bufferedReader().readText()
         val exitCode = process.waitFor()
         if (exitCode != 0) return ""

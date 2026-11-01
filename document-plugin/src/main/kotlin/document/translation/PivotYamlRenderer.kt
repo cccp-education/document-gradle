@@ -1,7 +1,6 @@
 package document.translation
 
 class PivotYamlRenderer {
-
     fun render(article: PivotArticle): String {
         val sb = StringBuilder()
         sb.append("article:\n")
@@ -13,7 +12,11 @@ class PivotYamlRenderer {
         return sb.toString()
     }
 
-    private fun renderFrontmatter(fm: PivotFrontmatter, sb: StringBuilder, indent: String) {
+    private fun renderFrontmatter(
+        fm: PivotFrontmatter,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("${indent}frontmatter:\n")
         sb.append("${indent}${INDENT_1}title: ${yamlString(fm.title)}\n")
         sb.append("${indent}${INDENT_1}date: ${yamlString(fm.date)}\n")
@@ -34,8 +37,13 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderBlock(block: PivotBlock, sb: StringBuilder, indent: String, isLast: Boolean) {
-        sb.append("${indent}- ")
+    private fun renderBlock(
+        block: PivotBlock,
+        sb: StringBuilder,
+        indent: String,
+        isLast: Boolean,
+    ) {
+        sb.append("$indent- ")
         when (block) {
             is PivotBlock.Heading -> renderHeading(block, sb, indent)
             is PivotBlock.Paragraph -> renderParagraph(block, sb, indent)
@@ -49,20 +57,32 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderHeading(h: PivotBlock.Heading, sb: StringBuilder, indent: String) {
+    private fun renderHeading(
+        h: PivotBlock.Heading,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: heading\n")
         sb.append("$indent${INDENT_1}level: ${h.level}\n")
         sb.append("$indent${INDENT_1}text: ${yamlString(h.text)}\n")
         sb.append("$indent${INDENT_1}translatable: ${h.translatable}\n")
     }
 
-    private fun renderParagraph(p: PivotBlock.Paragraph, sb: StringBuilder, indent: String) {
+    private fun renderParagraph(
+        p: PivotBlock.Paragraph,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: paragraph\n")
         sb.append("$indent${INDENT_1}inline:\n")
         p.inline.forEach { renderInline(it, sb, "$indent${INDENT_1}${INDENT_1}") }
     }
 
-    private fun renderList(list: PivotBlock.ListBlock, sb: StringBuilder, indent: String) {
+    private fun renderList(
+        list: PivotBlock.ListBlock,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: list\n")
         sb.append("$indent${INDENT_1}ordered: ${list.ordered}\n")
         sb.append("$indent${INDENT_1}items:\n")
@@ -72,7 +92,11 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderTable(table: PivotBlock.Table, sb: StringBuilder, indent: String) {
+    private fun renderTable(
+        table: PivotBlock.Table,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: table\n")
         sb.append("$indent${INDENT_1}cols: ${colsSpec(table.cols)}\n")
         sb.append("$indent${INDENT_1}header:\n")
@@ -91,14 +115,22 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderAdmonition(adm: PivotBlock.Admonition, sb: StringBuilder, indent: String) {
+    private fun renderAdmonition(
+        adm: PivotBlock.Admonition,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: admonition\n")
         sb.append("$indent${INDENT_1}kind: ${adm.kind}\n")
         sb.append("$indent${INDENT_1}blocks:\n")
         adm.blocks.forEach { renderBlock(it, sb, "$indent${INDENT_1}${INDENT_1}", isLast = false) }
     }
 
-    private fun renderSource(src: PivotBlock.Source, sb: StringBuilder, indent: String) {
+    private fun renderSource(
+        src: PivotBlock.Source,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: source\n")
         sb.append("$indent${INDENT_1}language: ${yamlScalar(src.language)}\n")
         sb.append("$indent${INDENT_1}translatable: false\n")
@@ -108,12 +140,19 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderHr(sb: StringBuilder, indent: String) {
+    private fun renderHr(
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: hr\n")
         sb.append("$indent${INDENT_1}translatable: false\n")
     }
 
-    private fun renderDescriptionList(dl: PivotBlock.DescriptionList, sb: StringBuilder, indent: String) {
+    private fun renderDescriptionList(
+        dl: PivotBlock.DescriptionList,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: description_list\n")
         sb.append("$indent${INDENT_1}translatable: ${dl.translatable}\n")
         sb.append("$indent${INDENT_1}items:\n")
@@ -129,14 +168,22 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun renderBlockMacro(macro: PivotBlock.BlockMacro, sb: StringBuilder, indent: String) {
+    private fun renderBlockMacro(
+        macro: PivotBlock.BlockMacro,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         sb.append("type: block_macro\n")
         sb.append("$indent${INDENT_1}name: ${yamlScalar(macro.name)}\n")
         sb.append("$indent${INDENT_1}target: ${yamlScalar(macro.target)}\n")
         sb.append("$indent${INDENT_1}translatable: false\n")
     }
 
-    private fun renderInline(inline: PivotInline, sb: StringBuilder, indent: String) {
+    private fun renderInline(
+        inline: PivotInline,
+        sb: StringBuilder,
+        indent: String,
+    ) {
         when (inline) {
             is PivotInline.Text -> {
                 sb.append("$indent- text: ${yamlString(inline.text)}\n")
@@ -165,14 +212,11 @@ class PivotYamlRenderer {
         }
     }
 
-    private fun colsSpec(cols: String?): String =
-        if (cols == null) "null" else "\"$cols\""
+    private fun colsSpec(cols: String?): String = if (cols == null) "null" else "\"$cols\""
 
-    private fun yamlString(s: String): String =
-        if (s.isEmpty()) "\"\"" else "\"${s.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+    private fun yamlString(s: String): String = if (s.isEmpty()) "\"\"" else "\"${s.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-    private fun yamlScalar(s: String): String =
-        if (s.isEmpty()) "\"\"" else s
+    private fun yamlScalar(s: String): String = if (s.isEmpty()) "\"\"" else s
 
     companion object {
         private const val INDENT_1 = "  "

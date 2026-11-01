@@ -15,25 +15,28 @@ import org.junit.jupiter.api.Test
  * d'Encre). The projection is deterministic and free of I/O.
  */
 class SemanticTableTest {
+    private val raw =
+        RawTable(
+            name = "planning",
+            header = listOf("Ref", "Titre", "Objectif", "Durée"),
+            rows =
+                listOf(
+                    listOf("1.0", "Introduction", "Situer le cadre", "30 min"),
+                    listOf("1.1", "Objectifs", "Formuler les objectifs", "45 min"),
+                ),
+        )
 
-    private val raw = RawTable(
-        name = "planning",
-        header = listOf("Ref", "Titre", "Objectif", "Durée"),
-        rows = listOf(
-            listOf("1.0", "Introduction", "Situer le cadre", "30 min"),
-            listOf("1.1", "Objectifs", "Formuler les objectifs", "45 min"),
-        ),
-    )
-
-    private val schema = SemanticTableSchema(
-        name = "planning",
-        columns = listOf(
-            SemanticColumnSpec(index = 0, role = "reference"),
-            SemanticColumnSpec(header = "Titre", role = "title"),
-            SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
-            SemanticColumnSpec(index = 3, role = "duration"),
-        ),
-    )
+    private val schema =
+        SemanticTableSchema(
+            name = "planning",
+            columns =
+                listOf(
+                    SemanticColumnSpec(index = 0, role = "reference"),
+                    SemanticColumnSpec(header = "Titre", role = "title"),
+                    SemanticColumnSpec(header = "Objectif", role = "objective", required = true),
+                    SemanticColumnSpec(index = 3, role = "duration"),
+                ),
+        )
 
     @Test
     fun `projection maps every row to a record keyed by role`() {
@@ -56,10 +59,11 @@ class SemanticTableTest {
 
     @Test
     fun `projection resolves a header column case-insensitively`() {
-        val uppercaseHeader = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(SemanticColumnSpec(header = "TITRE", role = "title")),
-        )
+        val uppercaseHeader =
+            SemanticTableSchema(
+                name = "planning",
+                columns = listOf(SemanticColumnSpec(header = "TITRE", role = "title")),
+            )
         val table = SemanticTable.projection(raw, uppercaseHeader)
 
         assertEquals("Introduction", table.records.first()["title"])
@@ -67,10 +71,11 @@ class SemanticTableTest {
 
     @Test
     fun `projection ignores columns absent from the schema`() {
-        val narrow = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(SemanticColumnSpec(index = 0, role = "reference")),
-        )
+        val narrow =
+            SemanticTableSchema(
+                name = "planning",
+                columns = listOf(SemanticColumnSpec(index = 0, role = "reference")),
+            )
         val table = SemanticTable.projection(raw, narrow)
 
         assertEquals(listOf("reference"), table.records.first().roles)
@@ -78,19 +83,22 @@ class SemanticTableTest {
 
     @Test
     fun `projection tolerates a row shorter than the header`() {
-        val ragged = RawTable(
-            name = "planning",
-            header = listOf("Ref", "Titre", "Objectif"),
-            rows = listOf(listOf("1.0", "Introduction")),
-        )
-        val narrow = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(
-                SemanticColumnSpec(index = 0, role = "reference"),
-                SemanticColumnSpec(index = 1, role = "title"),
-                SemanticColumnSpec(index = 2, role = "objective"),
-            ),
-        )
+        val ragged =
+            RawTable(
+                name = "planning",
+                header = listOf("Ref", "Titre", "Objectif"),
+                rows = listOf(listOf("1.0", "Introduction")),
+            )
+        val narrow =
+            SemanticTableSchema(
+                name = "planning",
+                columns =
+                    listOf(
+                        SemanticColumnSpec(index = 0, role = "reference"),
+                        SemanticColumnSpec(index = 1, role = "title"),
+                        SemanticColumnSpec(index = 2, role = "objective"),
+                    ),
+            )
         val table = SemanticTable.projection(ragged, narrow)
 
         assertEquals("1.0", table.records.first()["reference"])
@@ -100,15 +108,17 @@ class SemanticTableTest {
 
     @Test
     fun `projection of a table without header resolves index-targeted columns only`() {
-        val headerless = RawTable(
-            name = "planning",
-            header = emptyList(),
-            rows = listOf(listOf("1.0", "Introduction")),
-        )
-        val indexOnly = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(SemanticColumnSpec(index = 0, role = "reference")),
-        )
+        val headerless =
+            RawTable(
+                name = "planning",
+                header = emptyList(),
+                rows = listOf(listOf("1.0", "Introduction")),
+            )
+        val indexOnly =
+            SemanticTableSchema(
+                name = "planning",
+                columns = listOf(SemanticColumnSpec(index = 0, role = "reference")),
+            )
         val table = SemanticTable.projection(headerless, indexOnly)
 
         assertEquals("1.0", table.records.first()["reference"])

@@ -23,10 +23,13 @@ class TreeTranslationAdapter(
     private val batchPrompt: (TranslationRequest) -> String = ::buildBatchPrompt,
     private val parseNumberedLines: (String) -> Map<Int, String> = ::parseNumberedLines,
 ) : ArticleTranslator {
-
     private val log = LoggerFactory.getLogger(TreeTranslationAdapter::class.java)
 
-    override fun translate(asciidoc: String, sourceLanguage: String, targetLanguage: String): String {
+    override fun translate(
+        asciidoc: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): String {
         val article = parser.parse(asciidoc)
 
         // 1. Collect leaves (ordered), skipping non-translatable content.
@@ -46,12 +49,13 @@ class TreeTranslationAdapter(
                 asciidoc
             }
             is TranslationResult.Success -> {
-                val translations = try {
-                    parseNumberedLines(result.translatedText)
-                } catch (e: Exception) {
-                    log.warn("[TreeTranslationAdapter] Failed to parse LLM numbered output: {}", e.message)
-                    emptyMap()
-                }
+                val translations =
+                    try {
+                        parseNumberedLines(result.translatedText)
+                    } catch (e: Exception) {
+                        log.warn("[TreeTranslationAdapter] Failed to parse LLM numbered output: {}", e.message)
+                        emptyMap()
+                    }
                 if (translations.isEmpty()) {
                     log.warn("[TreeTranslationAdapter] No translations parsed, returning original")
                     return asciidoc
@@ -66,13 +70,19 @@ class TreeTranslationAdapter(
         }
     }
 
-    private data class Leaf(val text: String, val path: LeafPath)
+    private data class Leaf(
+        val text: String,
+        val path: LeafPath,
+    )
 
     private sealed class LeafPath {
-        data class Frontmatter(val field: String) : LeafPath()
+        data class Frontmatter(
+            val field: String,
+        ) : LeafPath()
+
         data class Inline(
             val blockIndex: Int,
-            val subPath: List<Int>,   // indexes into nested structures (list items, table cells, admonition blocks)
+            val subPath: List<Int>, // indexes into nested structures (list items, table cells, admonition blocks)
             val inlineIndex: Int,
         ) : LeafPath()
     }
@@ -152,16 +162,19 @@ class TreeTranslationAdapter(
             }
         }
 
-        private fun inlineText(inline: PivotInline): String? = when (inline) {
-            is PivotInline.Text -> inline.text
-            is PivotInline.Bold -> inline.text
-            is PivotInline.Code -> null
-            is PivotInline.Link -> inline.label
-            is PivotInline.LineBreak -> null
-        }
+        private fun inlineText(inline: PivotInline): String? =
+            when (inline) {
+                is PivotInline.Text -> inline.text
+                is PivotInline.Bold -> inline.text
+                is PivotInline.Code -> null
+                is PivotInline.Link -> inline.label
+                is PivotInline.LineBreak -> null
+            }
     }
 
-    private class LeafApplier(private val translations: Map<Int, String>) {
+    private class LeafApplier(
+        private val translations: Map<Int, String>,
+    ) {
         private var idx = 0
 
         fun apply(article: PivotArticle): PivotArticle {
@@ -181,36 +194,41 @@ class TreeTranslationAdapter(
             return PivotArticle(newFm, blocks)
         }
 
-        private fun applyBlock(block: PivotBlock): PivotBlock = when (block) {
-            is PivotBlock.Heading -> {
-                if (block.translatable && block.text.isNotBlank()) block.copy(text = replace(block.text)) else block
-            }
-            is PivotBlock.Paragraph -> block.copy(inline = applyInlines(block.inline))
-            is PivotBlock.ListBlock -> block.copy(items = block.items.map { applyInlines(it) })
-            is PivotBlock.Table -> block.copy(
-                header = block.header.map { applyInlines(it) },
-                rows = block.rows.map { row -> row.map { applyInlines(it) } },
-            )
-            is PivotBlock.Admonition -> block.copy(blocks = block.blocks.map { applyBlock(it) })
-            is PivotBlock.DescriptionList -> block.copy(
-                items = block.items.map { item ->
-                    DescriptionItem(
-                        term = applyInlines(item.term),
-                        definition = applyInlines(item.definition)
-                    )
+        private fun applyBlock(block: PivotBlock): PivotBlock =
+            when (block) {
+                is PivotBlock.Heading -> {
+                    if (block.translatable && block.text.isNotBlank()) block.copy(text = replace(block.text)) else block
                 }
-            )
-            is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> block
-        }
-
-        private fun applyInlines(inlines: List<PivotInline>): List<PivotInline> = inlines.map { inline ->
-            when (inline) {
-                is PivotInline.Text -> if (inline.translatable && inline.text.isNotBlank()) inline.copy(text = replace(inline.text)) else inline
-                is PivotInline.Bold -> if (inline.translatable && inline.text.isNotBlank()) inline.copy(text = replace(inline.text)) else inline
-                is PivotInline.Link -> if (inline.translatable && inline.label.isNotBlank()) inline.copy(label = replace(inline.label)) else inline
-                is PivotInline.Code, is PivotInline.LineBreak -> inline
+                is PivotBlock.Paragraph -> block.copy(inline = applyInlines(block.inline))
+                is PivotBlock.ListBlock -> block.copy(items = block.items.map { applyInlines(it) })
+                is PivotBlock.Table ->
+                    block.copy(
+                        header = block.header.map { applyInlines(it) },
+                        rows = block.rows.map { row -> row.map { applyInlines(it) } },
+                    )
+                is PivotBlock.Admonition -> block.copy(blocks = block.blocks.map { applyBlock(it) })
+                is PivotBlock.DescriptionList ->
+                    block.copy(
+                        items =
+                            block.items.map { item ->
+                                DescriptionItem(
+                                    term = applyInlines(item.term),
+                                    definition = applyInlines(item.definition),
+                                )
+                            },
+                    )
+                is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> block
             }
-        }
+
+        private fun applyInlines(inlines: List<PivotInline>): List<PivotInline> =
+            inlines.map { inline ->
+                when (inline) {
+                    is PivotInline.Text -> if (inline.translatable && inline.text.isNotBlank()) inline.copy(text = replace(inline.text)) else inline
+                    is PivotInline.Bold -> if (inline.translatable && inline.text.isNotBlank()) inline.copy(text = replace(inline.text)) else inline
+                    is PivotInline.Link -> if (inline.translatable && inline.label.isNotBlank()) inline.copy(label = replace(inline.label)) else inline
+                    is PivotInline.Code, is PivotInline.LineBreak -> inline
+                }
+            }
 
         private fun replace(original: String): String {
             val n = idx

@@ -5,16 +5,18 @@ import contracts.pipeline.ReleaseNotesConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 class JsonReleaseNotesRendererTest {
-
     private val renderer = JsonReleaseNotesRenderer()
 
-    private fun commit(type: String, scope: String? = null, message: String = "msg") =
-        ConventionalCommit(type = type, scope = scope, message = message, hash = "abc", date = "2026-07-05")
+    private fun commit(
+        type: String,
+        scope: String? = null,
+        message: String = "msg",
+    ) = ConventionalCommit(type = type, scope = scope, message = message, hash = "abc", date = "2026-07-05")
 
     @Test
     fun `format is json`() {
@@ -43,10 +45,11 @@ class JsonReleaseNotesRendererTest {
 
     @Test
     fun `render includes commits array with type scope message hash date`() {
-        val content = renderer.render(
-            listOf(commit("feat", scope = "api", message = "hello")),
-            ReleaseNotesConfig(version = "1.0.0", includeDownloads = false),
-        )
+        val content =
+            renderer.render(
+                listOf(commit("feat", scope = "api", message = "hello")),
+                ReleaseNotesConfig(version = "1.0.0", includeDownloads = false),
+            )
         assertTrue(content.contains("\"type\":\"feat\"") || content.contains("\"type\": \"feat\""))
         assertTrue(content.contains("\"scope\":\"api\"") || content.contains("\"scope\": \"api\""))
         assertTrue(content.contains("\"message\":\"hello\"") || content.contains("\"message\": \"hello\""))
@@ -56,10 +59,11 @@ class JsonReleaseNotesRendererTest {
 
     @Test
     fun `render groups commits by category under categories object`() {
-        val commits = listOf(
-            commit("feat", message = "feature 1"),
-            commit("fix", message = "bug 1"),
-        )
+        val commits =
+            listOf(
+                commit("feat", message = "feature 1"),
+                commit("fix", message = "bug 1"),
+            )
         val content = renderer.render(commits, ReleaseNotesConfig(version = "1.0.0", includeDownloads = false))
         assertTrue(content.contains("\"Nouveautés\"") || content.contains("\"Nouveaut\\u00e9s\""))
         assertTrue(content.contains("\"Corrections\"") || content.contains("\"Corrections\""))
@@ -79,7 +83,9 @@ class JsonReleaseNotesRendererTest {
     }
 
     @Test
-    fun `renderToFile writes content to file and returns it`(@TempDir dir: File) {
+    fun `renderToFile writes content to file and returns it`(
+        @TempDir dir: File,
+    ) {
         val output = dir.resolve("release-notes.json")
         val result = renderer.renderToFile(listOf(commit("feat", message = "hello")), ReleaseNotesConfig(version = "1.0.0"), output)
         assertEquals(output, result)
@@ -88,7 +94,9 @@ class JsonReleaseNotesRendererTest {
     }
 
     @Test
-    fun `renderToFile creates parent directories`(@TempDir dir: File) {
+    fun `renderToFile creates parent directories`(
+        @TempDir dir: File,
+    ) {
         val output = dir.resolve("build/release-notes/v1.json")
         renderer.renderToFile(listOf(commit("feat")), ReleaseNotesConfig(), output)
         assertTrue(output.isFile)

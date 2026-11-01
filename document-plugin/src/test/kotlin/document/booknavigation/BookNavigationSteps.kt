@@ -21,7 +21,6 @@ import kotlin.test.assertTrue
  * (anti-glue-collision pattern).
  */
 class BookNavigationSteps {
-
     private var sections: List<BookSection> = emptyList()
     private var assembled: String = ""
 
@@ -29,9 +28,10 @@ class BookNavigationSteps {
     fun `book-navigation a TOC with refs`(refsText: String) {
         val refs = Regex("\"([^\"]+)\"").findAll(refsText).map { it.groupValues[1] }.toList()
         require(refs.isNotEmpty()) { "at least one ref must be given, got: '$refsText'" }
-        sections = refs.mapIndexed { index, ref ->
-            BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
-        }
+        sections =
+            refs.mapIndexed { index, ref ->
+                BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
+            }
     }
 
     @Given("book-navigation OCR pages for every referenced section")
@@ -40,20 +40,25 @@ class BookNavigationSteps {
     }
 
     @Given("^book-navigation a multi-page section \"([^\"]+)\" spanning pages (\\d+) and (\\d+)$")
-    fun `book-navigation a multi-page section spanning pages`(ref: String, first: Int, second: Int) {
+    fun `book-navigation a multi-page section spanning pages`(
+        ref: String,
+        first: Int,
+        second: Int,
+    ) {
         val section = sections.first { it.ref == ref }
         // Expand the logical section into two physical pages sharing the same ref
         // (the `| 1.1 | … | 2, 3 | …` TOC convention handled by BookTocParser).
-        val expanded = sections.flatMap { current ->
-            if (current.ref == ref) {
-                listOf(
-                    current.copy(title = section.title, page = first, pdfFile = "%03d.adoc".format(first)),
-                    current.copy(title = section.title, page = second, pdfFile = "%03d.adoc".format(second)),
-                )
-            } else {
-                listOf(current)
+        val expanded =
+            sections.flatMap { current ->
+                if (current.ref == ref) {
+                    listOf(
+                        current.copy(title = section.title, page = first, pdfFile = "%03d.adoc".format(first)),
+                        current.copy(title = section.title, page = second, pdfFile = "%03d.adoc".format(second)),
+                    )
+                } else {
+                    listOf(current)
+                }
             }
-        }
         sections = expanded
     }
 
@@ -68,7 +73,10 @@ class BookNavigationSteps {
     }
 
     @Then("^book-navigation section \"([^\"]+)\" links back to \"([^\"]+)\"$")
-    fun `book-navigation section links back to`(ref: String, previous: String) {
+    fun `book-navigation section links back to`(
+        ref: String,
+        previous: String,
+    ) {
         assertTrue(
             navigationLine(ref).contains(pattern(previous)),
             "section '$ref' must link back to '$previous', got:\n$assembled",
@@ -76,7 +84,10 @@ class BookNavigationSteps {
     }
 
     @Then("^book-navigation section \"([^\"]+)\" links forward to \"([^\"]+)\"$")
-    fun `book-navigation section links forward to`(ref: String, next: String) {
+    fun `book-navigation section links forward to`(
+        ref: String,
+        next: String,
+    ) {
         assertTrue(
             navigationLine(ref).contains(pattern(next)),
             "section '$ref' must link forward to '$next', got:\n$assembled",
@@ -111,13 +122,14 @@ class BookNavigationSteps {
 
     private fun assemble(emitNavigation: Boolean): String {
         val tree = BookTreeBuilder.fromSections(sections)
-        return BookAssembler.assemble(
-            tree = tree,
-            layout = BookLayout(emitNavigation = emitNavigation, pageBreakBetweenNodes = false),
-            title = "Navigation Book",
-            author = "Cheroliv",
-            resolveContent = { section -> "Body of ${section.ref}" },
-        ).content
+        return BookAssembler
+            .assemble(
+                tree = tree,
+                layout = BookLayout(emitNavigation = emitNavigation, pageBreakBetweenNodes = false),
+                title = "Navigation Book",
+                author = "Cheroliv",
+                resolveContent = { section -> "Body of ${section.ref}" },
+            ).content
     }
 
     /** The navigation line emitted directly after [ref]'s section block. */

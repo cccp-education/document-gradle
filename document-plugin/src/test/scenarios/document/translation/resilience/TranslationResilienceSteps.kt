@@ -24,7 +24,6 @@ import java.nio.file.Files
  * TRANSLATED (which would make the source-language fallback permanent).
  */
 class TranslationResilienceSteps {
-
     private val parser = AsciiDocParser()
     private val renderer = AsciiDocRenderer()
 
@@ -66,7 +65,10 @@ class TranslationResilienceSteps {
     }
 
     @Given("a resilient source article with a failing paragraph {string} and a healthy paragraph {string}")
-    fun resilientSourceArticle(failing: String, healthy: String) {
+    fun resilientSourceArticle(
+        failing: String,
+        healthy: String,
+    ) {
         failPhrase = failing
         sourceFile.writeText(
             """= Intro
@@ -78,22 +80,27 @@ $healthy
 == Section Two
 
 $failing
-"""
+""",
         )
     }
 
     @When("the resilient delta translation runs")
     fun deltaTranslationRuns() {
-        val service = ContentTranslationService(
-            FlakyTranslationService(), parser, renderer, jbakeRenderer = JbakeNativeRenderer()
-        )
-        statuses = service.translateSingleFileWithBlockDelta(
-            sourceFile = sourceFile,
-            targetFile = targetFile,
-            previousBlockChecksums = statuses,
-            sourceLanguage = "fr",
-            targetLanguage = "en",
-        )
+        val service =
+            ContentTranslationService(
+                FlakyTranslationService(),
+                parser,
+                renderer,
+                jbakeRenderer = JbakeNativeRenderer(),
+            )
+        statuses =
+            service.translateSingleFileWithBlockDelta(
+                sourceFile = sourceFile,
+                targetFile = targetFile,
+                previousBlockChecksums = statuses,
+                sourceLanguage = "fr",
+                targetLanguage = "en",
+            )
     }
 
     @When("the resilient LLM has recovered")
@@ -133,21 +140,28 @@ $failing
         error("No top-level block contains '$phrase'")
     }
 
-    private fun blockContains(block: PivotBlock, phrase: String): Boolean = when (block) {
-        is PivotBlock.Heading -> block.text == phrase
-        is PivotBlock.Paragraph -> inlinesContain(block.inline, phrase)
-        is PivotBlock.ListBlock -> block.items.any { inlinesContain(it, phrase) }
-        is PivotBlock.Table ->
-            (block.header + block.rows.flatten()).any { inlinesContain(it, phrase) }
-        is PivotBlock.DescriptionList ->
-            block.items.any { inlinesContain(it.term, phrase) || inlinesContain(it.definition, phrase) }
-        is PivotBlock.Admonition -> block.blocks.any { blockContains(it, phrase) }
-        is PivotBlock.Source -> false
-        is PivotBlock.BlockMacro -> false
-        PivotBlock.Hr -> false
-    }
+    private fun blockContains(
+        block: PivotBlock,
+        phrase: String,
+    ): Boolean =
+        when (block) {
+            is PivotBlock.Heading -> block.text == phrase
+            is PivotBlock.Paragraph -> inlinesContain(block.inline, phrase)
+            is PivotBlock.ListBlock -> block.items.any { inlinesContain(it, phrase) }
+            is PivotBlock.Table ->
+                (block.header + block.rows.flatten()).any { inlinesContain(it, phrase) }
+            is PivotBlock.DescriptionList ->
+                block.items.any { inlinesContain(it.term, phrase) || inlinesContain(it.definition, phrase) }
+            is PivotBlock.Admonition -> block.blocks.any { blockContains(it, phrase) }
+            is PivotBlock.Source -> false
+            is PivotBlock.BlockMacro -> false
+            PivotBlock.Hr -> false
+        }
 
-    private fun inlinesContain(inlines: List<PivotInline>, phrase: String): Boolean =
+    private fun inlinesContain(
+        inlines: List<PivotInline>,
+        phrase: String,
+    ): Boolean =
         inlines.any { inline ->
             when (inline) {
                 is PivotInline.Text -> inline.text == phrase

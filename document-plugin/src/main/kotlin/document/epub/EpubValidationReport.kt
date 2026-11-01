@@ -2,7 +2,6 @@ package document.epub
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.io.File
 
 /**
  * JSON report of the EPUB validation (DOC-EPUBCHECK) — mirrors
@@ -13,7 +12,6 @@ data class EpubValidationReport(
     val tool: String = "epubcheck",
     val entries: List<EpubReportEntry>,
 ) {
-
     /**
      * One audit line: status VALID/INVALID + the epubcheck message list
      * (absent when valid — `@JsonInclude(NON_NULL)`, backward-compatible
@@ -27,24 +25,27 @@ data class EpubValidationReport(
 
     fun toJson(): String =
         ObjectMapper()
-            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule.Builder().build())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .registerModule(
+                com.fasterxml.jackson.module.kotlin.KotlinModule
+                    .Builder()
+                    .build(),
+            ).setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .writerWithDefaultPrettyPrinter()
             .writeValueAsString(this)
 
     companion object {
-
         /** Builds the report from a validation result. */
         fun fromResult(result: EpubValidationResult): EpubValidationReport {
-            val entry = when (result) {
-                is EpubValidationResult.Valid ->
-                    EpubReportEntry(status = "VALID")
-                is EpubValidationResult.Invalid ->
-                    EpubReportEntry(
-                        status = "INVALID",
-                        issues = result.issues.distinct().sorted(),
-                    )
-            }
+            val entry =
+                when (result) {
+                    is EpubValidationResult.Valid ->
+                        EpubReportEntry(status = "VALID")
+                    is EpubValidationResult.Invalid ->
+                        EpubReportEntry(
+                            status = "INVALID",
+                            issues = result.issues.distinct().sorted(),
+                        )
+                }
             return EpubValidationReport(entries = listOf(entry))
         }
 
@@ -52,16 +53,22 @@ data class EpubValidationReport(
          * Parses a report JSON; returns null on blank/invalid input
          * (degraded silent — never crashes the collect path).
          */
-        fun fromJson(json: String): EpubValidationReport? = try {
-            if (json.isBlank()) {
+        fun fromJson(json: String): EpubValidationReport? =
+            try {
+                if (json.isBlank()) {
+                    null
+                } else {
+                    ObjectMapper()
+                        .registerModule(
+                            com.fasterxml.jackson.module.kotlin.KotlinModule
+                                .Builder()
+                                .build(),
+                        ).readValue(json, EpubValidationReport::class.java)
+                }
+            } catch (
+                @Suppress("unused") e: Exception,
+            ) {
                 null
-            } else {
-                ObjectMapper()
-                    .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule.Builder().build())
-                    .readValue(json, EpubValidationReport::class.java)
             }
-        } catch (@Suppress("unused") e: Exception) {
-            null
-        }
     }
 }

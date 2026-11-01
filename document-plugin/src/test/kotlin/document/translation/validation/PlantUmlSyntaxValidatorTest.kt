@@ -6,18 +6,18 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class PlantUmlSyntaxValidatorTest {
-
     private val validator = PlantUmlSyntaxValidator.create()
 
     @Test
     fun `valid simple diagram returns Valid`() {
-        val code = """
+        val code =
+            """
             @startuml
             class User
             class Service
             User --> Service
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "My Article", 0, "TranslateLabels")
 
@@ -26,14 +26,15 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `valid diagram with notes returns Valid`() {
-        val code = """
+        val code =
+            """
             @startuml
             class User
             note right of User
               A user entity
             end note
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "Article", 1, "TranslateLabels")
 
@@ -42,12 +43,13 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `valid diagram with sequence returns Valid`() {
-        val code = """
+        val code =
+            """
             @startuml
             Alice -> Bob: Hello
             Bob --> Alice: Hi
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "Article", 0, "BorrowVocabulary")
 
@@ -56,13 +58,14 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `valid diagram with activity returns Valid`() {
-        val code = """
+        val code =
+            """
             @startuml
             start
             :Process;
             stop
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "Article", 0, "PreserveTechnical")
 
@@ -71,11 +74,12 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `missing startuml returns Invalid`() {
-        val code = """
+        val code =
+            """
             class User
             class Service
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "My Article", 2, "TranslateLabels")
 
@@ -88,11 +92,12 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `missing enduml returns Invalid`() {
-        val code = """
+        val code =
+            """
             @startuml
             class User
             class Service
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "Article", 0, "TranslateLabels")
 
@@ -134,7 +139,8 @@ class PlantUmlSyntaxValidatorTest {
 
     @Test
     fun `complex diagram with multiple elements returns Valid`() {
-        val code = """
+        val code =
+            """
             @startuml
             package "Core" {
               class User
@@ -146,7 +152,7 @@ class PlantUmlSyntaxValidatorTest {
             User --> Service
             Controller --> Service
             @enduml
-        """.trimIndent()
+            """.trimIndent()
 
         val result = validator.validate(code, "Article", 0, "TranslateLabels")
 

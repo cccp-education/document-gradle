@@ -36,13 +36,15 @@ import java.io.File
  * Ink Economy Law: pure read, deterministic, no mutation of any source file.
  */
 object BookOcrFailureDetector {
-
     private const val SHORT_THRESHOLD = 40
     private val ILLISIBLE_MARKERS = listOf("[ILLISIBLE]", "[ILLISIBL")
     private val STRUCT_SUSPECT_MARKERS = listOf("invalid part", "out of sequence")
     private val LINEARISED_TABLE_ROW = Regex("""^\s*\|.*\|\s*$""")
 
-    fun detect(scansDir: File, sections: List<BookSection>): List<BookOcrIssue> {
+    fun detect(
+        scansDir: File,
+        sections: List<BookSection>,
+    ): List<BookOcrIssue> {
         if (!scansDir.isDirectory) return emptyList()
         val byPage = sections.associateBy { it.page }
         val issues = mutableListOf<BookOcrIssue>()
@@ -59,13 +61,14 @@ object BookOcrFailureDetector {
                         else -> null
                     }
                 if (wholePageReason != null) {
-                    issues += BookOcrIssue(
-                        page = page,
-                        file = file.name,
-                        sectionRef = owner?.ref,
-                        sectionTitle = owner?.title,
-                        reason = wholePageReason,
-                    )
+                    issues +=
+                        BookOcrIssue(
+                            page = page,
+                            file = file.name,
+                            sectionRef = owner?.ref,
+                            sectionTitle = owner?.title,
+                            reason = wholePageReason,
+                        )
                 } else {
                     issues += structuredIssues(file, page, owner, text)
                 }
@@ -81,37 +84,41 @@ object BookOcrFailureDetector {
     ): List<BookOcrIssue> {
         val issues = mutableListOf<BookOcrIssue>()
         STRUCT_SUSPECT_MARKERS.firstOrNull { it in text }?.let { marker ->
-            issues += BookOcrIssue(
-                page = page,
-                file = file.name,
-                sectionRef = owner?.ref,
-                sectionTitle = owner?.title,
-                reason = OcrFailureReason.STRUCT_SUSPECT,
-                detail = marker,
-            )
-        }
-        text.lines().firstOrNull { LINEARISED_TABLE_ROW.matches(it) }?.let { row ->
-            issues += BookOcrIssue(
-                page = page,
-                file = file.name,
-                sectionRef = owner?.ref,
-                sectionTitle = owner?.title,
-                reason = OcrFailureReason.TABLE_SUSPECT,
-                detail = row.trim(),
-            )
-        }
-        text.lines()
-            .mapNotNull { IMAGE_DIRECTIVE.find(it)?.groupValues?.getOrNull(1) }
-            .filter { target -> !file.parentFile.resolve(target).isFile }
-            .forEach { target ->
-                issues += BookOcrIssue(
+            issues +=
+                BookOcrIssue(
                     page = page,
                     file = file.name,
                     sectionRef = owner?.ref,
                     sectionTitle = owner?.title,
-                    reason = OcrFailureReason.IMAGE_MISSING,
-                    detail = target,
+                    reason = OcrFailureReason.STRUCT_SUSPECT,
+                    detail = marker,
                 )
+        }
+        text.lines().firstOrNull { LINEARISED_TABLE_ROW.matches(it) }?.let { row ->
+            issues +=
+                BookOcrIssue(
+                    page = page,
+                    file = file.name,
+                    sectionRef = owner?.ref,
+                    sectionTitle = owner?.title,
+                    reason = OcrFailureReason.TABLE_SUSPECT,
+                    detail = row.trim(),
+                )
+        }
+        text
+            .lines()
+            .mapNotNull { IMAGE_DIRECTIVE.find(it)?.groupValues?.getOrNull(1) }
+            .filter { target -> !file.parentFile.resolve(target).isFile }
+            .forEach { target ->
+                issues +=
+                    BookOcrIssue(
+                        page = page,
+                        file = file.name,
+                        sectionRef = owner?.ref,
+                        sectionTitle = owner?.title,
+                        reason = OcrFailureReason.IMAGE_MISSING,
+                        detail = target,
+                    )
             }
         return issues
     }

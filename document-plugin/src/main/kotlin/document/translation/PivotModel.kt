@@ -6,11 +6,11 @@ sealed class PivotBlock {
     data class Heading(
         val level: Int,
         val text: String,
-        override val translatable: Boolean
+        override val translatable: Boolean,
     ) : PivotBlock()
 
     data class Paragraph(
-        val inline: List<PivotInline>
+        val inline: List<PivotInline>,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = inline.any { it.translatable }
@@ -18,7 +18,7 @@ sealed class PivotBlock {
 
     data class ListBlock(
         val ordered: Boolean,
-        val items: List<List<PivotInline>>
+        val items: List<List<PivotInline>>,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = items.flatten().any { it.translatable }
@@ -27,7 +27,7 @@ sealed class PivotBlock {
     data class Table(
         val cols: String?,
         val header: List<List<PivotInline>>,
-        val rows: List<List<List<PivotInline>>>
+        val rows: List<List<List<PivotInline>>>,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = (header.flatten() + rows.flatten().flatten()).any { it.translatable }
@@ -35,7 +35,7 @@ sealed class PivotBlock {
 
     data class Admonition(
         val kind: String,
-        val blocks: List<PivotBlock>
+        val blocks: List<PivotBlock>,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = blocks.any { it.translatable }
@@ -44,13 +44,13 @@ sealed class PivotBlock {
     data class Source(
         val language: String,
         val content: String,
-        val header: String = ""
+        val header: String = "",
     ) : PivotBlock() {
         override val translatable: Boolean = false
     }
 
     data class DescriptionList(
-        val items: List<DescriptionItem>
+        val items: List<DescriptionItem>,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = items.any { it.translatable }
@@ -59,7 +59,7 @@ sealed class PivotBlock {
     data class BlockMacro(
         val name: String,
         val target: String,
-        val attributes: String = ""
+        val attributes: String = "",
     ) : PivotBlock() {
         override val translatable: Boolean = false
     }
@@ -71,7 +71,7 @@ sealed class PivotBlock {
 
 data class DescriptionItem(
     val term: List<PivotInline>,
-    val definition: List<PivotInline>
+    val definition: List<PivotInline>,
 ) {
     val translatable: Boolean
         get() = term.any { it.translatable } || definition.any { it.translatable }
@@ -82,23 +82,23 @@ sealed class PivotInline {
 
     data class Text(
         val text: String,
-        override val translatable: Boolean
+        override val translatable: Boolean,
     ) : PivotInline()
 
     data class Bold(
         val text: String,
-        override val translatable: Boolean
+        override val translatable: Boolean,
     ) : PivotInline()
 
     data class Code(
         val text: String,
-        override val translatable: Boolean = false
+        override val translatable: Boolean = false,
     ) : PivotInline()
 
     data class Link(
         val url: String,
         val label: String,
-        override val translatable: Boolean
+        override val translatable: Boolean,
     ) : PivotInline()
 
     data object LineBreak : PivotInline() {
@@ -113,12 +113,12 @@ data class PivotFrontmatter(
     val status: String,
     val author: String = "",
     val jbakeAttributes: Map<String, String> = emptyMap(),
-    val asciidocAttributes: Map<String, String> = emptyMap()
+    val asciidocAttributes: Map<String, String> = emptyMap(),
 ) {
     val isJbakeNative: Boolean get() = jbakeAttributes.isNotEmpty() || author.isNotEmpty()
 }
 
 data class PivotArticle(
     val frontmatter: PivotFrontmatter,
-    val blocks: List<PivotBlock>
+    val blocks: List<PivotBlock>,
 )

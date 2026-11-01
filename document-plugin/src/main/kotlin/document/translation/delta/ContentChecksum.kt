@@ -12,7 +12,8 @@ object ContentChecksum {
 
     fun computeChecksums(dir: File): Map<String, String> {
         if (!dir.exists()) return emptyMap()
-        return dir.walkTopDown()
+        return dir
+            .walkTopDown()
             .filter { it.isFile && it.extension == "adoc" }
             .associate { it.relativeTo(dir).path to sha256(it) }
     }

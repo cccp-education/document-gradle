@@ -5,11 +5,14 @@ plugins {
     id("education.cccp.build.publishing") version "0.0.8"
     id("education.cccp.build.functional-test") version "0.0.8"
     id("education.cccp.build.cucumber") version "0.0.8"
+    id("education.cccp.build.lint") version "0.0.7"
 }
 
 group = "education.cccp"
 // MEM-CAT-ROLLOUT-1 (D3) — self version derived from the published workspace catalog.
-version = ws.versions.document.plugin.get()
+version =
+    ws.versions.document.plugin
+        .get()
 
 dependencies {
     implementation(platform("education.cccp:workspace-bom:0.0.110"))
@@ -91,7 +94,6 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-suite")
 }
 
-
 // Forward the dogfooding publish flag to the test JVM so the BOOK-4
 // integration test can copy generated artifacts into the private content
 // corpus directory (office/metiers/...).
@@ -103,8 +105,16 @@ tasks.named<Test>("test") {
     // hygiene guard must never read a neighbour repository's working tree
     // (`../workspace-bom/…`): that is racy between sessions and absent from an
     // isolated CI checkout (graphify D5-RACE, S-029; bakery pattern).
-    systemProperty("document.publishedCatalog.documentVersion", ws.versions.document.plugin.get())
-    systemProperty("document.publishedCatalog.bomVersion", ws.versions.workspace.bom.get())
+    systemProperty(
+        "document.publishedCatalog.documentVersion",
+        ws.versions.document.plugin
+            .get(),
+    )
+    systemProperty(
+        "document.publishedCatalog.bomVersion",
+        ws.versions.workspace.bom
+            .get(),
+    )
 }
 
 // DOC-TRANSLATE-RESILIENCE — the resilience proof runs the production
@@ -123,188 +133,189 @@ cucumberConventions {
     // every @book-*/@xref-*/... scenario would silently stop being executed in
     // CI — a green build covering nothing.
     additionalTasksInCheck = true
-    additionalTasks = listOf(
-        CucumberTaskSpec(
-            name = "preserveCucumberTest",
-            features = listOf("src/test/resources/features/preserve_n0.feature"),
-            tags = listOf("@preserve"),
-            runnerClass = "document.translation.PreserveCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "tableTranslationCucumberTest",
-            features = listOf("src/test/resources/features/table_translation.feature"),
-            tags = listOf("@table"),
-            runnerClass = "document.translation.TableTranslationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "tableValidationCucumberTest",
-            features = listOf("src/test/resources/features/table_validation.feature"),
-            tags = listOf("@table-validation"),
-            runnerClass = "document.translation.validation.TableValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "plantumlValidationCucumberTest",
-            features = listOf("src/test/resources/features/plantuml_validation.feature"),
-            tags = listOf("@plantuml-validation"),
-            runnerClass = "document.plantumlvalidation.PlantUmlValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "frontmatterRetranslateCucumberTest",
-            features = listOf("src/test/resources/features/frontmatter_retranslate.feature"),
-            tags = listOf("@frontmatter-retranslate"),
-            runnerClass = "document.translation.FrontmatterRetranslateCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "crossBoroughCucumberTest",
-            features = listOf("src/test/resources/features/cross_borough_book.feature"),
-            tags = listOf("@cross-borough"),
-            runnerClass = "document.crossborough.CrossBoroughCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookTreeCucumberTest",
-            features = listOf("src/test/resources/features/book_tree.feature"),
-            tags = listOf("@book-tree"),
-            runnerClass = "document.booktree.BookTreeCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookValidationCucumberTest",
-            features = listOf("src/test/resources/features/book_validation.feature"),
-            tags = listOf("@book-validation"),
-            runnerClass = "document.bookvalidation.BookValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "ocrQualityCucumberTest",
-            features = listOf("src/test/resources/features/ocr_quality.feature"),
-            tags = listOf("@ocr-quality"),
-            runnerClass = "document.ocrquality.OcrQualityCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "converterSafeModeCucumberTest",
-            features = listOf("src/test/resources/features/converter_safe_mode.feature"),
-            tags = listOf("@converter-safe-mode"),
-            runnerClass = "document.convertersafemode.ConverterSafeModeCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "includeGuardCucumberTest",
-            features = listOf("src/test/resources/features/converter_include_guard.feature"),
-            tags = listOf("@converter-include-guard"),
-            runnerClass = "document.includeguard.IncludeGuardCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "securityPolicyCucumberTest",
-            features = listOf("src/test/resources/features/converter_security_policy.feature"),
-            tags = listOf("@converter-security-policy"),
-            runnerClass = "document.securitypolicy.SecurityPolicyCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "xrefValidationCucumberTest",
-            features = listOf("src/test/resources/features/xref_validation.feature"),
-            tags = listOf("@xref-validation"),
-            runnerClass = "document.xrefvalidation.XrefValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "documentValidationCucumberTest",
-            features = listOf("src/test/resources/features/document_validation.feature"),
-            tags = listOf("@document-validation"),
-            runnerClass = "document.validation.DocumentValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "htmlLinkLintCucumberTest",
-            features = listOf("src/test/resources/features/html_link_lint.feature"),
-            tags = listOf("@html-link-lint"),
-            runnerClass = "document.htmllint.HtmlLinkLintCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "metadataValidationCucumberTest",
-            features = listOf("src/test/resources/features/metadata_validation.feature"),
-            tags = listOf("@metadata-validation"),
-            runnerClass = "document.metadatavalidation.MetadataValidationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "n3PipelineCucumberTest",
-            features = listOf("src/test/resources/features/n3_pipeline.feature"),
-            tags = listOf("@n3-pipeline"),
-            runnerClass = "document.n3pipeline.N3PipelineCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "n3CollectCustomCucumberTest",
-            features = listOf("src/test/resources/features/n3_collect_custom.feature"),
-            tags = listOf("@n3-collect-custom"),
-            runnerClass = "document.n3collect.N3CollectCustomCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "epubCheckCucumberTest",
-            features = listOf("src/test/resources/features/epub_check.feature"),
-            tags = listOf("@epub-check"),
-            runnerClass = "document.epubcheck.EpubCheckCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "pdfCheckCucumberTest",
-            features = listOf("src/test/resources/features/pdf_check.feature"),
-            tags = listOf("@pdf-check"),
-            runnerClass = "document.pdfcheck.PdfCheckCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookImagesCucumberTest",
-            features = listOf("src/test/resources/features/book_images.feature"),
-            tags = listOf("@book-images"),
-            runnerClass = "document.bookimages.BookImagesCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookMatterCucumberTest",
-            features = listOf("src/test/resources/features/book_matter.feature"),
-            tags = listOf("@book-matter"),
-            runnerClass = "document.bookmatter.BookMatterCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookNavigationCucumberTest",
-            features = listOf("src/test/resources/features/book_navigation.feature"),
-            tags = listOf("@book-navigation"),
-            runnerClass = "document.booknavigation.BookNavigationCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookTranslateCucumberTest",
-            features = listOf("src/test/resources/features/book_translate.feature"),
-            tags = listOf("@book-translate"),
-            runnerClass = "document.booktranslate.BookTranslateCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookMultilangCucumberTest",
-            features = listOf("src/test/resources/features/book_multilang.feature"),
-            tags = listOf("@book-multilang"),
-            runnerClass = "document.bookmultilang.BookMultilangCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "bookPublishCucumberTest",
-            features = listOf("src/test/resources/features/book_publish.feature"),
-            tags = listOf("@book-publish"),
-            runnerClass = "document.bookpublish.BookPublishCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "releaseGateCucumberTest",
-            features = listOf("src/test/resources/features/release_gate.feature"),
-            tags = listOf("@release-gate"),
-            runnerClass = "document.ci.ReleaseGateCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "tableSemanticCucumberTest",
-            features = listOf("src/test/resources/features/table_semantic.feature"),
-            tags = listOf("@table-semantic"),
-            runnerClass = "document.tablesemantic.TableSemanticCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "translationResilienceCucumberTest",
-            features = listOf("src/test/resources/features/translation_resilience.feature"),
-            tags = listOf("@translation-resilience"),
-            runnerClass = "document.translation.resilience.TranslationResilienceCucumberRunner",
-        ),
-        CucumberTaskSpec(
-            name = "articleTreeCucumberTest",
-            features = listOf("src/test/resources/features/article_tree.feature"),
-            tags = listOf("@article-tree"),
-            runnerClass = "document.translation.tree.ArticleTreeCucumberRunner",
-        ),
-    )
+    additionalTasks =
+        listOf(
+            CucumberTaskSpec(
+                name = "preserveCucumberTest",
+                features = listOf("src/test/resources/features/preserve_n0.feature"),
+                tags = listOf("@preserve"),
+                runnerClass = "document.translation.PreserveCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "tableTranslationCucumberTest",
+                features = listOf("src/test/resources/features/table_translation.feature"),
+                tags = listOf("@table"),
+                runnerClass = "document.translation.TableTranslationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "tableValidationCucumberTest",
+                features = listOf("src/test/resources/features/table_validation.feature"),
+                tags = listOf("@table-validation"),
+                runnerClass = "document.translation.validation.TableValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "plantumlValidationCucumberTest",
+                features = listOf("src/test/resources/features/plantuml_validation.feature"),
+                tags = listOf("@plantuml-validation"),
+                runnerClass = "document.plantumlvalidation.PlantUmlValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "frontmatterRetranslateCucumberTest",
+                features = listOf("src/test/resources/features/frontmatter_retranslate.feature"),
+                tags = listOf("@frontmatter-retranslate"),
+                runnerClass = "document.translation.FrontmatterRetranslateCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "crossBoroughCucumberTest",
+                features = listOf("src/test/resources/features/cross_borough_book.feature"),
+                tags = listOf("@cross-borough"),
+                runnerClass = "document.crossborough.CrossBoroughCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookTreeCucumberTest",
+                features = listOf("src/test/resources/features/book_tree.feature"),
+                tags = listOf("@book-tree"),
+                runnerClass = "document.booktree.BookTreeCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookValidationCucumberTest",
+                features = listOf("src/test/resources/features/book_validation.feature"),
+                tags = listOf("@book-validation"),
+                runnerClass = "document.bookvalidation.BookValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "ocrQualityCucumberTest",
+                features = listOf("src/test/resources/features/ocr_quality.feature"),
+                tags = listOf("@ocr-quality"),
+                runnerClass = "document.ocrquality.OcrQualityCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "converterSafeModeCucumberTest",
+                features = listOf("src/test/resources/features/converter_safe_mode.feature"),
+                tags = listOf("@converter-safe-mode"),
+                runnerClass = "document.convertersafemode.ConverterSafeModeCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "includeGuardCucumberTest",
+                features = listOf("src/test/resources/features/converter_include_guard.feature"),
+                tags = listOf("@converter-include-guard"),
+                runnerClass = "document.includeguard.IncludeGuardCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "securityPolicyCucumberTest",
+                features = listOf("src/test/resources/features/converter_security_policy.feature"),
+                tags = listOf("@converter-security-policy"),
+                runnerClass = "document.securitypolicy.SecurityPolicyCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "xrefValidationCucumberTest",
+                features = listOf("src/test/resources/features/xref_validation.feature"),
+                tags = listOf("@xref-validation"),
+                runnerClass = "document.xrefvalidation.XrefValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "documentValidationCucumberTest",
+                features = listOf("src/test/resources/features/document_validation.feature"),
+                tags = listOf("@document-validation"),
+                runnerClass = "document.validation.DocumentValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "htmlLinkLintCucumberTest",
+                features = listOf("src/test/resources/features/html_link_lint.feature"),
+                tags = listOf("@html-link-lint"),
+                runnerClass = "document.htmllint.HtmlLinkLintCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "metadataValidationCucumberTest",
+                features = listOf("src/test/resources/features/metadata_validation.feature"),
+                tags = listOf("@metadata-validation"),
+                runnerClass = "document.metadatavalidation.MetadataValidationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "n3PipelineCucumberTest",
+                features = listOf("src/test/resources/features/n3_pipeline.feature"),
+                tags = listOf("@n3-pipeline"),
+                runnerClass = "document.n3pipeline.N3PipelineCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "n3CollectCustomCucumberTest",
+                features = listOf("src/test/resources/features/n3_collect_custom.feature"),
+                tags = listOf("@n3-collect-custom"),
+                runnerClass = "document.n3collect.N3CollectCustomCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "epubCheckCucumberTest",
+                features = listOf("src/test/resources/features/epub_check.feature"),
+                tags = listOf("@epub-check"),
+                runnerClass = "document.epubcheck.EpubCheckCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "pdfCheckCucumberTest",
+                features = listOf("src/test/resources/features/pdf_check.feature"),
+                tags = listOf("@pdf-check"),
+                runnerClass = "document.pdfcheck.PdfCheckCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookImagesCucumberTest",
+                features = listOf("src/test/resources/features/book_images.feature"),
+                tags = listOf("@book-images"),
+                runnerClass = "document.bookimages.BookImagesCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookMatterCucumberTest",
+                features = listOf("src/test/resources/features/book_matter.feature"),
+                tags = listOf("@book-matter"),
+                runnerClass = "document.bookmatter.BookMatterCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookNavigationCucumberTest",
+                features = listOf("src/test/resources/features/book_navigation.feature"),
+                tags = listOf("@book-navigation"),
+                runnerClass = "document.booknavigation.BookNavigationCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookTranslateCucumberTest",
+                features = listOf("src/test/resources/features/book_translate.feature"),
+                tags = listOf("@book-translate"),
+                runnerClass = "document.booktranslate.BookTranslateCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookMultilangCucumberTest",
+                features = listOf("src/test/resources/features/book_multilang.feature"),
+                tags = listOf("@book-multilang"),
+                runnerClass = "document.bookmultilang.BookMultilangCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "bookPublishCucumberTest",
+                features = listOf("src/test/resources/features/book_publish.feature"),
+                tags = listOf("@book-publish"),
+                runnerClass = "document.bookpublish.BookPublishCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "releaseGateCucumberTest",
+                features = listOf("src/test/resources/features/release_gate.feature"),
+                tags = listOf("@release-gate"),
+                runnerClass = "document.ci.ReleaseGateCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "tableSemanticCucumberTest",
+                features = listOf("src/test/resources/features/table_semantic.feature"),
+                tags = listOf("@table-semantic"),
+                runnerClass = "document.tablesemantic.TableSemanticCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "translationResilienceCucumberTest",
+                features = listOf("src/test/resources/features/translation_resilience.feature"),
+                tags = listOf("@translation-resilience"),
+                runnerClass = "document.translation.resilience.TranslationResilienceCucumberRunner",
+            ),
+            CucumberTaskSpec(
+                name = "articleTreeCucumberTest",
+                features = listOf("src/test/resources/features/article_tree.feature"),
+                tags = listOf("@article-tree"),
+                runnerClass = "document.translation.tree.ArticleTreeCucumberRunner",
+            ),
+        )
 }
 
 gradlePlugin {

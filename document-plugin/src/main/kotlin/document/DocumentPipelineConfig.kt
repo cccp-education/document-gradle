@@ -22,7 +22,6 @@ data class DocumentPipelineConfig(
     val frontMatter: DocumentFrontMatter = DocumentFrontMatter(),
     val book: BookConfig = BookConfig(),
 ) {
-
     /**
      * Output directory for the pipeline artefacts (defaults to `build/docs/document`).
      */

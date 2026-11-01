@@ -18,12 +18,14 @@ import java.nio.file.Files
  * prefix (anti-glue pattern).
  */
 class SecurityPolicySteps {
-
     private lateinit var projectDir: File
     private lateinit var buildOutput: String
 
     @Given("a document gradle project with safeMode {string} and includeGuard {string}")
-    fun `a project with safeMode and includeGuard`(safeMode: String, includeGuard: String) {
+    fun `a project with safeMode and includeGuard`(
+        safeMode: String,
+        includeGuard: String,
+    ) {
         projectDir = Files.createTempDirectory("doc-security-policy-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-security-policy\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
@@ -50,24 +52,28 @@ class SecurityPolicySteps {
 
     @When("the plugin is applied and convertDocumentToHtml runs and fails")
     fun `convertDocumentToHtml runs and fails`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .forwardOutput()
-            .buildAndFail()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .forwardOutput()
+                .buildAndFail()
+                .output
     }
 
     @When("the plugin is applied and convertDocumentToHtml runs successfully")
     fun `convertDocumentToHtml runs successfully`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @Then("the build fails with security policy message {string}")

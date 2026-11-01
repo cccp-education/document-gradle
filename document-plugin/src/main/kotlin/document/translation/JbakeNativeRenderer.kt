@@ -1,7 +1,6 @@
 package document.translation
 
 class JbakeNativeRenderer : ArticleRenderer {
-
     override fun render(article: PivotArticle): String {
         val sb = StringBuilder()
         renderJbakeHeader(article.frontmatter, sb)
@@ -12,7 +11,10 @@ class JbakeNativeRenderer : ArticleRenderer {
         return sb.toString().trimEnd()
     }
 
-    private fun renderJbakeHeader(fm: PivotFrontmatter, sb: StringBuilder) {
+    private fun renderJbakeHeader(
+        fm: PivotFrontmatter,
+        sb: StringBuilder,
+    ) {
         sb.appendLine("= ${fm.title}")
         if (fm.author.isNotEmpty()) {
             sb.appendLine("@${fm.author}")
@@ -45,7 +47,10 @@ class JbakeNativeRenderer : ArticleRenderer {
         sb.appendLine()
     }
 
-    private fun renderBlock(block: PivotBlock, sb: StringBuilder) {
+    private fun renderBlock(
+        block: PivotBlock,
+        sb: StringBuilder,
+    ) {
         when (block) {
             is PivotBlock.Heading -> renderHeading(block, sb)
             is PivotBlock.Paragraph -> renderParagraph(block, sb)
@@ -59,12 +64,18 @@ class JbakeNativeRenderer : ArticleRenderer {
         }
     }
 
-    private fun renderHeading(h: PivotBlock.Heading, sb: StringBuilder) {
+    private fun renderHeading(
+        h: PivotBlock.Heading,
+        sb: StringBuilder,
+    ) {
         val prefix = "=".repeat(h.level)
         sb.appendLine("$prefix ${h.text}")
     }
 
-    private fun renderParagraph(p: PivotBlock.Paragraph, sb: StringBuilder) {
+    private fun renderParagraph(
+        p: PivotBlock.Paragraph,
+        sb: StringBuilder,
+    ) {
         val lines = splitParagraphLines(p.inline)
         for ((idx, line) in lines.withIndex()) {
             if (idx < lines.size - 1) {
@@ -93,7 +104,10 @@ class JbakeNativeRenderer : ArticleRenderer {
         return lines
     }
 
-    private fun renderList(list: PivotBlock.ListBlock, sb: StringBuilder) {
+    private fun renderList(
+        list: PivotBlock.ListBlock,
+        sb: StringBuilder,
+    ) {
         for ((idx, item) in list.items.withIndex()) {
             val prefix = if (list.ordered) "${idx + 1}. " else "* "
             val line = item.joinToString("") { renderInline(it) }
@@ -101,28 +115,38 @@ class JbakeNativeRenderer : ArticleRenderer {
         }
     }
 
-    private fun renderTable(table: PivotBlock.Table, sb: StringBuilder) {
+    private fun renderTable(
+        table: PivotBlock.Table,
+        sb: StringBuilder,
+    ) {
         if (table.cols != null) {
             sb.appendLine("[cols=\"${table.cols}\"]")
         }
         sb.appendLine("|===")
         if (table.header.isNotEmpty()) {
-            sb.appendLine(table.header.joinToString(" ") { cells ->
-                cells.joinToString("") { renderInline(it) }.let { "|$it" }
-            })
+            sb.appendLine(
+                table.header.joinToString(" ") { cells ->
+                    cells.joinToString("") { renderInline(it) }.let { "|$it" }
+                },
+            )
         }
         if (table.rows.isNotEmpty()) {
             sb.appendLine()
         }
         for (row in table.rows) {
-            sb.appendLine(row.joinToString(" ") { cells ->
-                cells.joinToString("") { renderInline(it) }.let { "|$it" }
-            })
+            sb.appendLine(
+                row.joinToString(" ") { cells ->
+                    cells.joinToString("") { renderInline(it) }.let { "|$it" }
+                },
+            )
         }
         sb.appendLine("|===")
     }
 
-    private fun renderAdmonition(adm: PivotBlock.Admonition, sb: StringBuilder) {
+    private fun renderAdmonition(
+        adm: PivotBlock.Admonition,
+        sb: StringBuilder,
+    ) {
         sb.appendLine("[${adm.kind}]")
         sb.appendLine("====")
         for (block in adm.blocks) {
@@ -131,7 +155,10 @@ class JbakeNativeRenderer : ArticleRenderer {
         sb.appendLine("====")
     }
 
-    private fun renderSource(src: PivotBlock.Source, sb: StringBuilder) {
+    private fun renderSource(
+        src: PivotBlock.Source,
+        sb: StringBuilder,
+    ) {
         if (src.header.isNotEmpty()) {
             sb.appendLine(src.header)
         } else {
@@ -143,7 +170,10 @@ class JbakeNativeRenderer : ArticleRenderer {
         sb.appendLine("----")
     }
 
-    private fun renderDescriptionList(dl: PivotBlock.DescriptionList, sb: StringBuilder) {
+    private fun renderDescriptionList(
+        dl: PivotBlock.DescriptionList,
+        sb: StringBuilder,
+    ) {
         for (item in dl.items) {
             val term = item.term.joinToString("") { renderInline(it) }
             val def = item.definition.joinToString("") { renderInline(it) }
@@ -151,22 +181,26 @@ class JbakeNativeRenderer : ArticleRenderer {
         }
     }
 
-    private fun renderBlockMacro(macro: PivotBlock.BlockMacro, sb: StringBuilder) {
+    private fun renderBlockMacro(
+        macro: PivotBlock.BlockMacro,
+        sb: StringBuilder,
+    ) {
         val attrs = if (macro.attributes.isNotEmpty()) "[${macro.attributes}]" else ""
         sb.appendLine("${macro.name}::${macro.target}$attrs")
     }
 
-    private fun renderInline(inline: PivotInline): String = when (inline) {
-        is PivotInline.Text -> inline.text
-        is PivotInline.Bold -> "**${inline.text}**"
-        is PivotInline.Code -> "`${inline.text}`"
-        is PivotInline.Link -> {
-            if (inline.url.startsWith("http://") || inline.url.startsWith("https://")) {
-                "${inline.url}[${inline.label}]"
-            } else {
-                "link:${inline.url}[${inline.label}]"
+    private fun renderInline(inline: PivotInline): String =
+        when (inline) {
+            is PivotInline.Text -> inline.text
+            is PivotInline.Bold -> "**${inline.text}**"
+            is PivotInline.Code -> "`${inline.text}`"
+            is PivotInline.Link -> {
+                if (inline.url.startsWith("http://") || inline.url.startsWith("https://")) {
+                    "${inline.url}[${inline.label}]"
+                } else {
+                    "link:${inline.url}[${inline.label}]"
+                }
             }
+            is PivotInline.LineBreak -> ""
         }
-        is PivotInline.LineBreak -> ""
-    }
 }

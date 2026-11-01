@@ -12,8 +12,9 @@ package document
  * to keep the assembler deterministic.
  */
 @JvmInline
-value class PageOrder(val value: Int) : Comparable<PageOrder> {
-
+value class PageOrder(
+    val value: Int,
+) : Comparable<PageOrder> {
     init {
         require(value >= 0) { "PageOrder must be non-negative, got: $value" }
     }
@@ -21,7 +22,6 @@ value class PageOrder(val value: Int) : Comparable<PageOrder> {
     override fun compareTo(other: PageOrder): Int = value.compareTo(other.value)
 
     companion object {
-
         val FIRST: PageOrder = PageOrder(0)
 
         private val LEADING_DIGITS = Regex("""^(\d+)""")

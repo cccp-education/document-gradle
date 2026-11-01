@@ -30,22 +30,29 @@ class OllamaAsciidocReleaseNotesRenderer(
     private val provider: DocumentLlmProvider,
     private val delegate: ReleaseNotesRenderer = AsciidocReleaseNotesRenderer(),
 ) : ReleaseNotesRenderer {
-
     private val log = LoggerFactory.getLogger(OllamaAsciidocReleaseNotesRenderer::class.java)
 
     override val format: String = "asciidoc"
 
-    override fun render(commits: List<ConventionalCommit>, config: ReleaseNotesConfig): String {
+    override fun render(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+    ): String {
         if (commits.isEmpty()) return ""
         val base = delegate.render(commits, config)
-        val summary = runCatching { runBlocking { provider.call(buildPrompt(commits)) } }
-            .onFailure { log.warn("[OllamaAsciidocReleaseNotesRenderer] LLM summary failed, falling back to plain AsciiDoc: {}", it.message) }
-            .getOrNull()
-            ?: return base
+        val summary =
+            runCatching { runBlocking { provider.call(buildPrompt(commits)) } }
+                .onFailure { log.warn("[OllamaAsciidocReleaseNotesRenderer] LLM summary failed, falling back to plain AsciiDoc: {}", it.message) }
+                .getOrNull()
+                ?: return base
         return insertSummary(base, summary)
     }
 
-    override fun renderToFile(commits: List<ConventionalCommit>, config: ReleaseNotesConfig, outputFile: File): File {
+    override fun renderToFile(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+        outputFile: File,
+    ): File {
         val content = render(commits, config)
         outputFile.parentFile.mkdirs()
         outputFile.writeText(content)
@@ -53,18 +60,24 @@ class OllamaAsciidocReleaseNotesRenderer(
     }
 
     private fun buildPrompt(commits: List<ConventionalCommit>): String {
-        val bulletList = commits.joinToString("\n") { c ->
-            val scope = c.scope?.let { " ($it)" } ?: ""
-            "- ${c.type}${scope}: ${c.message}"
-        }
-        return """Summarise the following conventional commits in French in two or three sentences, as a human-readable release overview.
+        val bulletList =
+            commits.joinToString("\n") { c ->
+                val scope = c.scope?.let { " ($it)" } ?: ""
+                "- ${c.type}$scope: ${c.message}"
+            }
+        return """
+            Summarise the following conventional commits in French in two or three sentences, as a human-readable release overview.
 Do not list individual commits — provide a synthesis.
 
 Commits:
-$bulletList""".trimIndent()
+$bulletList
+            """.trimIndent()
     }
 
-    private fun insertSummary(base: String, summary: String): String {
+    private fun insertSummary(
+        base: String,
+        summary: String,
+    ): String {
         val titleEnd = base.indexOf("\n\n")
         if (titleEnd < 0) return base
         val title = base.substring(0, titleEnd)

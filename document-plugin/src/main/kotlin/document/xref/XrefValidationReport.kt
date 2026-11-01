@@ -28,18 +28,19 @@ data class XrefValidationReport(
 
     companion object {
         fun fromResult(result: XrefValidationResult): XrefValidationReport {
-            val entries = when (result) {
-                is XrefValidationResult.Valid ->
-                    listOf(XrefValidationReportEntry(ref = "*", status = "VALID"))
-                is XrefValidationResult.Invalid ->
-                    result.missing.map {
-                        XrefValidationReportEntry(
-                            ref = it,
-                            status = "MISSING",
-                            reason = "cross-reference '$it' has no matching anchor",
-                        )
-                    }
-            }
+            val entries =
+                when (result) {
+                    is XrefValidationResult.Valid ->
+                        listOf(XrefValidationReportEntry(ref = "*", status = "VALID"))
+                    is XrefValidationResult.Invalid ->
+                        result.missing.map {
+                            XrefValidationReportEntry(
+                                ref = it,
+                                status = "MISSING",
+                                reason = "cross-reference '$it' has no matching anchor",
+                            )
+                        }
+                }
             return XrefValidationReport(entries)
         }
 

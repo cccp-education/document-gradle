@@ -37,7 +37,6 @@ class GitReleaseNotesGenerator private constructor(
     private val configDrivenRenderer: Boolean,
     private val llmProvider: DocumentLlmProvider? = null,
 ) : ReleaseNotesGenerator {
-
     /** DOC-8.1 constructor — default AsciiDoc renderer (backward compatible). */
     constructor(projectDir: File, parser: GitLogParser) : this(
         projectDir = projectDir,
@@ -58,33 +57,38 @@ class GitReleaseNotesGenerator private constructor(
     override fun generate(config: ReleaseNotesConfig): File {
         val resolvedVersion = config.version ?: parser.detectVersion(projectDir) ?: "SNAPSHOT"
         val fromTag = config.fromTag ?: parser.detectFromTag(projectDir, config.toTag)
-        val commits = if (fromTag != null) {
-            parser.parse(fromTag, config.toTag)
-        } else {
-            parser.parse("", config.toTag)
-        }
+        val commits =
+            if (fromTag != null) {
+                parser.parse(fromTag, config.toTag)
+            } else {
+                parser.parse("", config.toTag)
+            }
         val effectiveRenderer = if (configDrivenRenderer) rendererFor(config.rendererType) else renderer
         val outputDir = projectDir.resolve(config.outputDir)
         val outputFile = outputDir.resolve("release-notes-$resolvedVersion.${extensionFor(effectiveRenderer.format)}")
         return effectiveRenderer.renderToFile(commits, config.copy(version = resolvedVersion), outputFile)
     }
 
-    private fun rendererFor(rendererType: String): ReleaseNotesRenderer = when (rendererType) {
-        "markdown" -> MarkdownReleaseNotesRenderer()
-        "json" -> JsonReleaseNotesRenderer()
-        "ollama-asciidoc" -> OllamaAsciidocReleaseNotesRenderer(
-            provider = llmProvider ?: throw IllegalStateException(
-                "rendererType 'ollama-asciidoc' requires an LLM provider — use configDrivenWithLlm()",
-            ),
-        )
-        else -> AsciidocReleaseNotesRenderer()
-    }
+    private fun rendererFor(rendererType: String): ReleaseNotesRenderer =
+        when (rendererType) {
+            "markdown" -> MarkdownReleaseNotesRenderer()
+            "json" -> JsonReleaseNotesRenderer()
+            "ollama-asciidoc" ->
+                OllamaAsciidocReleaseNotesRenderer(
+                    provider =
+                        llmProvider ?: throw IllegalStateException(
+                            "rendererType 'ollama-asciidoc' requires an LLM provider — use configDrivenWithLlm()",
+                        ),
+                )
+            else -> AsciidocReleaseNotesRenderer()
+        }
 
-    private fun extensionFor(format: String): String = when (format) {
-        "markdown" -> "md"
-        "json" -> "json"
-        else -> "adoc"
-    }
+    private fun extensionFor(format: String): String =
+        when (format) {
+            "markdown" -> "md"
+            "json" -> "json"
+            else -> "adoc"
+        }
 
     companion object {
         /**
@@ -92,7 +96,10 @@ class GitReleaseNotesGenerator private constructor(
          * at [generate] time from [ReleaseNotesConfig.rendererType]. Use this
          * factory when the DSL/task must honour `rendererType`.
          */
-        fun configDriven(projectDir: File, parser: GitLogParser): GitReleaseNotesGenerator =
+        fun configDriven(
+            projectDir: File,
+            parser: GitLogParser,
+        ): GitReleaseNotesGenerator =
             GitReleaseNotesGenerator(
                 projectDir = projectDir,
                 parser = parser,
@@ -110,12 +117,13 @@ class GitReleaseNotesGenerator private constructor(
             projectDir: File,
             parser: GitLogParser,
             llmProvider: DocumentLlmProvider,
-        ): GitReleaseNotesGenerator = GitReleaseNotesGenerator(
-            projectDir = projectDir,
-            parser = parser,
-            renderer = AsciidocReleaseNotesRenderer(),
-            configDrivenRenderer = true,
-            llmProvider = llmProvider,
-        )
+        ): GitReleaseNotesGenerator =
+            GitReleaseNotesGenerator(
+                projectDir = projectDir,
+                parser = parser,
+                renderer = AsciidocReleaseNotesRenderer(),
+                configDrivenRenderer = true,
+                llmProvider = llmProvider,
+            )
     }
 }

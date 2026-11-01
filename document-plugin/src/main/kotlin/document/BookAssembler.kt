@@ -20,7 +20,6 @@ import java.io.File
  * in the same order always produces the same AsciiDoc book.
  */
 object BookAssembler {
-
     private const val DOUBLE_NEWLINE = "\n\n"
     private const val PAGE_SEPARATOR = "\n\n"
 
@@ -48,16 +47,23 @@ object BookAssembler {
         return BookAssemblyResult(content = content, pages = pages, photoCount = photoCount)
     }
 
-    private fun loadPages(pagesDir: File, photosDir: File?): List<BookPage> {
+    private fun loadPages(
+        pagesDir: File,
+        photosDir: File?,
+    ): List<BookPage> {
         if (!pagesDir.exists() || !pagesDir.isDirectory) return emptyList()
-        return pagesDir.listFiles { f -> f.isFile && f.extension.equals("adoc", ignoreCase = true) }
+        return pagesDir
+            .listFiles { f -> f.isFile && f.extension.equals("adoc", ignoreCase = true) }
             ?.sortedBy { it.name }
             ?.map { BookPage.fromFile(it, photosDir) }
             ?.sortedWith(compareBy({ it.order }, { it.name }))
             ?: emptyList()
     }
 
-    private fun buildHeader(title: String, author: String): String {
+    private fun buildHeader(
+        title: String,
+        author: String,
+    ): String {
         val sb = StringBuilder()
         sb.append("= ").append(title).append("\n")
         sb.append(":author: ").append(author).append("\n")
@@ -148,7 +154,10 @@ object BookAssembler {
      * the ghost-image repair performed by [BookPageRenderer] (fixes S-258
      * B4/B5). `null` keeps the previous behaviour exactly (non-regression).
      */
-    fun pageContentResolver(pagesDir: File, photosDir: File? = null): (BookSection) -> String {
+    fun pageContentResolver(
+        pagesDir: File,
+        photosDir: File? = null,
+    ): (BookSection) -> String {
         val byOrder = loadPages(pagesDir, null).associateBy { it.order.value }
         val imageDir = photosDir ?: pagesDir
         return { section ->
@@ -172,7 +181,10 @@ object BookAssembler {
      * the ghost-image repair performed by [ContentPageResolver] (fixes S-258
      * B4/B5). `null` keeps the previous behaviour exactly (non-regression).
      */
-    fun contentAwareResolver(pagesDir: File, photosDir: File? = null): (BookSection) -> String {
+    fun contentAwareResolver(
+        pagesDir: File,
+        photosDir: File? = null,
+    ): (BookSection) -> String {
         val content = ContentPageResolver(pagesDir, photosDir)
         val legacy = pageContentResolver(pagesDir, photosDir)
         return { section ->
@@ -185,7 +197,11 @@ object BookAssembler {
      * A body block: its heading [level] (0 = top-level node), the [matter] it
      * belongs to under the layout policy, and the emitted AsciiDoc [text].
      */
-    private data class BodyBlock(val level: Int, val matter: Matter, val text: String)
+    private data class BodyBlock(
+        val level: Int,
+        val matter: Matter,
+        val text: String,
+    )
 
     private fun buildStructuredBody(
         tree: BookTree,
@@ -207,24 +223,26 @@ object BookAssembler {
                 // DOC-BOOK-CONSISTENCY-B6 — opt-in previous / next cross-
                 // references at the foot of the section (the navigation runs
                 // over the emitted sections, not the raw pages).
-                val navigation = if (layout.emitNavigation) {
-                    layout.navigationLinks(BookNumbering.navigation(tree, node.ref))
-                } else {
-                    ""
-                }
-                val block = buildString {
-                    append(anchor)
-                    append("\n")
-                    append(heading)
-                    if (content.isNotEmpty()) {
-                        append("\n\n")
-                        append(content)
+                val navigation =
+                    if (layout.emitNavigation) {
+                        layout.navigationLinks(BookNumbering.navigation(tree, node.ref))
+                    } else {
+                        ""
                     }
-                    if (navigation.isNotEmpty()) {
-                        append("\n\n")
-                        append(navigation)
+                val block =
+                    buildString {
+                        append(anchor)
+                        append("\n")
+                        append(heading)
+                        if (content.isNotEmpty()) {
+                            append("\n\n")
+                            append(content)
+                        }
+                        if (navigation.isNotEmpty()) {
+                            append("\n\n")
+                            append(navigation)
+                        }
                     }
-                }
                 blocks.add(BodyBlock(node.level, layout.matterPolicy.classify(node.ref), block))
             }
             node.children.forEach { emit(it) }

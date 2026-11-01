@@ -3,7 +3,6 @@ package document
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
-import java.io.File
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -16,6 +15,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
+import java.io.File
 
 /**
  * Assembles OCR-ed AsciiDoc pages (produced by codex-gradle) into a single
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory
  */
 @DisableCachingByDefault(because = "Idempotence is applicative — deterministic assembly from ordered pages")
 abstract class AssembleBookTask : DefaultTask() {
-
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Optional
@@ -123,48 +122,51 @@ abstract class AssembleBookTask : DefaultTask() {
         // flagged; LEGACY keeps the historical 0/9 requirement.
         val matterPolicy = MatterPolicy.forMode(matterPolicyMode.get(), sections)
 
-        val result = if (tocPresent && sections.isNotEmpty()) {
-            // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree.
-            // EPIC DOC-BOOK-IMAGES — photosDir enables the page-scan illustration
-            // and the ghost-image repair (S-258 B4/B5). The referenced scans are
-            // materialised in `images/` next to the assembled book and the header
-            // emits a *relative* `:imagesdir: images` — AsciidoctorJ only embeds
-            // (and epubcheck only accepts) images inside the source directory;
-            // an absolute path is silently dropped (RSC-007) and a path escaping
-            // the container is rejected (RSC-026). Empirical proof: S-260.
-            val tree = BookTreeBuilder.fromSections(sections)
-            val resolveContent = BookAssembler.contentAwareResolver(pages, photos)
-            val baseLayout = BookLayout(
-                emitMatterBreaks = matterBreaks.get(),
-                matterPolicy = matterPolicy,
-                emitNavigation = navigation.get(),
-            )
-            val assembled = BookAssembler.assemble(tree, baseLayout, title.get(), author.get(), resolveContent)
-            // The targets the assembled book actually references are the exact
-            // (and only) scans to materialise — illustration, repaired ghosts and
-            // pre-existing images alike (Ink Economy Law: never copy an
-            // unreferenced scan, never risk a dangling target).
-            val referenced = BookImageMaterializer.resolveTargets(assembled.content, photos ?: pages)
-            if (referenced.isEmpty()) {
-                assembled
-            } else {
-                BookImageMaterializer.materialise(referenced, output.parentFile)
-                BookAssembler.assemble(
-                    tree = tree,
-                    layout = BookLayout(
-                        imagesDir = BookImageMaterializer.IMAGES_DIR,
+        val result =
+            if (tocPresent && sections.isNotEmpty()) {
+                // DOC-BOOK-DOMAIN-3 — structured, navigable assembly from the TOC tree.
+                // EPIC DOC-BOOK-IMAGES — photosDir enables the page-scan illustration
+                // and the ghost-image repair (S-258 B4/B5). The referenced scans are
+                // materialised in `images/` next to the assembled book and the header
+                // emits a *relative* `:imagesdir: images` — AsciidoctorJ only embeds
+                // (and epubcheck only accepts) images inside the source directory;
+                // an absolute path is silently dropped (RSC-007) and a path escaping
+                // the container is rejected (RSC-026). Empirical proof: S-260.
+                val tree = BookTreeBuilder.fromSections(sections)
+                val resolveContent = BookAssembler.contentAwareResolver(pages, photos)
+                val baseLayout =
+                    BookLayout(
                         emitMatterBreaks = matterBreaks.get(),
                         matterPolicy = matterPolicy,
                         emitNavigation = navigation.get(),
-                    ),
-                    title = title.get(),
-                    author = author.get(),
-                    resolveContent = resolveContent,
-                )
+                    )
+                val assembled = BookAssembler.assemble(tree, baseLayout, title.get(), author.get(), resolveContent)
+                // The targets the assembled book actually references are the exact
+                // (and only) scans to materialise — illustration, repaired ghosts and
+                // pre-existing images alike (Ink Economy Law: never copy an
+                // unreferenced scan, never risk a dangling target).
+                val referenced = BookImageMaterializer.resolveTargets(assembled.content, photos ?: pages)
+                if (referenced.isEmpty()) {
+                    assembled
+                } else {
+                    BookImageMaterializer.materialise(referenced, output.parentFile)
+                    BookAssembler.assemble(
+                        tree = tree,
+                        layout =
+                            BookLayout(
+                                imagesDir = BookImageMaterializer.IMAGES_DIR,
+                                emitMatterBreaks = matterBreaks.get(),
+                                matterPolicy = matterPolicy,
+                                emitNavigation = navigation.get(),
+                            ),
+                        title = title.get(),
+                        author = author.get(),
+                        resolveContent = resolveContent,
+                    )
+                }
+            } else {
+                BookAssembler.assemble(pages, title.get(), author.get(), photos)
             }
-        } else {
-            BookAssembler.assemble(pages, title.get(), author.get(), photos)
-        }
 
         result.writeTo(output)
         logger.info(
@@ -219,12 +221,13 @@ abstract class AssembleBookTask : DefaultTask() {
         // the file-level validation (DOC-BOOK-VALIDATE) into a single report.
         val structural = BookValidator.validateStructure(sections, matterPolicy = matterPolicy)
         val fileBased = BookValidator.validate(pagesDir = pages, toc = sections, pdfsDir = pdfs)
-        val reasons = buildList {
-            if (structural is BookValidationResult.Invalid) {
-                addAll(structural.reasons.map { "structure — $it" })
+        val reasons =
+            buildList {
+                if (structural is BookValidationResult.Invalid) {
+                    addAll(structural.reasons.map { "structure — $it" })
+                }
+                if (fileBased is BookValidationResult.Invalid) addAll(fileBased.reasons)
             }
-            if (fileBased is BookValidationResult.Invalid) addAll(fileBased.reasons)
-        }
 
         if (reasons.isEmpty()) {
             logger.info(
@@ -234,9 +237,10 @@ abstract class AssembleBookTask : DefaultTask() {
             )
         } else {
             when (validationMode.get()) {
-                ValidationMode.LENIENT -> reasons.forEach {
-                    logger.warn("{} — book validation (lenient): {}", name, it)
-                }
+                ValidationMode.LENIENT ->
+                    reasons.forEach {
+                        logger.warn("{} — book validation (lenient): {}", name, it)
+                    }
                 ValidationMode.STRICT -> BookValidator.enforce(ValidationMode.STRICT, reasons)
             }
         }

@@ -13,14 +13,14 @@ package document
  * and TOC always produces the same result.
  */
 sealed class BookValidationResult {
-
     /**
      * The book passes all validation checks.
      *
      * @property pageCount the number of AsciiDoc pages that were validated
      */
-    data class Valid(val pageCount: Int) : BookValidationResult() {
-
+    data class Valid(
+        val pageCount: Int,
+    ) : BookValidationResult() {
         init {
             require(pageCount >= 0) { "Valid pageCount must be non-negative, got: $pageCount" }
         }
@@ -31,8 +31,9 @@ sealed class BookValidationResult {
      *
      * @property reasons the list of human-readable failure descriptions
      */
-    data class Invalid(val reasons: List<String>) : BookValidationResult() {
-
+    data class Invalid(
+        val reasons: List<String>,
+    ) : BookValidationResult() {
         init {
             require(reasons.isNotEmpty()) { "Invalid must have at least one reason" }
         }

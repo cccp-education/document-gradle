@@ -20,10 +20,10 @@ package document
 enum class Matter {
     FRONT,
     BODY,
-    BACK;
+    BACK,
+    ;
 
     companion object {
-
         /**
          * Classifies [ref] into a [Matter].
          *
@@ -32,7 +32,11 @@ enum class Matter {
          * @param frontPrefix root segment that marks FRONT matter (default `0`)
          * @param backPrefix root segment that marks BACK matter (default `9`)
          */
-        fun classify(ref: String, frontPrefix: String = "0", backPrefix: String = "9"): Matter {
+        fun classify(
+            ref: String,
+            frontPrefix: String = "0",
+            backPrefix: String = "9",
+        ): Matter {
             if (ref.isEmpty()) return BODY
             return when {
                 ref.startsWith("$frontPrefix.") -> FRONT

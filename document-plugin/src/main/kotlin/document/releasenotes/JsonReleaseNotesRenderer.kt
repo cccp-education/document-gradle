@@ -22,10 +22,12 @@ import java.io.File
  * ```
  */
 class JsonReleaseNotesRenderer : ReleaseNotesRenderer {
-
     override val format: String = "json"
 
-    override fun render(commits: List<ConventionalCommit>, config: ReleaseNotesConfig): String {
+    override fun render(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+    ): String {
         val version = config.version ?: "SNAPSHOT"
         val sb = StringBuilder()
         sb.append("{")
@@ -45,7 +47,12 @@ class JsonReleaseNotesRenderer : ReleaseNotesRenderer {
         sb.append(",\"categories\":{")
         config.categories.entries.forEachIndexed { index, (type, label) ->
             if (index > 0) sb.append(",")
-            sb.append("\"").append(escape(type)).append("\":\"").append(escape(label)).append("\"")
+            sb
+                .append("\"")
+                .append(escape(type))
+                .append("\":\"")
+                .append(escape(label))
+                .append("\"")
         }
         sb.append("}")
         if (config.includeDownloads) {
@@ -55,13 +62,16 @@ class JsonReleaseNotesRenderer : ReleaseNotesRenderer {
         return sb.toString()
     }
 
-    override fun renderToFile(commits: List<ConventionalCommit>, config: ReleaseNotesConfig, outputFile: File): File {
+    override fun renderToFile(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+        outputFile: File,
+    ): File {
         val content = render(commits, config)
         outputFile.parentFile.mkdirs()
         outputFile.writeText(content)
         return outputFile
     }
 
-    private fun escape(s: String): String =
-        s.replace("\\", "\\\\").replace("\"", "\\\"")
+    private fun escape(s: String): String = s.replace("\\", "\\\\").replace("\"", "\\\"")
 }

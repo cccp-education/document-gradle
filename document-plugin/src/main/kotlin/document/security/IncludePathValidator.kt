@@ -20,7 +20,6 @@ import java.io.File
  * targets too).
  */
 object IncludePathValidator {
-
     private val PATTERN = Regex("""include::\s*("(?:[^"]*)"|[^\[\s]+)(\s*\[[^\]]*\])?""")
 
     /**
@@ -51,7 +50,11 @@ object IncludePathValidator {
      * @return [IncludeValidationResult.Valid] when every include is contained,
      *   otherwise the first [IncludeValidationResult.Invalid] finding.
      */
-    fun validate(text: String, baseDir: File, allowedRoot: File = baseDir): IncludeValidationResult {
+    fun validate(
+        text: String,
+        baseDir: File,
+        allowedRoot: File = baseDir,
+    ): IncludeValidationResult {
         val root = allowedRoot.canonicalFile
         val rootPrefix = root.path + File.separator
         for (directive in parseIncludes(text)) {

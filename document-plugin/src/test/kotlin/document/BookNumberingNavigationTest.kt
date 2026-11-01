@@ -17,15 +17,15 @@ import kotlin.test.assertTrue
  * *distinct* section, in document order.
  */
 class BookNumberingNavigationTest {
-
     private fun multiPageTree(): BookTree {
-        val sections = listOf(
-            BookSection(ref = "1.0.1", title = "First", page = 5, pdfFile = "005.adoc"),
-            BookSection(ref = "1.0.1", title = "First", page = 6, pdfFile = "006.adoc"),
-            BookSection(ref = "1.0.1", title = "First", page = 7, pdfFile = "007.adoc"),
-            BookSection(ref = "1.0.1", title = "First", page = 8, pdfFile = "008.adoc"),
-            BookSection(ref = "1.0.2", title = "Second", page = 14, pdfFile = "014.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1.0.1", title = "First", page = 5, pdfFile = "005.adoc"),
+                BookSection(ref = "1.0.1", title = "First", page = 6, pdfFile = "006.adoc"),
+                BookSection(ref = "1.0.1", title = "First", page = 7, pdfFile = "007.adoc"),
+                BookSection(ref = "1.0.1", title = "First", page = 8, pdfFile = "008.adoc"),
+                BookSection(ref = "1.0.2", title = "Second", page = 14, pdfFile = "014.adoc"),
+            )
         return BookTreeBuilder.fromSections(sections)
     }
 
@@ -64,10 +64,11 @@ class BookNumberingNavigationTest {
     @Test
     fun `navigation links emit a previous and a next cross-reference`() {
         val layout = BookLayout(emitNavigation = true)
-        val nav = BookNavigation(
-            previous = BookSection(ref = "1.0.1", title = "First", page = 5, pdfFile = "005.adoc"),
-            next = BookSection(ref = "1.0.3", title = "Third", page = 14, pdfFile = "014.adoc"),
-        )
+        val nav =
+            BookNavigation(
+                previous = BookSection(ref = "1.0.1", title = "First", page = 5, pdfFile = "005.adoc"),
+                next = BookSection(ref = "1.0.3", title = "Third", page = 14, pdfFile = "014.adoc"),
+            )
         val links = layout.navigationLinks(nav)
         assertTrue(links.contains("<<1.0.1,First>>"), "the previous section must be linked, got:\n$links")
         assertTrue(links.contains("<<1.0.3,Third>>"), "the next section must be linked, got:\n$links")
@@ -76,10 +77,11 @@ class BookNumberingNavigationTest {
     @Test
     fun `navigation links omit a missing side at the book boundaries`() {
         val layout = BookLayout(emitNavigation = true)
-        val onlyNext = BookNavigation(
-            previous = null,
-            next = BookSection(ref = "1.0.2", title = "Second", page = 14, pdfFile = "014.adoc"),
-        )
+        val onlyNext =
+            BookNavigation(
+                previous = null,
+                next = BookSection(ref = "1.0.2", title = "Second", page = 14, pdfFile = "014.adoc"),
+            )
         val links = layout.navigationLinks(onlyNext)
         assertTrue(links.contains("<<1.0.2,Second>>"))
         assertEquals("<<1.0.2,Second>>", links, "only the next link must be emitted at the first boundary")

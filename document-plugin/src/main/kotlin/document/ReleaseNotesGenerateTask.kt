@@ -1,5 +1,9 @@
 package document
 
+import contracts.pipeline.ReleaseNotesConfig
+import document.generation.DocumentLlmProviderFactory
+import document.releasenotes.CliGitLogParser
+import document.releasenotes.GitReleaseNotesGenerator
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.MapProperty
@@ -9,11 +13,6 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
-import document.generation.DocumentLlmProviderFactory
-import document.releasenotes.AsciidocReleaseNotesRenderer
-import document.releasenotes.CliGitLogParser
-import document.releasenotes.GitReleaseNotesGenerator
-import contracts.pipeline.ReleaseNotesConfig
 
 /**
  * Task `releaseNotesGenerate` (DOC-8.1 + DOC-8.2) — generates release notes
@@ -28,7 +27,6 @@ import contracts.pipeline.ReleaseNotesConfig
  */
 @DisableCachingByDefault(because = "Git log is non-deterministic across runs")
 abstract class ReleaseNotesGenerateTask : DefaultTask() {
-
     @get:Input
     @get:Optional
     abstract val fromTag: Property<String>
@@ -70,23 +68,25 @@ abstract class ReleaseNotesGenerateTask : DefaultTask() {
         val projectDir = project.projectDir
         val parser = CliGitLogParser(projectDir)
         val resolvedRendererType = rendererType.getOrElse("asciidoc")
-        val generator = if (resolvedRendererType == "ollama-asciidoc") {
-            val provider = DocumentLlmProviderFactory.create(llmMode.getOrElse("ollama"))
-            GitReleaseNotesGenerator.configDrivenWithLlm(projectDir, parser, provider)
-        } else {
-            GitReleaseNotesGenerator.configDriven(projectDir, parser)
-        }
+        val generator =
+            if (resolvedRendererType == "ollama-asciidoc") {
+                val provider = DocumentLlmProviderFactory.create(llmMode.getOrElse("ollama"))
+                GitReleaseNotesGenerator.configDrivenWithLlm(projectDir, parser, provider)
+            } else {
+                GitReleaseNotesGenerator.configDriven(projectDir, parser)
+            }
 
         val customCategories = categories.get().takeIf { it.isNotEmpty() }
-        val config = ReleaseNotesConfig(
-            fromTag = fromTag.orNull,
-            toTag = toTag.getOrElse("HEAD"),
-            version = version.orNull,
-            includeDownloads = includeDownloads.getOrElse(true),
-            outputDir = outputDir.get().asFile.toRelativeString(projectDir),
-            rendererType = resolvedRendererType,
-            categories = customCategories ?: ReleaseNotesConfig().categories,
-        )
+        val config =
+            ReleaseNotesConfig(
+                fromTag = fromTag.orNull,
+                toTag = toTag.getOrElse("HEAD"),
+                version = version.orNull,
+                includeDownloads = includeDownloads.getOrElse(true),
+                outputDir = outputDir.get().asFile.toRelativeString(projectDir),
+                rendererType = resolvedRendererType,
+                categories = customCategories ?: ReleaseNotesConfig().categories,
+            )
         val result = generator.generate(config)
         logger.lifecycle("releaseNotesGenerate -> {}", result.absolutePath)
     }

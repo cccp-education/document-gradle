@@ -1,7 +1,12 @@
 package document
 
+import document.validation.HtmlLinkLintMode
+import document.validation.HtmlLinkLintResult
+import document.validation.HtmlLinkLinter
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -9,18 +14,12 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
-import document.validation.HtmlLinkLinter
-import document.validation.HtmlLinkLintMode
-import document.validation.HtmlLinkLintResult
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 
 /**
  * Lints the HTML document produced by [convertDocumentToHtml] for navigability.
  */
 @DisableCachingByDefault(because = "Lint output depends on external links and rendered HTML which may change outside Gradle's tracking")
 abstract class LintHtmlDocumentTask : DefaultTask() {
-
     private val logger: Logger = Logging.getLogger(this::class.java)
 
     /**

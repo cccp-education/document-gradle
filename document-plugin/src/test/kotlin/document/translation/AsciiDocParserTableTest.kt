@@ -2,26 +2,25 @@ package document.translation
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AsciiDocParserTableTest {
-
     private val parser = AsciiDocParser()
 
     @Test
     fun `parses table with cols spec header and body`() {
-        val lines = listOf(
-            "[cols=\"1,2,3\"]",
-            "|===",
-            "| Partition | Taille | Role",
-            "",
-            "| System A (lecture seule)",
-            "| ~8 Go",
-            "| Systeme live Xubuntu actif",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,2,3\"]",
+                "|===",
+                "| Partition | Taille | Role",
+                "",
+                "| System A (lecture seule)",
+                "| ~8 Go",
+                "| Systeme live Xubuntu actif",
+                "|===",
+            )
 
         val (table, next) = parser.parseTableStructured(lines, 0, "1,2,3")
 
@@ -43,15 +42,16 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses table without cols spec`() {
-        val lines = listOf(
-            "|===",
-            "| Partition | Device | Taille",
-            "",
-            "| System A",
-            "| `/dev/sdX1`",
-            "| ~8 Go",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Partition | Device | Taille",
+                "",
+                "| System A",
+                "| `/dev/sdX1`",
+                "| ~8 Go",
+                "|===",
+            )
 
         val (table, next) = parser.parseTableStructured(lines, 0, null)
 
@@ -66,15 +66,16 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses table cell with inline code and text`() {
-        val lines = listOf(
-            "[cols=\"1,3\"]",
-            "|===",
-            "| Option | Description",
-            "",
-            "| `-c`, `--clean`",
-            "| Nettoyer le repertoire",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,3\"]",
+                "|===",
+                "| Option | Description",
+                "",
+                "| `-c`, `--clean`",
+                "| Nettoyer le repertoire",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,3")
 
@@ -87,14 +88,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses escaped pipe in cell content`() {
-        val lines = listOf(
-            "|===",
-            "| Expression | Resultat",
-            "",
-            "| a \\| b",
-            "| pipe preserve",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Expression | Resultat",
+                "",
+                "| a \\| b",
+                "| pipe preserve",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -104,15 +106,16 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses cell with col span`() {
-        val lines = listOf(
-            "[cols=\"1,1,1\"]",
-            "|===",
-            "| A | B | C",
-            "",
-            "2+| D spans two columns",
-            "| E",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,1,1\"]",
+                "|===",
+                "| A | B | C",
+                "",
+                "2+| D spans two columns",
+                "| E",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,1,1")
 
@@ -124,17 +127,18 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses cell with row span`() {
-        val lines = listOf(
-            "[cols=\"1,1\"]",
-            "|===",
-            "| A | B",
-            "",
-            ".2+| Spans two rows",
-            "| Row 1",
-            "",
-            "| Row 2",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,1\"]",
+                "|===",
+                "| A | B",
+                "",
+                ".2+| Spans two rows",
+                "| Row 1",
+                "",
+                "| Row 2",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,1")
 
@@ -146,16 +150,17 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses cell with horizontal alignment`() {
-        val lines = listOf(
-            "[cols=\"1,1,1\"]",
-            "|===",
-            "| Left | Center | Right",
-            "",
-            "<| left aligned",
-            "^| centered",
-            ">| right aligned",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,1,1\"]",
+                "|===",
+                "| Left | Center | Right",
+                "",
+                "<| left aligned",
+                "^| centered",
+                ">| right aligned",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,1,1")
 
@@ -166,16 +171,17 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses cell with vertical alignment`() {
-        val lines = listOf(
-            "[cols=\"1,1,1\"]",
-            "|===",
-            "| Top | Middle | Bottom",
-            "",
-            ".<| top aligned",
-            ".^| middle aligned",
-            ".>| bottom aligned",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,1,1\"]",
+                "|===",
+                "| Top | Middle | Bottom",
+                "",
+                ".<| top aligned",
+                ".^| middle aligned",
+                ".>| bottom aligned",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,1,1")
 
@@ -186,14 +192,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses a| asciidoc style cell`() {
-        val lines = listOf(
-            "|===",
-            "| Normal | AsciiDoc",
-            "",
-            "| plain text",
-            "a| **bold** and `code`",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Normal | AsciiDoc",
+                "",
+                "| plain text",
+                "a| **bold** and `code`",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -205,14 +212,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses h| header style cell`() {
-        val lines = listOf(
-            "|===",
-            "| Normal | Header",
-            "",
-            "| plain text",
-            "h| header style",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Normal | Header",
+                "",
+                "| plain text",
+                "h| header style",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -222,14 +230,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses col spec with alignment`() {
-        val lines = listOf(
-            "[cols=\"<,^,>\"]",
-            "|===",
-            "| Left | Center | Right",
-            "",
-            "| a | b | c",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"<,^,>\"]",
+                "|===",
+                "| Left | Center | Right",
+                "",
+                "| a | b | c",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "<,^,>")
 
@@ -241,14 +250,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses col spec with width and alignment`() {
-        val lines = listOf(
-            "[cols=\"<1,^2,>3\"]",
-            "|===",
-            "| A | B | C",
-            "",
-            "| x | y | z",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"<1,^2,>3\"]",
+                "|===",
+                "| A | B | C",
+                "",
+                "| x | y | z",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "<1,^2,>3")
 
@@ -262,14 +272,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses col spec with vertical alignment`() {
-        val lines = listOf(
-            "[cols=\".<,.^,.>\"]",
-            "|===",
-            "| Top | Middle | Bottom",
-            "",
-            "| a | b | c",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\".<,.^,.>\"]",
+                "|===",
+                "| Top | Middle | Bottom",
+                "",
+                "| a | b | c",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, ".<,.^,.>")
 
@@ -280,15 +291,16 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `round-trip parse toAsciiDoc parse is stable`() {
-        val originalLines = listOf(
-            "[cols=\"1,3\"]",
-            "|===",
-            "| Option | Description",
-            "",
-            "| `-c`, `--clean`",
-            "| Nettoyer le repertoire",
-            "|===",
-        )
+        val originalLines =
+            listOf(
+                "[cols=\"1,3\"]",
+                "|===",
+                "| Option | Description",
+                "",
+                "| `-c`, `--clean`",
+                "| Nettoyer le repertoire",
+                "|===",
+            )
 
         val (table1, _) = parser.parseTableStructured(originalLines, 0, "1,3")
         val adoc = table1.toAsciiDoc()
@@ -309,15 +321,16 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses multi-line cell content`() {
-        val lines = listOf(
-            "|===",
-            "| Cell 1 | Cell 2",
-            "",
-            "| Single line",
-            "| Line one",
-            "Line two",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Cell 1 | Cell 2",
+                "",
+                "| Single line",
+                "| Line one",
+                "Line two",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -327,10 +340,11 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses empty table`() {
-        val lines = listOf(
-            "|===",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -341,14 +355,15 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses table with bold and link in cells`() {
-        val lines = listOf(
-            "|===",
-            "| Feature | Link",
-            "",
-            "| **important** feature",
-            "| link:https://example.com[docs]",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "|===",
+                "| Feature | Link",
+                "",
+                "| **important** feature",
+                "| link:https://example.com[docs]",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, null)
 
@@ -361,21 +376,22 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses table with multiple body rows`() {
-        val lines = listOf(
-            "[cols=\"1,3\"]",
-            "|===",
-            "| Option | Description",
-            "",
-            "| `-c`",
-            "| Clean",
-            "",
-            "| `-v`",
-            "| Verbose",
-            "",
-            "| `-h`",
-            "| Help",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,3\"]",
+                "|===",
+                "| Option | Description",
+                "",
+                "| `-c`",
+                "| Clean",
+                "",
+                "| `-v`",
+                "| Verbose",
+                "",
+                "| `-h`",
+                "| Help",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,3")
 
@@ -388,17 +404,18 @@ class AsciiDocParserTableTest {
 
     @Test
     fun `parses table with col span and row span combined`() {
-        val lines = listOf(
-            "[cols=\"1,1,1\"]",
-            "|===",
-            "| A | B | C",
-            "",
-            "2.2+| spans 2 cols 2 rows",
-            "| C1",
-            "",
-            "| C2",
-            "|===",
-        )
+        val lines =
+            listOf(
+                "[cols=\"1,1,1\"]",
+                "|===",
+                "| A | B | C",
+                "",
+                "2.2+| spans 2 cols 2 rows",
+                "| C1",
+                "",
+                "| C2",
+                "|===",
+            )
 
         val (table, _) = parser.parseTableStructured(lines, 0, "1,1,1")
 

@@ -32,11 +32,12 @@ data class DocumentRetrieveResult(
     val count: Int = entries.size,
     val releaseNotes: List<ReleaseNotesArtifactEntry> = emptyList(),
     val releaseNotesCount: Int = releaseNotes.size,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 ) {
     companion object {
-        private val mapper: ObjectMapper = ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT)
+        private val mapper: ObjectMapper =
+            ObjectMapper()
+                .enable(SerializationFeature.INDENT_OUTPUT)
     }
 
     /**
@@ -46,14 +47,15 @@ data class DocumentRetrieveResult(
      * runner-gradle reads the `entries` array key and the `releaseNotes` array
      * (DOC-8.3).
      */
-    fun toMap(): Map<String, Any> = mapOf(
-        "source" to source,
-        "entries" to entries.map { it.toMap() },
-        "count" to count,
-        "releaseNotes" to releaseNotes.map { it.toMap() },
-        "releaseNotesCount" to releaseNotesCount,
-        "timestamp" to timestamp
-    )
+    fun toMap(): Map<String, Any> =
+        mapOf(
+            "source" to source,
+            "entries" to entries.map { it.toMap() },
+            "count" to count,
+            "releaseNotes" to releaseNotes.map { it.toMap() },
+            "releaseNotesCount" to releaseNotesCount,
+            "timestamp" to timestamp,
+        )
 
     /**
      * Writes this result as a pretty-printed `composite-context.json`

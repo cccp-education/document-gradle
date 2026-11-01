@@ -25,7 +25,6 @@ import kotlin.test.assertTrue
  * prefix (anti-glue-collision pattern).
  */
 class BookMatterSteps {
-
     private var sections: List<BookSection> = emptyList()
     private var policy: MatterPolicy? = null
     private var validation: BookValidationResult? = null
@@ -35,9 +34,10 @@ class BookMatterSteps {
     fun `book-matter a TOC with refs`(refsText: String) {
         val refs = Regex("\"([^\"]+)\"").findAll(refsText).map { it.groupValues[1] }.toList()
         require(refs.isNotEmpty()) { "at least one ref must be given, got: '$refsText'" }
-        sections = refs.mapIndexed { index, ref ->
-            BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
-        }
+        sections =
+            refs.mapIndexed { index, ref ->
+                BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
+            }
     }
 
     @Given("book-matter OCR pages for every referenced section")
@@ -155,19 +155,21 @@ class BookMatterSteps {
 
     private fun assemble(emitMatterBreaks: Boolean): String {
         val tree = BookTreeBuilder.fromSections(sections)
-        val layout = BookLayout(
-            emitMatterBreaks = emitMatterBreaks,
-            // isolate the matter-transition behaviour: the level-based page
-            // break would otherwise fire at the same boundaries.
-            pageBreakBetweenNodes = false,
-            matterPolicy = MatterPolicy.derive(sections),
-        )
-        return BookAssembler.assemble(
-            tree = tree,
-            layout = layout,
-            title = "Matter Book",
-            author = "Cheroliv",
-            resolveContent = { section -> "Body of ${section.ref}" },
-        ).content
+        val layout =
+            BookLayout(
+                emitMatterBreaks = emitMatterBreaks,
+                // isolate the matter-transition behaviour: the level-based page
+                // break would otherwise fire at the same boundaries.
+                pageBreakBetweenNodes = false,
+                matterPolicy = MatterPolicy.derive(sections),
+            )
+        return BookAssembler
+            .assemble(
+                tree = tree,
+                layout = layout,
+                title = "Matter Book",
+                author = "Cheroliv",
+                resolveContent = { section -> "Body of ${section.ref}" },
+            ).content
     }
 }

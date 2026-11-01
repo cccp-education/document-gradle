@@ -22,12 +22,20 @@ class SemanticSchemaDsl(
     private val columns = mutableListOf<SemanticColumnSpec>()
 
     /** Declares a column addressed by its zero-based [index]. */
-    fun column(index: Int, role: String, required: Boolean = false) {
+    fun column(
+        index: Int,
+        role: String,
+        required: Boolean = false,
+    ) {
         columns += SemanticColumnSpec.byIndex(index, role, required)
     }
 
     /** Declares a column addressed by its [header] text (case-insensitive). */
-    fun column(header: String, role: String, required: Boolean = false) {
+    fun column(
+        header: String,
+        role: String,
+        required: Boolean = false,
+    ) {
         columns += SemanticColumnSpec.byHeader(header, role, required)
     }
 
@@ -63,7 +71,10 @@ class SemanticDsl(
      * [schemas] ; the annotation `[.semantic-<name>]` in the source selects it
      * (decision D3).
      */
-    fun schema(name: String, action: Action<SemanticSchemaDsl>) {
+    fun schema(
+        name: String,
+        action: Action<SemanticSchemaDsl>,
+    ) {
         val builder = SemanticSchemaDsl(name)
         action.execute(builder)
         schemas.add(builder.build())

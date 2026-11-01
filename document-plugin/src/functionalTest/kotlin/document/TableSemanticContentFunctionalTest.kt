@@ -21,15 +21,14 @@ import java.security.MessageDigest
  * self-skips (`assumeTrue`) when the corpus is absent (isolated CI checkout).
  */
 class TableSemanticContentFunctionalTest {
-
     companion object {
-        private val CONTENT_PAGE = File(
-            "/home/cheroliv/workspace/office/metiers/FPA/" +
-                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans/110.adoc",
-        )
+        private val CONTENT_PAGE =
+            File(
+                "/home/cheroliv/workspace/office/metiers/FPA/" +
+                    "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans/110.adoc",
+            )
 
-        private fun sha256(file: File): String =
-            MessageDigest.getInstance("SHA-256").digest(file.readBytes()).joinToString("") { "%02x".format(it) }
+        private fun sha256(file: File): String = MessageDigest.getInstance("SHA-256").digest(file.readBytes()).joinToString("") { "%02x".format(it) }
     }
 
     @TempDir
@@ -43,8 +42,10 @@ class TableSemanticContentFunctionalTest {
 
         // Rule 7 — never mutate the private source: work on a copy in the
         // throw-away project and opt the first real table in with the annotation.
-        val annotated = CONTENT_PAGE.readText()
-            .replaceFirst("|===", "[.semantic-perte,options=\"header\"]\n|===")
+        val annotated =
+            CONTENT_PAGE
+                .readText()
+                .replaceFirst("|===", "[.semantic-perte,options=\"header\"]\n|===")
 
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-table-semantic-content\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
@@ -69,7 +70,8 @@ class TableSemanticContentFunctionalTest {
         )
         projectDir.resolve("doc.adoc").writeText(annotated)
 
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("collectTableSemantics")
             .withPluginClasspath()

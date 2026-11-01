@@ -26,30 +26,34 @@ import java.util.zip.ZipFile
  * compatible.
  */
 class BookImagesFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
     /** A valid 1×1 PNG so Asciidoctor can actually embed it in the EPUB. */
     private fun writePng(file: File) {
-        val bytes = java.util.Base64.getDecoder().decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        )
+        val bytes =
+            java.util.Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            )
         file.parentFile.mkdirs()
         file.writeBytes(bytes)
     }
 
-    private fun writeProject(photosConfigured: Boolean, photosSeparate: Boolean = false) {
+    private fun writeProject(
+        photosConfigured: Boolean,
+        photosSeparate: Boolean = false,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-images\"\n")
-        val photosLine = if (photosConfigured) {
-            if (photosSeparate) {
-                "photosDir.set(layout.projectDirectory.dir(\"photos\"))"
+        val photosLine =
+            if (photosConfigured) {
+                if (photosSeparate) {
+                    "photosDir.set(layout.projectDirectory.dir(\"photos\"))"
+                } else {
+                    "photosDir.set(layout.projectDirectory.dir(\"pages\"))"
+                }
             } else {
-                "photosDir.set(layout.projectDirectory.dir(\"pages\"))"
+                ""
             }
-        } else {
-            ""
-        }
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -77,11 +81,13 @@ class BookImagesFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     @Test
     fun `assembleBook illustrates each page with its scan and emits imagesdir when photos are configured`() {

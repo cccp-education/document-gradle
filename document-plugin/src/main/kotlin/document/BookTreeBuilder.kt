@@ -20,7 +20,6 @@ package document
  * always yield the same tree, and no file is read or mutated.
  */
 object BookTreeBuilder {
-
     private val REF_PATTERN = Regex("""^\d+(\.\d+)*$""")
 
     /**
@@ -65,8 +64,11 @@ object BookTreeBuilder {
         for (ref in skeleton.keys) childrenByParent[ref] = mutableListOf()
         for (ref in skeleton.keys) {
             val parent = parentRefOf(ref)
-            if (parent == null) childrenByParent[""]!!.add(ref)
-            else childrenByParent[parent]!!.add(ref)
+            if (parent == null) {
+                childrenByParent[""]!!.add(ref)
+            } else {
+                childrenByParent[parent]!!.add(ref)
+            }
         }
         for (list in childrenByParent.values) list.sort()
 
@@ -81,6 +83,7 @@ object BookTreeBuilder {
 
         // 6. index every node (real + synthetic) by ref
         val index = LinkedHashMap<String, BookNode>()
+
         fun collect(node: BookNode) {
             index[node.ref] = node
             node.children.forEach { collect(it) }

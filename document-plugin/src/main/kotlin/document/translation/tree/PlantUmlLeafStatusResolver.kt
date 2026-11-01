@@ -3,9 +3,9 @@ package document.translation.tree
 import contracts.plantuml.PlantUmlBlock
 import contracts.plantuml.PlantUmlClassifier
 import contracts.plantuml.PlantUmlStrategy
-import contracts.plantuml.PlantUmlSyntaxValidator as N0PlantUmlSyntaxValidator
 import contracts.plantuml.SyntaxValidationResult
 import document.translation.PivotBlock
+import contracts.plantuml.PlantUmlSyntaxValidator as N0PlantUmlSyntaxValidator
 
 /**
  * GBL-010 G-2b — derives a PlantUML leaf status from the N0 plantuml contracts.

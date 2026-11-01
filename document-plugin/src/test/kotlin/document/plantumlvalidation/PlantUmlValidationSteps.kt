@@ -16,7 +16,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PlantUmlValidationSteps {
-
     private var translationService: FakeTranslationService = FakeTranslationService(" [EN]")
     private var translator: DocumentTranslator? = null
     private var plantUmlValidationMode: ValidationMode = ValidationMode.LENIENT
@@ -40,11 +39,12 @@ class PlantUmlValidationSteps {
     }
 
     private fun buildTranslator(): DocumentTranslator {
-        val validator = if (useAlwaysInvalidValidator) {
-            alwaysInvalidValidator()
-        } else {
-            PlantUmlSyntaxValidator.create()
-        }
+        val validator =
+            if (useAlwaysInvalidValidator) {
+                alwaysInvalidValidator()
+            } else {
+                PlantUmlSyntaxValidator.create()
+            }
         return DocumentTranslator(
             translationService = translationService,
             plantUmlPort = FakePlantUmlPort(translationService),
@@ -53,19 +53,21 @@ class PlantUmlValidationSteps {
         )
     }
 
-    private fun alwaysInvalidValidator(): PlantUmlSyntaxValidator = object : PlantUmlSyntaxValidator {
-        override fun validate(
-            plantumlCode: String,
-            articleTitle: String,
-            blockIndex: Int,
-            strategy: String,
-        ): PlantUmlValidationResult = PlantUmlValidationResult.Invalid(
-            articleTitle = articleTitle,
-            blockIndex = blockIndex,
-            strategy = strategy,
-            reason = "Simulated corruption: unmatched quotes in label",
-        )
-    }
+    private fun alwaysInvalidValidator(): PlantUmlSyntaxValidator =
+        object : PlantUmlSyntaxValidator {
+            override fun validate(
+                plantumlCode: String,
+                articleTitle: String,
+                blockIndex: Int,
+                strategy: String,
+            ): PlantUmlValidationResult =
+                PlantUmlValidationResult.Invalid(
+                    articleTitle = articleTitle,
+                    blockIndex = blockIndex,
+                    strategy = strategy,
+                    reason = "Simulated corruption: unmatched quotes in label",
+                )
+        }
 
     @Given("an AsciiDoc article with a valid PlantUML diagram")
     fun `an asciidoc article with a valid plantuml diagram`() {
@@ -129,7 +131,10 @@ User --> Service
     }
 
     @When("I translate the article with plantUML from {string} to {string}")
-    fun `i translate the article with plantuml from source to target`(sourceLang: String, targetLang: String) {
+    fun `i translate the article with plantuml from source to target`(
+        sourceLang: String,
+        targetLang: String,
+    ) {
         thrownException = null
         translatedOutput = null
         try {

@@ -2,14 +2,13 @@ package document
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentPluginFunctionalTest {
-
     private fun newTempDir(): File = Files.createTempDirectory("doc-ft").toFile()
 
     @Test
@@ -17,22 +16,25 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
-        val expectedTasks = listOf(
-            "generateDocument",
-            "enrichDocument",
-            "convertDocumentToHtml",
-            "convertDocumentToPdf",
-            "convertDocumentToEpub",
-            "convertDocumentToDocBook",
-            "convertDocumentToManPage",
-            "collectDocumentRetrieve",
-        )
+        val expectedTasks =
+            listOf(
+                "generateDocument",
+                "enrichDocument",
+                "convertDocumentToHtml",
+                "convertDocumentToPdf",
+                "convertDocumentToEpub",
+                "convertDocumentToDocBook",
+                "convertDocumentToManPage",
+                "collectDocumentRetrieve",
+            )
         expectedTasks.forEach { taskName ->
             assertTrue(result.output.contains(taskName), "la tache '$taskName' doit etre listee")
         }
@@ -44,11 +46,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProjectWithDsl(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("document"))
         assertEquals(TaskOutcome.SUCCESS, result.task(":tasks")?.outcome)
@@ -59,11 +63,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("help", "--task", "generateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("help", "--task", "generateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("generateDocument"))
     }
@@ -74,11 +80,13 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu du livre.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document.adoc")
@@ -92,11 +100,13 @@ class DocumentPluginFunctionalTest {
         setupTestProject(projectDir)
         File(projectDir, "livre-cli.adoc").writeText("= Livre CLI\n\nContenu depuis CLI.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument", "-Pdocument.source=livre-cli.adoc")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument", "-Pdocument.source=livre-cli.adoc")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document.adoc")
@@ -119,14 +129,16 @@ class DocumentPluginFunctionalTest {
                 prompt.set("Genere une introduction pour un plugin Gradle documentaire.")
                 systemPrompt.set("Tu es un redacteur technique expert.")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document.adoc")
@@ -150,24 +162,28 @@ class DocumentPluginFunctionalTest {
                 llmMode.set("fake")
                 prompt.set("Genere une introduction.")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val firstResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument")
-            .withPluginClasspath()
-            .build()
+        val firstResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":generateDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document.adoc")
         assertTrue(output.exists())
         val firstContent = output.readText()
 
-        val secondResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument")
-            .withPluginClasspath()
-            .build()
+        val secondResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":generateDocument")?.outcome)
         assertEquals(firstContent, output.readText(), "le contenu ne doit pas changer apres skip")
     }
@@ -178,11 +194,13 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu du livre.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document.adoc")
@@ -201,14 +219,16 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Ceci est un paragraphe de test.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
         val output = File(projectDir, "build/docs/document/document.html")
@@ -224,21 +244,25 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu.")
 
-        val firstResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val firstResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":convertDocumentToHtml")?.outcome)
         val output = File(projectDir, "build/docs/document/document.html")
         assertTrue(output.exists())
         val firstContent = output.readText()
 
-        val secondResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val secondResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":convertDocumentToHtml")?.outcome)
         assertEquals(firstContent, output.readText(), "le contenu ne doit pas changer apres skip")
     }
@@ -254,14 +278,16 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers PDF.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
         val output = File(projectDir, "build/docs/document/document.pdf")
@@ -278,21 +304,25 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu.")
 
-        val firstResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf")
-            .withPluginClasspath()
-            .build()
+        val firstResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":convertDocumentToPdf")?.outcome)
         val output = File(projectDir, "build/docs/document/document.pdf")
         assertTrue(output.exists())
         val firstSize = output.length()
 
-        val secondResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf")
-            .withPluginClasspath()
-            .build()
+        val secondResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":convertDocumentToPdf")?.outcome)
         assertEquals(firstSize, output.length(), "le PDF ne doit pas changer apres skip")
     }
@@ -308,14 +338,16 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers EPUB3.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -332,21 +364,25 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         File(projectDir, "mon-livre.adoc").writeText("= Mon Livre\n\nContenu.")
 
-        val firstResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val firstResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
         assertTrue(output.exists())
         val firstSize = output.length()
 
-        val secondResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val secondResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":convertDocumentToEpub")?.outcome)
         assertEquals(firstSize, output.length(), "l'EPUB ne doit pas changer apres skip")
     }
@@ -362,14 +398,16 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers DocBook 5.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToDocBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToDocBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToDocBook")?.outcome)
         val output = File(projectDir, "build/docs/document/document.xml")
@@ -378,7 +416,7 @@ class DocumentPluginFunctionalTest {
         assertTrue(content.contains("xmlns", ignoreCase = true), "le DocBook doit contenir un namespace XML")
         assertTrue(
             content.contains("<book", ignoreCase = true) || content.contains("<article", ignoreCase = true),
-            "le DocBook doit contenir une racine <book> ou <article>"
+            "le DocBook doit contenir une racine <book> ou <article>",
         )
     }
 
@@ -395,7 +433,7 @@ class DocumentPluginFunctionalTest {
             document {
                 source.set(file("man.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("man.adoc").writeText(
             """
@@ -420,14 +458,16 @@ class DocumentPluginFunctionalTest {
 
             *-h, --help*::
             Print help message.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToManPage")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToManPage")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToManPage")?.outcome)
         val output = File(projectDir, "build/docs/document/document.man")
@@ -435,7 +475,7 @@ class DocumentPluginFunctionalTest {
         val content = output.readText()
         assertTrue(
             content.contains(".TH") || content.contains(".SH") || content.contains(".ds"),
-            "le manpage doit contenir des directives troff"
+            "le manpage doit contenir des directives troff",
         )
     }
 
@@ -461,14 +501,16 @@ class DocumentPluginFunctionalTest {
                 println("hello")
             }
             ----
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToDocBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToDocBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToDocBook")?.outcome)
         val output = File(projectDir, "build/docs/document/document.xml")
@@ -476,11 +518,11 @@ class DocumentPluginFunctionalTest {
         val content = output.readText()
         assertTrue(
             content.contains("<table", ignoreCase = true) || content.contains("<informaltable", ignoreCase = true),
-            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau"
+            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau",
         )
         assertTrue(
             content.contains("<programlisting", ignoreCase = true),
-            "le DocBook doit contenir un element <programlisting> pour le bloc de code source"
+            "le DocBook doit contenir un element <programlisting> pour le bloc de code source",
         )
         assertTrue(content.contains("fun main"), "le DocBook doit preserver le contenu du bloc de code")
     }
@@ -498,7 +540,7 @@ class DocumentPluginFunctionalTest {
             document {
                 source.set(file("man.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("man.adoc").writeText(
             """
@@ -522,14 +564,16 @@ class DocumentPluginFunctionalTest {
 
             *--pdf*::
             Generate PDF output.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToManPage")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToManPage")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToManPage")?.outcome)
         val output = File(projectDir, "build/docs/document/document.man")
@@ -538,7 +582,7 @@ class DocumentPluginFunctionalTest {
         assertTrue(content.contains("SYNOPSIS"), "le manpage doit contenir la section SYNOPSIS")
         assertTrue(
             content.contains(".B ") || content.contains("\\fB"),
-            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees"
+            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees",
         )
     }
 
@@ -557,7 +601,7 @@ class DocumentPluginFunctionalTest {
                 enrichPlantUml.set(true)
                 enrichPassthrough.set(true)
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("chapter.adoc").writeText("== Included Chapter\n\nText of the included chapter.")
         projectDir.resolve("source.adoc").writeText(
@@ -578,14 +622,16 @@ class DocumentPluginFunctionalTest {
             ++++
             <iframe src="https://example.com"></iframe>
             ++++
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("enrichDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("enrichDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":enrichDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document-enriched.adoc")
@@ -609,25 +655,29 @@ class DocumentPluginFunctionalTest {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("source.adoc").writeText("= Document to Enrich\n\nContent.")
 
-        val firstResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("enrichDocument")
-            .withPluginClasspath()
-            .build()
+        val firstResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("enrichDocument")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":enrichDocument")?.outcome)
         val output = File(projectDir, "build/docs/document/document-enriched.adoc")
         assertTrue(output.exists())
         val firstContent = output.readText()
 
-        val secondResult = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("enrichDocument")
-            .withPluginClasspath()
-            .build()
+        val secondResult =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("enrichDocument")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":enrichDocument")?.outcome)
         assertEquals(firstContent, output.readText(), "the enriched content must not change after skip")
     }
@@ -648,7 +698,7 @@ class DocumentPluginFunctionalTest {
                     htmlStylesheet.set(file("talaria.css"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("source.adoc").writeText(
             """
@@ -657,15 +707,17 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Content with custom theme.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("talaria.css").writeText("body { font-family: serif; color: #333; }")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
         val output = File(projectDir, "build/docs/document/document.html")
@@ -690,7 +742,7 @@ class DocumentPluginFunctionalTest {
                     pdfTheme.set(file("talaria-theme.yml"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("source.adoc").writeText(
             """
@@ -699,21 +751,23 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Content with custom PDF theme.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("talaria-theme.yml").writeText(
             """
             extends: default
             page:
               size: A4
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
         val output = File(projectDir, "build/docs/document/document.pdf")
@@ -735,14 +789,16 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Content without custom theme.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
         val output = File(projectDir, "build/docs/document/document.html")
@@ -762,20 +818,23 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Contenu pour le test N3 retrieve.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml")
             .withPluginClasspath()
             .build()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataFile = File(projectDir, "build/docs/document/metadata.json")
@@ -801,11 +860,13 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         projectDir.resolve("mon-livre.adoc").writeText("= Empty Pipeline\n\nNo conversions run.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
@@ -827,7 +888,7 @@ class DocumentPluginFunctionalTest {
             == Introduction
 
             Contenu pour le test N3 retrieve.
-            """.trimIndent()
+            """.trimIndent(),
         )
         // A composite validation report emitted by a previous `validateDocument` run (PASS).
         val reportFile = File(projectDir, "build/docs/document/document-validation-report.json")
@@ -838,14 +899,16 @@ class DocumentPluginFunctionalTest {
               "includeGuard" : { "status" : "OFF" },
               "security" : { "advice" : "VALID" }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataContent = reportFile.parentFile.resolve("metadata.json").readText()
@@ -861,11 +924,13 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         projectDir.resolve("mon-livre.adoc").writeText("= Empty Pipeline\n\nNo conversions run.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataFile = File(projectDir, "build/docs/document/metadata.json")
@@ -888,14 +953,16 @@ class DocumentPluginFunctionalTest {
               "includeGuard" : { "status" : "INVALID", "reason" : "traversal", "offendingTarget" : "/etc/passwd", "line" : 1 },
               "security" : { "advice" : "VALID" }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataContent = reportFile.parentFile.resolve("metadata.json").readText()
@@ -959,14 +1026,16 @@ class DocumentPluginFunctionalTest {
                     }
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("generatePomFileForPluginMavenPublication")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("generatePomFileForPluginMavenPublication")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generatePomFileForPluginMavenPublication")?.outcome)
         val pomFile = File(projectDir, "build/publications/pluginMaven/pom-default.xml")
@@ -993,17 +1062,19 @@ class DocumentPluginFunctionalTest {
                 bookTitle.set("Test Book")
                 bookAuthor.set("Test Author")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page content.")
         pagesDir.resolve("002-page.adoc").writeText("== Chapter 2\n\nSecond page content.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         val output = File(projectDir, "build/docs/document/book.adoc")
@@ -1034,18 +1105,20 @@ class DocumentPluginFunctionalTest {
                 bookTitle.set("Photo Book")
                 bookAuthor.set("Author")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page.")
         val photosDir = projectDir.resolve("photos").apply { mkdirs() }
         photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         val output = File(projectDir, "build/docs/document/book.adoc")
@@ -1059,11 +1132,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("assembleBook"), "assembleBook task must be registered")
         assertTrue(result.output.contains("bookPipeline"), "bookPipeline task must be registered")
@@ -1088,7 +1163,7 @@ class DocumentPluginFunctionalTest {
                     author.set("Runner N3")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page for runner-gradle.")
@@ -1097,11 +1172,13 @@ class DocumentPluginFunctionalTest {
         photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
         photosDir.resolve("002-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("bookPipeline")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("bookPipeline")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
@@ -1144,7 +1221,7 @@ class DocumentPluginFunctionalTest {
                     author.set("DSL Author")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst DSL page.")
@@ -1152,11 +1229,13 @@ class DocumentPluginFunctionalTest {
         val photosDir = projectDir.resolve("photos").apply { mkdirs() }
         photosDir.resolve("001-page.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         val output = File(projectDir, "build/docs/document/book.adoc")
@@ -1184,16 +1263,18 @@ class DocumentPluginFunctionalTest {
                     pagesDir.set(file("pages"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nOnly page.")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         val output = File(projectDir, "build/docs/document/book.adoc")
@@ -1216,15 +1297,17 @@ class DocumentPluginFunctionalTest {
             image::photo.png[Photo descriptive]
 
             Paragraphe suivant.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToHtml")?.outcome)
         val output = File(projectDir, "build/docs/document/document.html")
@@ -1247,15 +1330,17 @@ class DocumentPluginFunctionalTest {
             image::photo.png[Photo descriptive]
 
             Paragraphe suivant.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToPdf")?.outcome)
         val output = File(projectDir, "build/docs/document/document.pdf")
@@ -1279,15 +1364,17 @@ class DocumentPluginFunctionalTest {
             image::photo.png[Photo descriptive]
 
             Paragraphe suivant.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1296,12 +1383,13 @@ class DocumentPluginFunctionalTest {
         val bytes = output.readBytes()
         val header = String(bytes.copyOfRange(0, minOf(4, bytes.size)))
         assertTrue(header.startsWith("PK"), "the file must start with the zip signature PK")
-        val entries = java.util.zip.ZipFile(output).use { zf ->
-            zf.entries().toList().map { it.name }
-        }
+        val entries =
+            java.util.zip.ZipFile(output).use { zf ->
+                zf.entries().toList().map { it.name }
+            }
         assertTrue(
             entries.any { it.contains("photo.png") },
-            "the EPUB must embed the image referenced by image:: as a zip entry (entries: $entries)"
+            "the EPUB must embed the image referenced by image:: as a zip entry (entries: $entries)",
         )
     }
 
@@ -1320,14 +1408,16 @@ class DocumentPluginFunctionalTest {
 
             | Ligne 1A | Ligne 1B
             |===
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1335,7 +1425,7 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<table", ignoreCase = true),
-            "the EPUB XHTML must contain a <table> element for the AsciiDoc table"
+            "the EPUB XHTML must contain a <table> element for the AsciiDoc table",
         )
         assertTrue(xhtml.contains("Colonne A"), "the EPUB XHTML must preserve the table header")
     }
@@ -1356,14 +1446,16 @@ class DocumentPluginFunctionalTest {
                 println("hello")
             }
             ----
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1371,11 +1463,11 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<pre", ignoreCase = true),
-            "the EPUB XHTML must contain a <pre> element for the code block"
+            "the EPUB XHTML must contain a <pre> element for the code block",
         )
         assertTrue(
             xhtml.contains("<code", ignoreCase = true),
-            "the EPUB XHTML must contain a <code> element for the code block"
+            "the EPUB XHTML must contain a <code> element for the code block",
         )
         assertTrue(xhtml.contains("fun main"), "the EPUB XHTML must preserve the code content")
     }
@@ -1399,14 +1491,16 @@ class DocumentPluginFunctionalTest {
 
             . Premier
             . Deuxieme
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1414,23 +1508,24 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<ul", ignoreCase = true),
-            "the EPUB XHTML must contain a <ul> element for the unordered list"
+            "the EPUB XHTML must contain a <ul> element for the unordered list",
         )
         assertTrue(
             xhtml.contains("<ol", ignoreCase = true),
-            "the EPUB XHTML must contain a <ol> element for the ordered list"
+            "the EPUB XHTML must contain a <ol> element for the ordered list",
         )
         assertTrue(xhtml.contains("Element un"), "the EPUB XHTML must preserve the unordered list content")
         assertTrue(xhtml.contains("Premier"), "the EPUB XHTML must preserve the ordered list content")
     }
 
-    private fun extractEpubXhtml(epub: File): String {
-        return java.util.zip.ZipFile(epub).use { zf ->
-            zf.entries().toList()
+    private fun extractEpubXhtml(epub: File): String =
+        java.util.zip.ZipFile(epub).use { zf ->
+            zf
+                .entries()
+                .toList()
                 .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
                 .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
         }
-    }
 
     @Test
     fun `convertDocumentToEpub renders AsciiDoc admonitions into XHTML aside elements`() {
@@ -1447,14 +1542,16 @@ class DocumentPluginFunctionalTest {
             TIP: Ceci est une astuce.
 
             WARNING: Ceci est un avertissement.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1462,15 +1559,15 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("admonition note", ignoreCase = true),
-            "the EPUB XHTML must contain an admonition note aside for NOTE"
+            "the EPUB XHTML must contain an admonition note aside for NOTE",
         )
         assertTrue(
             xhtml.contains("admonition tip", ignoreCase = true),
-            "the EPUB XHTML must contain an admonition tip aside for TIP"
+            "the EPUB XHTML must contain an admonition tip aside for TIP",
         )
         assertTrue(
             xhtml.contains("admonition warning", ignoreCase = true),
-            "the EPUB XHTML must contain an admonition warning aside for WARNING"
+            "the EPUB XHTML must contain an admonition warning aside for WARNING",
         )
         assertTrue(xhtml.contains("Ceci est une note importante"), "the EPUB XHTML must preserve the note content")
     }
@@ -1487,14 +1584,16 @@ class DocumentPluginFunctionalTest {
 
             [sidebar]
             Contenu du sidebar dans un bloc.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1502,7 +1601,7 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("sidebar", ignoreCase = true),
-            "the EPUB XHTML must contain a sidebar aside for the [sidebar] block"
+            "the EPUB XHTML must contain a sidebar aside for the [sidebar] block",
         )
         assertTrue(xhtml.contains("Contenu du sidebar"), "the EPUB XHTML must preserve the sidebar content")
     }
@@ -1521,14 +1620,16 @@ class DocumentPluginFunctionalTest {
             .References
             * [[[ref1]]] Author, *Title*, 2026.
             * [[[ref2]]] Author2, *Title2*, 2026.
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToEpub")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToEpub")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":convertDocumentToEpub")?.outcome)
         val output = File(projectDir, "build/docs/document/document.epub")
@@ -1536,7 +1637,7 @@ class DocumentPluginFunctionalTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("bibliography", ignoreCase = true),
-            "the EPUB XHTML must contain a bibliography element for the [bibliography] block"
+            "the EPUB XHTML must contain a bibliography element for the [bibliography] block",
         )
         assertTrue(xhtml.contains("Author"), "the EPUB XHTML must preserve the reference content")
         assertTrue(xhtml.contains("ref1"), "the EPUB XHTML must preserve the reference id")
@@ -1561,17 +1662,19 @@ class DocumentPluginFunctionalTest {
                     author.set("Auteur")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
         projectDir.resolve("pages").mkdirs()
         projectDir.resolve("photos").mkdirs()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":serializeDocumentConfig")?.outcome)
         val config = File(projectDir, "build/docs/document/document-config.json")
@@ -1590,11 +1693,13 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         projectDir.resolve("mon-livre.adoc").writeText("= Livre\n\nContenu.\n")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":serializeDocumentConfig")?.outcome)
         val config = File(projectDir, "build/docs/document/document-config.json")
@@ -1637,17 +1742,19 @@ class DocumentPluginFunctionalTest {
                     author.set("Auteur")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
         projectDir.resolve("pages").mkdirs()
         projectDir.resolve("photos").mkdirs()
 
-        val first = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val first =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, first.task(":serializeDocumentConfig")?.outcome)
         val configFile = File(projectDir, "build/docs/document/document-config.json")
         assertTrue(configFile.exists(), "document-config.json must be generated on first run")
@@ -1655,11 +1762,13 @@ class DocumentPluginFunctionalTest {
 
         // Wipe output and re-run — the produced JSON must be byte-identical
         configFile.delete()
-        val second = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val second =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, second.task(":serializeDocumentConfig")?.outcome)
         val secondJson = configFile.readText()
 
@@ -1694,27 +1803,31 @@ class DocumentPluginFunctionalTest {
                     language.set("fr")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
 
         // First, serialise the config
-        val serialize = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val serialize =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, serialize.task(":serializeDocumentConfig")?.outcome)
         val sourceConfig = File(projectDir, "build/docs/document/document-config.json")
         assertTrue(sourceConfig.exists(), "document-config.json must be generated by serializeDocumentConfig")
         val sourceJson = sourceConfig.readText()
 
         // Then, deserialize and re-serialise it (round-trip)
-        val deserialize = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("deserializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val deserialize =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("deserializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, deserialize.task(":deserializeDocumentConfig")?.outcome)
         val roundTrippedConfig = File(projectDir, "build/docs/document-roundtrip/document-config.roundtrip.json")
         assertTrue(roundTrippedConfig.exists(), "document-config.roundtrip.json must be generated by deserializeDocumentConfig")
@@ -1742,28 +1855,32 @@ class DocumentPluginFunctionalTest {
                     author.set("Auteur")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("livre.adoc").writeText("= Livre\n\nContenu.\n")
         projectDir.resolve("pages").mkdirs()
         projectDir.resolve("photos").mkdirs()
 
-        val serialize = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("serializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val serialize =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("serializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, serialize.task(":serializeDocumentConfig")?.outcome)
         val sourceConfig = File(projectDir, "build/docs/document/document-config.json")
         assertTrue(sourceConfig.exists(), "document-config.json must be generated")
         val sourceJson = sourceConfig.readText()
         assertTrue(sourceJson.contains("\"book\""), "the source config must contain a book block")
 
-        val deserialize = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("deserializeDocumentConfig")
-            .withPluginClasspath()
-            .build()
+        val deserialize =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("deserializeDocumentConfig")
+                .withPluginClasspath()
+                .build()
         assertEquals(TaskOutcome.SUCCESS, deserialize.task(":deserializeDocumentConfig")?.outcome)
         val roundTrippedConfig = File(projectDir, "build/docs/document-roundtrip/document-config.roundtrip.json")
         assertTrue(roundTrippedConfig.exists(), "document-config.roundtrip.json must be generated")
@@ -1780,37 +1897,39 @@ class DocumentPluginFunctionalTest {
         setupTestProjectWithDsl(projectDir)
         projectDir.resolve("mon-livre.adoc").writeText("= Livre\n\nContenu.\n")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("deserializeDocumentConfig")
-            .withPluginClasspath()
-            .buildAndFail()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("deserializeDocumentConfig")
+                .withPluginClasspath()
+                .buildAndFail()
 
         // The task must fail clearly when document-config.json does not exist —
         // either our explicit message or Gradle's input validation message.
         val output = result.output
         assertTrue(
             output.contains("document-config.json not found") || output.contains("document-config.json") && output.contains("does not exist"),
-            "the failure must mention the missing document-config.json file (output=$output)"
+            "the failure must mention the missing document-config.json file (output=$output)",
         )
     }
 
     private fun setupTestProject(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"test-document\"\n"
+            "rootProject.name = \"test-document\"\n",
         )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 
     private fun setupTestProjectWithDsl(projectDir: File) {
         projectDir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"test-document\"\n"
+            "rootProject.name = \"test-document\"\n",
         )
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -1821,7 +1940,7 @@ class DocumentPluginFunctionalTest {
             document {
                 source.set(file("mon-livre.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 
@@ -1845,14 +1964,16 @@ class DocumentPluginFunctionalTest {
                     outputFileName.set("my-doc")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("applyDocumentTemplate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("applyDocumentTemplate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":applyDocumentTemplate")?.outcome)
         val output = projectDir.resolve("build/docs/document/my-doc.adoc")
@@ -1880,14 +2001,16 @@ class DocumentPluginFunctionalTest {
                     variables.put("title", "Doc")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("applyDocumentTemplate")
-            .withPluginClasspath()
-            .buildAndFail()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("applyDocumentTemplate")
+                .withPluginClasspath()
+                .buildAndFail()
 
         assertTrue(result.output.contains("missing") || result.output.contains("Missing"), "must report missing variable")
     }
@@ -1910,14 +2033,16 @@ class DocumentPluginFunctionalTest {
                     failOnMissingVariable.set(false)
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("applyDocumentTemplate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("applyDocumentTemplate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":applyDocumentTemplate")?.outcome)
         val output = projectDir.resolve("build/docs/document/document.adoc")
@@ -1932,11 +2057,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("applyDocumentTemplate"), "applyDocumentTemplate must be listed")
     }
@@ -1960,14 +2087,16 @@ class DocumentPluginFunctionalTest {
                     formats.set(listOf("html", "pdf"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("batchConvertDocuments")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("batchConvertDocuments")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":batchConvertDocuments")?.outcome)
         val outDir = projectDir.resolve("build/docs/batch")
@@ -1982,11 +2111,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("batchConvertDocuments"), "batchConvertDocuments must be listed")
     }
@@ -1996,11 +2127,13 @@ class DocumentPluginFunctionalTest {
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("translateDocument"), "translateDocument must be listed")
     }
@@ -2011,7 +2144,8 @@ class DocumentPluginFunctionalTest {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-translate\"\n")
         val srcDir = projectDir.resolve("src/docs")
         srcDir.mkdirs()
-        srcDir.resolve("article.adoc").writeText("""title=Bonjour le monde
+        srcDir.resolve("article.adoc").writeText(
+            """title=Bonjour le monde
 date=2026-07-20
 type=page
 status=published
@@ -2024,7 +2158,8 @@ Ceci est un paragraphe en francais.
 == Conclusion
 
 Fin du document.
-""")
+""",
+        )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -2039,14 +2174,16 @@ Fin du document.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("translateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("translateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
         val output = projectDir.resolve("build/docs/document/document-en.adoc")
@@ -2063,7 +2200,8 @@ Fin du document.
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-translate-code\"\n")
         val srcDir = projectDir.resolve("src/docs")
         srcDir.mkdirs()
-        srcDir.resolve("article.adoc").writeText("""title=Code Example
+        srcDir.resolve("article.adoc").writeText(
+            """title=Code Example
 date=2026-07-20
 type=page
 status=published
@@ -2077,7 +2215,8 @@ public class Hello {}
 ----
 
 Some text after code.
-""")
+""",
+        )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -2092,14 +2231,16 @@ Some text after code.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("translateDocument")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("translateDocument")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
         val output = projectDir.resolve("build/docs/document/document-en.adoc")
@@ -2113,11 +2254,13 @@ Some text after code.
         val projectDir = newTempDir()
         setupTestProject(projectDir)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
 
         assertTrue(result.output.contains("translateDocumentBatch"), "translateDocumentBatch must be listed")
     }
@@ -2128,7 +2271,8 @@ Some text after code.
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-doc-batch-translate\"\n")
         val srcDir = projectDir.resolve("src/docs/blog")
         srcDir.mkdirs()
-        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+        srcDir.resolve("article1.adoc").writeText(
+            """title=Article Un
 date=2026-07-20
 type=page
 status=published
@@ -2137,8 +2281,10 @@ status=published
 == Introduction
 
 Texte un en francais.
-""")
-        srcDir.resolve("article2.adoc").writeText("""title=Article Deux
+""",
+        )
+        srcDir.resolve("article2.adoc").writeText(
+            """title=Article Deux
 date=2026-07-20
 type=page
 status=published
@@ -2147,7 +2293,8 @@ status=published
 == Section
 
 Texte deux en francais.
-""")
+""",
+        )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -2162,14 +2309,16 @@ Texte deux en francais.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("translateDocumentBatch")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("translateDocumentBatch")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
         val outDir = projectDir.resolve("build/docs/translation")
@@ -2186,22 +2335,26 @@ Texte deux en francais.
         val srcDir = projectDir.resolve("src/docs")
         srcDir.resolve("2019").mkdirs()
         srcDir.resolve("2026").mkdirs()
-        srcDir.resolve("2019/old.adoc").writeText("""title=Old
+        srcDir.resolve("2019/old.adoc").writeText(
+            """title=Old
 date=2019-01-01
 type=page
 status=published
 ~~~~~~
 
 Vieux texte.
-""")
-        srcDir.resolve("2026/new.adoc").writeText("""title=New
+""",
+        )
+        srcDir.resolve("2026/new.adoc").writeText(
+            """title=New
 date=2026-07-22
 type=page
 status=published
 ~~~~~~
 
 Nouveau texte.
-""")
+""",
+        )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -2216,14 +2369,16 @@ Nouveau texte.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("translateDocumentBatch")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("translateDocumentBatch")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
         val outDir = projectDir.resolve("build/docs/translation")
@@ -2238,22 +2393,26 @@ Nouveau texte.
         val srcDir = projectDir.resolve("src/docs")
         srcDir.resolve("blog").mkdirs()
         srcDir.resolve("draft").mkdirs()
-        srcDir.resolve("blog/keep.adoc").writeText("""title=Keep
+        srcDir.resolve("blog/keep.adoc").writeText(
+            """title=Keep
 date=2026-07-20
 type=page
 status=published
 ~~~~~~
 
 Garder.
-""")
-        srcDir.resolve("draft/skip.adoc").writeText("""title=Skip
+""",
+        )
+        srcDir.resolve("draft/skip.adoc").writeText(
+            """title=Skip
 date=2026-07-20
 type=page
 status=published
 ~~~~~~
 
 Passer.
-""")
+""",
+        )
         projectDir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -2269,14 +2428,16 @@ Passer.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("translateDocumentBatch")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("translateDocumentBatch")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocumentBatch")?.outcome)
         val outDir = projectDir.resolve("build/docs/translation")
@@ -2303,7 +2464,7 @@ Passer.
                     author.set("Author")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("005.adoc").writeText("== Section 1\n\nContenu page 5.")
@@ -2319,14 +2480,16 @@ Passer.
             | 1.0.1 | Section 1 | 5 | 005.pdf
             | 1.0.2 | Section 2 | 6 | 006.pdf
             |===
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
         val output = projectDir.resolve("build/docs/document/book.adoc")
@@ -2353,7 +2516,7 @@ Passer.
                     author.set("Author")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = projectDir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("005.adoc").writeText("== Section 1\n\nContenu page 5.")
@@ -2365,14 +2528,16 @@ Passer.
             | 1.0.1 | Section 1 | 5 | 005.pdf
             | 1.0.2 | Section 2 | 7 | 007.pdf
             |===
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook", "-Pdocument.bookValidationMode=STRICT")
-            .withPluginClasspath()
-            .buildAndFail()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook", "-Pdocument.bookValidationMode=STRICT")
+                .withPluginClasspath()
+                .buildAndFail()
 
         assertTrue(result.output.contains("book validation failed"), "le build doit echouer avec un message de validation")
         assertTrue(result.output.contains("page 7"), "le message doit citer la page manquante 7")

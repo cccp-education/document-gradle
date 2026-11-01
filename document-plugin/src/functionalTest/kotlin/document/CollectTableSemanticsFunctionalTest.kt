@@ -12,7 +12,6 @@ import java.io.File
  * severity (STRICT fails, LENIENT warns, OFF skips) + opt-in annotation.
  */
 class CollectTableSemanticsFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -36,27 +35,32 @@ class CollectTableSemanticsFunctionalTest {
         )
     }
 
-    private val planningSchema = """
+    private val planningSchema =
+        """
         schema("planning") {
             column(0, role = "reference")
             column("Title", role = "title")
             column(2, role = "objective", required = true)
         }
-    """.trimIndent()
+        """.trimIndent()
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `LENIENT extracts an annotated table into table-semantics json`() {

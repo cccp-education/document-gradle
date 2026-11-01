@@ -4,42 +4,24 @@ import document.batch.BatchConvertDocumentsTask
 import document.batch.BatchDsl
 import document.epub.EpubValidationMode
 import document.pdf.PdfValidationMode
-import document.template.ApplyDocumentTemplateTask
-import document.template.TemplateDsl
-import document.translation.TranslateDocumentTask
-import document.translation.TranslateDocumentBatchTask
-import document.translation.TranslationDsl
-import document.translation.RetranslateFrontmatterTask
-import document.translation.validation.PlantUmlValidationConfig
-import document.translation.validation.TableValidationConfig
-import document.validation.HtmlLinkLintMode
-import document.validation.HtmlLinkLinter
-import document.validation.HtmlLinkLintResult
-import org.asciidoctor.SafeMode
 import document.security.IncludeGuardMode
 import document.semantic.SemanticTableSchema
 import document.semantic.TableSemanticsMode
+import document.template.ApplyDocumentTemplateTask
+import document.template.TemplateDsl
+import document.translation.RetranslateFrontmatterTask
+import document.translation.TranslateDocumentBatchTask
+import document.translation.TranslateDocumentTask
+import document.translation.TranslationDsl
+import document.translation.validation.PlantUmlValidationConfig
+import document.translation.validation.TableValidationConfig
+import document.validation.HtmlLinkLintMode
+import document.validation.HtmlLinkLintResult
+import document.validation.HtmlLinkLinter
 import document.xref.XrefValidationMode
+import org.asciidoctor.SafeMode
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-
-/**
- * Plugin Gradle `education.cccp.document` — création et publication
- * documentaire AsciiDoc multi-format via AsciidoctorJ.
- *
- * DOC-1 (stub) : enregistre l'extension `document { }` et les 8 taches
- * du pipeline. Les conversions (HTML/PDF/EPUB/DocBook/ManPage) sont
- * des stubs no-op ; l'implementation arrive dans DOC-2 -> DOC-5.
- *
- * Ordre de precedent des parametres (pattern planner/codebase) :
- *   CLI (-Pdocument.xxx) > DSL (block document { }) > convention (defaut)
- *
- * Boundary :
- * - Codex (Brooklyn) = READ + RAG — pas de dependance vers codex.
- * - plantuml-gradle (HTOWN) = composition — compileOnly legitime.
- * - planner-gradle (Manhattan) = LLM bridge partage — compileOnly.
- */
 
 /**
  * Plugin Gradle `education.cccp.document` — creation et publication
@@ -58,12 +40,11 @@ import org.gradle.api.provider.Property
  * - planner-gradle (Manhattan) = LLM bridge partage — compileOnly.
  */
 class DocumentPlugin : Plugin<Project> {
-
     override fun apply(project: Project) {
         val ext = project.extensions.create("document", DocumentExtension::class.java)
 
         // Verification DSL - will be initialized in initNested
-        
+
         // Conventions (defauts)
         ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
         ext.formats.convention(listOf(DocumentFormat.HTML))
@@ -75,104 +56,116 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-12 — Initialise the nested DSL blocks via ObjectFactory so the
         // concrete `val` properties resolve in the Kotlin DSL.
         ext.initNested(
-            enrich = DocumentEnrichDsl(
-                plantuml = project.objects.property(Boolean::class.java),
-                images = project.objects.property(Boolean::class.java),
-                passthrough = project.objects.property(Boolean::class.java),
-            ),
-            outputs = DocumentOutputsDsl(
-                html = project.objects.property(Boolean::class.java),
-                pdf = project.objects.property(Boolean::class.java),
-                epub = project.objects.property(Boolean::class.java),
-                docbook = project.objects.property(Boolean::class.java),
-                manpage = project.objects.property(Boolean::class.java),
-            ),
-            metadata = DocumentMetadataDsl(
-                title = project.objects.property(String::class.java),
-                author = project.objects.property(String::class.java),
-                language = project.objects.property(String::class.java),
-            ),
-            releaseNotes = ReleaseNotesDsl(
-                fromTag = project.objects.property(String::class.java),
-                toTag = project.objects.property(String::class.java),
-                version = project.objects.property(String::class.java),
-                includeDownloads = project.objects.property(Boolean::class.java),
-                rendererType = project.objects.property(String::class.java),
-                categories = project.objects.mapProperty(String::class.java, String::class.java),
-                llmMode = project.objects.property(String::class.java),
-            ),
-            book = BookDsl(
-                pagesDir = project.objects.directoryProperty(),
-                photosDir = project.objects.directoryProperty(),
-                title = project.objects.property(String::class.java),
-                author = project.objects.property(String::class.java),
-                tocFile = project.objects.fileProperty(),
-                pdfsDir = project.objects.directoryProperty(),
-                validationMode = project.objects.property(ValidationMode::class.java),
-                matterPolicy = project.objects.property(MatterPolicyMode::class.java),
-                matterBreaks = project.objects.property(Boolean::class.java),
-                navigation = project.objects.property(Boolean::class.java),
-                sourceLanguage = project.objects.property(String::class.java),
-                targetLanguage = project.objects.property(String::class.java),
-                translateToAll = project.objects.property(Boolean::class.java),
-                targetLanguages = project.objects.listProperty(String::class.java),
-                publishFormats = project.objects.listProperty(String::class.java),
-                includeSource = project.objects.property(Boolean::class.java),
-            ),
-            template = TemplateDsl(
-                templateFile = project.objects.property(String::class.java),
-                variables = project.objects.mapProperty(String::class.java, String::class.java),
-                failOnMissingVariable = project.objects.property(Boolean::class.java),
-                outputFileName = project.objects.property(String::class.java),
-            ),
-            batch = BatchDsl(
-                sourceDir = project.objects.property(String::class.java),
-                outputDir = project.objects.property(String::class.java),
-                formats = project.objects.listProperty(String::class.java),
-                recursive = project.objects.property(Boolean::class.java),
-            ),
-            translation = TranslationDsl(
-                sourceLanguage = project.objects.property(String::class.java),
-                targetLanguage = project.objects.property(String::class.java),
-                sourceFile = project.objects.property(String::class.java),
-                outputFileName = project.objects.property(String::class.java),
-                llmMode = project.objects.property(String::class.java),
-                batchSourceDir = project.objects.property(String::class.java),
-                batchOutputDir = project.objects.property(String::class.java),
-                batchExcludePaths = project.objects.property(String::class.java),
-                tableValidation = TableValidationConfig(
-                    mode = project.objects.property(String::class.java),
+            enrich =
+                DocumentEnrichDsl(
+                    plantuml = project.objects.property(Boolean::class.java),
+                    images = project.objects.property(Boolean::class.java),
+                    passthrough = project.objects.property(Boolean::class.java),
                 ),
-                plantUmlValidation = PlantUmlValidationConfig(
-                    mode = project.objects.property(String::class.java),
+            outputs =
+                DocumentOutputsDsl(
+                    html = project.objects.property(Boolean::class.java),
+                    pdf = project.objects.property(Boolean::class.java),
+                    epub = project.objects.property(Boolean::class.java),
+                    docbook = project.objects.property(Boolean::class.java),
+                    manpage = project.objects.property(Boolean::class.java),
                 ),
-            ),
-             converter = ConverterDsl(
-                 safeMode = project.objects.property(SafeMode::class.java),
-                 includeGuard = project.objects.property(IncludeGuardMode::class.java),
-                 xrefValidation = project.objects.property(XrefValidationMode::class.java),
-                 htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
-                 epubCheck = project.objects.property(EpubValidationMode::class.java),
-                 pdfCheck = project.objects.property(PdfValidationMode::class.java),
-             ),
-              verification = VerificationDsl(project.objects.property(Boolean::class.java)),
-             semantic = SemanticDsl(
-                 tableSemantics = project.objects.property(TableSemanticsMode::class.java),
-                 schemas = project.objects.listProperty(SemanticTableSchema::class.java),
-             ),
+            metadata =
+                DocumentMetadataDsl(
+                    title = project.objects.property(String::class.java),
+                    author = project.objects.property(String::class.java),
+                    language = project.objects.property(String::class.java),
+                ),
+            releaseNotes =
+                ReleaseNotesDsl(
+                    fromTag = project.objects.property(String::class.java),
+                    toTag = project.objects.property(String::class.java),
+                    version = project.objects.property(String::class.java),
+                    includeDownloads = project.objects.property(Boolean::class.java),
+                    rendererType = project.objects.property(String::class.java),
+                    categories = project.objects.mapProperty(String::class.java, String::class.java),
+                    llmMode = project.objects.property(String::class.java),
+                ),
+            book =
+                BookDsl(
+                    pagesDir = project.objects.directoryProperty(),
+                    photosDir = project.objects.directoryProperty(),
+                    title = project.objects.property(String::class.java),
+                    author = project.objects.property(String::class.java),
+                    tocFile = project.objects.fileProperty(),
+                    pdfsDir = project.objects.directoryProperty(),
+                    validationMode = project.objects.property(ValidationMode::class.java),
+                    matterPolicy = project.objects.property(MatterPolicyMode::class.java),
+                    matterBreaks = project.objects.property(Boolean::class.java),
+                    navigation = project.objects.property(Boolean::class.java),
+                    sourceLanguage = project.objects.property(String::class.java),
+                    targetLanguage = project.objects.property(String::class.java),
+                    translateToAll = project.objects.property(Boolean::class.java),
+                    targetLanguages = project.objects.listProperty(String::class.java),
+                    publishFormats = project.objects.listProperty(String::class.java),
+                    includeSource = project.objects.property(Boolean::class.java),
+                ),
+            template =
+                TemplateDsl(
+                    templateFile = project.objects.property(String::class.java),
+                    variables = project.objects.mapProperty(String::class.java, String::class.java),
+                    failOnMissingVariable = project.objects.property(Boolean::class.java),
+                    outputFileName = project.objects.property(String::class.java),
+                ),
+            batch =
+                BatchDsl(
+                    sourceDir = project.objects.property(String::class.java),
+                    outputDir = project.objects.property(String::class.java),
+                    formats = project.objects.listProperty(String::class.java),
+                    recursive = project.objects.property(Boolean::class.java),
+                ),
+            translation =
+                TranslationDsl(
+                    sourceLanguage = project.objects.property(String::class.java),
+                    targetLanguage = project.objects.property(String::class.java),
+                    sourceFile = project.objects.property(String::class.java),
+                    outputFileName = project.objects.property(String::class.java),
+                    llmMode = project.objects.property(String::class.java),
+                    batchSourceDir = project.objects.property(String::class.java),
+                    batchOutputDir = project.objects.property(String::class.java),
+                    batchExcludePaths = project.objects.property(String::class.java),
+                    tableValidation =
+                        TableValidationConfig(
+                            mode = project.objects.property(String::class.java),
+                        ),
+                    plantUmlValidation =
+                        PlantUmlValidationConfig(
+                            mode = project.objects.property(String::class.java),
+                        ),
+                ),
+            converter =
+                ConverterDsl(
+                    safeMode = project.objects.property(SafeMode::class.java),
+                    includeGuard = project.objects.property(IncludeGuardMode::class.java),
+                    xrefValidation = project.objects.property(XrefValidationMode::class.java),
+                    htmlLinkLint = project.objects.property(HtmlLinkLintMode::class.java),
+                    epubCheck = project.objects.property(EpubValidationMode::class.java),
+                    pdfCheck = project.objects.property(PdfValidationMode::class.java),
+                ),
+            verification = VerificationDsl(project.objects.property(Boolean::class.java)),
+            semantic =
+                SemanticDsl(
+                    tableSemantics = project.objects.property(TableSemanticsMode::class.java),
+                    schemas = project.objects.listProperty(SemanticTableSchema::class.java),
+                ),
         )
 
-         // Conventions (defauts)
-         ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
-         ext.formats.convention(listOf(DocumentFormat.HTML))
-         ext.enrichPlantUml.convention(false)
-         ext.enrichImages.convention(false)
-         ext.enrichPassthrough.convention(false)
-         ext.llmMode.convention("ollama")
-         // DOC-12 — Nested DSL block conventions (unified document { }).
-         ext.enrich.plantuml.convention(false)
-         ext.enrich.images.convention(false)
-         ext.enrich.passthrough.convention(false)
+        // Conventions (defauts)
+        ext.outputDir.convention(project.layout.buildDirectory.dir("docs/document"))
+        ext.formats.convention(listOf(DocumentFormat.HTML))
+        ext.enrichPlantUml.convention(false)
+        ext.enrichImages.convention(false)
+        ext.enrichPassthrough.convention(false)
+        ext.llmMode.convention("ollama")
+        // DOC-12 — Nested DSL block conventions (unified document { }).
+        ext.enrich.plantuml.convention(false)
+        ext.enrich.images.convention(false)
+        ext.enrich.passthrough.convention(false)
         ext.outputs.html.convention(true)
         ext.outputs.pdf.convention(false)
         ext.outputs.epub.convention(false)
@@ -216,8 +209,10 @@ class DocumentPlugin : Plugin<Project> {
         ext.translation.batchOutputDir.convention("")
         ext.translation.batchExcludePaths.convention("")
         ext.translation.outputFileName.convention("document")
-        ext.translation.tableValidation.mode.convention("LENIENT")
-        ext.translation.plantUmlValidation.mode.convention("LENIENT")
+        ext.translation.tableValidation.mode
+            .convention("LENIENT")
+        ext.translation.plantUmlValidation.mode
+            .convention("LENIENT")
         // DOC-CR3-2 — converter safeMode default UNSAFE (backward-compatible)
         ext.converter.safeMode.convention(SafeMode.UNSAFE)
         ext.safeMode.convention(SafeMode.UNSAFE)
@@ -236,13 +231,13 @@ class DocumentPlugin : Plugin<Project> {
         // DOC-PDF-CHECK — converter pdfCheck default OFF (backward-compatible) + mirror flat property
         ext.converter.pdfCheck.convention(PdfValidationMode.OFF)
         ext.pdfCheck.convention(ext.converter.pdfCheck)
-         // Verification DSL conventions
-         ext.verification.htmlLinks.convention(false)
-         // EPIC DOC-SEMANTIC-TABLE — semantic table lifting. OFF by default
-         // (backward-compatible: no AST read, no artifact) + mirror flat property.
-         ext.semantic.tableSemantics.convention(TableSemanticsMode.OFF)
-         ext.tableSemantics.convention(ext.semantic.tableSemantics)
-         ext.semantic.schemas.convention(emptyList())
+        // Verification DSL conventions
+        ext.verification.htmlLinks.convention(false)
+        // EPIC DOC-SEMANTIC-TABLE — semantic table lifting. OFF by default
+        // (backward-compatible: no AST read, no artifact) + mirror flat property.
+        ext.semantic.tableSemantics.convention(TableSemanticsMode.OFF)
+        ext.tableSemantics.convention(ext.semantic.tableSemantics)
+        ext.semantic.schemas.convention(emptyList())
 
         // DOC-12 — Mirror the legacy flat enrichment properties from the nested block
         // so both `enrich { plantuml.set(true) }` and the flat `enrichPlantUml.set(true)`
@@ -311,13 +306,20 @@ class DocumentPlugin : Plugin<Project> {
         registerCollectTableSemantics(project, ext)
     }
 
-    private fun cliProp(project: Project, key: String) =
-        project.providers.gradleProperty("document.$key")
+    private fun cliProp(
+        project: Project,
+        key: String,
+    ) = project.providers.gradleProperty("document.$key")
 
-    private fun cliFile(project: Project, key: String) =
-        cliProp(project, key).map { project.layout.projectDirectory.file(it) }
+    private fun cliFile(
+        project: Project,
+        key: String,
+    ) = cliProp(project, key).map { project.layout.projectDirectory.file(it) }
 
-    private fun registerGenerateDocument(project: Project, ext: DocumentExtension) {
+    private fun registerGenerateDocument(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("generateDocument", GenerateDocumentTask::class.java) { task ->
             task.group = "document"
             task.description = "Genere un document AsciiDoc (IA via koog+langchain4j si prompt set, sinon copie source)."
@@ -331,7 +333,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerEnrichDocument(project: Project, ext: DocumentExtension) {
+    private fun registerEnrichDocument(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("enrichDocument", EnrichDocumentTask::class.java) { task ->
             task.description = "Enriches the AsciiDoc document (PlantUML, images, includes, passthrough) — DOC-9."
             val cliSource = cliProp(project, "source").map { project.layout.projectDirectory.file(it) }
@@ -347,21 +352,26 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerConvertTasks(project: Project, ext: DocumentExtension) {
-        val conversions = listOf(
-            "convertDocumentToHtml" to DocumentFormat.HTML,
-            "convertDocumentToPdf" to DocumentFormat.PDF,
-            "convertDocumentToEpub" to DocumentFormat.EPUB,
-            "convertDocumentToDocBook" to DocumentFormat.DOCBOOK,
-            "convertDocumentToManPage" to DocumentFormat.MANPAGE,
-        )
+    private fun registerConvertTasks(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
+        val conversions =
+            listOf(
+                "convertDocumentToHtml" to DocumentFormat.HTML,
+                "convertDocumentToPdf" to DocumentFormat.PDF,
+                "convertDocumentToEpub" to DocumentFormat.EPUB,
+                "convertDocumentToDocBook" to DocumentFormat.DOCBOOK,
+                "convertDocumentToManPage" to DocumentFormat.MANPAGE,
+            )
         conversions.forEach { (name, format) ->
             project.tasks.register(name, ConvertDocumentTask::class.java) { task ->
-                val epicLabel = when (format) {
-                    DocumentFormat.HTML -> "DOC-3"
-                    DocumentFormat.PDF -> "DOC-4"
-                    else -> "DOC-5"
-                }
+                val epicLabel =
+                    when (format) {
+                        DocumentFormat.HTML -> "DOC-3"
+                        DocumentFormat.PDF -> "DOC-4"
+                        else -> "DOC-5"
+                    }
                 task.description = "Convertit l'AsciiDoc en ${format.name} (AsciidoctorJ ${format.backend}). — $epicLabel"
                 task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
                 task.format.set(format)
@@ -385,20 +395,36 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerCollectDocumentRetrieve(project: Project, ext: DocumentExtension) {
+    private fun registerCollectDocumentRetrieve(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("collectDocumentRetrieve", CollectDocumentRetrieveTask::class.java) { task ->
             task.group = "document"
-            task.description = "Produit metadata.json + composite-context.json pour l'integration N3 runner-gradle (assembleCompositeContext). — DOC-6 + DOC-8.3"
+            task.description =
+                "Produit metadata.json + composite-context.json pour l'integration N3 runner-gradle (assembleCompositeContext). — DOC-6 + DOC-8.3"
             task.outputDir.set(project.layout.buildDirectory.dir("docs/document"))
             task.sourceAdoc.set(cliProp(project, "source").orElse(ext.source.map { it.asFile.name }).orElse("source.adoc"))
-            task.releaseNotesDirPath.set(project.layout.buildDirectory.dir("release-notes").map { it.asFile.absolutePath })
+            task.releaseNotesDirPath.set(
+                project.layout.buildDirectory
+                    .dir("release-notes")
+                    .map { it.asFile.absolutePath },
+            )
             // DOC-METADATA-VALIDATION — snapshot the composite validation report if present
             // (emitted by `validateDocument`); absent → validationStatus omitted from metadata.json.
-            task.validationReportPath.set(project.layout.buildDirectory.file("docs/document/document-validation-report.json").map { it.asFile.absolutePath })
+            task.validationReportPath.set(
+                project.layout.buildDirectory
+                    .file("docs/document/document-validation-report.json")
+                    .map { it.asFile.absolutePath },
+            )
             // DOC-SEMANTIC-TABLE (D10) — index the semantic-lifting artifact if present
             // (emitted by `collectTableSemantics`); absent → tableSemanticsPath omitted
             // from metadata.json. Same-directory snapshot, zero task dependence.
-            task.tableSemanticsPath.set(project.layout.buildDirectory.file("docs/document/table-semantics.json").map { it.asFile.absolutePath })
+            task.tableSemanticsPath.set(
+                project.layout.buildDirectory
+                    .file("docs/document/table-semantics.json")
+                    .map { it.asFile.absolutePath },
+            )
             // S-236 — the collect follows the same `outputFileName` knob as the conversion
             // (live since S-235), so composite-context.json indexes the real artifacts.
             // Same-knob derivation, zero task dependence (S-232 pitfall respected).
@@ -406,7 +432,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerAssembleBook(project: Project, ext: DocumentExtension) {
+    private fun registerAssembleBook(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("assembleBook", AssembleBookTask::class.java) { task ->
             task.description = "Assembles OCR-ed AsciiDoc pages (codex-gradle output) into a single book. — DOC-11 / DOC-BOOK-VALIDATE-2"
             task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
@@ -416,22 +445,27 @@ class DocumentPlugin : Plugin<Project> {
             task.outputFileName.set(cliProp(project, "outputFileName").orElse("book"))
             task.tocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it) }.orElse(ext.bookTocFile))
             task.pdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPdfsDir))
-            task.validationMode.set(cliProp(project, "bookValidationMode").map { ValidationMode.valueOf(it) }.orElse(ext.bookValidationMode).orElse(ValidationMode.LENIENT))
+            task.validationMode.set(
+                cliProp(project, "bookValidationMode").map { ValidationMode.valueOf(it) }.orElse(ext.bookValidationMode).orElse(ValidationMode.LENIENT),
+            )
             // DOC-BOOK-MATTER — matter policy resolution (default DERIVED) and
             // opt-in matter breaks, driven by the `book { }` DSL or the CLI.
             task.matterPolicyMode.set(
-                cliProp(project, "bookMatterPolicy").map { MatterPolicyMode.valueOf(it.uppercase()) }
+                cliProp(project, "bookMatterPolicy")
+                    .map { MatterPolicyMode.valueOf(it.uppercase()) }
                     .orElse(ext.bookMatterPolicy)
                     .orElse(MatterPolicyMode.DERIVED),
             )
             task.matterBreaks.set(
-                cliProp(project, "bookMatterBreaks").map { it.toBoolean() }
+                cliProp(project, "bookMatterBreaks")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookMatterBreaks)
                     .orElse(false),
             )
             // DOC-BOOK-CONSISTENCY-B6 — opt-in previous / next navigation links.
             task.navigation.set(
-                cliProp(project, "bookNavigation").map { it.toBoolean() }
+                cliProp(project, "bookNavigation")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookNavigation)
                     .orElse(false),
             )
@@ -447,9 +481,13 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerTranslateBook(project: Project, ext: DocumentExtension) {
+    private fun registerTranslateBook(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("translateBook", TranslateBookTask::class.java) { task ->
-            task.description = "Translates the structured scanned book into a target language (domain-level; structure regenerated by BookAssembler). — DOC-BOOK-TRANSLATE"
+            task.description =
+                "Translates the structured scanned book into a target language (domain-level; structure regenerated by BookAssembler). — DOC-BOOK-TRANSLATE"
             task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
             task.photosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPhotosDir))
             task.title.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
@@ -466,33 +504,41 @@ class DocumentPlugin : Plugin<Project> {
             val baseName = cliProp(project, "outputFileName").orElse("book")
             task.outputFile.set(
                 baseName.flatMap { name ->
-                    task.targetLanguage.map { lang -> "docs/document/$name-$lang.adoc" }
+                    task.targetLanguage
+                        .map { lang -> "docs/document/$name-$lang.adoc" }
                         .flatMap { project.layout.buildDirectory.file(it) }
                 },
             )
             // DOC-BOOK-MATTER + DOC-BOOK-CONSISTENCY-B6 — the translated book
             // mirrors `assembleBook` (same matter policy and navigation knobs).
             task.matterPolicyMode.set(
-                cliProp(project, "bookMatterPolicy").map { MatterPolicyMode.valueOf(it.uppercase()) }
+                cliProp(project, "bookMatterPolicy")
+                    .map { MatterPolicyMode.valueOf(it.uppercase()) }
                     .orElse(ext.bookMatterPolicy)
                     .orElse(MatterPolicyMode.DERIVED),
             )
             task.matterBreaks.set(
-                cliProp(project, "bookMatterBreaks").map { it.toBoolean() }
+                cliProp(project, "bookMatterBreaks")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookMatterBreaks)
                     .orElse(false),
             )
             task.navigation.set(
-                cliProp(project, "bookNavigation").map { it.toBoolean() }
+                cliProp(project, "bookNavigation")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookNavigation)
                     .orElse(false),
             )
         }
     }
 
-    private fun registerTranslateBookAllLanguages(project: Project, ext: DocumentExtension) {
+    private fun registerTranslateBookAllLanguages(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("translateBookAllLanguages", TranslateBookAllLanguagesTask::class.java) { task ->
-            task.description = "Translates the structured scanned book into several target languages (domain-level; structure regenerated). — DOC-BOOK-MULTILANG"
+            task.description =
+                "Translates the structured scanned book into several target languages (domain-level; structure regenerated). — DOC-BOOK-MULTILANG"
             task.pagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPagesDir))
             task.photosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it) }.orElse(ext.bookPhotosDir))
             task.title.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
@@ -507,7 +553,8 @@ class DocumentPlugin : Plugin<Project> {
                     .orElse(ext.bookTargetLanguages),
             )
             task.translateToAll.set(
-                cliProp(project, "bookTranslateToAll").map { it.toBoolean() }
+                cliProp(project, "bookTranslateToAll")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookTranslateToAll)
                     .orElse(false),
             )
@@ -526,32 +573,39 @@ class DocumentPlugin : Plugin<Project> {
             task.outputFiles.from(
                 project.provider {
                     val base = baseName.get()
-                    BookLanguagePlanner.plan(
-                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
-                        requested = task.targetLanguages.getOrElse(emptyList()),
-                        translateToAll = task.translateToAll.getOrElse(false),
-                    ).map { target -> project.layout.buildDirectory.file("docs/document/${target.fileName(base)}") }
+                    BookLanguagePlanner
+                        .plan(
+                            sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                            requested = task.targetLanguages.getOrElse(emptyList()),
+                            translateToAll = task.translateToAll.getOrElse(false),
+                        ).map { target -> project.layout.buildDirectory.file("docs/document/${target.fileName(base)}") }
                 },
             )
             task.matterPolicyMode.set(
-                cliProp(project, "bookMatterPolicy").map { MatterPolicyMode.valueOf(it.uppercase()) }
+                cliProp(project, "bookMatterPolicy")
+                    .map { MatterPolicyMode.valueOf(it.uppercase()) }
                     .orElse(ext.bookMatterPolicy)
                     .orElse(MatterPolicyMode.DERIVED),
             )
             task.matterBreaks.set(
-                cliProp(project, "bookMatterBreaks").map { it.toBoolean() }
+                cliProp(project, "bookMatterBreaks")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookMatterBreaks)
                     .orElse(false),
             )
             task.navigation.set(
-                cliProp(project, "bookNavigation").map { it.toBoolean() }
+                cliProp(project, "bookNavigation")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookNavigation)
                     .orElse(false),
             )
         }
     }
 
-    private fun registerPublishBookAllLanguages(project: Project, ext: DocumentExtension) {
+    private fun registerPublishBookAllLanguages(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("publishBookAllLanguages", PublishBookAllLanguagesTask::class.java) { task ->
             task.description = "Publishes every translated book (book-<lang>.adoc) into each requested format. — DOC-BOOK-PUBLISH"
             // The sources are the books produced by `translateBookAllLanguages`
@@ -559,7 +613,8 @@ class DocumentPlugin : Plugin<Project> {
             task.dependsOn("translateBookAllLanguages")
             task.sourceLanguage.set(cliProp(project, "bookSourceLanguage").orElse(ext.bookSourceLanguage))
             task.translateToAll.set(
-                cliProp(project, "bookTranslateToAll").map { it.toBoolean() }
+                cliProp(project, "bookTranslateToAll")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookTranslateToAll)
                     .orElse(false),
             )
@@ -576,7 +631,8 @@ class DocumentPlugin : Plugin<Project> {
             )
             // DOC-BOOK-PUBLISH (US-5) — publish the assembled source book too.
             task.includeSource.set(
-                cliProp(project, "bookPublishIncludeSource").map { it.toBoolean() }
+                cliProp(project, "bookPublishIncludeSource")
+                    .map { it.toBoolean() }
                     .orElse(ext.bookPublishIncludeSource)
                     .orElse(false),
             )
@@ -607,24 +663,29 @@ class DocumentPlugin : Plugin<Project> {
             task.outputFiles.from(
                 project.provider {
                     val base = baseName.get()
-                    val languages = BookLanguagePlanner.plan(
-                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
-                        requested = task.targetLanguages.getOrElse(emptyList()),
-                        translateToAll = task.translateToAll.getOrElse(false),
-                    )
-                    BookPublicationPlanner.plan(
-                        languages,
-                        base,
-                        task.publishFormats.getOrElse(emptyList()),
-                        sourceLanguage = task.sourceLanguage.getOrElse("fr"),
-                        includeSource = task.includeSource.getOrElse(false),
-                    ).map { target -> project.layout.buildDirectory.file("docs/document/${target.outputFileName}") }
+                    val languages =
+                        BookLanguagePlanner.plan(
+                            sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                            requested = task.targetLanguages.getOrElse(emptyList()),
+                            translateToAll = task.translateToAll.getOrElse(false),
+                        )
+                    BookPublicationPlanner
+                        .plan(
+                            languages,
+                            base,
+                            task.publishFormats.getOrElse(emptyList()),
+                            sourceLanguage = task.sourceLanguage.getOrElse("fr"),
+                            includeSource = task.includeSource.getOrElse(false),
+                        ).map { target -> project.layout.buildDirectory.file("docs/document/${target.outputFileName}") }
                 },
             )
         }
     }
 
-    private fun registerBookPipeline(project: Project, ext: DocumentExtension) {
+    private fun registerBookPipeline(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("bookPipeline") { task ->
             task.group = "document"
             task.description = "Composite book pipeline: assemble -> enrich -> HTML/PDF/EPUB -> collect. — DOC-11"
@@ -674,9 +735,10 @@ class DocumentPlugin : Plugin<Project> {
         // non-existent book.adoc (latent bug).
         project.gradle.taskGraph.whenReady { graph ->
             if (graph.hasTask(project.tasks.named("bookPipeline").get())) {
-                val target = cliProp(project, "bookTargetLanguage")
-                    .orElse(ext.bookTargetLanguage)
-                    .getOrElse("")
+                val target =
+                    cliProp(project, "bookTargetLanguage")
+                        .orElse(ext.bookTargetLanguage)
+                        .getOrElse("")
                 val translated = target.isNotBlank()
                 if (translated) {
                     html.get().sourceFile.set(translateBook.flatMap { t -> t.outputFile })
@@ -692,7 +754,10 @@ class DocumentPlugin : Plugin<Project> {
         collect.configure { it.mustRunAfter(listOf(html, pdf, epub)) }
     }
 
-    private fun registerSerializeDocumentConfig(project: Project, ext: DocumentExtension) {
+    private fun registerSerializeDocumentConfig(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("serializeDocumentConfig", SerializeDocumentConfigTask::class.java) { task ->
             task.group = "document"
             task.description = "Serialises the unified document { } DSL configuration to document-config.json (N3 contract). — DOC-12"
@@ -719,12 +784,40 @@ class DocumentPlugin : Plugin<Project> {
             task.metaAuthor.set(cliProp(project, "metaAuthor").orElse(ext.metadata.author))
             task.metaLanguage.set(cliProp(project, "metaLanguage").orElse(ext.metadata.language))
             // Book (DOC-12 extension — book { } serialisation)
-            task.bookPagesDir.set(cliProp(project, "bookPagesDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPagesDir.asFile.map { it.path }))
-            task.bookPhotosDir.set(cliProp(project, "bookPhotosDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPhotosDir.asFile.map { it.path }))
+            task.bookPagesDir.set(
+                cliProp(project, "bookPagesDir")
+                    .map {
+                        project.layout.projectDirectory
+                            .dir(it)
+                            .asFile.path
+                    }.orElse(ext.bookPagesDir.asFile.map { it.path }),
+            )
+            task.bookPhotosDir.set(
+                cliProp(project, "bookPhotosDir")
+                    .map {
+                        project.layout.projectDirectory
+                            .dir(it)
+                            .asFile.path
+                    }.orElse(ext.bookPhotosDir.asFile.map { it.path }),
+            )
             task.bookTitle.set(cliProp(project, "bookTitle").orElse(ext.bookTitle))
             task.bookAuthor.set(cliProp(project, "bookAuthor").orElse(ext.bookAuthor))
-            task.bookTocFile.set(cliProp(project, "bookTocFile").map { project.layout.projectDirectory.file(it).asFile.path }.orElse(ext.bookTocFile.asFile.map { it.path }))
-            task.bookPdfsDir.set(cliProp(project, "bookPdfsDir").map { project.layout.projectDirectory.dir(it).asFile.path }.orElse(ext.bookPdfsDir.asFile.map { it.path }))
+            task.bookTocFile.set(
+                cliProp(project, "bookTocFile")
+                    .map {
+                        project.layout.projectDirectory
+                            .file(it)
+                            .asFile.path
+                    }.orElse(ext.bookTocFile.asFile.map { it.path }),
+            )
+            task.bookPdfsDir.set(
+                cliProp(project, "bookPdfsDir")
+                    .map {
+                        project.layout.projectDirectory
+                            .dir(it)
+                            .asFile.path
+                    }.orElse(ext.bookPdfsDir.asFile.map { it.path }),
+            )
             task.bookValidationMode.set(cliProp(project, "bookValidationMode").orElse(ext.bookValidationMode.map { it.name }))
             task.bookMatterPolicy.set(cliProp(project, "bookMatterPolicy").map { it.uppercase() }.orElse(ext.bookMatterPolicy.map { it.name }))
             task.bookMatterBreaks.set(cliProp(project, "bookMatterBreaks").map { it.toBoolean() }.orElse(ext.bookMatterBreaks))
@@ -748,7 +841,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerDeserializeDocumentConfig(project: Project, ext: DocumentExtension) {
+    private fun registerDeserializeDocumentConfig(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("deserializeDocumentConfig", DeserializeDocumentConfigTask::class.java) { task ->
             task.group = "document"
             task.description = "Deserialises document-config.json back to DocumentPipelineConfig and re-serialises it (DOC-12 round-trip validation)."
@@ -761,7 +857,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerReleaseNotesGenerate(project: Project, ext: DocumentExtension) {
+    private fun registerReleaseNotesGenerate(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("releaseNotesGenerate", ReleaseNotesGenerateTask::class.java) { task ->
             task.group = "document"
             task.description = "Generates release notes AsciiDoc/Markdown/JSON from git log between two tags (DOC-8)."
@@ -769,7 +868,8 @@ class DocumentPlugin : Plugin<Project> {
             task.toTag.set(cliProp(project, "releaseNotesToTag").orElse(ext.releaseNotes.toTag))
             task.version.set(cliProp(project, "releaseNotesVersion").orElse(ext.releaseNotes.version))
             task.includeDownloads.set(
-                cliProp(project, "releaseNotesIncludeDownloads").map { it.toBoolean() }
+                cliProp(project, "releaseNotesIncludeDownloads")
+                    .map { it.toBoolean() }
                     .orElse(ext.releaseNotes.includeDownloads),
             )
             task.rendererType.set(cliProp(project, "releaseNotesRendererType").orElse(ext.releaseNotes.rendererType))
@@ -789,7 +889,10 @@ class DocumentPlugin : Plugin<Project> {
             type.trim() to label.trim()
         }
 
-    private fun registerApplyDocumentTemplate(project: Project, ext: DocumentExtension) {
+    private fun registerApplyDocumentTemplate(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("applyDocumentTemplate", ApplyDocumentTemplateTask::class.java) { task ->
             task.group = "document"
             task.description = "Applies variable substitution to an AsciiDoc template ({{variable}} syntax). — DOC-13"
@@ -801,12 +904,14 @@ class DocumentPlugin : Plugin<Project> {
                     .orElse(ext.template.variables),
             )
             task.failOnMissingVariable.set(
-                cliProp(project, "templateFailOnMissing").map { it.toBoolean() }
+                cliProp(project, "templateFailOnMissing")
+                    .map { it.toBoolean() }
                     .orElse(ext.template.failOnMissingVariable),
             )
             task.outputFile.set(
                 project.layout.buildDirectory.file(
-                    project.providers.gradleProperty("document.templateOutputFileName")
+                    project.providers
+                        .gradleProperty("document.templateOutputFileName")
                         .orElse(ext.template.outputFileName)
                         .map { "docs/document/$it.adoc" },
                 ),
@@ -820,12 +925,16 @@ class DocumentPlugin : Plugin<Project> {
             key.trim() to value.trim()
         }
 
-    private fun registerBatchConvertDocuments(project: Project, ext: DocumentExtension) {
+    private fun registerBatchConvertDocuments(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("batchConvertDocuments", BatchConvertDocumentsTask::class.java) { task ->
             task.group = "document"
             task.description = "Batch-converts all AsciiDoc files in a directory to the specified formats. — DOC-14"
             task.sourceDir.set(
-                cliProp(project, "batchSourceDir").map { project.layout.projectDirectory.dir(it) }
+                cliProp(project, "batchSourceDir")
+                    .map { project.layout.projectDirectory.dir(it) }
                     .orElse(ext.batch.sourceDir.map { project.layout.projectDirectory.dir(it) }),
             )
             task.outputDir.convention(project.layout.buildDirectory.dir("docs/batch"))
@@ -835,13 +944,17 @@ class DocumentPlugin : Plugin<Project> {
                     .orElse(ext.batch.formats),
             )
             task.recursive.set(
-                cliProp(project, "batchRecursive").map { it.toBoolean() }
+                cliProp(project, "batchRecursive")
+                    .map { it.toBoolean() }
                     .orElse(ext.batch.recursive),
             )
         }
     }
 
-    private fun registerTranslateDocument(project: Project, ext: DocumentExtension) {
+    private fun registerTranslateDocument(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("translateDocument", TranslateDocumentTask::class.java) { task ->
             task.group = "document"
             task.description = "Translates an AsciiDoc document from source language to target language via LLM. — DOC-TRANSLATE"
@@ -854,7 +967,8 @@ class DocumentPlugin : Plugin<Project> {
             task.plantUmlValidationMode.set(cliProp(project, "translatePlantUmlValidation").orElse(ext.translation.plantUmlValidation.mode))
             task.outputFile.set(
                 project.layout.buildDirectory.file(
-                    project.providers.gradleProperty("document.translateOutputFileName")
+                    project.providers
+                        .gradleProperty("document.translateOutputFileName")
                         .orElse(ext.translation.outputFileName)
                         .map { "docs/document/$it-${ext.translation.targetLanguage.get()}.adoc" },
                 ),
@@ -862,7 +976,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerTranslateDocumentBatch(project: Project, ext: DocumentExtension) {
+    private fun registerTranslateDocumentBatch(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("translateDocumentBatch", TranslateDocumentBatchTask::class.java) { task ->
             task.group = "document"
             task.description = "Batch-translates all AsciiDoc files in a directory from source language to target language via LLM. — DOC-TRANSLATE-BATCH"
@@ -870,7 +987,8 @@ class DocumentPlugin : Plugin<Project> {
             task.sourceDir.set(cliSourceDir.orElse(ext.translation.batchSourceDir.map { project.layout.projectDirectory.dir(it) }))
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
-                    project.providers.gradleProperty("document.translateBatchOutputDir")
+                    project.providers
+                        .gradleProperty("document.translateBatchOutputDir")
                         .orElse(ext.translation.batchOutputDir)
                         .map { if (it.isBlank()) "docs/translation" else it },
                 ),
@@ -890,10 +1008,14 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerRetranslateFrontmatter(project: Project, ext: DocumentExtension) {
+    private fun registerRetranslateFrontmatter(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("retranslateFrontmatter", RetranslateFrontmatterTask::class.java) { task ->
             task.group = "document"
-            task.description = "Re-translates stale frontmatter (title/summary/description) in target AsciiDoc files, preserving already-translated body blocks. — DOC-FRONTMATTER-RETRANSLATE"
+            task.description =
+                "Re-translates stale frontmatter (title/summary/description) in target AsciiDoc files, preserving already-translated body blocks. — DOC-FRONTMATTER-RETRANSLATE"
             val cliSourceDir = cliProp(project, "retranslateSourceDir").map { project.layout.projectDirectory.dir(it) }
             task.sourceDir.set(cliSourceDir.orElse(ext.translation.batchSourceDir.map { project.layout.projectDirectory.dir(it) }))
             val tgtLang = cliProp(project, "translateTargetLang").orElse(ext.translation.targetLanguage)
@@ -903,7 +1025,7 @@ class DocumentPlugin : Plugin<Project> {
                         .orElse(project.providers.gradleProperty("document.retranslateTargetDir"))
                         .orElse(ext.translation.batchOutputDir)
                         .map { outputDir -> "$outputDir/$lang" }
-                }
+                },
             )
             task.sourceLanguage.set(cliProp(project, "translateSourceLang").orElse(ext.translation.sourceLanguage))
             task.targetLanguage.set(tgtLang)
@@ -911,10 +1033,14 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerValidateDocumentPdf(project: Project, ext: DocumentExtension) {
+    private fun registerValidateDocumentPdf(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("validateDocumentPdf", ValidateDocumentPdfTask::class.java) { task ->
             task.group = "document"
-            task.description = "Validates the PDF artifact produced by convertDocumentToPdf with PDFBox (structure, extractable text) and writes a JSON report. — DOC-PDF-CHECK"
+            task.description =
+                "Validates the PDF artifact produced by convertDocumentToPdf with PDFBox (structure, extractable text) and writes a JSON report. — DOC-PDF-CHECK"
             task.pdfFile.set(
                 cliProp(project, "outputFileName")
                     .orElse("document")
@@ -930,7 +1056,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerValidateDocumentEpub(project: Project, ext: DocumentExtension) {
+    private fun registerValidateDocumentEpub(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("validateDocumentEpub", ValidateDocumentEpubTask::class.java) { task ->
             task.group = "document"
             task.description = "Validates the EPUB artifact produced by convertDocumentToEpub with epubcheck and writes a JSON report. — DOC-EPUBCHECK"
@@ -949,7 +1078,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerValidateDocumentXref(project: Project, ext: DocumentExtension) {
+    private fun registerValidateDocumentXref(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("validateDocumentXref", ValidateDocumentXrefTask::class.java) { task ->
             task.group = "document"
             task.description = "Validates AsciiDoc cross-references (<<id>> / xref:id[]) in the source and writes a JSON report. — DOC-XREF-VALIDATE"
@@ -959,10 +1091,14 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerValidateDocument(project: Project, ext: DocumentExtension) {
+    private fun registerValidateDocument(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("validateDocument", ValidateDocumentTask::class.java) { task ->
             task.group = "document"
-            task.description = "Composite pre-flight validation (include guard + xref + security policy + HTML link lint) of the AsciiDoc source, writes a consolidated JSON report. — DOC-VALIDATE-COMPOSITE + DOC-VALIDATE-HTML-LINT"
+            task.description =
+                "Composite pre-flight validation (include guard + xref + security policy + HTML link lint) of the AsciiDoc source, writes a consolidated JSON report. — DOC-VALIDATE-COMPOSITE + DOC-VALIDATE-HTML-LINT"
             task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
             task.includeGuard.set(cliProp(project, "includeGuard").map { IncludeGuardMode.valueOf(it.uppercase()) }.orElse(ext.includeGuard))
             task.xrefValidation.set(cliProp(project, "xrefValidation").map { XrefValidationMode.valueOf(it.uppercase()) }.orElse(ext.xrefValidation))
@@ -990,7 +1126,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerLintHtmlDocument(project: Project, ext: DocumentExtension) {
+    private fun registerLintHtmlDocument(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("lintHtmlDocument", LintHtmlDocumentTask::class.java) { task ->
             task.group = "document"
             task.description = "Lints the HTML document produced by convertDocumentToHtml for navigability (dead internal links). — DOC-HTML-LINT"
@@ -1018,7 +1157,10 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerVerifyHtmlLinksTask(project: Project, ext: DocumentExtension) {
+    private fun registerVerifyHtmlLinksTask(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("verifyHtmlLinks") { task ->
             task.group = "verification"
             task.description = "Vérifie les liens internes du document HTML produit (optionnel, activé par verification { htmlLinks.set(true) })."
@@ -1030,7 +1172,12 @@ class DocumentPlugin : Plugin<Project> {
                 }
                 // Get the HTML file from the convertDocumentToHtml task
                 val htmlTask = project.tasks.named("convertDocumentToHtml", ConvertDocumentTask::class.java)
-                val htmlFile = htmlTask.get().outputFile.get().getAsFile()
+                val htmlFile =
+                    htmlTask
+                        .get()
+                        .outputFile
+                        .get()
+                        .getAsFile()
                 val html = htmlFile.readText()
                 val result = HtmlLinkLinter.validate(html)
                 when (result) {
@@ -1048,14 +1195,18 @@ class DocumentPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerCollectTableSemantics(project: Project, ext: DocumentExtension) {
+    private fun registerCollectTableSemantics(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
         project.tasks.register("collectTableSemantics", CollectTableSemanticsTask::class.java) { task ->
             task.group = "document"
             task.description = "Lifts opt-in annotated AsciiDoc tables into typed records and exports table-semantics.json. — DOC-SEMANTIC-TABLE"
             task.sourceFile.set(cliProp(project, "source").map { project.layout.projectDirectory.file(it) }.orElse(ext.source))
             // D9 precedence — CLI `-Pdocument.tableSemantics` > DSL > default OFF.
             task.tableSemantics.set(
-                cliProp(project, "tableSemantics").map { TableSemanticsMode.valueOf(it.uppercase()) }
+                cliProp(project, "tableSemantics")
+                    .map { TableSemanticsMode.valueOf(it.uppercase()) }
                     .orElse(ext.tableSemantics),
             )
             // Schemas are a structured consumer declaration — DSL only (a CSV CLI

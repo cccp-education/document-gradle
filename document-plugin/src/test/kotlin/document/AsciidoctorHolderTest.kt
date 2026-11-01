@@ -13,7 +13,6 @@ import java.nio.file.Files
  * qui redemarre JRuby a chaque format du bookPipeline).
  */
 class AsciidoctorHolderTest {
-
     private var createCount = 0
     private val countingProvider: () -> Asciidoctor = {
         createCount++
@@ -30,11 +29,12 @@ class AsciidoctorHolderTest {
         AsciidoctorHolder.setProviderForTest(countingProvider)
 
         val dir = Files.createTempDirectory("asciidoc-holder").toFile()
-        val source = DocumentSource(
-            File(dir, "src.adoc").apply {
-                writeText("= Titre\n\n== Section\n\nTexte.")
-            }
-        )
+        val source =
+            DocumentSource(
+                File(dir, "src.adoc").apply {
+                    writeText("= Titre\n\n== Section\n\nTexte.")
+                },
+            )
 
         DocumentConverter.convertToHtml(source)
         DocumentConverter.convertToHtml(source)
@@ -42,7 +42,7 @@ class AsciidoctorHolderTest {
         assertEquals(
             1,
             createCount,
-            "l'instance AsciidoctorJ doit etre creee une seule fois et reutilisee entre conversions"
+            "l'instance AsciidoctorJ doit etre creee une seule fois et reutilisee entre conversions",
         )
     }
 }

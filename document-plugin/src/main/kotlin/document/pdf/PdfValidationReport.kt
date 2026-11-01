@@ -14,7 +14,6 @@ data class PdfValidationReport(
     val tool: String = "pdfbox",
     val entries: List<PdfReportEntry>,
 ) {
-
     /**
      * One audit line: status VALID/INVALID + the finding list (absent when
      * valid — `@JsonInclude(NON_NULL)`, backward-compatible with the other
@@ -34,18 +33,18 @@ data class PdfValidationReport(
             .writeValueAsString(this)
 
     companion object {
-
         /** Builds the report from a validation result. */
         fun fromResult(result: PdfValidationResult): PdfValidationReport {
-            val entry = when (result) {
-                is PdfValidationResult.Valid ->
-                    PdfReportEntry(status = "VALID")
-                is PdfValidationResult.Invalid ->
-                    PdfReportEntry(
-                        status = "INVALID",
-                        issues = result.issues.distinct().sorted(),
-                    )
-            }
+            val entry =
+                when (result) {
+                    is PdfValidationResult.Valid ->
+                        PdfReportEntry(status = "VALID")
+                    is PdfValidationResult.Invalid ->
+                        PdfReportEntry(
+                            status = "INVALID",
+                            issues = result.issues.distinct().sorted(),
+                        )
+                }
             return PdfValidationReport(entries = listOf(entry))
         }
 
@@ -53,16 +52,19 @@ data class PdfValidationReport(
          * Parses a report JSON; returns null on blank/invalid input
          * (degraded silent — never crashes the collect path).
          */
-        fun fromJson(json: String): PdfValidationReport? = try {
-            if (json.isBlank()) {
+        fun fromJson(json: String): PdfValidationReport? =
+            try {
+                if (json.isBlank()) {
+                    null
+                } else {
+                    ObjectMapper()
+                        .registerModule(KotlinModule.Builder().build())
+                        .readValue(json)
+                }
+            } catch (
+                @Suppress("unused") e: Exception,
+            ) {
                 null
-            } else {
-                ObjectMapper()
-                    .registerModule(KotlinModule.Builder().build())
-                    .readValue(json)
             }
-        } catch (@Suppress("unused") e: Exception) {
-            null
-        }
     }
 }

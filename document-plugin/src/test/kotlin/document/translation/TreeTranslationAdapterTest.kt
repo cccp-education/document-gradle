@@ -5,14 +5,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TreeTranslationAdapterTest {
-
-    private val adapter = TreeTranslationAdapter(
-        translationService = NumberedFakeTranslationService(),
-    )
+    private val adapter =
+        TreeTranslationAdapter(
+            translationService = NumberedFakeTranslationService(),
+        )
 
     @Test
     fun `round trips a well-formed article with numbered fake`() {
-        val input = """
+        val input =
+            """
             = Titre de l'article
             @cheroliv
             2025-01-01
@@ -42,7 +43,7 @@ class TreeTranslationAdapterTest {
             ----
             echo "ne pas traduire"
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val result = adapter.translate(input, "fr", "en")
 
@@ -59,7 +60,8 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `preserves non-translatable content by construction`() {
-        val input = """
+        val input =
+            """
             = Titre
             @cheroliv
             2025-01-01
@@ -79,7 +81,7 @@ class TreeTranslationAdapterTest {
             ----
 
             Un paragraphe final.
-        """.trimIndent()
+            """.trimIndent()
 
         val result = adapter.translate(input, "fr", "en")
 
@@ -92,7 +94,8 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `translates paragraphs preceding source blocks`() {
-        val input = """
+        val input =
+            """
             = Titre
             @cheroliv
             2025-01-01
@@ -108,7 +111,7 @@ class TreeTranslationAdapterTest {
             ----
             echo "code"
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val result = adapter.translate(input, "fr", "en")
 
@@ -118,7 +121,8 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `translate via pool does not translate source blocks`() {
-        val input = """
+        val input =
+            """
             = Titre
             @cheroliv
             2025-01-01
@@ -134,7 +138,7 @@ class TreeTranslationAdapterTest {
             ----
             sudo apt install zsh
             ----
-        """.trimIndent()
+            """.trimIndent()
 
         val result = adapter.translate(input, "fr", "en")
 
@@ -144,7 +148,8 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `round trips inline admonition without block delimiters`() {
-        val input = """
+        val input =
+            """
             = Titre
             @cheroliv
             2025-01-01
@@ -158,7 +163,7 @@ class TreeTranslationAdapterTest {
             Le fine-tune n'est pas un remplacement du RAG. Il reste pertinent pour les donnees qui changent souvent.
 
             == Heading after
-        """.trimIndent()
+            """.trimIndent()
 
         val result = adapter.translate(input, "fr", "en")
 
@@ -169,7 +174,8 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `parseNumberedLines tolerates list markers and noise`() {
-        val response = """
+        val response =
+            """
             Here are the translations:
 
             - 1: Premier [EN]
@@ -177,7 +183,7 @@ class TreeTranslationAdapterTest {
             3. Troisième [EN]
 
             Done!
-        """.trimIndent()
+            """.trimIndent()
 
         val parsed = TreeTranslationAdapter.parseNumberedLines(response)
 
@@ -189,11 +195,12 @@ class TreeTranslationAdapterTest {
 
     @Test
     fun `parseNumberedLines skips non-numbered noise`() {
-        val response = """
+        val response =
+            """
             I cannot translate this.
             - 1: Premier [EN]
             Nope.
-        """.trimIndent()
+            """.trimIndent()
 
         val parsed = TreeTranslationAdapter.parseNumberedLines(response)
 

@@ -5,8 +5,9 @@ import io.cucumber.java.en.Then
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 
-class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
-
+class FrontmatterRetranslateSteps(
+    private val world: DocumentWorld,
+) {
     @Given("a frontmatter re-translation project with fake LLM")
     fun frontmatterRetranslateProject() {
         val dir = Files.createTempDirectory("doc-bdd-retranslate").toFile()
@@ -16,7 +17,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         world.projectDir = dir
     }
@@ -26,7 +27,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeSourceFrArticle(
             title = "Titre FR",
             extraJbakeAttrs = mapOf("summary" to summary),
-            body = "Corps de l article en francais."
+            body = "Corps de l article en francais.",
         )
     }
 
@@ -35,7 +36,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeSourceFrArticle(
             title = "Titre FR",
             asciidocAttrs = mapOf("summary" to summary),
-            body = "Corps de l article en francais."
+            body = "Corps de l article en francais.",
         )
     }
 
@@ -43,7 +44,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
     fun sourceFrArticleWithTitle(title: String) {
         writeSourceFrArticle(
             title = title,
-            body = "Corps de l article en francais."
+            body = "Corps de l article en francais.",
         )
     }
 
@@ -52,7 +53,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeSourceFrArticle(
             title = "Titre FR",
             extraJbakeAttrs = mapOf("description" to description),
-            body = "Corps de l article en francais."
+            body = "Corps de l article en francais.",
         )
     }
 
@@ -61,7 +62,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeTargetEnArticle(
             title = "Title EN",
             extraJbakeAttrs = mapOf("summary" to summary),
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
@@ -70,7 +71,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeTargetEnArticle(
             title = "Title EN",
             asciidocAttrs = mapOf("summary" to summary),
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
@@ -78,7 +79,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
     fun targetEnArticleWithSameTitle(title: String) {
         writeTargetEnArticle(
             title = title,
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
@@ -87,7 +88,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeTargetEnArticle(
             title = "Title EN",
             extraJbakeAttrs = mapOf("description" to description),
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
@@ -96,25 +97,31 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         writeTargetEnArticle(
             title = "Title EN",
             extraJbakeAttrs = mapOf("summary" to summary),
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
     @Given("a source FR article with jbake summary {string} and jbake description {string}")
-    fun sourceFrArticleWithJbakeSummaryAndDescription(summary: String, description: String) {
+    fun sourceFrArticleWithJbakeSummaryAndDescription(
+        summary: String,
+        description: String,
+    ) {
         writeSourceFrArticle(
             title = "Titre FR",
             extraJbakeAttrs = mapOf("summary" to summary, "description" to description),
-            body = "Corps de l article en francais."
+            body = "Corps de l article en francais.",
         )
     }
 
     @Given("a target EN article with the same jbake summary {string} and same jbake description {string} and an already translated body")
-    fun targetEnArticleWithSameJbakeSummaryAndDescription(summary: String, description: String) {
+    fun targetEnArticleWithSameJbakeSummaryAndDescription(
+        summary: String,
+        description: String,
+    ) {
         writeTargetEnArticle(
             title = "Title EN",
             extraJbakeAttrs = mapOf("summary" to summary, "description" to description),
-            body = "Body already translated in English."
+            body = "Body already translated in English.",
         )
     }
 
@@ -144,7 +151,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         title: String,
         extraJbakeAttrs: Map<String, String> = emptyMap(),
         asciidocAttrs: Map<String, String> = emptyMap(),
-        body: String
+        body: String,
     ) {
         val dir = world.projectDir!!
         val srcDir = dir.resolve("content/blog").apply { mkdirs() }
@@ -167,7 +174,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
         title: String,
         extraJbakeAttrs: Map<String, String> = emptyMap(),
         asciidocAttrs: Map<String, String> = emptyMap(),
-        body: String
+        body: String,
     ) {
         val dir = world.projectDir!!
         val tgtDir = dir.resolve("content-i18n/en").apply { mkdirs() }
@@ -201,7 +208,7 @@ class FrontmatterRetranslateSteps(private val world: DocumentWorld) {
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 }

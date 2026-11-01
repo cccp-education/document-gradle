@@ -27,51 +27,66 @@ import kotlin.test.assertTrue
  * TestKit) — baby-step TDD before wiring into [AssembleBookTask].
  */
 class BookImagesTest {
-
     @Test
-    fun `BookImageResolver finds the unpadded scan of a page`(@TempDir dir: File) {
+    fun `BookImageResolver finds the unpadded scan of a page`(
+        @TempDir dir: File,
+    ) {
         File(dir, "61.jpg").writeBytes(byteArrayOf(1))
         assertEquals("61.jpg", BookImageResolver.scanFor(61, dir)?.name)
     }
 
     @Test
-    fun `BookImageResolver finds the zero-padded scan of a page`(@TempDir dir: File) {
+    fun `BookImageResolver finds the zero-padded scan of a page`(
+        @TempDir dir: File,
+    ) {
         File(dir, "007.png").writeBytes(byteArrayOf(1))
         assertEquals("007.png", BookImageResolver.scanFor(7, dir)?.name)
     }
 
     @Test
-    fun `BookImageResolver finds a split scan of a page`(@TempDir dir: File) {
+    fun `BookImageResolver finds a split scan of a page`(
+        @TempDir dir: File,
+    ) {
         File(dir, "83_1.jpg").writeBytes(byteArrayOf(1))
         assertEquals("83_1.jpg", BookImageResolver.scanFor(83, dir)?.name)
     }
 
     @Test
-    fun `BookImageResolver returns null when no scan exists for a page`(@TempDir dir: File) {
+    fun `BookImageResolver returns null when no scan exists for a page`(
+        @TempDir dir: File,
+    ) {
         assertNull(BookImageResolver.scanFor(42, dir))
     }
 
     @Test
-    fun `BookImageResolver resolves the exact scan of a split source file`(@TempDir dir: File) {
+    fun `BookImageResolver resolves the exact scan of a split source file`(
+        @TempDir dir: File,
+    ) {
         File(dir, "83_1.jpg").writeBytes(byteArrayOf(1))
         assertEquals("83_1.jpg", BookImageResolver.scanForBase("83_1", dir)?.name)
     }
 
     @Test
-    fun `BookImageResolver falls back to the page scan when the split has no scan`(@TempDir dir: File) {
+    fun `BookImageResolver falls back to the page scan when the split has no scan`(
+        @TempDir dir: File,
+    ) {
         File(dir, "83.jpg").writeBytes(byteArrayOf(1))
         assertEquals("83.jpg", BookImageResolver.scanForBase("83_1", dir)?.name)
     }
 
     @Test
-    fun `BookImageRewriter keeps a directive whose target file exists`(@TempDir dir: File) {
+    fun `BookImageRewriter keeps a directive whose target file exists`(
+        @TempDir dir: File,
+    ) {
         File(dir, "real.png").writeBytes(byteArrayOf(1))
         val text = "Avant\nimage::real.png[Legende]\nApres"
         assertEquals(text, BookImageRewriter.repair(text, dir, File(dir, "61.jpg")))
     }
 
     @Test
-    fun `BookImageRewriter substitutes a ghost block directive with the page scan preserving the form`(@TempDir dir: File) {
+    fun `BookImageRewriter substitutes a ghost block directive with the page scan preserving the form`(
+        @TempDir dir: File,
+    ) {
         File(dir, "157.jpg").writeBytes(byteArrayOf(1))
         val text = "== Section\nimage::qr-code.png[QR Code]\nSuite du texte"
         val repaired = BookImageRewriter.repair(text, dir, File(dir, "157.jpg"))
@@ -80,7 +95,9 @@ class BookImagesTest {
     }
 
     @Test
-    fun `BookImageRewriter substitutes a ghost inline directive preserving the inline form`(@TempDir dir: File) {
+    fun `BookImageRewriter substitutes a ghost inline directive preserving the inline form`(
+        @TempDir dir: File,
+    ) {
         File(dir, "61.jpg").writeBytes(byteArrayOf(1))
         val text = "Le cerveau :\nimage:cerveau_gauche_vs_cerveau_droit.jpg[Brain]\nSuite"
         val repaired = BookImageRewriter.repair(text, dir, File(dir, "61.jpg"))
@@ -89,7 +106,9 @@ class BookImagesTest {
     }
 
     @Test
-    fun `BookImageRewriter drops a ghost directive when the page has no scan`(@TempDir dir: File) {
+    fun `BookImageRewriter drops a ghost directive when the page has no scan`(
+        @TempDir dir: File,
+    ) {
         val text = "== Section\nimage::ghost.png[]\nSuite du texte"
         val repaired = BookImageRewriter.repair(text, dir, null)
         assertTrue("image::" !in repaired, "the ghost must be dropped, got:\n$repaired")
@@ -98,7 +117,9 @@ class BookImagesTest {
     }
 
     @Test
-    fun `BookImageRewriter drops a ghost directive line carrying a trailing comment`(@TempDir dir: File) {
+    fun `BookImageRewriter drops a ghost directive line carrying a trailing comment`(
+        @TempDir dir: File,
+    ) {
         val text = "== Section\nimage::triangle-gradient.png[] // schema du cycle\nSuite"
         val repaired = BookImageRewriter.repair(text, dir, null)
         assertTrue("image::" !in repaired, "the ghost must be dropped, got:\n$repaired")
@@ -106,19 +127,25 @@ class BookImagesTest {
     }
 
     @Test
-    fun `BookImageRewriter is a no-op on content without any image directive`(@TempDir dir: File) {
+    fun `BookImageRewriter is a no-op on content without any image directive`(
+        @TempDir dir: File,
+    ) {
         val text = "== Section\nAucune image ici.\nSuite"
         assertEquals(text, BookImageRewriter.repair(text, dir, File(dir, "61.jpg")))
     }
 
     @Test
-    fun `BookImageRewriter targets lists distinct block and inline targets in order`(@TempDir dir: File) {
+    fun `BookImageRewriter targets lists distinct block and inline targets in order`(
+        @TempDir dir: File,
+    ) {
         val text = "image::a.png[]\ntexte\nimage:b.png[Legende]\nimage::a.png[Encore]"
         assertEquals(linkedSetOf("a.png", "b.png"), BookImageRewriter.targets(text))
     }
 
     @Test
-    fun `BookImageRewriter targets is empty when no image directive is present`(@TempDir dir: File) {
+    fun `BookImageRewriter targets is empty when no image directive is present`(
+        @TempDir dir: File,
+    ) {
         assertTrue(BookImageRewriter.targets("== Section\nAucune image.\n").isEmpty())
     }
 }

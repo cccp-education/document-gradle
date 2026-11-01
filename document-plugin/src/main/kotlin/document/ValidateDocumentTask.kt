@@ -13,10 +13,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
-import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -51,7 +51,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "Composite validation severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class ValidateDocumentTask : DefaultTask() {
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty
@@ -96,15 +95,26 @@ abstract class ValidateDocumentTask : DefaultTask() {
         val safe = safeMode.get()
         val lintMode = htmlLinkLint.get()
 
-        val html: String? = if (lintMode == HtmlLinkLintMode.OFF) {
-            null
-        } else {
-            htmlFilePath.orNull?.let { File(it) }?.takeIf { it.exists() }?.readText()
-        }
+        val html: String? =
+            if (lintMode == HtmlLinkLintMode.OFF) {
+                null
+            } else {
+                htmlFilePath.orNull
+                    ?.let { File(it) }
+                    ?.takeIf { it.exists() }
+                    ?.readText()
+            }
 
-        val report = DocumentValidator.validate(
-            source.readText(), source.parentFile, includeMode, xrefMode, safe, lintMode, html,
-        )
+        val report =
+            DocumentValidator.validate(
+                source.readText(),
+                source.parentFile,
+                includeMode,
+                xrefMode,
+                safe,
+                lintMode,
+                html,
+            )
         reportFile.get().asFile.apply {
             parentFile.mkdirs()
             writeText(report.toJson())
@@ -153,15 +163,23 @@ abstract class ValidateDocumentTask : DefaultTask() {
             log.error(
                 "{} — HTML link lint (STRICT) failed: {} dead internal link(s): {}",
                 name,
-                report.htmlLint.deadLinks.orEmpty().size,
-                report.htmlLint.deadLinks.orEmpty().joinToString(),
+                report.htmlLint.deadLinks
+                    .orEmpty()
+                    .size,
+                report.htmlLint.deadLinks
+                    .orEmpty()
+                    .joinToString(),
             )
         } else if (lintMode == HtmlLinkLintMode.LENIENT && report.htmlLint?.status == "DEAD") {
             log.warn(
                 "{} — HTML link lint (LENIENT): {} dead internal link(s): {}",
                 name,
-                report.htmlLint.deadLinks.orEmpty().size,
-                report.htmlLint.deadLinks.orEmpty().joinToString(),
+                report.htmlLint.deadLinks
+                    .orEmpty()
+                    .size,
+                report.htmlLint.deadLinks
+                    .orEmpty()
+                    .joinToString(),
             )
         }
 

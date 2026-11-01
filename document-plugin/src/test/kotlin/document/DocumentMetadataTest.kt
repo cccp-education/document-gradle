@@ -1,14 +1,13 @@
 package document
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentMetadataTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-meta").toFile()
 
     @Test
@@ -114,19 +113,21 @@ class DocumentMetadataTest {
 
     @Test
     fun `DocumentMetadata forNewOrleans accepts a releaseNotesPath`() {
-        val metadata = DocumentMetadata.forNewOrleans(
-            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
+            )
 
         assertEquals("/build/release-notes/release-notes-1.0.0.adoc", metadata.releaseNotesPath)
     }
 
     @Test
     fun `DocumentMetadata forNewOrleans accepts a releaseNotesRenderer`() {
-        val metadata = DocumentMetadata.forNewOrleans(
-            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.md",
-            releaseNotesRenderer = "markdown",
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                releaseNotesPath = "/build/release-notes/release-notes-1.0.0.md",
+                releaseNotesRenderer = "markdown",
+            )
 
         assertEquals("markdown", metadata.releaseNotesRenderer)
     }
@@ -134,10 +135,11 @@ class DocumentMetadataTest {
     @Test
     fun `DocumentMetadata writeTo includes releaseNotesPath when set`() {
         val dir = tempDir()
-        val metadata = DocumentMetadata.forNewOrleans(
-            releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
-            releaseNotesRenderer = "asciidoc",
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                releaseNotesPath = "/build/release-notes/release-notes-1.0.0.adoc",
+                releaseNotesRenderer = "asciidoc",
+            )
 
         val file = DocumentMetadata.writeTo(dir, metadata)
 
@@ -216,9 +218,10 @@ class DocumentMetadataTest {
 
     @Test
     fun `DocumentMetadata forNewOrleans accepts a tableSemanticsPath`() {
-        val metadata = DocumentMetadata.forNewOrleans(
-            tableSemanticsPath = "/build/docs/document/table-semantics.json",
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                tableSemanticsPath = "/build/docs/document/table-semantics.json",
+            )
 
         assertEquals("/build/docs/document/table-semantics.json", metadata.tableSemanticsPath)
     }
@@ -226,9 +229,10 @@ class DocumentMetadataTest {
     @Test
     fun `DocumentMetadata writeTo includes tableSemanticsPath when set`() {
         val dir = tempDir()
-        val metadata = DocumentMetadata.forNewOrleans(
-            tableSemanticsPath = "/build/docs/document/table-semantics.json",
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                tableSemanticsPath = "/build/docs/document/table-semantics.json",
+            )
 
         val file = DocumentMetadata.writeTo(dir, metadata)
 

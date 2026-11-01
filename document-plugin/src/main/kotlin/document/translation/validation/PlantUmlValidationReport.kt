@@ -23,15 +23,16 @@ data class PlantUmlValidationReport(
 
     companion object {
         fun fromResults(results: List<PlantUmlValidationResult.Invalid>): PlantUmlValidationReport {
-            val entries = results.map { r ->
-                PlantUmlValidationReportEntry(
-                    article = r.articleTitle,
-                    blockIndex = r.blockIndex,
-                    status = "INVALID",
-                    strategy = r.strategy,
-                    reason = r.reason,
-                )
-            }
+            val entries =
+                results.map { r ->
+                    PlantUmlValidationReportEntry(
+                        article = r.articleTitle,
+                        blockIndex = r.blockIndex,
+                        status = "INVALID",
+                        strategy = r.strategy,
+                        reason = r.reason,
+                    )
+                }
             return PlantUmlValidationReport(entries)
         }
 

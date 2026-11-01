@@ -16,7 +16,6 @@ import java.io.File
  * whole scanned corpus (hundreds of megabytes).
  */
 object BookImageMaterializer {
-
     /** Relative directory the referenced scans are materialised into (S-260). */
     const val IMAGES_DIR = "images"
 
@@ -27,7 +26,10 @@ object BookImageMaterializer {
      * [imageDir] is a scan to copy (illustration, repaired ghost or
      * pre-existing image alike).
      */
-    fun resolveTargets(bookContent: String, imageDir: File): Map<String, File> {
+    fun resolveTargets(
+        bookContent: String,
+        imageDir: File,
+    ): Map<String, File> {
         val scans = LinkedHashMap<String, File>()
         BookImageRewriter.targets(bookContent).forEach { target ->
             val source = imageDir.resolve(target)
@@ -41,7 +43,10 @@ object BookImageMaterializer {
      * [outputDir] so the relative `image::` targets resolve and the EPUB embeds
      * them (RSC-007-free).
      */
-    fun materialise(scans: Map<String, File>, outputDir: File) {
+    fun materialise(
+        scans: Map<String, File>,
+        outputDir: File,
+    ) {
         if (scans.isEmpty()) return
         val target = outputDir.resolve(IMAGES_DIR).apply { mkdirs() }
         scans.forEach { (name, source) ->

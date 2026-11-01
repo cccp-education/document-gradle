@@ -29,20 +29,23 @@ data class Table(
     }
 
     fun reinject(translations: Map<Int, String>): Table {
-        val newRows = allRows.mapIndexed { rowIdx, row ->
-            val newCells = row.cells.mapIndexed { cellIdx, cell ->
-                val newInline = cell.inline.mapIndexed { inlineIdx, node ->
-                    val key = segmentKey(rowIdx, cellIdx, inlineIdx)
-                    if (key in translations && node is PivotInline.Text && node.translatable) {
-                        node.copy(text = translations[key]!!)
-                    } else {
-                        node
+        val newRows =
+            allRows.mapIndexed { rowIdx, row ->
+                val newCells =
+                    row.cells.mapIndexed { cellIdx, cell ->
+                        val newInline =
+                            cell.inline.mapIndexed { inlineIdx, node ->
+                                val key = segmentKey(rowIdx, cellIdx, inlineIdx)
+                                if (key in translations && node is PivotInline.Text && node.translatable) {
+                                    node.copy(text = translations[key]!!)
+                                } else {
+                                    node
+                                }
+                            }
+                        cell.copy(inline = newInline)
                     }
-                }
-                cell.copy(inline = newInline)
+                row.copy(cells = newCells)
             }
-            row.copy(cells = newCells)
-        }
         val headerSize = header.size
         return copy(
             header = newRows.take(headerSize),
@@ -99,8 +102,11 @@ data class Table(
         return sb.toString()
     }
 
-    private fun segmentKey(rowIdx: Int, cellIdx: Int, inlineIdx: Int): Int =
-        (rowIdx * 10000) + (cellIdx * 100) + inlineIdx
+    private fun segmentKey(
+        rowIdx: Int,
+        cellIdx: Int,
+        inlineIdx: Int,
+    ): Int = (rowIdx * 10000) + (cellIdx * 100) + inlineIdx
 }
 
 data class ColSpec(
@@ -117,13 +123,17 @@ data class ColSpec(
     }
 }
 
-enum class HAlign(val asciiDoc: String) {
+enum class HAlign(
+    val asciiDoc: String,
+) {
     LEFT("<"),
     CENTER("^"),
     RIGHT(">"),
 }
 
-enum class VAlign(val asciiDoc: String) {
+enum class VAlign(
+    val asciiDoc: String,
+) {
     TOP(".<"),
     MIDDLE(".^"),
     BOTTOM(".>"),
@@ -141,18 +151,18 @@ data class Cell(
     val valign: VAlign? = null,
 ) {
     fun toAsciiDoc(): String {
-        val prefix = buildString {
-            if (colSpan > 1) append("$colSpan+")
-            if (rowSpan > 1) append(".$rowSpan+")
-            if (halign != null) append(halign.asciiDoc)
-            if (valign != null) append(valign.asciiDoc)
-        }
+        val prefix =
+            buildString {
+                if (colSpan > 1) append("$colSpan+")
+                if (rowSpan > 1) append(".$rowSpan+")
+                if (halign != null) append(halign.asciiDoc)
+                if (valign != null) append(valign.asciiDoc)
+            }
         val content = inline.joinToString("") { it.toAsciiDoc() }
         return "|$prefix$content "
     }
 
-    fun toHtmlContent(): String =
-        inline.joinToString("") { it.toHtml() }
+    fun toHtmlContent(): String = inline.joinToString("") { it.toHtml() }
 
     fun htmlAttrs(): String {
         val attrs = mutableListOf<String>()
@@ -171,30 +181,34 @@ data class TranslatableSegment(
     val text: String,
 )
 
-private fun PivotInline.toAsciiDoc(): String = when (this) {
-    is PivotInline.Text -> text
-    is PivotInline.Bold -> "**$text**"
-    is PivotInline.Code -> "`$text`"
-    is PivotInline.Link -> "link:$url[$label]"
-    is PivotInline.LineBreak -> " +\n"
-}
+private fun PivotInline.toAsciiDoc(): String =
+    when (this) {
+        is PivotInline.Text -> text
+        is PivotInline.Bold -> "**$text**"
+        is PivotInline.Code -> "`$text`"
+        is PivotInline.Link -> "link:$url[$label]"
+        is PivotInline.LineBreak -> " +\n"
+    }
 
-private fun PivotInline.toHtml(): String = when (this) {
-    is PivotInline.Text -> text
-    is PivotInline.Bold -> "<strong>$text</strong>"
-    is PivotInline.Code -> "<code>$text</code>"
-    is PivotInline.Link -> "<a href=\"$url\">$label</a>"
-    is PivotInline.LineBreak -> "<br>"
-}
+private fun PivotInline.toHtml(): String =
+    when (this) {
+        is PivotInline.Text -> text
+        is PivotInline.Bold -> "<strong>$text</strong>"
+        is PivotInline.Code -> "<code>$text</code>"
+        is PivotInline.Link -> "<a href=\"$url\">$label</a>"
+        is PivotInline.LineBreak -> "<br>"
+    }
 
-private val HAlign.html: String? get() = when (this) {
-    HAlign.LEFT -> "left"
-    HAlign.CENTER -> "center"
-    HAlign.RIGHT -> "right"
-}
+private val HAlign.html: String? get() =
+    when (this) {
+        HAlign.LEFT -> "left"
+        HAlign.CENTER -> "center"
+        HAlign.RIGHT -> "right"
+    }
 
-private val VAlign.html: String? get() = when (this) {
-    VAlign.TOP -> "top"
-    VAlign.MIDDLE -> "middle"
-    VAlign.BOTTOM -> "bottom"
-}
+private val VAlign.html: String? get() =
+    when (this) {
+        VAlign.TOP -> "top"
+        VAlign.MIDDLE -> "middle"
+        VAlign.BOTTOM -> "bottom"
+    }

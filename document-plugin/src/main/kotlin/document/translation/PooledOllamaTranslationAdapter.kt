@@ -17,14 +17,14 @@ class PooledOllamaTranslationAdapter(
     internal val timeout: Duration = Duration.ofMinutes(5),
     internal val docKnowledgeBase: DocKnowledgeBase = DocKnowledgeBase.forAsciiDoc(),
 ) : TranslationService {
-
     private val log = LoggerFactory.getLogger(PooledOllamaTranslationAdapter::class.java)
     private val index = AtomicInteger(0)
 
     private val chatModels by lazy {
         log.info("[PooledOllamaTranslationAdapter] Creating {} OllamaChatModel(s) for model={}", baseUrls.size, model)
         baseUrls.map { baseUrl ->
-            OllamaChatModel.builder()
+            OllamaChatModel
+                .builder()
                 .baseUrl(baseUrl)
                 .modelName(model)
                 .timeout(timeout)
@@ -42,9 +42,10 @@ class PooledOllamaTranslationAdapter(
             val chatModel = chatModels[idx]
             val baseUrl = baseUrls[idx]
             try {
-                val raw = kotlinx.coroutines.runBlocking {
-                    withContext(Dispatchers.IO) { chatModel.chat(prompt) }
-                }
+                val raw =
+                    kotlinx.coroutines.runBlocking {
+                        withContext(Dispatchers.IO) { chatModel.chat(prompt) }
+                    }
                 val cleaned = raw.trim().trim('"', '\u00AB', '\u00BB', '`', '\n')
                 if (cleaned.isBlank() || isRefusalOrMetaResponse(cleaned)) {
                     val reason = if (cleaned.isBlank()) "Blank response" else "Refusal/meta response"
@@ -65,47 +66,51 @@ class PooledOllamaTranslationAdapter(
 
     internal fun isRefusalOrMetaResponse(text: String): Boolean {
         val lower = text.lowercase()
-        val patterns = listOf(
-            "please provide the text",
-            "please provide the source text",
-            "please provide more text",
-            "please share the text",
-            "please send me the text",
-            "please paste the text",
-            "please give me the text",
-            "please provide the content",
-            "the text you would like me to translate",
-            "text you want me to translate",
-            "text you wish to translate",
-            "please provide a text",
-            "i would be happy to translate",
-            "i'd be happy to translate",
-            "here is the translation",
-            "the translation is",
-            "translate the following text",
-            "please provide the french text",
-            "you haven't provided any text",
-            "no text was provided",
-            "no source text",
-            "it looks like you didn't provide",
-            "looks like you didn't provide",
-            "as an ai language model",
-            "i am an ai language model",
-            "i'm an ai language model",
-            "cannot translate",
-            "can't translate",
-        )
+        val patterns =
+            listOf(
+                "please provide the text",
+                "please provide the source text",
+                "please provide more text",
+                "please share the text",
+                "please send me the text",
+                "please paste the text",
+                "please give me the text",
+                "please provide the content",
+                "the text you would like me to translate",
+                "text you want me to translate",
+                "text you wish to translate",
+                "please provide a text",
+                "i would be happy to translate",
+                "i'd be happy to translate",
+                "here is the translation",
+                "the translation is",
+                "translate the following text",
+                "please provide the french text",
+                "you haven't provided any text",
+                "no text was provided",
+                "no source text",
+                "it looks like you didn't provide",
+                "looks like you didn't provide",
+                "as an ai language model",
+                "i am an ai language model",
+                "i'm an ai language model",
+                "cannot translate",
+                "can't translate",
+            )
         return patterns.any { lower.contains(it) }
     }
 
     private fun buildPrompt(request: TranslationRequest): String {
         val docContext = docKnowledgeBase.queryContext(request.sourceText)
-        val docSection = if (docContext.isNotBlank()) {
-            """AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):
+        val docSection =
+            if (docContext.isNotBlank()) {
+                """AsciiDoc syntax rules (this is AsciiDoc, NOT Markdown):
 $docContext
 
 """
-        } else ""
+            } else {
+                ""
+            }
 
         return """${docSection}Translate from ${request.sourceLanguage} to ${request.targetLanguage}.
 Preserve ALL backtick code spans (`...`) exactly as-is — never modify backtick content, spacing, or position.

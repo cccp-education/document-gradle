@@ -18,13 +18,15 @@ import java.nio.file.Files
  * Every step text carries the `document-validation` prefix (anti-glue pattern from S-223).
  */
 class DocumentValidationSteps {
-
     private lateinit var projectDir: File
     private lateinit var buildOutput: String
     private lateinit var reportFile: File
 
     @Given("a document gradle project with document-validation config {string} and source {string}")
-    fun `a project with document-validation config and source`(config: String, source: String) {
+    fun `a project with document-validation config and source`(
+        config: String,
+        source: String,
+    ) {
         projectDir = Files.createTempDirectory("doc-validation-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-validation\"\n")
         projectDir.resolve("build.gradle.kts").writeText(buildScript(config))
@@ -38,7 +40,10 @@ class DocumentValidationSteps {
      * the HTML conversion (producer of the rendered output) and the composite validation.
      */
     @Given("a document gradle project with document-validationHtml config {string} and source {string}")
-    fun `a project with document-validationHtml config and source`(config: String, source: String) {
+    fun `a project with document-validationHtml config and source`(
+        config: String,
+        source: String,
+    ) {
         projectDir = Files.createTempDirectory("doc-validation-html-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-validation-html\"\n")
         projectDir.resolve("build.gradle.kts").writeText(buildScript(config))
@@ -47,27 +52,28 @@ class DocumentValidationSteps {
     }
 
     private fun buildScript(config: String): String {
-        val block = when (config) {
-            "STRICT" ->
-                "converter { includeGuard = IncludeGuardMode.STRICT; xrefValidation = XrefValidationMode.STRICT; safeMode = SafeMode.UNSAFE }"
-            "STRICT_SERVER" ->
-                "converter { includeGuard = IncludeGuardMode.STRICT; xrefValidation = XrefValidationMode.STRICT; safeMode = SafeMode.SERVER }"
-            "STRICT_XREF" ->
-                "converter { xrefValidation = XrefValidationMode.STRICT }"
-            "LENIENT" ->
-                "converter { includeGuard = IncludeGuardMode.LENIENT; xrefValidation = XrefValidationMode.LENIENT; safeMode = SafeMode.UNSAFE }"
-            "OFF" ->
-                "converter { includeGuard = IncludeGuardMode.OFF; xrefValidation = XrefValidationMode.OFF; safeMode = SafeMode.UNSAFE }"
-            "STRICT_HTML" ->
-                "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
-            "LENIENT_HTML" ->
-                "converter { htmlLinkLint = HtmlLinkLintMode.LENIENT; safeMode = SafeMode.SERVER }"
-            // S-235 (Option B) — custom output name : same STRICT knob, the audited
-            // HTML is the *real* custom-named output build/docs/document/custom.html.
-            "CUSTOM_NAME" ->
-                "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
-            else -> "converter { }"
-        }
+        val block =
+            when (config) {
+                "STRICT" ->
+                    "converter { includeGuard = IncludeGuardMode.STRICT; xrefValidation = XrefValidationMode.STRICT; safeMode = SafeMode.UNSAFE }"
+                "STRICT_SERVER" ->
+                    "converter { includeGuard = IncludeGuardMode.STRICT; xrefValidation = XrefValidationMode.STRICT; safeMode = SafeMode.SERVER }"
+                "STRICT_XREF" ->
+                    "converter { xrefValidation = XrefValidationMode.STRICT }"
+                "LENIENT" ->
+                    "converter { includeGuard = IncludeGuardMode.LENIENT; xrefValidation = XrefValidationMode.LENIENT; safeMode = SafeMode.UNSAFE }"
+                "OFF" ->
+                    "converter { includeGuard = IncludeGuardMode.OFF; xrefValidation = XrefValidationMode.OFF; safeMode = SafeMode.UNSAFE }"
+                "STRICT_HTML" ->
+                    "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
+                "LENIENT_HTML" ->
+                    "converter { htmlLinkLint = HtmlLinkLintMode.LENIENT; safeMode = SafeMode.SERVER }"
+                // S-235 (Option B) — custom output name : same STRICT knob, the audited
+                // HTML is the *real* custom-named output build/docs/document/custom.html.
+                "CUSTOM_NAME" ->
+                    "converter { htmlLinkLint = HtmlLinkLintMode.STRICT; safeMode = SafeMode.SERVER }"
+                else -> "converter { }"
+            }
         return """
             import document.security.IncludeGuardMode
             import document.validation.HtmlLinkLintMode
@@ -87,24 +93,28 @@ class DocumentValidationSteps {
 
     @When("the validateDocument task runs with the HTML conversion")
     fun `validateDocument runs with the HTML conversion`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml", "validateDocument")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml", "validateDocument")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @When("the validateDocument task runs with the HTML conversion and fails")
     fun `validateDocument runs with the HTML conversion and fails`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml", "validateDocument")
-            .withPluginClasspath()
-            .forwardOutput()
-            .buildAndFail()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml", "validateDocument")
+                .withPluginClasspath()
+                .forwardOutput()
+                .buildAndFail()
+                .output
     }
 
     /** S-235 (Option B, anti-glue S-223 distinct step texts) — same two-task chain as
@@ -112,46 +122,54 @@ class DocumentValidationSteps {
      *  conversion output (`custom.html`), which the fourth guard must audit. */
     @When("the validateDocument task runs with the custom output name")
     fun `validateDocument runs with the custom output name`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @When("the validateDocument task runs with the custom output name and fails")
     fun `validateDocument runs with the custom output name and fails`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
-            .withPluginClasspath()
-            .forwardOutput()
-            .buildAndFail()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToHtml", "validateDocument", "-Pdocument.outputFileName=custom")
+                .withPluginClasspath()
+                .forwardOutput()
+                .buildAndFail()
+                .output
     }
 
     @When("the validateDocument task runs successfully")
     fun `validateDocument runs successfully`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("validateDocument")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("validateDocument")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @When("the validateDocument task runs and fails")
     fun `validateDocument runs and fails`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("validateDocument")
-            .withPluginClasspath()
-            .forwardOutput()
-            .buildAndFail()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("validateDocument")
+                .withPluginClasspath()
+                .forwardOutput()
+                .buildAndFail()
+                .output
     }
 
     @Then("the document-validation-report.json marks VALID everywhere")

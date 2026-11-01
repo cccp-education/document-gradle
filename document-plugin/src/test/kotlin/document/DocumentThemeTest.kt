@@ -1,18 +1,20 @@
 package document
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentThemeTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-theme").toFile()
 
-    private fun file(dir: File, name: String, content: String = ""): File =
-        File(dir, name).apply { writeText(content) }
+    private fun file(
+        dir: File,
+        name: String,
+        content: String = "",
+    ): File = File(dir, name).apply { writeText(content) }
 
     @Test
     fun `DocumentTheme default has no theme files configured`() {

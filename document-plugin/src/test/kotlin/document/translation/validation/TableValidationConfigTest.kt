@@ -1,30 +1,31 @@
 package document.translation.validation
 
-import document.translation.DocumentTranslator
-import document.translation.FakeTranslationService
-import document.translation.TranslationException
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import document.translation.DocumentTranslator
+import document.translation.FakeTranslationService
+import document.translation.TranslationException
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class TableValidationConfigTest {
-
     @Test
     fun `LENIENT mode warns but does not throw`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== broken [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== broken [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val translator = DocumentTranslator(corruptingService, tableValidationMode = ValidationMode.LENIENT)
 
         val source = """title=Test
@@ -50,16 +51,18 @@ status=published
 
     @Test
     fun `STRICT mode throws TranslationException on invalid table`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== broken [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== broken [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val translator = DocumentTranslator(corruptingService, tableValidationMode = ValidationMode.STRICT)
 
         val source = """title=Test
@@ -84,16 +87,18 @@ status=published
 
     @Test
     fun `OFF mode skips validation entirely`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== broken [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== broken [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val translator = DocumentTranslator(corruptingService, tableValidationMode = ValidationMode.OFF)
 
         val source = """title=Test
@@ -145,16 +150,18 @@ status=published
 
     @Test
     fun `STRICT mode throws on column count mismatch`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== 1 [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== 1 [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val translator = DocumentTranslator(corruptingService, tableValidationMode = ValidationMode.STRICT)
 
         val source = """title=Test
@@ -204,16 +211,18 @@ status=published
 
     @Test
     fun `tableValidationResults accumulates invalid results in LENIENT mode`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== broken [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== broken [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val translator = DocumentTranslator(corruptingService, tableValidationMode = ValidationMode.LENIENT)
 
         val source = """title=Test

@@ -1,14 +1,12 @@
 package document
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentArtifactCollectorTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-collector").toFile()
 
     @Test

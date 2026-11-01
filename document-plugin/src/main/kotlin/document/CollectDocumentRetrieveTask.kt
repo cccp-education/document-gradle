@@ -36,7 +36,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "Filesystem-bound: scans output directory for produced artifacts")
 abstract class CollectDocumentRetrieveTask : DefaultTask() {
-
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -93,16 +92,18 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
         val collector = DocumentArtifactCollector(dir)
         val entries = collector.collect(sourceAdoc = source, outputFileName = outputFileName.getOrElse("document"))
 
-        val releaseNotesEntries = releaseNotesDirPath.orNull
-            ?.let { File(it) }
-            ?.takeIf { it.exists() && it.isDirectory }
-            ?.let { collector.collectReleaseNotes(it) }
-            ?: emptyList()
+        val releaseNotesEntries =
+            releaseNotesDirPath.orNull
+                ?.let { File(it) }
+                ?.takeIf { it.exists() && it.isDirectory }
+                ?.let { collector.collectReleaseNotes(it) }
+                ?: emptyList()
 
-        val result = DocumentRetrieveResult(
-            entries = entries,
-            releaseNotes = releaseNotesEntries,
-        )
+        val result =
+            DocumentRetrieveResult(
+                entries = entries,
+                releaseNotes = releaseNotesEntries,
+            )
         val compositeFile = result.writeTo(dir)
 
         // DOC-METADATA-VALIDATION — carry the composite validation status into
@@ -113,30 +114,36 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
         // dependsOn collect while the report may not exist yet (validate runs in a
         // later build), and a non-null @InputFile would fail the build before this
         // action ever runs — the Gradle pitfall documented in S-232.
-        val reportFile: File? = validationReportPath.orNull?.let { File(it) }
-            ?.takeIf { it.exists() && it.isFile }
-        val validationStatus: String? = reportFile?.let { file ->
-            runCatching { DocumentValidationReport.fromJson(file.readText()) }
-                .getOrNull()
-                ?.overallStatus()
-        }
+        val reportFile: File? =
+            validationReportPath.orNull
+                ?.let { File(it) }
+                ?.takeIf { it.exists() && it.isFile }
+        val validationStatus: String? =
+            reportFile?.let { file ->
+                runCatching { DocumentValidationReport.fromJson(file.readText()) }
+                    .getOrNull()
+                    ?.overallStatus()
+            }
 
         // DOC-SEMANTIC-TABLE (D10) — carry the semantic-lifting artifact path when
         // it exists (read-only snapshot, no re-lifting). Absent → omitted from
         // metadata.json (NON_NULL, backward-compatible).
-        val tableSemanticsFile: File? = tableSemanticsPath.orNull?.let { File(it) }
-            ?.takeIf { it.exists() && it.isFile }
+        val tableSemanticsFile: File? =
+            tableSemanticsPath.orNull
+                ?.let { File(it) }
+                ?.takeIf { it.exists() && it.isFile }
 
         val primaryReleaseNotes = releaseNotesEntries.firstOrNull()
-        val metadata = DocumentMetadata.forNewOrleans(
-            type = "retrieve",
-            sessions = entries.size,
-            dependencies = listOf("brooklyn", "htown"),
-            releaseNotesPath = primaryReleaseNotes?.path,
-            releaseNotesRenderer = primaryReleaseNotes?.rendererType,
-            validationStatus = validationStatus,
-            tableSemanticsPath = tableSemanticsFile?.path,
-        )
+        val metadata =
+            DocumentMetadata.forNewOrleans(
+                type = "retrieve",
+                sessions = entries.size,
+                dependencies = listOf("brooklyn", "htown"),
+                releaseNotesPath = primaryReleaseNotes?.path,
+                releaseNotesRenderer = primaryReleaseNotes?.rendererType,
+                validationStatus = validationStatus,
+                tableSemanticsPath = tableSemanticsFile?.path,
+            )
         DocumentMetadata.writeTo(dir, metadata)
 
         logger.lifecycle(
@@ -144,7 +151,7 @@ abstract class CollectDocumentRetrieveTask : DefaultTask() {
             entries.size,
             releaseNotesEntries.size,
             validationStatus ?: "n/a",
-            compositeFile.absolutePath
+            compositeFile.absolutePath,
         )
     }
 }

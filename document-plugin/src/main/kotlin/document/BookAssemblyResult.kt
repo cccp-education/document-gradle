@@ -19,7 +19,6 @@ data class BookAssemblyResult(
     val pages: List<BookPage>,
     val photoCount: Int,
 ) {
-
     val pageCount: Int get() = pages.size
 
     /**

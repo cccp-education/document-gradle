@@ -14,12 +14,12 @@ class OllamaTranslationAdapter(
     private val model: String = System.getenv("OLLAMA_MODEL") ?: DEFAULT_MODEL,
     private val timeout: Duration = Duration.ofMinutes(5),
 ) : TranslationService {
-
     private val log = LoggerFactory.getLogger(OllamaTranslationAdapter::class.java)
 
     private val chatModel by lazy {
         log.info("[OllamaTranslationAdapter] Creating OllamaChatModel: baseUrl={}, model={}", baseUrl, model)
-        OllamaChatModel.builder()
+        OllamaChatModel
+            .builder()
             .baseUrl(baseUrl)
             .modelName(model)
             .timeout(timeout)
@@ -29,9 +29,10 @@ class OllamaTranslationAdapter(
     override fun translate(request: TranslationRequest): TranslationResult {
         val prompt = buildPrompt(request)
         return try {
-            val raw = kotlinx.coroutines.runBlocking {
-                withContext(Dispatchers.IO) { chatModel.chat(prompt) }
-            }
+            val raw =
+                kotlinx.coroutines.runBlocking {
+                    withContext(Dispatchers.IO) { chatModel.chat(prompt) }
+                }
             val cleaned = raw.trim().trim('"', '\u00AB', '\u00BB', '`', '\n')
             if (cleaned.isBlank()) {
                 TranslationResult.Failure("LLM returned blank response")

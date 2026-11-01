@@ -9,7 +9,6 @@ package document.translation
  * tree translation mode (whole-article single LLM call).
  */
 class PivotYamlParser {
-
     fun parse(yaml: String): PivotArticle {
         val lines = yaml.lines().filter { it.isNotBlank() }
         var i = 0
@@ -39,7 +38,10 @@ class PivotYamlParser {
         return PivotArticle(frontmatter, blocks)
     }
 
-    private fun parseFrontmatter(lines: List<String>, start: Int): Pair<PivotFrontmatter, Int> {
+    private fun parseFrontmatter(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotFrontmatter, Int> {
         var title = ""
         var date = ""
         var type = ""
@@ -86,25 +88,32 @@ class PivotYamlParser {
             i++
         }
 
-        val fm = PivotFrontmatter(
-            title = title,
-            date = date,
-            type = type,
-            status = status,
-            author = author,
-            jbakeAttributes = jbake,
-            asciidocAttributes = asciidoc
-        )
+        val fm =
+            PivotFrontmatter(
+                title = title,
+                date = date,
+                type = type,
+                status = status,
+                author = author,
+                jbakeAttributes = jbake,
+                asciidocAttributes = asciidoc,
+            )
         return fm to i
     }
 
-    private fun parseBlocks(lines: List<String>, start: Int): Pair<List<PivotBlock>, Int> {
+    private fun parseBlocks(
+        lines: List<String>,
+        start: Int,
+    ): Pair<List<PivotBlock>, Int> {
         val blocks = mutableListOf<PivotBlock>()
         var i = start
 
         while (i < lines.size) {
             val line = lines[i]
-            if (line.startsWith("  blocks:")) { i++; continue }
+            if (line.startsWith("  blocks:")) {
+                i++
+                continue
+            }
             if (!line.startsWith("    - ")) break
 
             val parsed = parseBlock(lines, i, indent = "    ")
@@ -115,7 +124,11 @@ class PivotYamlParser {
         return blocks to i
     }
 
-    private fun parseBlock(lines: List<String>, start: Int, indent: String): Pair<PivotBlock, Int> {
+    private fun parseBlock(
+        lines: List<String>,
+        start: Int,
+        indent: String,
+    ): Pair<PivotBlock, Int> {
         var i = start
         val first = lines[i].trim().removePrefix("- ")
         require(first.startsWith("type: ")) { "Expected 'type:' in block, got: $first" }
@@ -146,7 +159,12 @@ class PivotYamlParser {
                 var ordered = false
                 var j = i
                 if (j < lines.size && lines[j].trim().startsWith("ordered:")) {
-                    ordered = lines[j].trim().removePrefix("ordered:").trim().toBoolean()
+                    ordered =
+                        lines[j]
+                            .trim()
+                            .removePrefix("ordered:")
+                            .trim()
+                            .toBoolean()
                     j++
                 }
                 // items:
@@ -251,7 +269,11 @@ class PivotYamlParser {
         }
     }
 
-    private fun parseInlineList(lines: List<String>, start: Int, indent: String): Pair<List<PivotInline>, Int> {
+    private fun parseInlineList(
+        lines: List<String>,
+        start: Int,
+        indent: String,
+    ): Pair<List<PivotInline>, Int> {
         val inlines = mutableListOf<PivotInline>()
         var i = start
 
@@ -285,7 +307,9 @@ class PivotYamlParser {
                 }
                 raw.startsWith("type: line_break") -> {
                     i++
-                    while (i < lines.size && lines[i].startsWith("$indent  ")) { i++ }
+                    while (i < lines.size && lines[i].startsWith("$indent  ")) {
+                        i++
+                    }
                     inlines.add(PivotInline.LineBreak)
                 }
                 else -> throw IllegalArgumentException("Unknown inline in YAML: $raw")
@@ -295,7 +319,11 @@ class PivotYamlParser {
         return inlines to i
     }
 
-    private fun parseTranslatable(lines: List<String>, start: Int, indent: String): Pair<Boolean, Int> {
+    private fun parseTranslatable(
+        lines: List<String>,
+        start: Int,
+        indent: String,
+    ): Pair<Boolean, Int> {
         var i = start
         while (i < lines.size && lines[i].startsWith("$indent  ")) {
             val l = lines[i].trim()
@@ -308,7 +336,12 @@ class PivotYamlParser {
         return true to i
     }
 
-    private fun nextValue(lines: List<String>, start: Int, indent: String, key: String): String {
+    private fun nextValue(
+        lines: List<String>,
+        start: Int,
+        indent: String,
+        key: String,
+    ): String {
         var i = start
         while (i < lines.size && lines[i].startsWith("$indent  ")) {
             val l = lines[i].trim()

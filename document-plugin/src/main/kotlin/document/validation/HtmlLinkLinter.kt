@@ -19,7 +19,6 @@ package document.validation
  * sufficient for the HTML AsciidoctorJ produces where anchors are explicit.
  */
 object HtmlLinkLinter {
-
     private val ID_DOUBLE = Regex("""(?i)(?<![a-zA-Z0-9_-])id\s*=\s*"([^"]*)"""")
     private val ID_SINGLE = Regex("""(?i)(?<![a-zA-Z0-9_-])id\s*=\s*'([^']*)'""")
     private val NAME_DOUBLE = Regex("""(?i)(?<![a-zA-Z0-9_-])name\s*=\s*"([^"]*)"""")
@@ -33,10 +32,12 @@ object HtmlLinkLinter {
      * deduplicated).
      */
     fun extractAnchors(html: String): Set<String> {
-        val ids = ID_DOUBLE.findAll(html).map { it.groupValues[1] } +
-            ID_SINGLE.findAll(html).map { it.groupValues[1] }
-        val names = NAME_DOUBLE.findAll(html).map { it.groupValues[1] } +
-            NAME_SINGLE.findAll(html).map { it.groupValues[1] }
+        val ids =
+            ID_DOUBLE.findAll(html).map { it.groupValues[1] } +
+                ID_SINGLE.findAll(html).map { it.groupValues[1] }
+        val names =
+            NAME_DOUBLE.findAll(html).map { it.groupValues[1] } +
+                NAME_SINGLE.findAll(html).map { it.groupValues[1] }
         return (ids + names).toSet()
     }
 
@@ -63,10 +64,11 @@ object HtmlLinkLinter {
      */
     fun validate(html: String): HtmlLinkLintResult {
         val defined = extractAnchors(html)
-        val dead = extractInternalLinks(html)
-            .filter { it !in defined }
-            .distinct()
-            .sorted()
+        val dead =
+            extractInternalLinks(html)
+                .filter { it !in defined }
+                .distinct()
+                .sorted()
         return if (dead.isEmpty()) {
             HtmlLinkLintResult.Valid
         } else {

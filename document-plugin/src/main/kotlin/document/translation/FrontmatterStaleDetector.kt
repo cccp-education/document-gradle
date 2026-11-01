@@ -2,16 +2,18 @@ package document.translation
 
 data class FrontmatterStaleReport(
     val stale: Boolean,
-    val staleKeys: Set<String>
+    val staleKeys: Set<String>,
 )
 
 object FrontmatterStaleDetector {
-
     private const val TITLE_KEY = "title"
     private val TRANSLATABLE_JBAKE_KEYS = setOf("summary", "description")
     private val TRANSLATABLE_ASCIIDOC_KEYS = setOf("summary", "description")
 
-    fun detect(source: PivotFrontmatter, target: PivotFrontmatter): FrontmatterStaleReport {
+    fun detect(
+        source: PivotFrontmatter,
+        target: PivotFrontmatter,
+    ): FrontmatterStaleReport {
         val staleKeys = mutableSetOf<String>()
 
         if (isStale(source.title, target.title)) {
@@ -37,7 +39,10 @@ object FrontmatterStaleDetector {
         return FrontmatterStaleReport(stale = staleKeys.isNotEmpty(), staleKeys = staleKeys)
     }
 
-    private fun isStale(sourceValue: String?, targetValue: String?): Boolean {
+    private fun isStale(
+        sourceValue: String?,
+        targetValue: String?,
+    ): Boolean {
         if (sourceValue.isNullOrBlank()) return false
         if (targetValue.isNullOrBlank()) return false
         return sourceValue == targetValue

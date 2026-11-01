@@ -4,12 +4,12 @@ import document.BookAssembler
 import document.BookLayout
 import document.BookTocParser
 import document.BookTreeBuilder
+import io.cucumber.datatable.DataTable
 import io.cucumber.java.After
 import io.cucumber.java.Before
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
-import io.cucumber.datatable.DataTable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -34,7 +34,6 @@ import java.nio.file.Files
  * All step texts are unambiguous with the rest of the glue (anti-collision).
  */
 class CrossBoroughSteps {
-
     private lateinit var pagesDir: File
     private lateinit var tocDir: File
     private var tocFile: File? = null
@@ -83,23 +82,30 @@ class CrossBoroughSteps {
     }
 
     @When("I assemble the flat book with title {string} and author {string}")
-    fun iAssembleTheFlatBook(title: String, author: String) {
+    fun iAssembleTheFlatBook(
+        title: String,
+        author: String,
+    ) {
         result = BookAssembler.assemble(pagesDir, title, author, null)
     }
 
     @When("I assemble the book from the TOC with title {string} and author {string}")
-    fun iAssembleTheBookFromTheToc(title: String, author: String) {
+    fun iAssembleTheBookFromTheToc(
+        title: String,
+        author: String,
+    ) {
         val toc = tocFile ?: fail("A codex TOC file must be written before assembling")
         val sections = BookTocParser.parse(toc)
         assertTrue(sections.isNotEmpty(), "The TOC must yield at least one section")
         val tree = BookTreeBuilder.fromSections(sections)
-        result = BookAssembler.assemble(
-            tree = tree,
-            layout = BookLayout(),
-            title = title,
-            author = author,
-            resolveContent = BookAssembler.contentAwareResolver(pagesDir, null),
-        )
+        result =
+            BookAssembler.assemble(
+                tree = tree,
+                layout = BookLayout(),
+                title = title,
+                author = author,
+                resolveContent = BookAssembler.contentAwareResolver(pagesDir, null),
+            )
     }
 
     @Then("the assembled book should contain {int} section headings")
@@ -150,7 +156,10 @@ class CrossBoroughSteps {
     }
 
     @Then("the assembled book should contain {string} before {string}")
-    fun theAssembledBookShouldContainBefore(first: String, second: String) {
+    fun theAssembledBookShouldContainBefore(
+        first: String,
+        second: String,
+    ) {
         val r = result ?: fail("Book was not assembled")
         val firstIdx = r.content.indexOf(first)
         val secondIdx = r.content.indexOf(second)
@@ -186,6 +195,5 @@ class CrossBoroughSteps {
      * fidelity scenarios is that the assembler never fabricates a *section*
      * heading from raw OCR text.
      */
-    private fun sectionHeadings(content: String): List<String> =
-        content.lines().filter { Regex("^={2,} ").containsMatchIn(it) }
+    private fun sectionHeadings(content: String): List<String> = content.lines().filter { Regex("^={2,} ").containsMatchIn(it) }
 }

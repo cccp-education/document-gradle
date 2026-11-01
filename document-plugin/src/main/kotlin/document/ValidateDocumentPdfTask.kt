@@ -1,9 +1,9 @@
 package document
 
+import document.pdf.PdfBoxValidatorAdapter
 import document.pdf.PdfValidationMode
 import document.pdf.PdfValidationReport
 import document.pdf.PdfValidationResult
-import document.pdf.PdfBoxValidatorAdapter
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
@@ -37,7 +37,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "PDF validation severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class ValidateDocumentPdfTask : DefaultTask() {
-
     /**
      * Path of the PDF artifact audited by this guard, carried as an [@Input]
      * string (NOT an [@InputFile]) — the exact [ValidateDocumentEpubTask.epubFile]
@@ -71,9 +70,10 @@ abstract class ValidateDocumentPdfTask : DefaultTask() {
             // Mirror of the S-232/S-240 rule: visibility over silence — a missing
             // PDF under a non-OFF mode is an audit finding, never a silent skip.
             val label = pdf?.name ?: "document.pdf"
-            val report = PdfValidationReport.fromResult(
-                PdfValidationResult.Invalid(listOf("<pdf-file-missing> $label")),
-            )
+            val report =
+                PdfValidationReport.fromResult(
+                    PdfValidationResult.Invalid(listOf("<pdf-file-missing> $label")),
+                )
             writeReport(report)
             val message = message(mode, "<pdf-file-missing> $label")
             if (mode == PdfValidationMode.STRICT) {
@@ -106,6 +106,8 @@ abstract class ValidateDocumentPdfTask : DefaultTask() {
         }
     }
 
-    private fun message(mode: PdfValidationMode, detail: String): String =
-        "pdf validation failed ($mode): $detail"
+    private fun message(
+        mode: PdfValidationMode,
+        detail: String,
+    ): String = "pdf validation failed ($mode): $detail"
 }

@@ -33,7 +33,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "Idempotence is applicative — deterministic JSON round-trip of resolved config")
 abstract class DeserializeDocumentConfigTask : DefaultTask() {
-
     /**
      * The `document-config.json` file to read and round-trip.
      *
@@ -64,7 +63,7 @@ abstract class DeserializeDocumentConfigTask : DefaultTask() {
         if (source == null || !source.exists()) {
             val path = source?.absolutePath ?: "build/docs/document/document-config.json"
             throw IllegalStateException(
-                "document-config.json not found at $path — run 'serializeDocumentConfig' first"
+                "document-config.json not found at $path — run 'serializeDocumentConfig' first",
             )
         }
         val serializer = DocumentConfigSerializer()

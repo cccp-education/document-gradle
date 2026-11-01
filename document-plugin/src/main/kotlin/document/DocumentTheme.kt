@@ -19,9 +19,7 @@ data class DocumentTheme(
     val epubStylesheet: File? = null,
     val logo: File? = null,
 ) {
-
-    fun isEmpty(): Boolean =
-        pdfTheme == null && htmlStylesheet == null && epubStylesheet == null && logo == null
+    fun isEmpty(): Boolean = pdfTheme == null && htmlStylesheet == null && epubStylesheet == null && logo == null
 
     /**
      * Builds the AsciidoctorJ attributes map for the given [format].
@@ -35,10 +33,11 @@ data class DocumentTheme(
         if (isEmpty()) return emptyMap()
         return when (format) {
             DocumentFormat.HTML -> htmlStylesheet?.let { mapOf("stylesheet" to it.absolutePath) } ?: emptyMap()
-            DocumentFormat.PDF -> buildMap {
-                pdfTheme?.let { put("pdf-theme", it.absolutePath) }
-                logo?.let { put("pdf-front-cover-image", it.absolutePath) }
-            }
+            DocumentFormat.PDF ->
+                buildMap {
+                    pdfTheme?.let { put("pdf-theme", it.absolutePath) }
+                    logo?.let { put("pdf-front-cover-image", it.absolutePath) }
+                }
             DocumentFormat.EPUB -> epubStylesheet?.let { mapOf("epub-stylesheet" to it.absolutePath) } ?: emptyMap()
             DocumentFormat.DOCBOOK -> emptyMap()
             DocumentFormat.MANPAGE -> emptyMap()

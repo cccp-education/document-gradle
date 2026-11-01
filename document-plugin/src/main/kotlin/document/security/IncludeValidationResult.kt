@@ -8,7 +8,6 @@ package document.security
  * inside the allowed root, otherwise the first [Invalid] finding is reported.
  */
 sealed interface IncludeValidationResult {
-
     /** Every include directive stays within the allowed root. */
     data object Valid : IncludeValidationResult
 

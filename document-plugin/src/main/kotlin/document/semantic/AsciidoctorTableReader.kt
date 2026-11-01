@@ -29,20 +29,24 @@ import java.io.File
 class AsciidoctorTableReader(
     private val safeMode: SafeMode = SafeMode.UNSAFE,
 ) : SemanticTableReader {
-
     override fun read(source: File): List<RawTable> {
         if (!source.exists() || !source.isFile) return emptyList()
-        val options = Options.builder()
-            .safe(safeMode)
-            .option("sourcemap", "true")
-            .build()
+        val options =
+            Options
+                .builder()
+                .safe(safeMode)
+                .option("sourcemap", "true")
+                .build()
         val document = AsciidoctorHolder.load(source, options)
         val tables = mutableListOf<RawTable>()
         collect(document, tables)
         return tables
     }
 
-    private fun collect(node: StructuralNode, sink: MutableList<RawTable>) {
+    private fun collect(
+        node: StructuralNode,
+        sink: MutableList<RawTable>,
+    ) {
         if (node is Table) {
             annotationName(node)?.let { sink += toRawTable(it, node) }
             return
@@ -56,19 +60,33 @@ class AsciidoctorTableReader(
      * `semantic=<name>` takes precedence over the `semantic-<name>` role.
      */
     internal fun annotationName(node: ContentNode): String? {
-        val attribute = node.attributes?.get(ANNOTATION_ATTRIBUTE)?.toString()?.trim()
+        val attribute =
+            node.attributes
+                ?.get(ANNOTATION_ATTRIBUTE)
+                ?.toString()
+                ?.trim()
         if (!attribute.isNullOrBlank()) return attribute
-        return node.roles.orEmpty()
+        return node.roles
+            .orEmpty()
             .firstOrNull { it.startsWith(ANNOTATION_ROLE_PREFIX) }
             ?.removePrefix(ANNOTATION_ROLE_PREFIX)
             ?.trim()
             ?.takeIf { it.isNotBlank() }
     }
 
-    private fun toRawTable(name: String, table: Table): RawTable =
+    private fun toRawTable(
+        name: String,
+        table: Table,
+    ): RawTable =
         RawTable(
             name = name,
-            header = table.header.orEmpty().firstOrNull()?.cells.orEmpty().map { it.cellText() },
+            header =
+                table.header
+                    .orEmpty()
+                    .firstOrNull()
+                    ?.cells
+                    .orEmpty()
+                    .map { it.cellText() },
             rows = table.body.orEmpty().map { row -> row.cells.orEmpty().map { it.cellText() } },
         )
 

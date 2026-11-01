@@ -18,14 +18,16 @@ import document.translation.PivotBlock
  * Pure domain: no I/O, no Gradle, no LLM.
  */
 object ArticleTreeAudit {
-
     const val PLANTUML = "plantuml"
 
     /**
      * Builds and audits the article tree, resolving each PlantUML leaf status
      * through the N0 plantuml contracts (GBL-010 G-2b).
      */
-    fun of(content: Content, statusResolver: PlantUmlLeafStatusResolver): ArticleTreeReport {
+    fun of(
+        content: Content,
+        statusResolver: PlantUmlLeafStatusResolver,
+    ): ArticleTreeReport {
         val root = build(content, statusResolver)
         val leaves = leavesOf(root)
         val plantumlStatuses =
@@ -54,7 +56,10 @@ object ArticleTreeAudit {
      * Builds the article tree, resolving each PlantUML leaf status when a
      * [statusResolver] is supplied.
      */
-    internal fun build(content: Content, statusResolver: PlantUmlLeafStatusResolver?): ArticleNode.Section {
+    internal fun build(
+        content: Content,
+        statusResolver: PlantUmlLeafStatusResolver?,
+    ): ArticleNode.Section {
         val root = Building.Section(0, "")
         val stack = ArrayDeque<Building.Section>()
         stack.addLast(root)
@@ -81,7 +86,10 @@ object ArticleTreeAudit {
             is ArticleNode.Section -> node.children.flatMap { leavesOf(it) }
         }
 
-    private fun leafOf(block: PivotBlock, statusResolver: PlantUmlLeafStatusResolver?): ArticleNode.Leaf =
+    private fun leafOf(
+        block: PivotBlock,
+        statusResolver: PlantUmlLeafStatusResolver?,
+    ): ArticleNode.Leaf =
         when (block) {
             is PivotBlock.Heading ->
                 ArticleNode.Leaf("heading", block.translatable, ArticleLeafOwner.DOCUMENT)
@@ -124,14 +132,18 @@ object ArticleTreeAudit {
     private sealed interface Building {
         fun freeze(): ArticleNode
 
-        class Section(val level: Int, val title: String) : Building {
+        class Section(
+            val level: Int,
+            val title: String,
+        ) : Building {
             val children = mutableListOf<Building>()
 
-            override fun freeze(): ArticleNode.Section =
-                ArticleNode.Section(level, title, children.map { it.freeze() })
+            override fun freeze(): ArticleNode.Section = ArticleNode.Section(level, title, children.map { it.freeze() })
         }
 
-        class Leaf(val node: ArticleNode.Leaf) : Building {
+        class Leaf(
+            val node: ArticleNode.Leaf,
+        ) : Building {
             override fun freeze(): ArticleNode = node
         }
     }
@@ -170,7 +182,10 @@ data class ArticleTreeReport(
             root.children.forEach { renderNode(it, 1) }
         }
 
-    private fun StringBuilder.renderNode(node: ArticleNode, depth: Int) {
+    private fun StringBuilder.renderNode(
+        node: ArticleNode,
+        depth: Int,
+    ) {
         val indent = "  ".repeat(depth - 1)
         when (node) {
             is ArticleNode.Section -> {

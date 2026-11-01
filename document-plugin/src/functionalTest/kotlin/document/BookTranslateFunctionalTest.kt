@@ -20,7 +20,6 @@ import java.io.File
  * leaves the pipeline untouched (backward compatible).
  */
 class BookTranslateFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -39,7 +38,10 @@ class BookTranslateFunctionalTest {
         )
     }
 
-    private fun writeBuild(targetLine: String, extraBookLine: String = "") {
+    private fun writeBuild(
+        targetLine: String,
+        extraBookLine: String = "",
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-book-translate\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -66,11 +68,13 @@ class BookTranslateFunctionalTest {
         writePages()
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     @Test
     fun `translateBook produces book-en dot adoc with translated content and preserved structure`() {

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
  * [SemanticTableTest]) ; this suite pins the value object contract only.
  */
 class SemanticRowTest {
-
     @Test
     fun `a row keeps the role to value mapping`() {
         val row = SemanticRow(values = mapOf("reference" to "1.0", "title" to "Intro"))

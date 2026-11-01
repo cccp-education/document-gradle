@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
  * serialization contract (mirrors EpubValidationReportTest).
  */
 class PdfValidationReportTest {
-
     @Test
     fun `fromResult Valid produces single VALID entry`() {
         val report = PdfValidationReport.fromResult(PdfValidationResult.Valid)
@@ -29,9 +28,10 @@ class PdfValidationReportTest {
 
     @Test
     fun `report serializes to JSON with entry status and issues`() {
-        val report = PdfValidationReport.fromResult(
-            PdfValidationResult.Invalid(listOf("page 1: no extractable text")),
-        )
+        val report =
+            PdfValidationReport.fromResult(
+                PdfValidationResult.Invalid(listOf("page 1: no extractable text")),
+            )
 
         val json = report.toJson()
 
@@ -59,9 +59,10 @@ class PdfValidationReportTest {
 
     @Test
     fun `fromJson round-trips an INVALID report with issues`() {
-        val report = PdfValidationReport.fromResult(
-            PdfValidationResult.Invalid(listOf("page 2: no extractable text", "page 1: no extractable text")),
-        )
+        val report =
+            PdfValidationReport.fromResult(
+                PdfValidationResult.Invalid(listOf("page 2: no extractable text", "page 1: no extractable text")),
+            )
         val json = report.toJson()
 
         val parsed = PdfValidationReport.fromJson(json)

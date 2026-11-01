@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory
  */
 @DisableCachingByDefault(because = "Idempotence is applicative — source hash is stored in enriched file metadata")
 abstract class EnrichDocumentTask : DefaultTask() {
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty

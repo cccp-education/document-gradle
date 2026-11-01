@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory
  */
 @DisableCachingByDefault(because = "Translation output depends on LLM which is non-deterministic")
 abstract class TranslateBookAllLanguagesTask : DefaultTask() {
-
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Optional
@@ -145,11 +144,12 @@ abstract class TranslateBookAllLanguagesTask : DefaultTask() {
         val source = sourceLanguage.getOrElse("fr")
         val baseName = outputFileName.getOrElse("book")
 
-        val plan = BookLanguagePlanner.plan(
-            sourceLanguage = source,
-            requested = targetLanguages.getOrElse(emptyList()),
-            translateToAll = translateToAll.getOrElse(false),
-        )
+        val plan =
+            BookLanguagePlanner.plan(
+                sourceLanguage = source,
+                requested = targetLanguages.getOrElse(emptyList()),
+                translateToAll = translateToAll.getOrElse(false),
+            )
 
         // Ink Economy Law — no language selected is a strict no-op: the book
         // pipeline is left untouched (backward compatible).
@@ -192,9 +192,10 @@ abstract class TranslateBookAllLanguagesTask : DefaultTask() {
             }
 
             val service = serviceFactory(target.code)
-            val runner = BookTranslationRunner(
-                BookTranslator(service, documentTranslator = DocumentTranslator(service)),
-            )
+            val runner =
+                BookTranslationRunner(
+                    BookTranslator(service, documentTranslator = DocumentTranslator(service)),
+                )
             runner.translateAndPublish(
                 BookTranslationRequest(
                     tree = tree,

@@ -19,7 +19,6 @@ import kotlin.test.assertTrue
  * the silent source-language fallback as TRANSLATED forever.
  */
 class TranslationResilienceFunctionalTest {
-
     @TempDir
     lateinit var tempDir: File
 
@@ -57,15 +56,20 @@ First paragraph.
 == Section Two
 
 Second paragraph.
-"""
+""",
         )
 
         // Run 1 — the LLM fails on the second paragraph.
         val service = ControllableService("Second paragraph.", failing = true)
         val runner = ContentTranslationService(service, parser, renderer, jbakeRenderer = JbakeNativeRenderer())
-        val firstStatuses = runner.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, emptyMap(), "fr", "en"
-        )
+        val firstStatuses =
+            runner.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                emptyMap(),
+                "fr",
+                "en",
+            )
 
         val secondParagraphKey = firstStatuses.entries.first { it.value.status == BlockTranslationStatus.PENDING }.key
         assertTrue(firstStatuses.values.any { it.status == BlockTranslationStatus.TRANSLATED })
@@ -96,14 +100,19 @@ First paragraph.
 == Section Two
 
 Second paragraph.
-"""
+""",
         )
 
         val service = ControllableService("never", failing = false)
         val runner = ContentTranslationService(service, parser, renderer, jbakeRenderer = JbakeNativeRenderer())
-        val statuses = runner.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, emptyMap(), "fr", "en"
-        )
+        val statuses =
+            runner.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                emptyMap(),
+                "fr",
+                "en",
+            )
 
         assertTrue(statuses.isNotEmpty())
         assertTrue(statuses.values.all { it.status == BlockTranslationStatus.TRANSLATED })

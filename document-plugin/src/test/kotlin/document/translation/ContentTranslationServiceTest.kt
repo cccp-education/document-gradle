@@ -10,7 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ContentTranslationServiceTest {
-
     private val parser = AsciiDocParser()
     private val renderer = AsciiDocRenderer()
 
@@ -22,7 +21,9 @@ class ContentTranslationServiceTest {
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Bonjour
+        val article =
+            parser.parse(
+                """title=Bonjour
 date=2026-06-26
 type=page
 status=published
@@ -31,7 +32,8 @@ status=published
 == Salut
 
 Ceci est un **texte** en francais.
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         assertEquals("Bonjour [EN]", result.frontmatter.title)
@@ -46,14 +48,17 @@ Ceci est un **texte** en francais.
         val fake = FakeTranslationService(" [TR]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
 ~~~~~~
 
 Text with `code` and **bold**.
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val para = result.blocks[0] as PivotBlock.Paragraph
@@ -68,7 +73,9 @@ Text with `code` and **bold**.
         val fake = FakeTranslationService(" [X]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Source
+        val article =
+            parser.parse(
+                """title=Source
 date=2026-06-26
 type=page
 status=published
@@ -78,7 +85,8 @@ status=published
 ----
 public class Hello {}
 ----
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val source = result.blocks[0] as PivotBlock.Source
@@ -90,7 +98,9 @@ public class Hello {}
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
@@ -98,7 +108,8 @@ status=published
 
 == Introduction
 === Sous-section
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         assertEquals("Introduction [EN]", (result.blocks[0] as PivotBlock.Heading).text)
@@ -110,7 +121,9 @@ status=published
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Liste
+        val article =
+            parser.parse(
+                """title=Liste
 date=2026-06-26
 type=page
 status=published
@@ -121,7 +134,8 @@ status=published
 
 1. Premier
 2. Second
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val ul = result.blocks[0] as PivotBlock.ListBlock
@@ -136,7 +150,9 @@ status=published
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Tableau
+        val article =
+            parser.parse(
+                """title=Tableau
 date=2026-06-26
 type=page
 status=published
@@ -149,7 +165,8 @@ status=published
 | Un | 1
 | Deux | 2
 |===
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val table = result.blocks[0] as PivotBlock.Table
@@ -162,7 +179,9 @@ status=published
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Note
+        val article =
+            parser.parse(
+                """title=Note
 date=2026-06-26
 type=page
 status=published
@@ -172,7 +191,8 @@ status=published
 ====
 Texte important avec **gras**.
 ====
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val adm = result.blocks[0] as PivotBlock.Admonition
@@ -186,22 +206,26 @@ Texte important avec **gras**.
         val service = ContentTranslationService(fake, parser, renderer)
 
         val langDir = tempDir.resolve("en").also { it.mkdirs() }
-        langDir.resolve("article1.adoc").writeText("""title=Article 1
+        langDir.resolve("article1.adoc").writeText(
+            """title=Article 1
 date=2026-06-26
 type=page
 status=published
 ~~~~~~
 
 Premier article.
-""")
-        langDir.resolve("article2.adoc").writeText("""title=Article 2
+""",
+        )
+        langDir.resolve("article2.adoc").writeText(
+            """title=Article 2
 date=2026-06-26
 type=page
 status=published
 ~~~~~~
 
 Second article.
-""")
+""",
+        )
         langDir.resolve("data.txt").writeText("not an adoc")
 
         val result = service.translate(langDir, "fr", "en")
@@ -228,21 +252,23 @@ Second article.
 
     @Test
     fun `translation failure falls back to original text`() {
-        val failing = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                return TranslationResult.Failure("API down")
+        val failing =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult = TranslationResult.Failure("API down")
             }
-        }
         val service = ContentTranslationService(failing, parser, renderer)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
 ~~~~~~
 
 Hello world.
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         assertEquals("Test", result.frontmatter.title)
@@ -255,7 +281,9 @@ Hello world.
         val fake = FakeTranslationService(" [EN]")
         val service = ContentTranslationService(fake, parser, renderer)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
@@ -268,7 +296,8 @@ actor "Utilisateur" as User
 User -> Service: Requête
 @enduml
 ----
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val source = result.blocks[0] as PivotBlock.Source
@@ -282,7 +311,9 @@ User -> Service: Requête
         val port = FakePlantUmlPort(fake)
         val service = ContentTranslationService(fake, parser, renderer, plantUmlPort = port)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
@@ -295,7 +326,8 @@ actor "Utilisateur" as User
 User -> Service: Requête
 @enduml
 ----
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val source = result.blocks[0] as PivotBlock.Source
@@ -309,7 +341,9 @@ User -> Service: Requête
         val port = FakePlantUmlPort(fake)
         val service = ContentTranslationService(fake, parser, renderer, plantUmlPort = port)
 
-        val article = parser.parse("""title=Test
+        val article =
+            parser.parse(
+                """title=Test
 date=2026-06-26
 type=page
 status=published
@@ -319,7 +353,8 @@ status=published
 ----
 public class Hello {}
 ----
-""")
+""",
+            )
         val result = service.translateArticle(article, "fr", "en")
 
         val source = result.blocks[0] as PivotBlock.Source
@@ -336,7 +371,8 @@ public class Hello {}
         val langDir = tempDir.resolve("i18n/en")
         langDir.mkdirs()
         for (i in 1..5) {
-            langDir.resolve("article-$i.adoc").writeText("""= Article $i
+            langDir.resolve("article-$i.adoc").writeText(
+                """= Article $i
 @CherOliv
 2026-07-21
 :jbake-type: post
@@ -347,7 +383,8 @@ public class Hello {}
 class "Service$i"
 @enduml
 ----
-""")
+""",
+            )
         }
 
         val result = service.translate(langDir, "fr", "en")
@@ -361,8 +398,8 @@ class "Service$i"
     }
 }
 
-class FakeTranslationService(private val suffix: String) : TranslationService {
-    override fun translate(request: TranslationRequest): TranslationResult {
-        return TranslationResult.Success(request.sourceText + suffix)
-    }
+class FakeTranslationService(
+    private val suffix: String,
+) : TranslationService {
+    override fun translate(request: TranslationRequest): TranslationResult = TranslationResult.Success(request.sourceText + suffix)
 }

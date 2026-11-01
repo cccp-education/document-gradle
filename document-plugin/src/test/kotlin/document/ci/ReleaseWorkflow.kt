@@ -20,8 +20,9 @@ package document.ci
  * No Gradle type, no I/O: the workflow text is the only input.
  */
 object ReleaseWorkflow {
-
-    data class Verdict(val violations: List<String>) {
+    data class Verdict(
+        val violations: List<String>,
+    ) {
         val compliant: Boolean get() = violations.isEmpty()
     }
 

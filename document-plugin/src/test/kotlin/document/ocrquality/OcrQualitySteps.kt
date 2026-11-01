@@ -3,7 +3,6 @@ package document.ocrquality
 import document.BookOcrFailureDetector
 import document.BookOcrIssue
 import document.BookOcrIssueReport
-import document.BookSection
 import io.cucumber.java.Before
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -22,30 +21,36 @@ import kotlin.test.assertTrue
  * `ocr-quality ` prefix (anti-glue-collision pattern, S-223).
  */
 class OcrQualitySteps {
-
     private lateinit var scansDir: File
     private var issues: List<BookOcrIssue> = emptyList()
     private var reportFile: File? = null
 
     @Before
     fun setup() {
-        scansDir = File.createTempFile("ocr-quality-", "").apply {
-            delete()
-            mkdirs()
-            deleteOnExit()
-        }
+        scansDir =
+            File.createTempFile("ocr-quality-", "").apply {
+                delete()
+                mkdirs()
+                deleteOnExit()
+            }
         issues = emptyList()
         reportFile = null
     }
 
     @Given("ocr-quality a scans directory with page {string} containing")
-    fun `a scans directory with page containing`(fileName: String, body: String) {
+    fun `a scans directory with page containing`(
+        fileName: String,
+        body: String,
+    ) {
         // Scenarios may add several pages against the same directory.
         File(scansDir, fileName).writeText(body)
     }
 
     @Given("ocr-quality a scans directory with page {string} containing {string}")
-    fun `a scans directory with page containing inline`(fileName: String, body: String) {
+    fun `a scans directory with page containing inline`(
+        fileName: String,
+        body: String,
+    ) {
         File(scansDir, fileName).writeText(body)
     }
 
@@ -74,11 +79,12 @@ class OcrQualitySteps {
     @Then("ocr-quality the issues are")
     fun `the issues are`(expected: List<Map<String, String>>) {
         val actual = issues.map { issue -> mapOf("reason" to issue.reason.name, "detail" to (issue.detail ?: "")) }
-        val expect = expected.map { row ->
-            // Cucumber escapes literal pipes in table cells with a backslash —
-            // strip the escapes so the row matches the raw line content.
-            mapOf("reason" to (row["reason"] ?: ""), "detail" to (row["detail"] ?: "").replace("\\|", "|"))
-        }
+        val expect =
+            expected.map { row ->
+                // Cucumber escapes literal pipes in table cells with a backslash —
+                // strip the escapes so the row matches the raw line content.
+                mapOf("reason" to (row["reason"] ?: ""), "detail" to (row["detail"] ?: "").replace("\\|", "|"))
+            }
         assertEquals(expect, actual, "detected issues differ from expected")
     }
 

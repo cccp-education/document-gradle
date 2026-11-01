@@ -24,7 +24,6 @@ import java.io.File
  * compatible.
  */
 class BookOutputFileNameFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -62,11 +61,13 @@ class BookOutputFileNameFunctionalTest {
         writePages()
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     @Test
     fun `assembleBook writes the renamed book when the outputFileName knob is set`() {

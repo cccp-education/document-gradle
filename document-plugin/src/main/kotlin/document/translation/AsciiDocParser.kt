@@ -1,7 +1,6 @@
 package document.translation
 
 class AsciiDocParser {
-
     fun parse(adoc: String): PivotArticle {
         val lines = adoc.lines()
         return if (isPivotFormat(lines)) {
@@ -25,8 +24,7 @@ class AsciiDocParser {
      */
     fun parseBody(adoc: String): List<PivotBlock> = parseBlocks(adoc.lines())
 
-    private fun isPivotFormat(lines: List<String>): Boolean =
-        lines.any { it.startsWith("~~~~~~") }
+    private fun isPivotFormat(lines: List<String>): Boolean = lines.any { it.startsWith("~~~~~~") }
 
     private fun parsePivotFormat(lines: List<String>): PivotArticle {
         val frontmatter = parseFrontmatter(lines)
@@ -115,7 +113,7 @@ class AsciiDocParser {
             status = status,
             author = author,
             jbakeAttributes = jbakeAttributes,
-            asciidocAttributes = asciidocAttributes
+            asciidocAttributes = asciidocAttributes,
         ) to i
     }
 
@@ -127,30 +125,38 @@ class AsciiDocParser {
         var author = ""
         val jbakeAttributes = mutableMapOf<String, String>()
         for (line in lines) {
-            if (line.startsWith("title=")) title = line.removePrefix("title=").trim()
-            else if (line.startsWith("date=")) date = line.removePrefix("date=").trim()
-            else if (line.startsWith("type=")) type = line.removePrefix("type=").trim()
-            else if (line.startsWith("status=")) status = line.removePrefix("status=").trim()
-            else if (line.startsWith("author=")) author = line.removePrefix("author=").trim()
-            else if (line.startsWith("jbake-")) {
+            if (line.startsWith("title=")) {
+                title = line.removePrefix("title=").trim()
+            } else if (line.startsWith("date=")) {
+                date = line.removePrefix("date=").trim()
+            } else if (line.startsWith("type=")) {
+                type = line.removePrefix("type=").trim()
+            } else if (line.startsWith("status=")) {
+                status = line.removePrefix("status=").trim()
+            } else if (line.startsWith("author=")) {
+                author = line.removePrefix("author=").trim()
+            } else if (line.startsWith("jbake-")) {
                 val key = line.removePrefix("jbake-").substringBefore("=").trim()
                 val value = line.substringAfter("=").trim()
                 jbakeAttributes[key] = value
+            } else if (line.startsWith("~~~~~~")) {
+                break
             }
-            else if (line.startsWith("~~~~~~")) break
         }
         return PivotFrontmatter(title, date, type, status, author, jbakeAttributes)
     }
 
-    private fun indexOfTildeSeparator(lines: List<String>): Int =
-        lines.indexOfFirst { it.startsWith("~~~~~~") }.let { if (it < 0) 0 else it }
+    private fun indexOfTildeSeparator(lines: List<String>): Int = lines.indexOfFirst { it.startsWith("~~~~~~") }.let { if (it < 0) 0 else it }
 
     private fun parseBlocks(lines: List<String>): List<PivotBlock> {
         val blocks = mutableListOf<PivotBlock>()
         var i = 0
         while (i < lines.size) {
             val line = lines[i]
-            if (line.isBlank()) { i++; continue }
+            if (line.isBlank()) {
+                i++
+                continue
+            }
 
             when {
                 line.trim() == "'''" -> {
@@ -238,8 +244,7 @@ class AsciiDocParser {
      */
     private fun isHeading(line: String): Boolean = HEADING_PATTERN.matches(line)
 
-    private fun isAdmonitionDelimiter(line: String): Boolean =
-        line.length >= 4 && line.all { it == '=' }
+    private fun isAdmonitionDelimiter(line: String): Boolean = line.length >= 4 && line.all { it == '=' }
 
     private fun parseHeading(line: String): PivotBlock.Heading {
         val match = HEADING_PATTERN.find(line)!!
@@ -248,13 +253,22 @@ class AsciiDocParser {
         return PivotBlock.Heading(level, text, translatable = true)
     }
 
-    private fun parseSourceBlock(lines: List<String>, start: Int): Pair<PivotBlock.Source, Int> {
+    private fun parseSourceBlock(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotBlock.Source, Int> {
         val header = lines[start]
-        val language = when {
-            header.startsWith("[source") -> Regex("\\[source,?\\s*(\\w*)\\]").find(header)?.groupValues?.get(1)?.trim() ?: ""
-            header.startsWith("[plantuml") -> "plantuml"
-            else -> ""
-        }
+        val language =
+            when {
+                header.startsWith("[source") ->
+                    Regex("\\[source,?\\s*(\\w*)\\]")
+                        .find(header)
+                        ?.groupValues
+                        ?.get(1)
+                        ?.trim() ?: ""
+                header.startsWith("[plantuml") -> "plantuml"
+                else -> ""
+            }
         var i = start + 1
         val delimiter = firstBlockDelimiterAfterHeader(lines, i)
         if (delimiter != null) {
@@ -268,20 +282,25 @@ class AsciiDocParser {
         return PivotBlock.Source(language, "", header) to lines.size
     }
 
-    private fun firstBlockDelimiterAfterHeader(lines: List<String>, from: Int): Pair<String, Int>? {
+    private fun firstBlockDelimiterAfterHeader(
+        lines: List<String>,
+        from: Int,
+    ): Pair<String, Int>? {
         var i = from
         while (i < lines.size) {
             val line = lines[i].trim()
             if (isSourceDelimiterLine(line)) return line to i + 1
-            if (isBlockTitleLine(line)) { i++; continue }
+            if (isBlockTitleLine(line)) {
+                i++
+                continue
+            }
             if (line.isNotBlank()) return null
             i++
         }
         return null
     }
 
-    private fun isBlockTitleLine(line: String): Boolean =
-        line.startsWith(".") && !line.startsWith("..") && line.length > 1
+    private fun isBlockTitleLine(line: String): Boolean = line.startsWith(".") && !line.startsWith("..") && line.length > 1
 
     private fun isSourceClosingDelimiter(line: String): Boolean {
         val trimmed = line.trim()
@@ -296,7 +315,10 @@ class AsciiDocParser {
 
     private fun isMarkdownFence(line: String): Boolean = line.trim().startsWith("```")
 
-    private fun parseMarkdownFencedBlock(lines: List<String>, start: Int): Pair<PivotBlock.Source, Int> {
+    private fun parseMarkdownFencedBlock(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotBlock.Source, Int> {
         val fenceLine = lines[start].trim()
         val language = fenceLine.removePrefix("```").trim()
         var i = start + 1
@@ -307,7 +329,11 @@ class AsciiDocParser {
         return PivotBlock.Source(language, content, lines[start]) to i
     }
 
-    private fun parseAdmonition(lines: List<String>, start: Int, kind: String): Pair<PivotBlock.Admonition, Int> {
+    private fun parseAdmonition(
+        lines: List<String>,
+        start: Int,
+        kind: String,
+    ): Pair<PivotBlock.Admonition, Int> {
         if (start + 1 >= lines.size) {
             return PivotBlock.Admonition(kind, emptyList()) to start + 1
         }
@@ -332,7 +358,11 @@ class AsciiDocParser {
         return match?.groupValues?.get(1)
     }
 
-    fun parseTableStructured(lines: List<String>, start: Int, cols: String?): Pair<Table, Int> {
+    fun parseTableStructured(
+        lines: List<String>,
+        start: Int,
+        cols: String?,
+    ): Pair<Table, Int> {
         val colSpecs = parseColSpecs(cols)
         var i = start
         if (lines[i].startsWith("[cols=")) i++
@@ -361,13 +391,27 @@ class AsciiDocParser {
         var valign: VAlign? = null
         var width: Int? = null
 
-        if (remaining.startsWith(".<")) { valign = VAlign.TOP; remaining = remaining.removePrefix(".<") }
-        else if (remaining.startsWith(".^")) { valign = VAlign.MIDDLE; remaining = remaining.removePrefix(".^") }
-        else if (remaining.startsWith(".>")) { valign = VAlign.BOTTOM; remaining = remaining.removePrefix(".>") }
+        if (remaining.startsWith(".<")) {
+            valign = VAlign.TOP
+            remaining = remaining.removePrefix(".<")
+        } else if (remaining.startsWith(".^")) {
+            valign = VAlign.MIDDLE
+            remaining = remaining.removePrefix(".^")
+        } else if (remaining.startsWith(".>")) {
+            valign = VAlign.BOTTOM
+            remaining = remaining.removePrefix(".>")
+        }
 
-        if (remaining.startsWith("<")) { halign = HAlign.LEFT; remaining = remaining.removePrefix("<") }
-        else if (remaining.startsWith("^")) { halign = HAlign.CENTER; remaining = remaining.removePrefix("^") }
-        else if (remaining.startsWith(">")) { halign = HAlign.RIGHT; remaining = remaining.removePrefix(">") }
+        if (remaining.startsWith("<")) {
+            halign = HAlign.LEFT
+            remaining = remaining.removePrefix("<")
+        } else if (remaining.startsWith("^")) {
+            halign = HAlign.CENTER
+            remaining = remaining.removePrefix("^")
+        } else if (remaining.startsWith(">")) {
+            halign = HAlign.RIGHT
+            remaining = remaining.removePrefix(">")
+        }
 
         if (remaining.isNotEmpty()) {
             val digits = remaining.takeWhile { it.isDigit() }
@@ -395,9 +439,11 @@ class AsciiDocParser {
                     val lastText = (lastCell.inline.lastOrNull() as? PivotInline.Text)?.text.orEmpty()
                     val rest = lastCell.inline.dropLast(1)
                     val mergedText = if (lastText.isEmpty()) line.trim() else "$lastText ${line.trim()}"
-                    val newInline = rest + listOf(
-                        PivotInline.Text(mergedText, translatable = TextTranslatableClassifier.isTranslatable(mergedText)),
-                    )
+                    val newInline =
+                        rest +
+                            listOf(
+                                PivotInline.Text(mergedText, translatable = TextTranslatableClassifier.isTranslatable(mergedText)),
+                            )
                     currentCells.add(lastCell.copy(inline = newInline))
                 }
                 continue
@@ -423,10 +469,10 @@ class AsciiDocParser {
 
     private fun isCellPrefixLine(line: String): Boolean {
         val trimmed = line.trimStart()
-        return CELL_PREFIX_LINE_PATTERN.containsMatchIn(trimmed)
+        return cellPrefixLinePattern.containsMatchIn(trimmed)
     }
 
-    private val CELL_PREFIX_LINE_PATTERN = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?\\|")
+    private val cellPrefixLinePattern = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?\\|")
 
     private fun splitStructuredCells(line: String): List<String> {
         if (!line.startsWith("|")) return listOf(line)
@@ -458,10 +504,10 @@ class AsciiDocParser {
     private fun isCellPrefix(s: String): Boolean {
         val trimmed = s.trimStart()
         if (trimmed.isEmpty()) return false
-        return CELL_PREFIX_PATTERN.matches(trimmed)
+        return cellPrefixPattern.matches(trimmed)
     }
 
-    private val CELL_PREFIX_PATTERN = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?$")
+    private val cellPrefixPattern = Regex("^(\\d+)?\\+?(\\.(\\d+)\\+)?[<^>]?(\\.[<^>])?[ah]?$")
 
     private fun parseCellPrefix(raw: String): CellPrefix {
         var remaining = raw.trimStart()
@@ -479,17 +525,35 @@ class AsciiDocParser {
             remaining = remaining.removePrefix(spanMatch.value)
         }
 
-        if (remaining.startsWith("<")) { halign = HAlign.LEFT; remaining = remaining.removePrefix("<") }
-        else if (remaining.startsWith("^")) { halign = HAlign.CENTER; remaining = remaining.removePrefix("^") }
-        else if (remaining.startsWith(">")) { halign = HAlign.RIGHT; remaining = remaining.removePrefix(">") }
+        if (remaining.startsWith("<")) {
+            halign = HAlign.LEFT
+            remaining = remaining.removePrefix("<")
+        } else if (remaining.startsWith("^")) {
+            halign = HAlign.CENTER
+            remaining = remaining.removePrefix("^")
+        } else if (remaining.startsWith(">")) {
+            halign = HAlign.RIGHT
+            remaining = remaining.removePrefix(">")
+        }
 
-        if (remaining.startsWith(".<")) { valign = VAlign.TOP; remaining = remaining.removePrefix(".<") }
-        else if (remaining.startsWith(".^")) { valign = VAlign.MIDDLE; remaining = remaining.removePrefix(".^") }
-        else if (remaining.startsWith(".>")) { valign = VAlign.BOTTOM; remaining = remaining.removePrefix(".>") }
+        if (remaining.startsWith(".<")) {
+            valign = VAlign.TOP
+            remaining = remaining.removePrefix(".<")
+        } else if (remaining.startsWith(".^")) {
+            valign = VAlign.MIDDLE
+            remaining = remaining.removePrefix(".^")
+        } else if (remaining.startsWith(".>")) {
+            valign = VAlign.BOTTOM
+            remaining = remaining.removePrefix(".>")
+        }
 
-        if (remaining.startsWith("a|")) remaining = remaining.removePrefix("a|")
-        else if (remaining.startsWith("h|")) remaining = remaining.removePrefix("h|")
-        else if (remaining.startsWith("|")) remaining = remaining.removePrefix("|")
+        if (remaining.startsWith("a|")) {
+            remaining = remaining.removePrefix("a|")
+        } else if (remaining.startsWith("h|")) {
+            remaining = remaining.removePrefix("h|")
+        } else if (remaining.startsWith("|")) {
+            remaining = remaining.removePrefix("|")
+        }
 
         return CellPrefix(colSpan, rowSpan, halign, valign, remaining)
     }
@@ -502,7 +566,11 @@ class AsciiDocParser {
         val content: String,
     )
 
-    private fun parseTable(lines: List<String>, start: Int, cols: String?): Pair<PivotBlock.Table, Int> {
+    private fun parseTable(
+        lines: List<String>,
+        start: Int,
+        cols: String?,
+    ): Pair<PivotBlock.Table, Int> {
         var i = start
         if (lines[i].startsWith("[cols=")) i++
         if (i < lines.size && lines[i].startsWith("|===")) i++
@@ -571,22 +639,24 @@ class AsciiDocParser {
         return result
     }
 
-    private fun isNumberedListMarker(line: String): Boolean =
-        Regex("^\\d+\\.\\s+.+").matches(line)
+    private fun isNumberedListMarker(line: String): Boolean = Regex("^\\d+\\.\\s+.+").matches(line)
 
-    private fun isUnorderedListMarker(line: String): Boolean =
-        line.startsWith("* ") || line.startsWith("** ") || line.startsWith("*** ")
+    private fun isUnorderedListMarker(line: String): Boolean = line.startsWith("* ") || line.startsWith("** ") || line.startsWith("*** ")
 
-    private fun listMarkerLength(line: String): Int = when {
-        line.startsWith("*** ") -> 4
-        line.startsWith("** ") -> 3
-        line.startsWith("* ") -> 2
-        line.startsWith(". ") -> 2
-        isNumberedListMarker(line) -> Regex("^\\d+\\.").find(line)!!.value.length + 1
-        else -> 0
-    }
+    private fun listMarkerLength(line: String): Int =
+        when {
+            line.startsWith("*** ") -> 4
+            line.startsWith("** ") -> 3
+            line.startsWith("* ") -> 2
+            line.startsWith(". ") -> 2
+            isNumberedListMarker(line) -> Regex("^\\d+\\.").find(line)!!.value.length + 1
+            else -> 0
+        }
 
-    private fun parseList(lines: List<String>, start: Int): Pair<PivotBlock.ListBlock, Int> {
+    private fun parseList(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotBlock.ListBlock, Int> {
         val firstLine = lines[start]
         val ordered = firstLine.startsWith(". ") || isNumberedListMarker(firstLine)
         val items = mutableListOf<List<PivotInline>>()
@@ -599,15 +669,23 @@ class AsciiDocParser {
         return PivotBlock.ListBlock(ordered, items) to i
     }
 
-    private fun parseParagraph(lines: List<String>, start: Int): Pair<PivotBlock.Paragraph?, Int> {
+    private fun parseParagraph(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotBlock.Paragraph?, Int> {
         val collectedLines = mutableListOf<String>()
         var i = start
-        while (i < lines.size && lines[i].isNotBlank() &&
-            !(lines[i].startsWith("=") && isHeading(lines[i])) && !isUnorderedListMarker(lines[i]) &&
-            !lines[i].startsWith(". ") && !isNumberedListMarker(lines[i]) &&
+        while (i < lines.size &&
+            lines[i].isNotBlank() &&
+            !(lines[i].startsWith("=") && isHeading(lines[i])) &&
+            !isUnorderedListMarker(lines[i]) &&
+            !lines[i].startsWith(". ") &&
+            !isNumberedListMarker(lines[i]) &&
             !lines[i].startsWith("[") &&
-            !lines[i].startsWith("|===") && !lines[i].startsWith("---") &&
-            !lines[i].startsWith("----")) {
+            !lines[i].startsWith("|===") &&
+            !lines[i].startsWith("---") &&
+            !lines[i].startsWith("----")
+        ) {
             collectedLines.add(lines[i].trim())
             i++
         }
@@ -662,18 +740,22 @@ class AsciiDocParser {
 
             when (nextMatch) {
                 linkWithPrefix -> {
-                    segments.add(PivotInline.Link(
-                        url = nextMatch.groupValues[1],
-                        label = nextMatch.groupValues[2],
-                        translatable = true
-                    ))
+                    segments.add(
+                        PivotInline.Link(
+                            url = nextMatch.groupValues[1],
+                            label = nextMatch.groupValues[2],
+                            translatable = true,
+                        ),
+                    )
                 }
                 directLink -> {
-                    segments.add(PivotInline.Link(
-                        url = nextMatch.groupValues[1],
-                        label = nextMatch.groupValues[2],
-                        translatable = true
-                    ))
+                    segments.add(
+                        PivotInline.Link(
+                            url = nextMatch.groupValues[1],
+                            label = nextMatch.groupValues[2],
+                            translatable = true,
+                        ),
+                    )
                 }
                 boldMatch -> {
                     segments.add(PivotInline.Bold(nextMatch.groupValues[1], translatable = true))
@@ -703,7 +785,10 @@ class AsciiDocParser {
         return true
     }
 
-    private fun parseDescriptionList(lines: List<String>, start: Int): Pair<PivotBlock.DescriptionList, Int> {
+    private fun parseDescriptionList(
+        lines: List<String>,
+        start: Int,
+    ): Pair<PivotBlock.DescriptionList, Int> {
         val items = mutableListOf<DescriptionItem>()
         var i = start
         while (i < lines.size && isDescriptionListItem(lines[i])) {
@@ -731,7 +816,7 @@ class AsciiDocParser {
             PivotBlock.BlockMacro(
                 name = match.groupValues[1],
                 target = match.groupValues[2],
-                attributes = match.groupValues[3]
+                attributes = match.groupValues[3],
             )
         } else {
             PivotBlock.BlockMacro(name = "image", target = trimmed.substringAfter("::"))

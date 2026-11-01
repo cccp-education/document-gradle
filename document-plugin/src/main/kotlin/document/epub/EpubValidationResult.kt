@@ -8,7 +8,6 @@ package document.epub
  *   list (format `ID severity: text`).
  */
 sealed class EpubValidationResult {
-
     /** The issue list attached to a result (empty for [Valid]). */
     abstract val issues: List<String>
 

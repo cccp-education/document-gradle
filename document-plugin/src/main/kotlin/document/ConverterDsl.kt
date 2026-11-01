@@ -1,12 +1,12 @@
 package document
 
-import org.asciidoctor.SafeMode
-import org.gradle.api.provider.Property
 import document.epub.EpubValidationMode
 import document.pdf.PdfValidationMode
 import document.security.IncludeGuardMode
 import document.validation.HtmlLinkLintMode
 import document.xref.XrefValidationMode
+import org.asciidoctor.SafeMode
+import org.gradle.api.provider.Property
 
 /**
  * DSL block `converter { }` for conversion options.

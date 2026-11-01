@@ -43,7 +43,6 @@ import java.io.File
  */
 @DisableCachingByDefault(because = "Conversion idempotence is applicative — source hash is stored in generated file metadata")
 abstract class PublishBookAllLanguagesTask : DefaultTask() {
-
     @get:Input
     @get:Optional
     abstract val sourceLanguage: Property<String>
@@ -122,12 +121,13 @@ abstract class PublishBookAllLanguagesTask : DefaultTask() {
 
     @get:Internal
     internal val theme: DocumentTheme
-        get() = DocumentTheme(
-            pdfTheme = pdfThemeFile.orNull?.asFile,
-            htmlStylesheet = htmlStylesheetFile.orNull?.asFile,
-            epubStylesheet = epubStylesheetFile.orNull?.asFile,
-            logo = logoFile.orNull?.asFile,
-        )
+        get() =
+            DocumentTheme(
+                pdfTheme = pdfThemeFile.orNull?.asFile,
+                htmlStylesheet = htmlStylesheetFile.orNull?.asFile,
+                epubStylesheet = epubStylesheetFile.orNull?.asFile,
+                logo = logoFile.orNull?.asFile,
+            )
 
     @TaskAction
     fun publishBookAllLanguages() {
@@ -136,18 +136,20 @@ abstract class PublishBookAllLanguagesTask : DefaultTask() {
         val baseName = outputFileName.getOrElse("book")
         val destination = outputDir.orNull?.asFile ?: throw GradleException("$name — outputDir is not set")
 
-        val languages = BookLanguagePlanner.plan(
-            sourceLanguage = source,
-            requested = targetLanguages.getOrElse(emptyList()),
-            translateToAll = translateToAll.getOrElse(false),
-        )
-        val plan = BookPublicationPlanner.plan(
-            languages,
-            baseName,
-            publishFormats.getOrElse(emptyList()),
-            sourceLanguage = source,
-            includeSource = includeSource.getOrElse(false),
-        )
+        val languages =
+            BookLanguagePlanner.plan(
+                sourceLanguage = source,
+                requested = targetLanguages.getOrElse(emptyList()),
+                translateToAll = translateToAll.getOrElse(false),
+            )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName,
+                publishFormats.getOrElse(emptyList()),
+                sourceLanguage = source,
+                includeSource = includeSource.getOrElse(false),
+            )
 
         // Ink Economy Law — no format (or no language) selected is a strict
         // no-op: the pipeline is left untouched (backward compatible).

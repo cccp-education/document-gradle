@@ -7,18 +7,18 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class ReleaseNotesDslTest {
-
     private val objects: ObjectFactory = ProjectBuilder.builder().build().objects
 
-    private fun dsl() = ReleaseNotesDsl(
-        fromTag = objects.property(String::class.java),
-        toTag = objects.property(String::class.java),
-        version = objects.property(String::class.java),
-        includeDownloads = objects.property(Boolean::class.java),
-        rendererType = objects.property(String::class.java),
-        categories = objects.mapProperty(String::class.java, String::class.java),
-        llmMode = objects.property(String::class.java),
-    )
+    private fun dsl() =
+        ReleaseNotesDsl(
+            fromTag = objects.property(String::class.java),
+            toTag = objects.property(String::class.java),
+            version = objects.property(String::class.java),
+            includeDownloads = objects.property(Boolean::class.java),
+            rendererType = objects.property(String::class.java),
+            categories = objects.mapProperty(String::class.java, String::class.java),
+            llmMode = objects.property(String::class.java),
+        )
 
     @Test
     fun `default rendererType is null (falls back to asciidoc)`() {

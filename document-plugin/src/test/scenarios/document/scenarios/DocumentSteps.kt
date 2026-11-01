@@ -8,8 +8,9 @@ import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.assertj.core.api.Assertions.assertThat
 
-class DocumentSteps(private val world: DocumentWorld) {
-
+class DocumentSteps(
+    private val world: DocumentWorld,
+) {
     @Given("a new document project")
     fun createNewDocumentProject() {
         world.createGradleProject()
@@ -148,12 +149,18 @@ class DocumentSteps(private val world: DocumentWorld) {
     }
 
     @When("I am executing the task {string} with group {string}")
-    fun executeTaskWithGroup(taskName: String, group: String) {
+    fun executeTaskWithGroup(
+        taskName: String,
+        group: String,
+    ) {
         world.executeGradle(taskName, "--group", group)
     }
 
     @When("I am executing the task {string} with prompt {string}")
-    fun executeTaskWithPrompt(taskName: String, prompt: String) {
+    fun executeTaskWithPrompt(
+        taskName: String,
+        prompt: String,
+    ) {
         world.executeGradle(taskName, "-Pdocument.prompt=$prompt")
     }
 
@@ -269,9 +276,10 @@ class DocumentSteps(private val world: DocumentWorld) {
     fun convertedEpubShouldEmbedImageDirectiveAsZipEntry() {
         val epub = world.convertedEpubFile()
         assertThat(epub).exists()
-        val entries = java.util.zip.ZipFile(epub).use { zf ->
-            zf.entries().toList().map { it.name }
-        }
+        val entries =
+            java.util.zip.ZipFile(epub).use { zf ->
+                zf.entries().toList().map { it.name }
+            }
         assertThat(entries).anySatisfy { name ->
             assertThat(name).contains("photo.png")
         }
@@ -969,7 +977,10 @@ class DocumentSteps(private val world: DocumentWorld) {
     }
 
     @Then("the batch translated output should contain file {string} with content {string}")
-    fun batchTranslatedOutputShouldContainFileWithContent(relPath: String, expected: String) {
+    fun batchTranslatedOutputShouldContainFileWithContent(
+        relPath: String,
+        expected: String,
+    ) {
         val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
         assertThat(output).exists()
         assertThat(output.readText()).contains(expected)
@@ -982,11 +993,16 @@ class DocumentSteps(private val world: DocumentWorld) {
     }
 
     @Then("the batch translated output file {string} should have {int} lines containing {string}")
-    fun batchTranslatedOutputFileShouldHaveLinesContaining(relPath: String, expectedCount: Int, substring: String) {
+    fun batchTranslatedOutputFileShouldHaveLinesContaining(
+        relPath: String,
+        expectedCount: Int,
+        substring: String,
+    ) {
         val output = world.projectDir!!.resolve("build/docs/translation/$relPath")
         assertThat(output).exists()
         val count = output.readText().lines().count { it.contains(substring) }
-        assertThat(count).`as`("Expected $expectedCount lines containing '$substring' in $relPath, got $count")
+        assertThat(count)
+            .`as`("Expected $expectedCount lines containing '$substring' in $relPath, got $count")
             .isEqualTo(expectedCount)
     }
 

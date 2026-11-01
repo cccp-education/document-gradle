@@ -32,15 +32,16 @@ class DocumentPluginPublicationTest {
     @Test
     fun `plugin version matches root consumer catalog version`() {
         val buildScript = pluginDir.resolve("build.gradle.kts").readText(UTF_8)
-        val versionLine =
-            buildScript
-                .lineSequence()
-                .first { it.trimStart().startsWith("version =") }
+
+        // MEM-LINT-ADOPTION (LINT-ADOPT-8) — ktlint reflows this assignment, so the
+        // guard is whitespace-insensitive: normalise then assert the compact form
+        // (`version=ws.versions.document.plugin.get()`), never a line shape.
+        val compactBuildScript = buildScript.replace(Regex("\\s+"), "")
 
         // MEM-CAT-ROLLOUT-1 (D3) — self version derived from the published workspace catalog.
-        assertThat(versionLine)
+        assertThat(compactBuildScript)
             .withFailMessage("build.gradle.kts version must derive from the published workspace catalog (ws.versions.document.plugin)")
-            .contains("ws.versions.document.plugin.get()")
+            .contains("version=ws.versions.document.plugin.get()")
 
         // Hygiene (D5): local toml self version must match the published ws catalog version —
         // the ws catalog (workspace-bom repo) is the cross-borough source of truth.

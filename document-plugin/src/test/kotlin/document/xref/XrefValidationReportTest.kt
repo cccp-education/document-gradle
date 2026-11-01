@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class XrefValidationReportTest {
-
     @Test
     fun `fromResult Valid produces a single VALID entry`() {
         val report = XrefValidationReport.fromResult(XrefValidationResult.Valid)
@@ -15,9 +14,10 @@ class XrefValidationReportTest {
 
     @Test
     fun `fromResult Invalid lists every missing ref as MISSING`() {
-        val report = XrefValidationReport.fromResult(
-            XrefValidationResult.Invalid(listOf("ghost", "phantom")),
-        )
+        val report =
+            XrefValidationReport.fromResult(
+                XrefValidationResult.Invalid(listOf("ghost", "phantom")),
+            )
         assertEquals(2, report.entries.size)
         assertTrue(report.entries.all { it.status == "MISSING" })
         assertEquals(listOf("ghost", "phantom"), report.entries.map { it.ref })
@@ -25,9 +25,11 @@ class XrefValidationReportTest {
 
     @Test
     fun `toJson is non-empty and round-trips entries`() {
-        val json = XrefValidationReport.fromResult(
-            XrefValidationResult.Invalid(listOf("ghost")),
-        ).toJson()
+        val json =
+            XrefValidationReport
+                .fromResult(
+                    XrefValidationResult.Invalid(listOf("ghost")),
+                ).toJson()
         assertTrue(json.contains("MISSING"))
         assertTrue(json.contains("ghost"))
     }

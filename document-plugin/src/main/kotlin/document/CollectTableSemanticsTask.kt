@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory
  */
 @DisableCachingByDefault(because = "Semantic lifting is an opt-in audit whose severity branches are side-effect-bearing (fail-fast vs report)")
 abstract class CollectTableSemanticsTask : DefaultTask() {
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty

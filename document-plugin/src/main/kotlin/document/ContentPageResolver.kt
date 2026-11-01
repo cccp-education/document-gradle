@@ -31,7 +31,6 @@ class ContentPageResolver(
     private val scansDir: File,
     private val photosDir: File? = null,
 ) {
-
     private val imageDir: File get() = photosDir ?: scansDir
 
     fun content(section: BookSection): String {
@@ -45,13 +44,11 @@ class ContentPageResolver(
                 f.isFile &&
                     f.extension.equals("adoc", ignoreCase = true) &&
                     f.name.matches(Regex("^($padded|$unpadded)_\\d+\\.adoc$"))
-            }
-            ?.sortedBy { it.name }
+            }?.sortedBy { it.name }
             ?.let { files += it }
         if (files.isEmpty()) return ""
         return files.joinToString("\n\n") { render(it) }.trim()
     }
 
-    private fun render(file: File): String =
-        BookPageRenderer.render(file, imageDir, illustrate = photosDir != null)
+    private fun render(file: File): String = BookPageRenderer.render(file, imageDir, illustrate = photosDir != null)
 }

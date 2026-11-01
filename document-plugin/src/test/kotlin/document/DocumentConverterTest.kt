@@ -2,21 +2,27 @@ package document
 
 import org.asciidoctor.Options
 import org.asciidoctor.SafeMode
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentConverterTest {
-
     private fun tempDir(): File = Files.createTempDirectory("doc-conv").toFile()
 
-    private fun adocSource(dir: File, name: String = "source.adoc", content: String = "= Document de Test\n\n== Introduction\n\nParagraphe."): DocumentSource {
-        return DocumentSource(File(dir, name).apply { writeText(content) })
-    }
+    private fun adocSource(
+        dir: File,
+        name: String = "source.adoc",
+        content: String = "= Document de Test\n\n== Introduction\n\nParagraphe.",
+    ): DocumentSource =
+        DocumentSource(
+            File(dir, name).apply {
+                writeText(content)
+            },
+        )
 
     @Test
     fun `convertToHtml produit un HTML5 avec doctype depuis un AsciiDoc valide`() {
@@ -33,10 +39,11 @@ class DocumentConverterTest {
     @Test
     fun `convertToHtml preserve les sections du document source`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
-        )
+        val source =
+            adocSource(
+                dir,
+                content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu.",
+            )
 
         val html = DocumentConverter.convertToHtml(source)
 
@@ -47,17 +54,19 @@ class DocumentConverterTest {
     @Test
     fun `convertToHtml rend les blocs de code source avec syntaxe colorisee`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-                = Document Code
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document Code
 
-                [source,kotlin]
-                ----
-                fun hello() = println("hi")
-                ----
-            """.trimIndent()
-        )
+                    [source,kotlin]
+                    ----
+                    fun hello() = println("hi")
+                    ----
+                    """.trimIndent(),
+            )
 
         val html = DocumentConverter.convertToHtml(source)
 
@@ -69,10 +78,11 @@ class DocumentConverterTest {
     fun `convertToHtml resout les includes AsciiDoc`() {
         val dir = tempDir()
         File(dir, "chapitre.adoc").writeText("== Chapitre Inclu\n\nTexte du chapitre inclus.")
-        val source = adocSource(
-            dir,
-            content = "= Document avec Include\n\ninclude::chapitre.adoc[]"
-        )
+        val source =
+            adocSource(
+                dir,
+                content = "= Document avec Include\n\ninclude::chapitre.adoc[]",
+            )
 
         val html = DocumentConverter.convertToHtml(source)
 
@@ -93,11 +103,12 @@ class DocumentConverterTest {
     fun `shouldSkip retourne vrai si le fichier existe et le hash source correspond`() {
         val dir = tempDir()
         val source = adocSource(dir)
-        val output = File(dir, "output.html").apply {
-            writeText("<!DOCTYPE html><html><body>existing</body></html>")
-            // metadata: hash source inscrit dans un header
-            writeText("<!-- document-gradle — source hash: ${DocumentConverter.sourceHash(source)} -->\n<!DOCTYPE html>\n<html></html>")
-        }
+        val output =
+            File(dir, "output.html").apply {
+                writeText("<!DOCTYPE html><html><body>existing</body></html>")
+                // metadata: hash source inscrit dans un header
+                writeText("<!-- document-gradle — source hash: ${DocumentConverter.sourceHash(source)} -->\n<!DOCTYPE html>\n<html></html>")
+            }
 
         assertTrue(DocumentConverter.shouldSkipConversion(source, output))
     }
@@ -115,9 +126,10 @@ class DocumentConverterTest {
     fun `shouldSkip retourne faux si le hash source ne correspond pas`() {
         val dir = tempDir()
         val source = adocSource(dir)
-        val output = File(dir, "output.html").apply {
-            writeText("<!-- document-gradle — source hash: differethash -->\n<!DOCTYPE html>")
-        }
+        val output =
+            File(dir, "output.html").apply {
+                writeText("<!-- document-gradle — source hash: differethash -->\n<!DOCTYPE html>")
+            }
 
         assertFalse(DocumentConverter.shouldSkipConversion(source, output))
     }
@@ -136,38 +148,41 @@ class DocumentConverterTest {
 
     @Test
     fun `buildOptions applique le SafeMode fourni`() {
-        val options = DocumentConverter.buildOptions(
-            backend = "html5",
-            theme = DocumentTheme(),
-            format = DocumentFormat.HTML,
-            outputFile = null,
-            safeMode = SafeMode.SERVER,
-        )
+        val options =
+            DocumentConverter.buildOptions(
+                backend = "html5",
+                theme = DocumentTheme(),
+                format = DocumentFormat.HTML,
+                outputFile = null,
+                safeMode = SafeMode.SERVER,
+            )
 
         assertEquals(SafeMode.SERVER, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode fourni doit etre reflete dans les Options")
     }
 
     @Test
     fun `buildOptions utilise UNSAFE par defaut pour backward-compat`() {
-        val options = DocumentConverter.buildOptions(
-            backend = "html5",
-            theme = DocumentTheme(),
-            format = DocumentFormat.HTML,
-            outputFile = null,
-        )
+        val options =
+            DocumentConverter.buildOptions(
+                backend = "html5",
+                theme = DocumentTheme(),
+                format = DocumentFormat.HTML,
+                outputFile = null,
+            )
 
         assertEquals(SafeMode.UNSAFE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le defaut doit rester UNSAFE (backward-compat)")
     }
 
     @Test
     fun `buildOptions applique SECURE quand fourni`() {
-        val options = DocumentConverter.buildOptions(
-            backend = "pdf",
-            theme = DocumentTheme(),
-            format = DocumentFormat.PDF,
-            outputFile = File(tempDir(), "out.pdf"),
-            safeMode = SafeMode.SECURE,
-        )
+        val options =
+            DocumentConverter.buildOptions(
+                backend = "pdf",
+                theme = DocumentTheme(),
+                format = DocumentFormat.PDF,
+                outputFile = File(tempDir(), "out.pdf"),
+                safeMode = SafeMode.SECURE,
+            )
 
         assertEquals(SafeMode.SECURE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode SECURE doit etre reflete dans les Options")
     }
@@ -203,20 +218,22 @@ class DocumentConverterTest {
     @Test
     fun `convertToPdf preserve les sections du document source`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Livre de Contenu
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Livre de Contenu
 
-            == Chapitre 1
+                    == Chapitre 1
 
-            Contenu du chapitre.
+                    Contenu du chapitre.
 
-            == Chapitre 2
+                    == Chapitre 2
 
-            Autre contenu.
-            """.trimIndent()
-        )
+                    Autre contenu.
+                    """.trimIndent(),
+            )
         val output = File(dir, "livre.pdf")
 
         DocumentConverter.convertToPdf(source, output)
@@ -230,9 +247,10 @@ class DocumentConverterTest {
         val dir = tempDir()
         val source = adocSource(dir)
         val pdfOutput = File(dir, "output.pdf").apply { writeBytes(byteArrayOf(0x25, 0x50, 0x44, 0x46)) }
-        val hashFile = File(dir, "output.pdf.sourcehash").apply {
-            writeText(DocumentConverter.sourceHash(source))
-        }
+        val hashFile =
+            File(dir, "output.pdf.sourcehash").apply {
+                writeText(DocumentConverter.sourceHash(source))
+            }
 
         assertTrue(DocumentConverter.shouldSkipBinaryConversion(source, pdfOutput))
     }
@@ -311,31 +329,34 @@ class DocumentConverterTest {
 
     // --- US-DOC-04 (P2) : EPUB advanced rendering (tableaux, code, listes) ---
 
-    private fun extractEpubXhtml(epub: File): String {
-        return java.util.zip.ZipFile(epub).use { zf ->
-            zf.entries().toList()
+    private fun extractEpubXhtml(epub: File): String =
+        java.util.zip.ZipFile(epub).use { zf ->
+            zf
+                .entries()
+                .toList()
                 .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
                 .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
         }
-    }
 
     @Test
     fun `convertToEpub rend les tableaux AsciiDoc en elements table XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Tableau
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Tableau
 
-            == Donnees
+                    == Donnees
 
-            |===
-            | Colonne A | Colonne B
+                    |===
+                    | Colonne A | Colonne B
 
-            | Ligne 1A | Ligne 1B
-            |===
-            """.trimIndent()
-        )
+                    | Ligne 1A | Ligne 1B
+                    |===
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -344,7 +365,7 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<table", ignoreCase = true),
-            "l'EPUB doit contenir un element <table> XHTML pour le tableau AsciiDoc"
+            "l'EPUB doit contenir un element <table> XHTML pour le tableau AsciiDoc",
         )
         assertTrue(xhtml.contains("Colonne A"), "l'EPUB doit preserver l'en-tete du tableau")
         assertTrue(xhtml.contains("Ligne 1A"), "l'EPUB doit preserver le contenu des cellules")
@@ -353,21 +374,23 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub rend les blocs de code AsciiDoc en elements pre code XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Code
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Code
 
-            == Exemple
+                    == Exemple
 
-            [source,kotlin]
-            ----
-            fun main() {
-                println("hello")
-            }
-            ----
-            """.trimIndent()
-        )
+                    [source,kotlin]
+                    ----
+                    fun main() {
+                        println("hello")
+                    }
+                    ----
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -376,11 +399,11 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<pre", ignoreCase = true),
-            "l'EPUB doit contenir un element <pre> XHTML pour le bloc de code source"
+            "l'EPUB doit contenir un element <pre> XHTML pour le bloc de code source",
         )
         assertTrue(
             xhtml.contains("<code", ignoreCase = true),
-            "l'EPUB doit contenir un element <code> XHTML pour le bloc de code source"
+            "l'EPUB doit contenir un element <code> XHTML pour le bloc de code source",
         )
         assertTrue(xhtml.contains("fun main"), "l'EPUB doit preserver le contenu du bloc de code")
     }
@@ -388,24 +411,26 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub rend les listes AsciiDoc en elements ul et ol XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Listes
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Listes
 
-            == Listes
+                    == Listes
 
-            Liste non ordonnee:
+                    Liste non ordonnee:
 
-            * Element un
-            * Element deux
+                    * Element un
+                    * Element deux
 
-            Liste ordonnee:
+                    Liste ordonnee:
 
-            . Premier
-            . Deuxieme
-            """.trimIndent()
-        )
+                    . Premier
+                    . Deuxieme
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -414,11 +439,11 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("<ul", ignoreCase = true),
-            "l'EPUB doit contenir un element <ul> XHTML pour la liste non ordonnee"
+            "l'EPUB doit contenir un element <ul> XHTML pour la liste non ordonnee",
         )
         assertTrue(
             xhtml.contains("<ol", ignoreCase = true),
-            "l'EPUB doit contenir un element <ol> XHTML pour la liste ordonnee"
+            "l'EPUB doit contenir un element <ol> XHTML pour la liste ordonnee",
         )
         assertTrue(xhtml.contains("Element un"), "l'EPUB doit preserver le contenu des items non ordonnes")
         assertTrue(xhtml.contains("Premier"), "l'EPUB doit preserver le contenu des items ordonnes")
@@ -429,20 +454,22 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub rend les admonitions AsciiDoc en elements aside XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Admonitions
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Admonitions
 
-            == Notes
+                    == Notes
 
-            NOTE: Ceci est une note importante.
+                    NOTE: Ceci est une note importante.
 
-            TIP: Ceci est une astuce.
+                    TIP: Ceci est une astuce.
 
-            WARNING: Ceci est un avertissement.
-            """.trimIndent()
-        )
+                    WARNING: Ceci est un avertissement.
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -451,15 +478,15 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("admonition note", ignoreCase = true),
-            "l'EPUB doit contenir un aside admonition note pour NOTE"
+            "l'EPUB doit contenir un aside admonition note pour NOTE",
         )
         assertTrue(
             xhtml.contains("admonition tip", ignoreCase = true),
-            "l'EPUB doit contenir un aside admonition tip pour TIP"
+            "l'EPUB doit contenir un aside admonition tip pour TIP",
         )
         assertTrue(
             xhtml.contains("admonition warning", ignoreCase = true),
-            "l'EPUB doit contenir un aside admonition warning pour WARNING"
+            "l'EPUB doit contenir un aside admonition warning pour WARNING",
         )
         assertTrue(xhtml.contains("Ceci est une note importante"), "l'EPUB doit preserver le contenu de la note")
     }
@@ -467,17 +494,19 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub rend les blocs sidebar AsciiDoc en elements aside sidebar XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Sidebar
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Sidebar
 
-            == Section
+                    == Section
 
-            [sidebar]
-            Contenu du sidebar dans un bloc.
-            """.trimIndent()
-        )
+                    [sidebar]
+                    Contenu du sidebar dans un bloc.
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -486,7 +515,7 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("sidebar", ignoreCase = true),
-            "l'EPUB doit contenir un element aside sidebar pour le bloc [sidebar]"
+            "l'EPUB doit contenir un element aside sidebar pour le bloc [sidebar]",
         )
         assertTrue(xhtml.contains("Contenu du sidebar"), "l'EPUB doit preserver le contenu du sidebar")
     }
@@ -494,19 +523,21 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub rend la bibliographie AsciiDoc en element bibliography XHTML`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document EPUB Bibliographie
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document EPUB Bibliographie
 
-            == References
+                    == References
 
-            [bibliography]
-            .References
-            * [[[ref1]]] Author, *Title*, 2026.
-            * [[[ref2]]] Author2, *Title2*, 2026.
-            """.trimIndent()
-        )
+                    [bibliography]
+                    .References
+                    * [[[ref1]]] Author, *Title*, 2026.
+                    * [[[ref2]]] Author2, *Title2*, 2026.
+                    """.trimIndent(),
+            )
         val output = File(dir, "output.epub")
 
         DocumentConverter.convertToEpub(source, output)
@@ -515,7 +546,7 @@ class DocumentConverterTest {
         val xhtml = extractEpubXhtml(output)
         assertTrue(
             xhtml.contains("bibliography", ignoreCase = true),
-            "l'EPUB doit contenir un element bibliography pour le bloc [bibliography]"
+            "l'EPUB doit contenir un element bibliography pour le bloc [bibliography]",
         )
         assertTrue(xhtml.contains("Author"), "l'EPUB doit preserver le contenu de la reference")
         assertTrue(xhtml.contains("ref1"), "l'EPUB doit preserver l'identifiant de reference")
@@ -526,18 +557,20 @@ class DocumentConverterTest {
     @Test
     fun `convertToEpub embeds image referenced by image directive as a zip entry`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document avec Image
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document avec Image
 
-            == Illustration
+                    == Illustration
 
-            image::photo.png[Photo descriptive]
+                    image::photo.png[Photo descriptive]
 
-            Paragraphe suivant.
-            """.trimIndent()
-        )
+                    Paragraphe suivant.
+                    """.trimIndent(),
+            )
         File(dir, "photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
         val output = File(dir, "output.epub")
 
@@ -545,12 +578,13 @@ class DocumentConverterTest {
 
         assertTrue(output.exists(), "le fichier EPUB doit etre cree")
         assertTrue(output.length() > 100, "l'EPUB ne doit pas etre vide")
-        val entries = java.util.zip.ZipFile(output).use { zf ->
-            zf.entries().toList().map { it.name }
-        }
+        val entries =
+            java.util.zip.ZipFile(output).use { zf ->
+                zf.entries().toList().map { it.name }
+            }
         assertTrue(
             entries.any { it.contains("photo.png") },
-            "l'EPUB doit embarquer l'image referencee par image:: comme entree du zip (entries: $entries)"
+            "l'EPUB doit embarquer l'image referencee par image:: comme entree du zip (entries: $entries)",
         )
     }
 
@@ -567,17 +601,18 @@ class DocumentConverterTest {
         assertTrue(docbook.contains("xmlns", ignoreCase = true), "le DocBook doit contenir un namespace XML")
         assertTrue(
             docbook.contains("<book", ignoreCase = true) || docbook.contains("<article", ignoreCase = true),
-            "le DocBook doit contenir une racine <book> ou <article>"
+            "le DocBook doit contenir une racine <book> ou <article>",
         )
     }
 
     @Test
     fun `convertToDocBook preserve les sections du document source`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu."
-        )
+        val source =
+            adocSource(
+                dir,
+                content = "= Livre de Contenu\n\n== Chapitre 1\n\nContenu du chapitre.\n\n== Chapitre 2\n\nAutre contenu.",
+            )
 
         val docbook = DocumentConverter.convertToDocBook(source)
 
@@ -590,26 +625,29 @@ class DocumentConverterTest {
     @Test
     fun `convertToManPage produit une page de manuel troff valide depuis un AsciiDoc manpage`() {
         val dir = tempDir()
-        val source = DocumentSource(File(dir, "man.adoc").apply {
-            writeText(
-                """
-                = document(1)
-                :doctype: manpage
+        val source =
+            DocumentSource(
+                File(dir, "man.adoc").apply {
+                    writeText(
+                        """
+                        = document(1)
+                        :doctype: manpage
 
-                == NAME
+                        == NAME
 
-                document - Gradle plugin for AsciiDoc publication
+                        document - Gradle plugin for AsciiDoc publication
 
-                == SYNOPSIS
+                        == SYNOPSIS
 
-                *document* ['OPTION']...
+                        *document* ['OPTION']...
 
-                == DESCRIPTION
+                        == DESCRIPTION
 
-                The *document* plugin converts AsciiDoc to multiple formats.
-                """.trimIndent()
+                        The *document* plugin converts AsciiDoc to multiple formats.
+                        """.trimIndent(),
+                    )
+                },
             )
-        })
 
         val manpage = DocumentConverter.convertToManPage(source)
 
@@ -617,7 +655,7 @@ class DocumentConverterTest {
         // Format troff — commence par .TH ou contient .SH
         assertTrue(
             manpage.contains(".TH") || manpage.contains(".SH") || manpage.contains(".ds"),
-            "le manpage doit contenir des directives troff (.TH, .SH ou .ds)"
+            "le manpage doit contenir des directives troff (.TH, .SH ou .ds)",
         )
     }
 
@@ -636,56 +674,60 @@ class DocumentConverterTest {
     @Test
     fun `convertToDocBook rend les tableaux AsciiDoc en elements DocBook table`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document avec Tableau
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document avec Tableau
 
-            == Donnees
+                    == Donnees
 
-            |===
-            | Colonne A | Colonne B
+                    |===
+                    | Colonne A | Colonne B
 
-            | Ligne 1A | Ligne 1B
-            | Ligne 2A | Ligne 2B
-            |===
-            """.trimIndent()
-        )
+                    | Ligne 1A | Ligne 1B
+                    | Ligne 2A | Ligne 2B
+                    |===
+                    """.trimIndent(),
+            )
 
         val docbook = DocumentConverter.convertToDocBook(source)
 
         assertNotNull(docbook)
         assertTrue(
             docbook.contains("<table", ignoreCase = true) || docbook.contains("<informaltable", ignoreCase = true),
-            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau AsciiDoc"
+            "le DocBook doit contenir un element <table> ou <informaltable> pour le tableau AsciiDoc",
         )
     }
 
     @Test
     fun `convertToDocBook rend les blocs de code AsciiDoc en elements programlisting`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document avec Code
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document avec Code
 
-            == Exemple
+                    == Exemple
 
-            [source,kotlin]
-            ----
-            fun main() {
-                println("hello")
-            }
-            ----
-            """.trimIndent()
-        )
+                    [source,kotlin]
+                    ----
+                    fun main() {
+                        println("hello")
+                    }
+                    ----
+                    """.trimIndent(),
+            )
 
         val docbook = DocumentConverter.convertToDocBook(source)
 
         assertNotNull(docbook)
         assertTrue(
             docbook.contains("<programlisting", ignoreCase = true),
-            "le DocBook doit contenir un element <programlisting> pour le bloc de code source"
+            "le DocBook doit contenir un element <programlisting> pour le bloc de code source",
         )
         assertTrue(docbook.contains("fun main"), "le DocBook doit preserver le contenu du bloc de code")
     }
@@ -693,37 +735,39 @@ class DocumentConverterTest {
     @Test
     fun `convertToDocBook rend les listes AsciiDoc en elements itemizedlist ou orderedlist`() {
         val dir = tempDir()
-        val source = adocSource(
-            dir,
-            content = """
-            = Document avec Listes
+        val source =
+            adocSource(
+                dir,
+                content =
+                    """
+                    = Document avec Listes
 
-            == Listes
+                    == Listes
 
-            Liste non ordonnee:
+                    Liste non ordonnee:
 
-            * Element un
-            * Element deux
-            * Element trois
+                    * Element un
+                    * Element deux
+                    * Element trois
 
-            Liste ordonnee:
+                    Liste ordonnee:
 
-            . Premier
-            . Deuxieme
-            . Troisieme
-            """.trimIndent()
-        )
+                    . Premier
+                    . Deuxieme
+                    . Troisieme
+                    """.trimIndent(),
+            )
 
         val docbook = DocumentConverter.convertToDocBook(source)
 
         assertNotNull(docbook)
         assertTrue(
             docbook.contains("<itemizedlist", ignoreCase = true),
-            "le DocBook doit contenir un element <itemizedlist> pour la liste non ordonnee"
+            "le DocBook doit contenir un element <itemizedlist> pour la liste non ordonnee",
         )
         assertTrue(
             docbook.contains("<orderedlist", ignoreCase = true),
-            "le DocBook doit contenir un element <orderedlist> pour la liste ordonnee"
+            "le DocBook doit contenir un element <orderedlist> pour la liste ordonnee",
         )
         assertTrue(docbook.contains("Element un"), "le DocBook doit preserver le contenu des items de liste")
         assertTrue(docbook.contains("Premier"), "le DocBook doit preserver le contenu des items ordonnes")
@@ -734,29 +778,32 @@ class DocumentConverterTest {
     @Test
     fun `convertToManPage rend la section SYNOPSIS avec les options en gras troff`() {
         val dir = tempDir()
-        val source = DocumentSource(File(dir, "man.adoc").apply {
-            writeText(
-                """
-                = document(1)
-                :doctype: manpage
+        val source =
+            DocumentSource(
+                File(dir, "man.adoc").apply {
+                    writeText(
+                        """
+                        = document(1)
+                        :doctype: manpage
 
-                == NAME
+                        == NAME
 
-                document - Gradle plugin for AsciiDoc publication
+                        document - Gradle plugin for AsciiDoc publication
 
-                == SYNOPSIS
+                        == SYNOPSIS
 
-                *document* ['OPTION']...
+                        *document* ['OPTION']...
 
-                == OPTIONS
+                        == OPTIONS
 
-                *--html*::
-                    Generate HTML output.
-                *--pdf*::
-                    Generate PDF output.
-                """.trimIndent()
+                        *--html*::
+                            Generate HTML output.
+                        *--pdf*::
+                            Generate PDF output.
+                        """.trimIndent(),
+                    )
+                },
             )
-        })
 
         val manpage = DocumentConverter.convertToManPage(source)
 
@@ -765,37 +812,40 @@ class DocumentConverterTest {
         assertTrue(manpage.contains("OPTIONS") || manpage.contains("options"), "le manpage doit contenir la section OPTIONS")
         assertTrue(
             manpage.contains(".B ") || manpage.contains("\\fB"),
-            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees"
+            "le manpage doit contenir une directive de gras troff (.B ou \\fB) pour les options formatees",
         )
     }
 
     @Test
     fun `convertToManPage rend les sections imbriquees du document source`() {
         val dir = tempDir()
-        val source = DocumentSource(File(dir, "man.adoc").apply {
-            writeText(
-                """
-                = document(1)
-                :doctype: manpage
+        val source =
+            DocumentSource(
+                File(dir, "man.adoc").apply {
+                    writeText(
+                        """
+                        = document(1)
+                        :doctype: manpage
 
-                == NAME
+                        == NAME
 
-                document - Gradle plugin for AsciiDoc publication
+                        document - Gradle plugin for AsciiDoc publication
 
-                == DESCRIPTION
+                        == DESCRIPTION
 
-                The *document* plugin converts AsciiDoc to multiple formats.
+                        The *document* plugin converts AsciiDoc to multiple formats.
 
-                === Sub-section
+                        === Sub-section
 
-                Detailed description of a sub-feature.
+                        Detailed description of a sub-feature.
 
-                == EXAMPLES
+                        == EXAMPLES
 
-                *document* --html livre.adoc
-                """.trimIndent()
+                        *document* --html livre.adoc
+                        """.trimIndent(),
+                    )
+                },
             )
-        })
 
         val manpage = DocumentConverter.convertToManPage(source)
 
@@ -806,7 +856,7 @@ class DocumentConverterTest {
         // or preserves the heading text. Either signal validates the sub-section is present.
         assertTrue(
             manpage.contains("Sub-section") || manpage.contains(".SS"),
-            "le manpage doit rendre les sous-sections (texte ou directive .SS): $manpage"
+            "le manpage doit rendre les sous-sections (texte ou directive .SS): $manpage",
         )
     }
 }

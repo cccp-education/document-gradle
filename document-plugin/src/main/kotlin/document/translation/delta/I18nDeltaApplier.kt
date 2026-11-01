@@ -1,16 +1,21 @@
 package document.translation.delta
 
-data class FilesToTranslate(val paths: Set<String>)
-data class FilesToPreserve(val paths: Set<String>)
+data class FilesToTranslate(
+    val paths: Set<String>,
+)
+
+data class FilesToPreserve(
+    val paths: Set<String>,
+)
 
 data class I18nDeltaApplicationResult(
     val toTranslate: FilesToTranslate,
-    val toPreserve: FilesToPreserve
+    val toPreserve: FilesToPreserve,
 )
 
 class I18nDeltaApplier(
     private val delta: I18nDelta,
-    private val existingTargetFiles: Set<String>
+    private val existingTargetFiles: Set<String>,
 ) {
     fun apply(): I18nDeltaApplicationResult {
         val modifiedPaths = delta.modifiedArticles.map { it.path }.toSet()
@@ -38,7 +43,7 @@ class I18nDeltaApplier(
 
         return I18nDeltaApplicationResult(
             toTranslate = FilesToTranslate(toTranslate),
-            toPreserve = FilesToPreserve(toPreserve)
+            toPreserve = FilesToPreserve(toPreserve),
         )
     }
 }

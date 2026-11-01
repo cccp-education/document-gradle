@@ -4,7 +4,6 @@ import document.translation.validation.PlantUmlValidationReport
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableValidationReport
 import org.slf4j.LoggerFactory
-import java.io.File
 
 class BatchDocumentTranslator(
     private val documentTranslator: ArticleTranslator,
@@ -18,16 +17,18 @@ class BatchDocumentTranslator(
         val srcLang = request.sourceLanguage
         val tgtLang = request.targetLanguage
 
-        val adocFiles = sourceDir.walkTopDown()
-            .filter { it.isFile && it.extension == "adoc" }
-            .filter { file ->
-                val relPath = file.relativeTo(sourceDir).path
-                val dirsToCheck = generateSequence(relPath) { path ->
-                    path.lastIndexOf('/').let { if (it > 0) path.substring(0, it) else null }
-                }.toSet()
-                excludes.none { it in dirsToCheck || relPath.startsWith("$it/") }
-            }
-            .toList()
+        val adocFiles =
+            sourceDir
+                .walkTopDown()
+                .filter { it.isFile && it.extension == "adoc" }
+                .filter { file ->
+                    val relPath = file.relativeTo(sourceDir).path
+                    val dirsToCheck =
+                        generateSequence(relPath) { path ->
+                            path.lastIndexOf('/').let { if (it > 0) path.substring(0, it) else null }
+                        }.toSet()
+                    excludes.none { it in dirsToCheck || relPath.startsWith("$it/") }
+                }.toList()
 
         log.info("[translateBatch] {} ({}→{}) — {} files found", sourceDir.name, srcLang, tgtLang, adocFiles.size)
 

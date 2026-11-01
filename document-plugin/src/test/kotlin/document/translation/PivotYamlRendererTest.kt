@@ -1,26 +1,27 @@
 package document.translation
 
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PivotYamlRendererTest {
-
     private val renderer = PivotYamlRenderer()
 
     @Test
     fun `renders minimal article with frontmatter and single heading`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter(
-                title = "Guide de demarrage rapide",
-                date = "2026-04-26",
-                type = "page",
-                status = "published"
-            ),
-            blocks = listOf(
-                PivotBlock.Heading(level = 2, text = "Guide de demarrage rapide", translatable = true)
+        val article =
+            PivotArticle(
+                frontmatter =
+                    PivotFrontmatter(
+                        title = "Guide de demarrage rapide",
+                        date = "2026-04-26",
+                        type = "page",
+                        status = "published",
+                    ),
+                blocks =
+                    listOf(
+                        PivotBlock.Heading(level = 2, text = "Guide de demarrage rapide", translatable = true),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -35,18 +36,21 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders paragraph with inline text bold code segments`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Paragraph(
-                    inline = listOf(
-                        PivotInline.Text("avec ", translatable = true),
-                        PivotInline.Bold("balenaEtcher", translatable = true),
-                        PivotInline.Text(" (recommande) :", translatable = true)
-                    )
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Paragraph(
+                            inline =
+                                listOf(
+                                    PivotInline.Text("avec ", translatable = true),
+                                    PivotInline.Bold("balenaEtcher", translatable = true),
+                                    PivotInline.Text(" (recommande) :", translatable = true),
+                                ),
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -58,15 +62,17 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders source block with language and content`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Source(
-                    language = "bash",
-                    content = "sudo dd if=img.iso of=/dev/sdX bs=4M"
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Source(
+                            language = "bash",
+                            content = "sudo dd if=img.iso of=/dev/sdX bs=4M",
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -78,10 +84,11 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders hr block as non-translatable`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(PivotBlock.Hr)
-        )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks = listOf(PivotBlock.Hr),
+            )
 
         val yaml = renderer.render(article)
 
@@ -91,18 +98,21 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders list block with ordered flag and items`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.ListBlock(
-                    ordered = true,
-                    items = listOf(
-                        listOf(PivotInline.Text("Premiere etape", translatable = true)),
-                        listOf(PivotInline.Text("Deuxieme etape", translatable = true))
-                    )
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.ListBlock(
+                            ordered = true,
+                            items =
+                                listOf(
+                                    listOf(PivotInline.Text("Premiere etape", translatable = true)),
+                                    listOf(PivotInline.Text("Deuxieme etape", translatable = true)),
+                                ),
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -115,24 +125,28 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders table with cols header and rows`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Table(
-                    cols = "1,2",
-                    header = listOf(
-                        listOf(PivotInline.Text("Option", translatable = true)),
-                        listOf(PivotInline.Text("Description", translatable = true))
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Table(
+                            cols = "1,2",
+                            header =
+                                listOf(
+                                    listOf(PivotInline.Text("Option", translatable = true)),
+                                    listOf(PivotInline.Text("Description", translatable = true)),
+                                ),
+                            rows =
+                                listOf(
+                                    listOf(
+                                        listOf(PivotInline.Code("-c", translatable = false)),
+                                        listOf(PivotInline.Text("Nettoyer le repertoire", translatable = true)),
+                                    ),
+                                ),
+                        ),
                     ),
-                    rows = listOf(
-                        listOf(
-                            listOf(PivotInline.Code("-c", translatable = false)),
-                            listOf(PivotInline.Text("Nettoyer le repertoire", translatable = true))
-                        )
-                    )
-                )
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -146,16 +160,18 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders table with null cols as null`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Table(
-                    cols = null,
-                    header = listOf(listOf(PivotInline.Text("Col", translatable = true))),
-                    rows = emptyList()
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Table(
+                            cols = null,
+                            header = listOf(listOf(PivotInline.Text("Col", translatable = true))),
+                            rows = emptyList(),
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -164,22 +180,26 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders admonition with kind and nested blocks`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Admonition(
-                    kind = "WARNING",
-                    blocks = listOf(
-                        PivotBlock.Paragraph(
-                            inline = listOf(
-                                PivotInline.Text("Cette operation ", translatable = true),
-                                PivotInline.Bold("efface toutes les donnees", translatable = true)
-                            )
-                        )
-                    )
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Admonition(
+                            kind = "WARNING",
+                            blocks =
+                                listOf(
+                                    PivotBlock.Paragraph(
+                                        inline =
+                                            listOf(
+                                                PivotInline.Text("Cette operation ", translatable = true),
+                                                PivotInline.Bold("efface toutes les donnees", translatable = true),
+                                            ),
+                                    ),
+                                ),
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 
@@ -191,20 +211,23 @@ class PivotYamlRendererTest {
 
     @Test
     fun `renders link inline with url and label`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
-            blocks = listOf(
-                PivotBlock.Paragraph(
-                    inline = listOf(
-                        PivotInline.Link(
-                            url = "https://sourceforge.net/projects/magic-stick/files/",
-                            label = "magic-stick sur SourceForge",
-                            translatable = true
-                        )
-                    )
-                )
+        val article =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-01-01", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Paragraph(
+                            inline =
+                                listOf(
+                                    PivotInline.Link(
+                                        url = "https://sourceforge.net/projects/magic-stick/files/",
+                                        label = "magic-stick sur SourceForge",
+                                        translatable = true,
+                                    ),
+                                ),
+                        ),
+                    ),
             )
-        )
 
         val yaml = renderer.render(article)
 

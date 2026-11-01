@@ -1,15 +1,17 @@
 package document
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class DocumentSourceTest {
-
-    private fun tempFile(name: String, content: String): File {
+    private fun tempFile(
+        name: String,
+        content: String,
+    ): File {
         val dir = Files.createTempDirectory("doc-test").toFile()
         return File(dir, name).apply { writeText(content) }
     }
@@ -27,15 +29,15 @@ class DocumentSourceTest {
     fun `DocumentSource refuse un fichier non adoc`() {
         val file = tempFile("doc.txt", "texte")
 
-        val ex = assertThrows(IllegalArgumentException::class.java) {
-            DocumentSource(file)
-        }
+        val ex =
+            assertThrows(IllegalArgumentException::class.java) {
+                DocumentSource(file)
+            }
         assertTrue(ex.message!!.contains(".adoc"))
     }
 }
 
 class DocumentFormatTest {
-
     @Test
     fun `DocumentFormat HTML a backend html5 et extension html`() {
         assertEquals("html5", DocumentFormat.HTML.backend)
@@ -60,10 +62,11 @@ class DocumentFormatTest {
 }
 
 class DocumentConfigTest {
-
-    private fun newSource(dir: File, name: String = "doc.adoc", content: String = "= Doc"): DocumentSource {
-        return DocumentSource(File(dir, name).apply { writeText(content) })
-    }
+    private fun newSource(
+        dir: File,
+        name: String = "doc.adoc",
+        content: String = "= Doc",
+    ): DocumentSource = DocumentSource(File(dir, name).apply { writeText(content) })
 
     private fun tempDir(): File = Files.createTempDirectory("doc-config").toFile()
 

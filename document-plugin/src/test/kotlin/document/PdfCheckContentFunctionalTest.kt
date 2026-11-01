@@ -21,12 +21,12 @@ import java.io.File
  * not just open. The test self-skips (`assumeTrue`) when the corpus is absent.
  */
 class PdfCheckContentFunctionalTest {
-
     companion object {
-        private val CONTENT_BOOK_PDF = File(
-            "/home/cheroliv/workspace/office/metiers/FPA",
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.pdf",
-        )
+        private val CONTENT_BOOK_PDF =
+            File(
+                "/home/cheroliv/workspace/office/metiers/FPA",
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.pdf",
+            )
     }
 
     @Test

@@ -1,21 +1,21 @@
 package document.translation.plan
 
-import document.translation.tree.SiteNode
-import document.translation.tree.SiteTree
 import document.translation.delta.ArticleModification
 import document.translation.delta.I18nDelta
+import document.translation.tree.SiteNode
+import document.translation.tree.SiteTree
 
 class SubtreeI18nPlanner(
     private val tree: SiteTree?,
     private val flatArticles: List<SiteNode.Article>?,
-    private val beforeChecksums: Map<String, String>
+    private val beforeChecksums: Map<String, String>,
 ) {
     constructor(tree: SiteTree, beforeChecksums: Map<String, String>) : this(tree, null, beforeChecksums)
     constructor(articles: List<SiteNode.Article>, beforeChecksums: Map<String, String>) : this(null, articles, beforeChecksums)
 
     fun computeDelta(
         afterChecksums: Map<String, String>,
-        subtreePath: String? = null
+        subtreePath: String? = null,
     ): I18nDelta {
         val articles = scopedArticles(subtreePath)
         val modified = mutableListOf<ArticleModification>()
@@ -29,12 +29,14 @@ class SubtreeI18nPlanner(
             if (before == after) {
                 untouched.add(article)
             } else {
-                modified.add(ArticleModification(
-                    path = path,
-                    oldChecksum = before,
-                    newChecksum = after,
-                    translatableSegmentCount = article.content?.translatableSegments()?.size ?: 0
-                ))
+                modified.add(
+                    ArticleModification(
+                        path = path,
+                        oldChecksum = before,
+                        newChecksum = after,
+                        translatableSegmentCount = article.content?.translatableSegments()?.size ?: 0,
+                    ),
+                )
             }
         }
 

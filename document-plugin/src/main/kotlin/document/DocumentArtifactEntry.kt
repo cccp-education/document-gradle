@@ -17,7 +17,7 @@ data class DocumentArtifactEntry(
     val path: String,
     val format: DocumentFormat,
     val sourceAdoc: String,
-    val exists: Boolean
+    val exists: Boolean,
 ) {
     /**
      * Serializes this entry to an N3-compatible map.
@@ -26,12 +26,13 @@ data class DocumentArtifactEntry(
      * within the entry, enabling runner-gradle to merge entries from
      * multiple boroughs into a single composite context.
      */
-    fun toMap(): Map<String, Any> = mapOf(
-        "source" to "document",
-        "path" to path,
-        "format" to format.name.lowercase(),
-        "backend" to format.backend,
-        "sourceAdoc" to sourceAdoc,
-        "exists" to exists
-    )
+    fun toMap(): Map<String, Any> =
+        mapOf(
+            "source" to "document",
+            "path" to path,
+            "format" to format.name.lowercase(),
+            "backend" to format.backend,
+            "sourceAdoc" to sourceAdoc,
+            "exists" to exists,
+        )
 }

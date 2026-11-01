@@ -17,7 +17,6 @@ import java.io.File
  * Default `"document"` keeps the canonical names — fully backward compatible.
  */
 class CollectDocumentRetrieveOutputFileNameFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -45,17 +44,20 @@ class CollectDocumentRetrieveOutputFileNameFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
     @Test
     fun `collect indexes the custom html artifact when the knob renames the conversion output`() {
         writeBuild()
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml", "-Pdocument.outputFileName=custom")
             .withPluginClasspath()
@@ -82,7 +84,8 @@ class CollectDocumentRetrieveOutputFileNameFunctionalTest {
     @Test
     fun `collect with default output file name keeps indexing the canonical html artifact`() {
         writeBuild()
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml")
             .withPluginClasspath()

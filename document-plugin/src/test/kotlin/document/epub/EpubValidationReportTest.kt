@@ -1,7 +1,5 @@
 package document.epub
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.annotation.JsonInclude
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -10,7 +8,6 @@ import org.junit.jupiter.api.Test
  * serialization contract (mirrors XrefValidationReportTest).
  */
 class EpubValidationReportTest {
-
     @Test
     fun `fromResult Valid produces single VALID entry`() {
         val report = EpubValidationReport.fromResult(EpubValidationResult.Valid)
@@ -31,9 +28,10 @@ class EpubValidationReportTest {
 
     @Test
     fun `report serializes to JSON with entry status and issues`() {
-        val report = EpubValidationReport.fromResult(
-            EpubValidationResult.Invalid(listOf("OPF-001: missing nav")),
-        )
+        val report =
+            EpubValidationReport.fromResult(
+                EpubValidationResult.Invalid(listOf("OPF-001: missing nav")),
+            )
 
         val json = report.toJson()
 
@@ -61,9 +59,10 @@ class EpubValidationReportTest {
 
     @Test
     fun `fromJson round-trips an INVALID report with issues`() {
-        val report = EpubValidationReport.fromResult(
-            EpubValidationResult.Invalid(listOf("OPF-001", "CSS-009")),
-        )
+        val report =
+            EpubValidationReport.fromResult(
+                EpubValidationResult.Invalid(listOf("OPF-001", "CSS-009")),
+            )
         val json = report.toJson()
 
         val parsed = EpubValidationReport.fromJson(json)

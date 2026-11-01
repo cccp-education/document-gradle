@@ -2,14 +2,12 @@ package document.translation.validation
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class TableValidationFunctionalTest {
-
     private fun newTempDir(): File = Files.createTempDirectory("doc-tv-ft").toFile()
 
     private fun setupTestProject(projectDir: File) {
@@ -19,7 +17,7 @@ class TableValidationFunctionalTest {
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 
@@ -41,19 +39,20 @@ status=published
 | Colonne A | Colonne B
 | Valeur 1 | Valeur 2
 |===
-"""
+""",
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments(
-                "translateDocument",
-                "-Pdocument.translateSource=source.adoc",
-                "-Pdocument.translateLlmMode=fake",
-                "-Pdocument.translateTableValidation=LENIENT",
-            )
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments(
+                    "translateDocument",
+                    "-Pdocument.translateSource=source.adoc",
+                    "-Pdocument.translateLlmMode=fake",
+                    "-Pdocument.translateTableValidation=LENIENT",
+                ).withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
     }
@@ -76,19 +75,20 @@ status=published
 | Colonne A | Colonne B
 | Valeur 1 | Valeur 2
 |===
-"""
+""",
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments(
-                "translateDocument",
-                "-Pdocument.translateSource=source.adoc",
-                "-Pdocument.translateLlmMode=fake",
-                "-Pdocument.translateTableValidation=STRICT",
-            )
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments(
+                    "translateDocument",
+                    "-Pdocument.translateSource=source.adoc",
+                    "-Pdocument.translateLlmMode=fake",
+                    "-Pdocument.translateTableValidation=STRICT",
+                ).withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
     }
@@ -111,19 +111,20 @@ status=published
 | Colonne A | Colonne B
 | Valeur 1 | Valeur 2
 |===
-"""
+""",
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments(
-                "translateDocument",
-                "-Pdocument.translateSource=source.adoc",
-                "-Pdocument.translateLlmMode=fake",
-                "-Pdocument.translateTableValidation=OFF",
-            )
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments(
+                    "translateDocument",
+                    "-Pdocument.translateSource=source.adoc",
+                    "-Pdocument.translateLlmMode=fake",
+                    "-Pdocument.translateTableValidation=OFF",
+                ).withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateDocument")?.outcome)
     }

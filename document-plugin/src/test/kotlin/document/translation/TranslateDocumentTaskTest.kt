@@ -3,19 +3,18 @@ package document.translation
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TranslateDocumentTaskTest {
-
     @TempDir
     lateinit var tempDir: File
 
     @Test
     fun `translateDocument parses and translates a simple AsciiDoc article`() {
         val source = tempDir.resolve("source.adoc")
-        source.writeText("""title=Bonjour le monde
+        source.writeText(
+            """title=Bonjour le monde
 date=2026-07-20
 type=page
 status=published
@@ -28,7 +27,8 @@ Ceci est un paragraphe en francais.
 == Conclusion
 
 Fin du document.
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()
@@ -55,7 +55,8 @@ Fin du document.
     @Test
     fun `translateDocument preserves non-translatable blocks like source code`() {
         val source = tempDir.resolve("source.adoc")
-        source.writeText("""title=Code Example
+        source.writeText(
+            """title=Code Example
 date=2026-07-20
 type=page
 status=published
@@ -73,7 +74,8 @@ public class Hello {
 ----
 
 Some text after code.
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()
@@ -97,7 +99,8 @@ Some text after code.
     @Test
     fun `translateDocument preserves frontmatter structure`() {
         val source = tempDir.resolve("source.adoc")
-        source.writeText("""title=Mon Article
+        source.writeText(
+            """title=Mon Article
 date=2026-07-20
 type=blog
 status=published
@@ -108,7 +111,8 @@ jbake-tags=java,kotlin
 == Contenu
 
 Texte a traduire.
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()
@@ -134,13 +138,15 @@ Texte a traduire.
     @Test
     fun `translateDocument handles empty document gracefully`() {
         val source = tempDir.resolve("source.adoc")
-        source.writeText("""title=Vide
+        source.writeText(
+            """title=Vide
 date=2026-07-20
 type=page
 status=published
 ~~~~~~
 
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()
@@ -163,7 +169,8 @@ status=published
     @Test
     fun `translateDocument handles lists and admonitions`() {
         val source = tempDir.resolve("source.adoc")
-        source.writeText("""title=Listes
+        source.writeText(
+            """title=Listes
 date=2026-07-20
 type=page
 status=published
@@ -178,7 +185,8 @@ NOTE: Ceci est une note importante.
 
 * Puce un
 * Puce deux
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()
@@ -204,7 +212,8 @@ NOTE: Ceci est une note importante.
     @Test
     fun `translateDocument preserves cheroliv com JBake native article`() {
         val source = tempDir.resolve("0011_gradle_configuration_ide_jbake_content_post.adoc")
-        source.writeText("""= Gradle: dossier resources visible dans l'IDE
+        source.writeText(
+            """= Gradle: dossier resources visible dans l'IDE
 @CherOliv
 2019-08-16
 :jbake-title: Gradle: dossier resources visible dans l'IDE
@@ -225,7 +234,8 @@ plugins {
     id "groovy"
 }
 ----
-""")
+""",
+        )
         val output = tempDir.resolve("output.adoc")
 
         val parser = AsciiDocParser()

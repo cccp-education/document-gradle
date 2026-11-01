@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
  * owns (`PivotBlock.Source(language = "plantuml")`).
  */
 class ArticleTreeAuditTest {
-
     @Test
     fun `headings open nested sections that own the following blocks`() {
         val content =
@@ -126,9 +125,10 @@ class ArticleTreeAuditTest {
 
     @Test
     fun `an invalid plantuml block is broken`() {
-        val invalid = PlantUmlSyntaxValidator {
-            SyntaxValidationResult.Invalid("syntax error", "trace")
-        }
+        val invalid =
+            PlantUmlSyntaxValidator {
+                SyntaxValidationResult.Invalid("syntax error", "trace")
+            }
 
         val report =
             ArticleTreeAudit.of(
@@ -155,9 +155,7 @@ class ArticleTreeAuditTest {
     private val validValidator: PlantUmlSyntaxValidator =
         PlantUmlSyntaxValidator { SyntaxValidationResult.Valid }
 
-    private fun resolver(
-        validator: PlantUmlSyntaxValidator = validValidator,
-    ): PlantUmlLeafStatusResolver = PlantUmlLeafStatusResolver(validator)
+    private fun resolver(validator: PlantUmlSyntaxValidator = validValidator): PlantUmlLeafStatusResolver = PlantUmlLeafStatusResolver(validator)
 
     private fun leavesOf(report: ArticleTreeReport): List<ArticleNode.Leaf> {
         fun walk(node: ArticleNode): List<ArticleNode.Leaf> =
@@ -168,7 +166,10 @@ class ArticleTreeAuditTest {
         return walk(report.root)
     }
 
-    private fun heading(level: Int, text: String) = PivotBlock.Heading(level, text, true)
+    private fun heading(
+        level: Int,
+        text: String,
+    ) = PivotBlock.Heading(level, text, true)
 
     private fun paragraph(text: String) = PivotBlock.Paragraph(listOf(PivotInline.Text(text, true)))
 

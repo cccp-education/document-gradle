@@ -1,23 +1,21 @@
 package document
 
+import document.ValidationMode
+import document.batch.BatchDsl
 import document.epub.EpubValidationMode
 import document.pdf.PdfValidationMode
-
-import document.batch.BatchDsl
+import document.security.IncludeGuardMode
+import document.semantic.TableSemanticsMode
 import document.template.TemplateDsl
 import document.translation.TranslationDsl
 import document.validation.HtmlLinkLintMode
+import document.xref.XrefValidationMode
+import org.asciidoctor.SafeMode
 import org.gradle.api.Action
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Nested
-import document.ValidationMode
-import document.security.IncludeGuardMode
-import document.semantic.TableSemanticsMode
-import document.xref.XrefValidationMode
-import org.asciidoctor.SafeMode
 
 /**
  * Extension Gradle `document { }` — point d'entree du DSL documentaire (DOC-12 unified).
@@ -54,7 +52,6 @@ import org.asciidoctor.SafeMode
  * ```
  */
 abstract class DocumentExtension {
-
     abstract val source: RegularFileProperty
     abstract val outputDir: DirectoryProperty
     abstract val formats: ListProperty<DocumentFormat>

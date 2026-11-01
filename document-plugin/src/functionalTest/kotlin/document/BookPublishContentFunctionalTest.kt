@@ -26,14 +26,14 @@ import java.io.File
  * (`assumeTrue`) when the corpus is absent.
  */
 class BookPublishContentFunctionalTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
         private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
 
         /** Bounded but real subset — one structured book, a handful of OCR pages. */
         private const val MAX_PAGES = 6
@@ -53,20 +53,33 @@ class BookPublishContentFunctionalTest {
         val tocLines = CONTENT_TOC.readText().lines()
         val header = tocLines.firstOrNull { it.trim().startsWith("|") }
         assumeTrue(header != null) { "the content TOC carries no header row" }
-        data class TocEntry(val line: String, val ref: String, val fileName: String)
-        val referenced = tocLines.mapNotNull { line ->
-            val cells = line.trim().split("|").map { it.trim() }.drop(1)
-            if (cells.size < 4) return@mapNotNull null
-            val ref = cells[0]
-            val fileName = cells[3]
-            if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc") &&
-                File(CONTENT_SCANS, fileName).isFile
-            ) {
-                TocEntry(line, ref, fileName)
-            } else {
-                null
-            }
-        }.take(MAX_PAGES)
+
+        data class TocEntry(
+            val line: String,
+            val ref: String,
+            val fileName: String,
+        )
+        val referenced =
+            tocLines
+                .mapNotNull { line ->
+                    val cells =
+                        line
+                            .trim()
+                            .split("|")
+                            .map { it.trim() }
+                            .drop(1)
+                    if (cells.size < 4) return@mapNotNull null
+                    val ref = cells[0]
+                    val fileName = cells[3]
+                    if (Regex("""\d+(\.\d+)*""").matches(ref) &&
+                        fileName.endsWith(".adoc") &&
+                        File(CONTENT_SCANS, fileName).isFile
+                    ) {
+                        TocEntry(line, ref, fileName)
+                    } else {
+                        null
+                    }
+                }.take(MAX_PAGES)
         assumeTrue(referenced.size >= 3) { "at least three referenced real content pages are required" }
         val tocRefs = referenced.map { it.ref }.toSet()
 
@@ -106,11 +119,13 @@ class BookPublishContentFunctionalTest {
             """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("publishBookAllLanguages")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("publishBookAllLanguages")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":translateBookAllLanguages")?.outcome, "translation must run first")
         assertEquals(TaskOutcome.SUCCESS, result.task(":publishBookAllLanguages")?.outcome, "publication must succeed")
@@ -136,20 +151,33 @@ class BookPublishContentFunctionalTest {
         val tocLines = CONTENT_TOC.readText().lines()
         val header = tocLines.firstOrNull { it.trim().startsWith("|") }
         assumeTrue(header != null) { "the content TOC carries no header row" }
-        data class TocEntry(val line: String, val ref: String, val fileName: String)
-        val referenced = tocLines.mapNotNull { line ->
-            val cells = line.trim().split("|").map { it.trim() }.drop(1)
-            if (cells.size < 4) return@mapNotNull null
-            val ref = cells[0]
-            val fileName = cells[3]
-            if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc") &&
-                File(CONTENT_SCANS, fileName).isFile
-            ) {
-                TocEntry(line, ref, fileName)
-            } else {
-                null
-            }
-        }.take(MAX_PAGES)
+
+        data class TocEntry(
+            val line: String,
+            val ref: String,
+            val fileName: String,
+        )
+        val referenced =
+            tocLines
+                .mapNotNull { line ->
+                    val cells =
+                        line
+                            .trim()
+                            .split("|")
+                            .map { it.trim() }
+                            .drop(1)
+                    if (cells.size < 4) return@mapNotNull null
+                    val ref = cells[0]
+                    val fileName = cells[3]
+                    if (Regex("""\d+(\.\d+)*""").matches(ref) &&
+                        fileName.endsWith(".adoc") &&
+                        File(CONTENT_SCANS, fileName).isFile
+                    ) {
+                        TocEntry(line, ref, fileName)
+                    } else {
+                        null
+                    }
+                }.take(MAX_PAGES)
         assumeTrue(referenced.size >= 3) { "at least three referenced real content pages are required" }
 
         projectDir.resolve("content").mkdirs()
@@ -189,11 +217,13 @@ class BookPublishContentFunctionalTest {
             """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("publishBookAllLanguages")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("publishBookAllLanguages")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome, "assembleBook must run for includeSource")
         assertEquals(TaskOutcome.SUCCESS, result.task(":publishBookAllLanguages")?.outcome, "publication must succeed")
@@ -206,6 +236,5 @@ class BookPublishContentFunctionalTest {
         assertFalse(sourceHtml.readText().contains("[EN]"), "book.html must be the untranslated source book")
     }
 
-    private fun anchorRefs(content: String): Set<String> =
-        Regex("""id="([^"]+)"""").findAll(content).map { it.groupValues[1] }.toSet()
+    private fun anchorRefs(content: String): Set<String> = Regex("""id="([^"]+)"""").findAll(content).map { it.groupValues[1] }.toSet()
 }

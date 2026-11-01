@@ -26,13 +26,14 @@ data class ReleaseNotesArtifactEntry(
      * `type` field marks this as a "release-notes" entry, enabling runner-gradle
      * to distinguish release notes from document artifacts in the composite context.
      */
-    fun toMap(): Map<String, Any> = mapOf(
-        "source" to "document",
-        "path" to path,
-        "type" to "release-notes",
-        "rendererType" to rendererType,
-        "exists" to exists,
-    )
+    fun toMap(): Map<String, Any> =
+        mapOf(
+            "source" to "document",
+            "path" to path,
+            "type" to "release-notes",
+            "rendererType" to rendererType,
+            "exists" to exists,
+        )
 
     companion object {
         /**
@@ -43,13 +44,17 @@ data class ReleaseNotesArtifactEntry(
          * - `.json` → "json"
          * - other   → "asciidoc" (default)
          */
-        fun fromFile(path: String, exists: Boolean): ReleaseNotesArtifactEntry {
-            val renderer = when (File(path).extension.lowercase()) {
-                "adoc" -> "asciidoc"
-                "md" -> "markdown"
-                "json" -> "json"
-                else -> "asciidoc"
-            }
+        fun fromFile(
+            path: String,
+            exists: Boolean,
+        ): ReleaseNotesArtifactEntry {
+            val renderer =
+                when (File(path).extension.lowercase()) {
+                    "adoc" -> "asciidoc"
+                    "md" -> "markdown"
+                    "json" -> "json"
+                    else -> "asciidoc"
+                }
             return ReleaseNotesArtifactEntry(path = path, rendererType = renderer, exists = exists)
         }
     }

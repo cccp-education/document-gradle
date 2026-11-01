@@ -75,23 +75,26 @@ data class TableSemanticsReport(
             schemas: List<SemanticTableSchema>,
             extractions: List<SemanticExtraction>,
         ): TableSemanticsReport {
-            val tables = extractions.filterIsInstance<SemanticExtraction.Extracted>().map { extraction ->
-                SemanticExtractedTableReport(
-                    name = extraction.table.name,
-                    records = extraction.table.records.map { it.values },
-                    findings = extraction.table.findings.map { finding ->
-                        SemanticFindingReport(
-                            table = extraction.table.name,
-                            rowIndex = finding.rowIndex,
-                            role = finding.role,
-                            message = finding.message,
-                        )
-                    },
-                )
-            }
-            val skipped = extractions.filterIsInstance<SemanticExtraction.Skipped>().map {
-                SemanticSkippedReport(name = it.name, reason = it.reason)
-            }
+            val tables =
+                extractions.filterIsInstance<SemanticExtraction.Extracted>().map { extraction ->
+                    SemanticExtractedTableReport(
+                        name = extraction.table.name,
+                        records = extraction.table.records.map { it.values },
+                        findings =
+                            extraction.table.findings.map { finding ->
+                                SemanticFindingReport(
+                                    table = extraction.table.name,
+                                    rowIndex = finding.rowIndex,
+                                    role = finding.role,
+                                    message = finding.message,
+                                )
+                            },
+                    )
+                }
+            val skipped =
+                extractions.filterIsInstance<SemanticExtraction.Skipped>().map {
+                    SemanticSkippedReport(name = it.name, reason = it.reason)
+                }
             val findings = tables.flatMap { it.findings }
             return TableSemanticsReport(
                 mode = mode.name,
@@ -103,12 +106,13 @@ data class TableSemanticsReport(
         }
 
         /** The report of a run that lifted no annotated table. */
-        fun empty(mode: TableSemanticsMode): TableSemanticsReport = TableSemanticsReport(
-            mode = mode.name,
-            schemas = emptyList(),
-            tables = emptyList(),
-            skipped = emptyList(),
-            findings = emptyList(),
-        )
+        fun empty(mode: TableSemanticsMode): TableSemanticsReport =
+            TableSemanticsReport(
+                mode = mode.name,
+                schemas = emptyList(),
+                tables = emptyList(),
+                skipped = emptyList(),
+                findings = emptyList(),
+            )
     }
 }

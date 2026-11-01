@@ -1,6 +1,5 @@
 package document
 
-import org.asciidoctor.SafeMode
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -16,7 +15,6 @@ import java.io.File
  * static `document.html` convention (S-232 limitation, now resolved).
  */
 class ValidateDocumentHtmlLintCustomOutputFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -48,12 +46,14 @@ class ValidateDocumentHtmlLintCustomOutputFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(deadLinkSource)
     }
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     private val reportPath get() = projectDir.resolve("build/docs/document/document-validation-report.json")
 

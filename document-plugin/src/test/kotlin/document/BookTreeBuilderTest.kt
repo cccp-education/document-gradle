@@ -8,9 +8,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BookTreeBuilderTest {
-
-    private fun section(ref: String, title: String = "Section $ref") =
-        BookSection(ref = ref, title = title, page = 1, pdfFile = "$ref.pdf")
+    private fun section(
+        ref: String,
+        title: String = "Section $ref",
+    ) = BookSection(ref = ref, title = title, page = 1, pdfFile = "$ref.pdf")
 
     // --- depth derivation (level = number of segments minus one) ---
 
@@ -35,9 +36,10 @@ class BookTreeBuilderTest {
 
     @Test
     fun `level increases by exactly one per ref segment`() {
-        val tree = BookTreeBuilder.fromSections(
-            listOf(section("1"), section("1.0"), section("1.0.2"), section("1.0.2.6.4"))
-        )
+        val tree =
+            BookTreeBuilder.fromSections(
+                listOf(section("1"), section("1.0"), section("1.0.2"), section("1.0.2.6.4")),
+            )
         assertEquals(0, tree.node("1")!!.level)
         assertEquals(1, tree.node("1.0")!!.level)
         assertEquals(2, tree.node("1.0.2")!!.level)
@@ -69,9 +71,10 @@ class BookTreeBuilderTest {
 
     @Test
     fun `duplicate ref sections collapse into a single node`() {
-        val tree = BookTreeBuilder.fromSections(
-            listOf(section("1.0.1", "Premier"), section("1.0.1", "Deuxieme"))
-        )
+        val tree =
+            BookTreeBuilder.fromSections(
+                listOf(section("1.0.1", "Premier"), section("1.0.1", "Deuxieme")),
+            )
         assertEquals(1, tree.nodesByRef.values.count { it.ref == "1.0.1" })
         assertEquals("Premier", tree.node("1.0.1")!!.source!!.title)
     }
@@ -92,9 +95,10 @@ class BookTreeBuilderTest {
 
     @Test
     fun `children are ordered by ref ascending`() {
-        val tree = BookTreeBuilder.fromSections(
-            listOf(section("1.0.2"), section("1.0.1"), section("1.0.3"))
-        )
+        val tree =
+            BookTreeBuilder.fromSections(
+                listOf(section("1.0.2"), section("1.0.1"), section("1.0.3")),
+            )
         assertEquals(listOf("1.0.1", "1.0.2", "1.0.3"), tree.node("1.0")!!.children.map { it.ref })
     }
 
@@ -147,7 +151,10 @@ class BookTreeBuilderTest {
         assertFalse(a.root.children.isEmpty())
     }
 
-    private fun findParentRef(tree: BookTree, ref: String): String? {
+    private fun findParentRef(
+        tree: BookTree,
+        ref: String,
+    ): String? {
         for ((parentRef, node) in tree.nodesByRef) {
             if (node.children.any { it.ref == ref }) return parentRef
         }

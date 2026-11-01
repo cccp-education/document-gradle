@@ -7,10 +7,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.nio.file.Files
 
 class ReleaseNotesFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -21,15 +19,16 @@ class ReleaseNotesFunctionalTest {
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 
     private fun runGit(vararg args: String): String {
-        val process = ProcessBuilder("git", *args)
-            .directory(projectDir)
-            .redirectErrorStream(true)
-            .start()
+        val process =
+            ProcessBuilder("git", *args)
+                .directory(projectDir)
+                .redirectErrorStream(true)
+                .start()
         val output = process.inputStream.bufferedReader().readText()
         process.waitFor()
         return output
@@ -61,11 +60,13 @@ class ReleaseNotesFunctionalTest {
     @Test
     fun `releaseNotesGenerate task is registered`() {
         setupPluginProject()
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("tasks", "--group", "document")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("tasks", "--group", "document")
+                .withPluginClasspath()
+                .build()
         assertTrue(result.output.contains("releaseNotesGenerate"))
         assertEquals(TaskOutcome.SUCCESS, result.task(":tasks")?.outcome)
     }
@@ -79,11 +80,13 @@ class ReleaseNotesFunctionalTest {
         commit("fix(api): bug fix")
         commit("docs: update readme")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate", "--stacktrace")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate", "--stacktrace")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -102,11 +105,13 @@ class ReleaseNotesFunctionalTest {
         initRepo()
         commit("feat: initial")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -121,11 +126,13 @@ class ReleaseNotesFunctionalTest {
         File(projectDir, "VERSION").writeText("2.1.0")
         commit("feat: feature a")
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -151,14 +158,16 @@ class ReleaseNotesFunctionalTest {
                     rendererType.set("markdown")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -188,14 +197,16 @@ class ReleaseNotesFunctionalTest {
                     includeDownloads.set(false)
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -229,14 +240,16 @@ class ReleaseNotesFunctionalTest {
                     ))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -266,14 +279,16 @@ class ReleaseNotesFunctionalTest {
                     rendererType.set("asciidoc")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate", "-Pdocument.releaseNotesRendererType=markdown")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate", "-Pdocument.releaseNotesRendererType=markdown")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")
@@ -291,17 +306,20 @@ class ReleaseNotesFunctionalTest {
         tag("v1.0.0")
         commit("fix(api): bug fix")
 
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("releaseNotesGenerate")
             .withPluginClasspath()
             .build()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
@@ -322,17 +340,20 @@ class ReleaseNotesFunctionalTest {
         tag("v1.0.0")
         commit("fix: bug fix")
 
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("releaseNotesGenerate")
             .withPluginClasspath()
             .build()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataFile = File(projectDir, "build/docs/document/metadata.json")
@@ -348,11 +369,13 @@ class ReleaseNotesFunctionalTest {
     fun `collectDocumentRetrieve metadata json omits releaseNotesPath when no release notes`() {
         setupPluginProject()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val metadataFile = File(projectDir, "build/docs/document/metadata.json")
@@ -379,20 +402,23 @@ class ReleaseNotesFunctionalTest {
                     rendererType.set("markdown")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("releaseNotesGenerate")
             .withPluginClasspath()
             .build()
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("collectDocumentRetrieve")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("collectDocumentRetrieve")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":collectDocumentRetrieve")?.outcome)
         val compositeFile = File(projectDir, "build/docs/document/composite-context.json")
@@ -424,14 +450,16 @@ class ReleaseNotesFunctionalTest {
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("releaseNotesGenerate", "--stacktrace")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("releaseNotesGenerate", "--stacktrace")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":releaseNotesGenerate")?.outcome)
         val outputDir = File(projectDir, "build/release-notes")

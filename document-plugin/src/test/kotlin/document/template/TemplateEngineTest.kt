@@ -1,14 +1,13 @@
 package document.template
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
 class TemplateEngineTest {
-
     private val engine = TemplateEngine()
 
     @Test
@@ -39,9 +38,10 @@ class TemplateEngineTest {
 
     @Test
     fun `throws when variable missing and failOnMissing is true`() {
-        val ex = assertThrows(MissingVariableException::class.java) {
-            engine.apply("Hello {{name}}!", emptyMap(), failOnMissing = true)
-        }
+        val ex =
+            assertThrows(MissingVariableException::class.java) {
+                engine.apply("Hello {{name}}!", emptyMap(), failOnMissing = true)
+            }
         assertTrue(ex.missingVariables.contains("name"))
     }
 
@@ -53,9 +53,10 @@ class TemplateEngineTest {
 
     @Test
     fun `collects all missing variables`() {
-        val ex = assertThrows(MissingVariableException::class.java) {
-            engine.apply("{{a}} {{b}} {{c}}", mapOf("a" to "1"), failOnMissing = true)
-        }
+        val ex =
+            assertThrows(MissingVariableException::class.java) {
+                engine.apply("{{a}} {{b}} {{c}}", mapOf("a" to "1"), failOnMissing = true)
+            }
         assertEquals(setOf("b", "c"), ex.missingVariables)
     }
 
@@ -68,9 +69,10 @@ class TemplateEngineTest {
     @Test
     fun `applies template from file`() {
         val dir = Files.createTempDirectory("tmpl-test").toFile()
-        val templateFile = File(dir, "template.adoc").apply {
-            writeText("= {{title}}\n\n{{body}}")
-        }
+        val templateFile =
+            File(dir, "template.adoc").apply {
+                writeText("= {{title}}\n\n{{body}}")
+            }
         val result = engine.applyFile(templateFile, mapOf("title" to "Doc", "body" to "Content."))
         assertEquals("= Doc\n\nContent.", result)
     }
@@ -107,7 +109,8 @@ class TemplateEngineTest {
 
     @Test
     fun `template with AsciiDoc structure`() {
-        val template = """
+        val template =
+            """
             |= {{title}}
             |:author: {{author}}
             |:toc:
@@ -119,15 +122,16 @@ class TemplateEngineTest {
             |== {{section2}}
             |
             |{{paragraph2}}
-        """.trimMargin()
-        val vars = mapOf(
-            "title" to "User Guide",
-            "author" to "Admin",
-            "section1" to "Introduction",
-            "paragraph1" to "Welcome to the guide.",
-            "section2" to "Setup",
-            "paragraph2" to "Follow these steps.",
-        )
+            """.trimMargin()
+        val vars =
+            mapOf(
+                "title" to "User Guide",
+                "author" to "Admin",
+                "section1" to "Introduction",
+                "paragraph1" to "Welcome to the guide.",
+                "section2" to "Setup",
+                "paragraph2" to "Follow these steps.",
+            )
         val result = engine.apply(template, vars)
         assertTrue(result.contains("= User Guide"))
         assertTrue(result.contains(":author: Admin"))

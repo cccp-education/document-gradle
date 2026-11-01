@@ -27,7 +27,6 @@ import kotlin.test.assertTrue
  * preserves anchors, doctype and toc (the *source* book is never parsed).
  */
 class BookTranslateSteps {
-
     private var sections: List<BookSection> = emptyList()
     private var tree: BookTree? = null
     private var translated: TranslatedBook? = null
@@ -41,9 +40,10 @@ class BookTranslateSteps {
     fun `book-translate a TOC with refs`(refsText: String) {
         val refs = Regex("\"([^\"]*)\"").findAll(refsText).map { it.groupValues[1] }.toList()
         require(refs.isNotEmpty()) { "at least one ref must be given, got: '$refsText'" }
-        sections = refs.mapIndexed { index, ref ->
-            BookSection(ref = ref, title = "Chapter $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
-        }
+        sections =
+            refs.mapIndexed { index, ref ->
+                BookSection(ref = ref, title = "Chapter $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
+            }
         tree = BookTreeBuilder.fromSections(sections)
     }
 
@@ -53,7 +53,10 @@ class BookTranslateSteps {
     }
 
     @When("^book-translate the book is translated from \"([^\"]*)\" to \"([^\"]*)\"$")
-    fun `book-translate the book is translated`(source: String, target: String) {
+    fun `book-translate the book is translated`(
+        source: String,
+        target: String,
+    ) {
         translate(source, target, navigation = false)
     }
 
@@ -62,7 +65,11 @@ class BookTranslateSteps {
         translate("fr", "en", navigation = true)
     }
 
-    private fun translate(source: String, target: String, navigation: Boolean) {
+    private fun translate(
+        source: String,
+        target: String,
+        navigation: Boolean,
+    ) {
         val sourceTree = requireNotNull(tree) { "a TOC must be given first" }
         val translator = BookTranslator(FakeTranslationService(" [EN]"))
         val translatedBook = translator.translate(sourceTree, resolver(), source, target)
@@ -72,17 +79,25 @@ class BookTranslateSteps {
         translatedAssembled = assemble(translatedBook.tree, translatedBook.bodyResolver, navigation)
     }
 
-    private fun assemble(tree: BookTree, resolve: (BookSection) -> String, navigation: Boolean): String =
-        BookAssembler.assemble(
-            tree = tree,
-            layout = BookLayout(emitNavigation = navigation, pageBreakBetweenNodes = false),
-            title = "Translated Book",
-            author = "Cheroliv",
-            resolveContent = resolve,
-        ).content
+    private fun assemble(
+        tree: BookTree,
+        resolve: (BookSection) -> String,
+        navigation: Boolean,
+    ): String =
+        BookAssembler
+            .assemble(
+                tree = tree,
+                layout = BookLayout(emitNavigation = navigation, pageBreakBetweenNodes = false),
+                title = "Translated Book",
+                author = "Cheroliv",
+                resolveContent = resolve,
+            ).content
 
     @Then("^book-translate node \"([^\"]+)\" is titled \"([^\"]+)\"$")
-    fun `book-translate node is titled`(ref: String, expected: String) {
+    fun `book-translate node is titled`(
+        ref: String,
+        expected: String,
+    ) {
         val node = requireNotNull(translated).tree.node(ref)
         assertEquals(expected, node?.title, "node '$ref' title mismatch")
     }
@@ -131,7 +146,10 @@ class BookTranslateSteps {
     }
 
     @Then("^book-translate section \"([^\"]+)\" links forward to \"([^\"]+)\" using the translated titles$")
-    fun `book-translate section links forward using the translated titles`(ref: String, next: String) {
+    fun `book-translate section links forward using the translated titles`(
+        ref: String,
+        next: String,
+    ) {
         assertTrue(emitNavigation, "the book must have been assembled with navigation")
         assertTrue(
             translatedAssembled.contains("<<$next,Chapter $next [EN]>>"),

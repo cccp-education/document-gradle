@@ -9,8 +9,9 @@ import java.io.File
  * lu en lecture seule (Regle 7 — DOCUMENT CONSOMME ASCIIDOC).
  * La source n'est jamais modifiee ; seul le fichier genere est produit.
  */
-data class DocumentSource(val file: File) {
-
+data class DocumentSource(
+    val file: File,
+) {
     init {
         require(file.extension.equals("adoc", ignoreCase = true)) {
             "DocumentSource doit etre un fichier .adoc, recu: ${file.name}"

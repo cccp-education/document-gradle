@@ -21,7 +21,6 @@ package document.ci
  * without a Gradle build (no Gradle types, no I/O).
  */
 object SettingsCredentialPolicy {
-
     /** The historical hard-fail this guard forbids. */
     private val HARD_FAIL = Regex("""\?:\s*error\s*\(\s*["']ossrh(Username|Password)""")
 
@@ -31,7 +30,10 @@ object SettingsCredentialPolicy {
 
     private val CENTRAL_PORTAL = Regex("""centralPortal""")
 
-    data class Verdict(val tolerant: Boolean, val message: String)
+    data class Verdict(
+        val tolerant: Boolean,
+        val message: String,
+    )
 
     /**
      * @return a tolerant verdict when the settings script configures nmcp

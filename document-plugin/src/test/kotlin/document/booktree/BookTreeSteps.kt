@@ -23,7 +23,6 @@ import kotlin.test.assertTrue
  * All step texts carry the `book-tree ` prefix (anti-glue-collision pattern).
  */
 class BookTreeSteps {
-
     private val title = "Structured Book"
     private val author = "Cheroliv"
 
@@ -37,14 +36,15 @@ class BookTreeSteps {
     fun `book-tree a TOC with refs`(refsText: String) {
         val refs = Regex("\"([^\"]+)\"").findAll(refsText).map { it.groupValues[1] }.toList()
         require(refs.isNotEmpty()) { "at least one ref must be given, got: '$refsText'" }
-        sections = refs.mapIndexed { index, ref ->
-            BookSection(
-                ref = ref,
-                title = "Section $ref",
-                page = index + 1,
-                pdfFile = "%03d.adoc".format(index + 1),
-            )
-        }
+        sections =
+            refs.mapIndexed { index, ref ->
+                BookSection(
+                    ref = ref,
+                    title = "Section $ref",
+                    page = index + 1,
+                    pdfFile = "%03d.adoc".format(index + 1),
+                )
+            }
         pageContent = sections.associate { it.page to "Content of ${it.ref}" }
     }
 
@@ -61,13 +61,15 @@ class BookTreeSteps {
     @When("book-tree the book is assembled from the tree")
     fun `book-tree the book is assembled from the tree`() {
         val tree = BookTreeBuilder.fromSections(sections)
-        assembled = BookAssembler.assemble(
-            tree = tree,
-            layout = BookLayout(),
-            title = title,
-            author = author,
-            resolveContent = { section -> pageContent[section.page] ?: "" },
-        ).content
+        assembled =
+            BookAssembler
+                .assemble(
+                    tree = tree,
+                    layout = BookLayout(),
+                    title = title,
+                    author = author,
+                    resolveContent = { section -> pageContent[section.page] ?: "" },
+                ).content
     }
 
     @Then("book-tree the title page is emitted with author {string}")
@@ -123,12 +125,16 @@ class BookTreeSteps {
     }
 
     @Then("book-tree the heading of section {string} starts with {string}")
-    fun `book-tree the heading of section starts with`(ref: String, prefix: String) {
+    fun `book-tree the heading of section starts with`(
+        ref: String,
+        prefix: String,
+    ) {
         val content = assembled.orEmpty()
-        val heading = content.lines().firstOrNull { line ->
-            line.startsWith("=") &&
-                line.dropWhile { it == '=' }.dropWhile { it == ' ' }.startsWith(prefix)
-        }
+        val heading =
+            content.lines().firstOrNull { line ->
+                line.startsWith("=") &&
+                    line.dropWhile { it == '=' }.dropWhile { it == ' ' }.startsWith(prefix)
+            }
         assertTrue(
             heading != null,
             "a heading starting with '$prefix' must be emitted for section '$ref', got:\n$content",
@@ -173,11 +179,13 @@ class BookTreeSteps {
 
     @When("book-tree the book is assembled without a tree")
     fun `book-tree the book is assembled without a tree`() {
-        assembled = BookAssembler.assemble(
-            pagesDir = flatPagesDir!!,
-            title = title,
-            author = author,
-        ).content
+        assembled =
+            BookAssembler
+                .assemble(
+                    pagesDir = flatPagesDir!!,
+                    title = title,
+                    author = author,
+                ).content
     }
 
     @Then("book-tree no structured hierarchical heading is emitted")

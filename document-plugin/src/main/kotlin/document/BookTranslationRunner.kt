@@ -29,7 +29,6 @@ import java.io.File
 class BookTranslationRunner(
     private val translator: BookTranslator,
 ) {
-
     /**
      * Translates [tree] into [BookTranslationRequest.targetLanguage], assembles
      * the regenerated structure and writes it to
@@ -38,44 +37,48 @@ class BookTranslationRunner(
      * @return the assembled [BookAssemblyResult] (already written to disk)
      */
     fun translateAndPublish(request: BookTranslationRequest): BookAssemblyResult {
-        val translated = translator.translate(
-            tree = request.tree,
-            resolveContent = request.resolveContent,
-            sourceLanguage = request.sourceLanguage,
-            targetLanguage = request.targetLanguage,
-        )
+        val translated =
+            translator.translate(
+                tree = request.tree,
+                resolveContent = request.resolveContent,
+                sourceLanguage = request.sourceLanguage,
+                targetLanguage = request.targetLanguage,
+            )
 
-        val baseLayout = BookLayout(
-            emitMatterBreaks = request.matterBreaks,
-            matterPolicy = request.matterPolicy,
-            emitNavigation = request.navigation,
-        )
+        val baseLayout =
+            BookLayout(
+                emitMatterBreaks = request.matterBreaks,
+                matterPolicy = request.matterPolicy,
+                emitNavigation = request.navigation,
+            )
 
-        val assembled = BookAssembler.assemble(
-            tree = translated.tree,
-            layout = baseLayout,
-            title = request.title,
-            author = request.author,
-            resolveContent = translated.bodyResolver,
-        )
+        val assembled =
+            BookAssembler.assemble(
+                tree = translated.tree,
+                layout = baseLayout,
+                title = request.title,
+                author = request.author,
+                resolveContent = translated.bodyResolver,
+            )
 
         // Mirror `assembleBook`: when photos are configured the translated book
         // is illustrated by the referenced scans, copied next to the book with a
         // relative `:imagesdir:` (EPIC DOC-BOOK-IMAGES).
         val imageDir = request.photosDir ?: request.pagesDir
         val referenced = BookImageMaterializer.resolveTargets(assembled.content, imageDir)
-        val result = if (referenced.isEmpty()) {
-            assembled
-        } else {
-            BookImageMaterializer.materialise(referenced, request.outputFile.parentFile)
-            BookAssembler.assemble(
-                tree = translated.tree,
-                layout = baseLayout.copy(imagesDir = BookImageMaterializer.IMAGES_DIR),
-                title = request.title,
-                author = request.author,
-                resolveContent = translated.bodyResolver,
-            )
-        }
+        val result =
+            if (referenced.isEmpty()) {
+                assembled
+            } else {
+                BookImageMaterializer.materialise(referenced, request.outputFile.parentFile)
+                BookAssembler.assemble(
+                    tree = translated.tree,
+                    layout = baseLayout.copy(imagesDir = BookImageMaterializer.IMAGES_DIR),
+                    title = request.title,
+                    author = request.author,
+                    resolveContent = translated.bodyResolver,
+                )
+            }
 
         result.writeTo(request.outputFile)
         return result

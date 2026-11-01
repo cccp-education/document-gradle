@@ -9,7 +9,6 @@ import kotlin.test.assertTrue
  * Pure DDD unit tests for [HtmlLinkLinter], mirroring [document.xref.XrefValidatorTest].
  */
 class HtmlLinkLinterTest {
-
     @Test
     fun `extractAnchors collects double-quoted id attribute`() {
         val html = """<h2 id="chapter-1">Title</h2><p id="intro">Hi</p>"""

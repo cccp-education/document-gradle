@@ -22,14 +22,15 @@ data class TableValidationReport(
 
     companion object {
         fun fromResults(results: List<TableValidationResult.Invalid>): TableValidationReport {
-            val entries = results.map { r ->
-                TableValidationReportEntry(
-                    article = r.articleTitle,
-                    tableIndex = r.tableIndex,
-                    status = "INVALID",
-                    reason = r.reason,
-                )
-            }
+            val entries =
+                results.map { r ->
+                    TableValidationReportEntry(
+                        article = r.articleTitle,
+                        tableIndex = r.tableIndex,
+                        status = "INVALID",
+                        reason = r.reason,
+                    )
+                }
             return TableValidationReport(entries)
         }
 

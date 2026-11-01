@@ -22,17 +22,18 @@ import java.io.File
  * corpus is absent.
  */
 class BookTranslateContentTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
-        private val CONTENT_RICH_TOC = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc",
-        )
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_RICH_TOC =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc",
+            )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
     }
 
     @Test
@@ -50,13 +51,15 @@ class BookTranslateContentTest {
 
         val sourceBook = BookAssembler.assemble(tree, BookLayout(), "Content Book", "Author", resolveContent).content
         val translated = translator.translate(tree, resolveContent, "fr", "en")
-        val translatedBook = BookAssembler.assemble(
-            translated.tree,
-            BookLayout(),
-            "Content Book",
-            "Author",
-            translated.bodyResolver,
-        ).content
+        val translatedBook =
+            BookAssembler
+                .assemble(
+                    translated.tree,
+                    BookLayout(),
+                    "Content Book",
+                    "Author",
+                    translated.bodyResolver,
+                ).content
 
         val sourceAnchors = anchors(sourceBook)
         val translatedAnchors = anchorRefs(translatedBook)
@@ -76,10 +79,12 @@ class BookTranslateContentTest {
         // a regex over the content — OCR prose legitimately contains `<<`
         // artefacts of the guillemets («).
         val emittedRefs = BookNumbering.emittedNodes(translated.tree).map { it.ref }
-        val dangling = emittedRefs.flatMap { ref ->
-            val navigation = BookNumbering.navigation(translated.tree, ref)
-            listOfNotNull(navigation.previous?.ref, navigation.next?.ref)
-        }.filterNot { it in translatedAnchors }
+        val dangling =
+            emittedRefs
+                .flatMap { ref ->
+                    val navigation = BookNumbering.navigation(translated.tree, ref)
+                    listOfNotNull(navigation.previous?.ref, navigation.next?.ref)
+                }.filterNot { it in translatedAnchors }
         assertTrue(
             dangling.isEmpty(),
             "the translated book must carry 0 dangling navigation target, found: $dangling",
@@ -88,6 +93,5 @@ class BookTranslateContentTest {
 
     private fun anchors(content: String): Int = Regex("""\[\[[^\]]+\]\]""").findAll(content).count()
 
-    private fun anchorRefs(content: String): Set<String> =
-        Regex("""\[\[([^\]]+)\]\]""").findAll(content).map { it.groupValues[1] }.toSet()
+    private fun anchorRefs(content: String): Set<String> = Regex("""\[\[([^\]]+)\]\]""").findAll(content).map { it.groupValues[1] }.toSet()
 }

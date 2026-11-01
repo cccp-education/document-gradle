@@ -26,14 +26,14 @@ import java.io.File
  * build, and the assembled book must still be navigable.
  */
 class AssembleBookTaskContentTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
         private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
     }
 
     @TempDir
@@ -71,18 +71,25 @@ class AssembleBookTaskContentTest {
         CONTENT_TOC.copyTo(projectDir.resolve("content/toc.adoc"), overwrite = true)
         // copy only the pages the TOC references (Ink Economy Law — delta only),
         // parsing each data row by its four `|`-separated cells (no trailing pipe).
-        val referenced = tocText.lines()
-            .mapNotNull { line ->
-                val cells = line.trim().split("|").map { it.trim() }.drop(1)
-                if (cells.size < 4) return@mapNotNull null
-                val ref = cells[0]
-                val fileName = cells[3]
-                if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc")) {
-                    fileName
-                } else {
-                    null
+        val referenced =
+            tocText
+                .lines()
+                .mapNotNull { line ->
+                    val cells =
+                        line
+                            .trim()
+                            .split("|")
+                            .map { it.trim() }
+                            .drop(1)
+                    if (cells.size < 4) return@mapNotNull null
+                    val ref = cells[0]
+                    val fileName = cells[3]
+                    if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc")) {
+                        fileName
+                    } else {
+                        null
+                    }
                 }
-            }
         assumeTrue(referenced.isNotEmpty()) { "no .adoc page reference found in the content TOC" }
         referenced.forEach { name ->
             val page = File(CONTENT_SCANS, name)
@@ -91,11 +98,13 @@ class AssembleBookTaskContentTest {
         }
 
         // --- run the real task
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
 

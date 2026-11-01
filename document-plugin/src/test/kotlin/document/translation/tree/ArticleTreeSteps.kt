@@ -18,7 +18,6 @@ import org.assertj.core.api.Assertions.assertThat
  * so these names must not collide with another runner's steps.
  */
 class ArticleTreeSteps {
-
     private val blocks = mutableListOf<PivotBlock>()
     private var built: ArticleNode.Section? = null
     private var report: ArticleTreeReport? = null
@@ -95,9 +94,14 @@ class ArticleTreeSteps {
     }
 
     @Then("the section {string} owns one nested section {string}")
-    fun ownsOneNestedSection(parent: String, child: String) {
+    fun ownsOneNestedSection(
+        parent: String,
+        child: String,
+    ) {
         val rootSection =
-            built!!.children.filterIsInstance<ArticleNode.Section>()
+            built!!
+                .children
+                .filterIsInstance<ArticleNode.Section>()
                 .single { it.title == parent }
         val nested = rootSection.children.filterIsInstance<ArticleNode.Section>()
         assertThat(nested).hasSize(1)
@@ -115,7 +119,10 @@ class ArticleTreeSteps {
     }
 
     @Then("the article tree counts {int} plantuml leaves with status {word}")
-    fun countsPlantumlLeavesWithStatus(count: Int, status: String) {
+    fun countsPlantumlLeavesWithStatus(
+        count: Int,
+        status: String,
+    ) {
         val expected = ArticleLeafStatus.valueOf(status)
         assertThat(report!!.plantumlStatusCounts[expected] ?: 0).isEqualTo(count)
     }

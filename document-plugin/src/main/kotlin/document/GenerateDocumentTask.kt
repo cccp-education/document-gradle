@@ -33,7 +33,6 @@ import java.security.MessageDigest
  */
 @DisableCachingByDefault(because = "Idempotence is applicative — source/prompt hash is stored in generated file metadata")
 abstract class GenerateDocumentTask : DefaultTask() {
-
     @get:InputFile
     @get:Optional
     @get:PathSensitive(PathSensitivity.NONE)
@@ -92,10 +91,11 @@ abstract class GenerateDocumentTask : DefaultTask() {
 
         val provider = DocumentLlmProviderFactory.create(mode)
         val graph = DocumentGenerationGraph(provider)
-        val initial = DocumentGenerationState(
-            prompt = promptText,
-            systemPrompt = systemPromptText,
-        )
+        val initial =
+            DocumentGenerationState(
+                prompt = promptText,
+                systemPrompt = systemPromptText,
+            )
         val result = graph.execute(initial)
 
         if (result.error != null) {
@@ -108,7 +108,10 @@ abstract class GenerateDocumentTask : DefaultTask() {
         logger.info("generateDocument — IA ({}) -> {} ({} chars)", mode, output.absolutePath, result.document.length)
     }
 
-    private fun copySource(output: java.io.File, logger: org.slf4j.Logger) {
+    private fun copySource(
+        output: java.io.File,
+        logger: org.slf4j.Logger,
+    ) {
         val source = sourceFile.orNull?.asFile
         if (source == null || !source.exists()) {
             logger.warn("generateDocument — source absente et aucun prompt defini, rien a faire.")
@@ -128,10 +131,12 @@ abstract class GenerateDocumentTask : DefaultTask() {
         return digest.digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 
-    private fun buildMetadataHeader(hash: String): String =
-        "// document-gradle generated — prompt hash: $hash\n"
+    private fun buildMetadataHeader(hash: String): String = "// document-gradle generated — prompt hash: $hash\n"
 
-    private fun outputHashMatches(output: java.io.File, expectedHash: String): Boolean {
+    private fun outputHashMatches(
+        output: java.io.File,
+        expectedHash: String,
+    ): Boolean {
         val firstLine = output.bufferedReader().use { it.readLine() } ?: return false
         return firstLine.contains("prompt hash: $expectedHash")
     }

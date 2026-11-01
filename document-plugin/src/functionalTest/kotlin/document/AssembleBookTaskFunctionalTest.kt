@@ -19,7 +19,6 @@ import java.io.File
  *   succeeds.
  */
 class AssembleBookTaskFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -59,17 +58,21 @@ class AssembleBookTaskFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
-    private fun runExpectingFailure(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .buildAndFail()
+    private fun runExpectingFailure(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .buildAndFail()
 
     @Test
     fun `assembleBook is registered in the document task group`() {

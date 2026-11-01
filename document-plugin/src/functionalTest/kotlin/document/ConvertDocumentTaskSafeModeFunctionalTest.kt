@@ -13,11 +13,13 @@ import java.io.File
  * propagated to every [ConvertDocumentTask].
  */
 class ConvertDocumentTaskSafeModeFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
-    private fun writeBuild(converterBlock: String, cliSafeModeImport: Boolean = true) {
+    private fun writeBuild(
+        converterBlock: String,
+        cliSafeModeImport: Boolean = true,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText(
             """
             rootProject.name = "test-converter-safemode"
@@ -43,12 +45,14 @@ class ConvertDocumentTaskSafeModeFunctionalTest {
         )
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
     @Test
     fun `converter DSL safeMode SERVER is propagated to convertDocumentToHtml`() {

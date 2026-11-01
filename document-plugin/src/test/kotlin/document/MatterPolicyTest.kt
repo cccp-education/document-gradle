@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * policy — no I/O, fully deterministic and testable in isolation.
  */
 class MatterPolicyTest {
-
     // --- default (legacy-compatible) policy ---
 
     @Test
@@ -114,9 +113,10 @@ class MatterPolicyTest {
 
     // --- derivation from a real table of contents ---
 
-    private fun sections(vararg refs: String) = refs.mapIndexed { index, ref ->
-        BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
-    }
+    private fun sections(vararg refs: String) =
+        refs.mapIndexed { index, ref ->
+            BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
+        }
 
     @Test
     fun `derive requires front and back when the TOC declares both roots`() {

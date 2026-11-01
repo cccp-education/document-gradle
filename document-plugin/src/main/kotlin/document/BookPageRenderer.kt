@@ -21,13 +21,16 @@ import java.io.File
  * illustration the content is returned byte-identical (no-op).
  */
 object BookPageRenderer {
-
     /**
      * @param file the OCR-ed AsciiDoc page
      * @param imageDir the directory scans are resolved against
      * @param illustrate whether the page scan is emitted as an illustration
      */
-    fun render(file: File, imageDir: File, illustrate: Boolean): String {
+    fun render(
+        file: File,
+        imageDir: File,
+        illustrate: Boolean,
+    ): String {
         val scan = BookImageResolver.scanForBase(file.nameWithoutExtension, imageDir)
         val repaired = BookImageRewriter.repair(file.readText().trim(), imageDir, scan)
         if (!illustrate || scan == null) return repaired

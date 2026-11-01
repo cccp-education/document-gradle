@@ -16,10 +16,13 @@ import contracts.pipeline.ConventionalCommit
  * Non-conventional lines return null (filtered out by [parseLines]).
  */
 class ConventionalCommitParser {
-
     private val regex = Regex("^(feat|fix|chore|perf|refactor|docs|test|ci|build|style)(?:\\(([^)]+)\\))?!?: (.+)$")
 
-    fun parseSubject(subject: String, hash: String, date: String): ConventionalCommit? {
+    fun parseSubject(
+        subject: String,
+        hash: String,
+        date: String,
+    ): ConventionalCommit? {
         if (subject.isBlank()) return null
         val match = regex.matchEntire(subject) ?: return null
         val type = match.groupValues[1]
@@ -28,7 +31,11 @@ class ConventionalCommitParser {
         return ConventionalCommit(type = type, scope = scope, message = message, hash = hash, date = date)
     }
 
-    fun parseLines(subjects: List<String>, hashes: List<String>, dates: List<String>): List<ConventionalCommit> {
+    fun parseLines(
+        subjects: List<String>,
+        hashes: List<String>,
+        dates: List<String>,
+    ): List<ConventionalCommit> {
         require(subjects.size == hashes.size && subjects.size == dates.size) {
             "subjects, hashes and dates must have the same size"
         }

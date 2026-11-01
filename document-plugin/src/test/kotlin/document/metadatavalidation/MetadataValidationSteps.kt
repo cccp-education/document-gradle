@@ -1,6 +1,5 @@
 package document.metadatavalidation
 
-import document.security.IncludeGuardMode
 import document.validation.DocumentValidationReport
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -21,12 +20,14 @@ import java.nio.file.Files
  * (anti-glue pattern from S-223).
  */
 class MetadataValidationSteps {
-
     private lateinit var projectDir: File
     private lateinit var metadataFile: File
 
     @Given("a document gradle project with metadata-validation config {string} and source {string}")
-    fun `a document gradle project with metadata-validation config and source`(config: String, source: String) {
+    fun `a document gradle project with metadata-validation config and source`(
+        config: String,
+        source: String,
+    ) {
         projectDir = Files.createTempDirectory("doc-metadata-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-metadata\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
@@ -47,7 +48,7 @@ class MetadataValidationSteps {
                     safeMode = SafeMode.${safeMode(config)}
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir.resolve("doc.adoc").writeText(source)
         metadataFile = projectDir.resolve("build/docs/document/metadata.json")
@@ -63,14 +64,16 @@ class MetadataValidationSteps {
      * as a security illusion, so the STRICT config pairs with SERVER (same pattern as the
      * `STRICT_SERVER` config of the `@document-validation` scenarios, S-225).
      */
-    private fun safeMode(config: String): String = when (config) {
-        "STRICT" -> "SERVER"
-        else -> "UNSAFE"
-    }
+    private fun safeMode(config: String): String =
+        when (config) {
+            "STRICT" -> "SERVER"
+            else -> "UNSAFE"
+        }
 
     @When("the collectDocumentRetrieve task runs after validateDocument")
     fun `collectDocumentRetrieve runs after validateDocument`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("validateDocument", "collectDocumentRetrieve")
             .withPluginClasspath()
@@ -80,7 +83,8 @@ class MetadataValidationSteps {
 
     @When("the validateDocument step runs and fails its STRICT build")
     fun `validateDocument step runs and fails its STRICT build`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("validateDocument")
             .withPluginClasspath()
@@ -90,7 +94,8 @@ class MetadataValidationSteps {
 
     @When("the collectDocumentRetrieve task runs alone")
     fun `collectDocumentRetrieve task runs alone`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("collectDocumentRetrieve")
             .withPluginClasspath()
@@ -99,9 +104,10 @@ class MetadataValidationSteps {
     }
 
     private fun overallStatus(): String =
-        DocumentValidationReport.fromJson(
-            projectDir.resolve("build/docs/document/document-validation-report.json").readText(),
-        ).overallStatus()
+        DocumentValidationReport
+            .fromJson(
+                projectDir.resolve("build/docs/document/document-validation-report.json").readText(),
+            ).overallStatus()
 
     @Then("the metadata.json carries validationStatus PASS")
     fun `metadata carries validationStatus PASS`() {

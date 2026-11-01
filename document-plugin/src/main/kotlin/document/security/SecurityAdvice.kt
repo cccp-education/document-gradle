@@ -12,7 +12,6 @@ package document.security
  * - [Reject]  : same asymmetry under STRICT include guard — must fail the build fast.
  */
 sealed interface SecurityAdvice {
-
     /** The security configuration is coherent. */
     data object Valid : SecurityAdvice
 
@@ -20,11 +19,15 @@ sealed interface SecurityAdvice {
      * Asymmetric but tolerated (LENIENT include guard + UNSAFE SafeMode).
      * @param reason human-readable explanation of the detected asymmetry
      */
-    data class Warn(val reason: String) : SecurityAdvice
+    data class Warn(
+        val reason: String,
+    ) : SecurityAdvice
 
     /**
      * Asymmetric and unacceptable (STRICT include guard + UNSAFE SafeMode).
      * @param reason human-readable explanation of the detected asymmetry
      */
-    data class Reject(val reason: String) : SecurityAdvice
+    data class Reject(
+        val reason: String,
+    ) : SecurityAdvice
 }

@@ -10,7 +10,9 @@ package document.semantic
  */
 sealed class SemanticExtraction {
     /** The [table] was projected against its declared schema. */
-    data class Extracted(val table: SemanticTable) : SemanticExtraction()
+    data class Extracted(
+        val table: SemanticTable,
+    ) : SemanticExtraction()
 
     /**
      * The annotated table [name] had no declared schema.
@@ -18,7 +20,10 @@ sealed class SemanticExtraction {
      * @param name the annotation name found in the source
      * @param reason a human-readable explanation (never blank)
      */
-    data class Skipped(val name: String, val reason: String) : SemanticExtraction() {
+    data class Skipped(
+        val name: String,
+        val reason: String,
+    ) : SemanticExtraction() {
         init {
             require(reason.isNotBlank()) { "a skipped table must carry a reason" }
         }
@@ -34,7 +39,6 @@ sealed class SemanticExtraction {
  * the export is deterministic. The domain is Gradle-free and free of I/O.
  */
 object SemanticExtractor {
-
     /**
      * @param rawTables the annotated tables read from the AST, in document order
      * @param schemas the schemas declared by the consumer (matched by name)

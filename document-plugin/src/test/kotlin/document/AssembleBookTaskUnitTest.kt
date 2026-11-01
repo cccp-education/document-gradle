@@ -64,11 +64,13 @@ class AssembleBookTaskUnitTest {
         task.outputFile.set(outputFile)
 
         // Create the TOC file
-        tocFile.writeText("""
+        tocFile.writeText(
+            """
             | Référence | Sujet / Titre | Page | Fichier
             | 1 | Introduction | 1 | 001-introduction.adoc
             | 2 | Conclusion | 2 | 002-conclusion.adoc
-            """.trimIndent())
+            """.trimIndent(),
+        )
 
         // Create the page files
         File(pagesDir, "001-introduction.adoc").writeText("== Introduction\n\nThis is the introduction.")

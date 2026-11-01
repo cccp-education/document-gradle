@@ -18,11 +18,12 @@ import kotlin.test.assertTrue
  *   (opt-in — the whole scanned corpus is 525 MB, never embedded by default).
  */
 class ContentPageResolverImagesTest {
-
     private fun scans(dir: File) = dir.resolve("scans").apply { mkdirs() }
 
     @Test
-    fun `content keeps the exact behaviour when photosDir is absent (non-regression)`(@TempDir dir: File) {
+    fun `content keeps the exact behaviour when photosDir is absent (non-regression)`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("014.adoc").writeText("Historique content [ILLISIBLE]")
         scans.resolve("014.jpg").writeBytes(byteArrayOf(1))
@@ -35,7 +36,9 @@ class ContentPageResolverImagesTest {
     }
 
     @Test
-    fun `content illustrates each page with its scan when photosDir is configured`(@TempDir dir: File) {
+    fun `content illustrates each page with its scan when photosDir is configured`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("014.adoc").writeText("Historique content")
         scans.resolve("014.jpg").writeBytes(byteArrayOf(1))
@@ -47,7 +50,9 @@ class ContentPageResolverImagesTest {
     }
 
     @Test
-    fun `content repairs a ghost with the page scan even without photosDir`(@TempDir dir: File) {
+    fun `content repairs a ghost with the page scan even without photosDir`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("157.adoc").writeText("== Section\nimage::qr-code.png[QR Code]\nSuite")
         scans.resolve("157.jpg").writeBytes(byteArrayOf(1))
@@ -60,7 +65,9 @@ class ContentPageResolverImagesTest {
     }
 
     @Test
-    fun `content drops a ghost when the page has no scan`(@TempDir dir: File) {
+    fun `content drops a ghost when the page has no scan`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("042.adoc").writeText("== Section\nimage::ghost.png[]\nSuite")
 
@@ -72,7 +79,9 @@ class ContentPageResolverImagesTest {
     }
 
     @Test
-    fun `content does not duplicate the scan when the ghost repaired to the same file`(@TempDir dir: File) {
+    fun `content does not duplicate the scan when the ghost repaired to the same file`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("157.adoc").writeText("== Section\nimage::qr-code.png[QR Code]\nSuite")
         scans.resolve("157.jpg").writeBytes(byteArrayOf(1))
@@ -84,7 +93,9 @@ class ContentPageResolverImagesTest {
     }
 
     @Test
-    fun `content concatenates a split page with its own split scan`(@TempDir dir: File) {
+    fun `content concatenates a split page with its own split scan`(
+        @TempDir dir: File,
+    ) {
         val scans = scans(dir)
         scans.resolve("055.adoc").writeText("Body page 55")
         scans.resolve("055_2.adoc").writeText("Continuation of page 55")

@@ -12,7 +12,6 @@ import java.io.File
  * actually failing/warning a conversion when a forbidden `include::` is found.
  */
 class ConvertDocumentTaskIncludeGuardFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -44,19 +43,23 @@ class ConvertDocumentTaskIncludeGuardFunctionalTest {
         }
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `converter DSL includeGuard STRICT is propagated to convertDocumentToHtml`() {

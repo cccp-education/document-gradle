@@ -9,7 +9,6 @@ package document.pdf
  *   [issues] carries the sorted, deduplicated finding list.
  */
 sealed class PdfValidationResult {
-
     /** The finding list attached to a result (empty for [Valid]). */
     abstract val issues: List<String>
 

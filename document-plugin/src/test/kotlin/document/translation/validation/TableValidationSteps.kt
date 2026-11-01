@@ -1,8 +1,5 @@
 package document.translation.validation
 
-import document.translation.ArticleTranslator
-import document.translation.AsciiDocParser
-import document.translation.AsciiDocRenderer
 import document.translation.BatchDocumentTranslator
 import document.translation.BatchTranslationRequest
 import document.translation.DocumentTranslator
@@ -12,14 +9,13 @@ import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
+import java.io.File
+import kotlin.io.path.createTempDirectory
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import java.io.File
-import kotlin.io.path.createTempDirectory
 
 class TableValidationSteps {
-
     private var translationService: CorruptingTranslationService = CorruptingTranslationService()
     private var translator: DocumentTranslator? = null
     private var batchTranslator: BatchDocumentTranslator? = null
@@ -33,20 +29,25 @@ class TableValidationSteps {
     fun `a document translator with validation mode`(mode: String) {
         validationMode = ValidationMode.valueOf(mode.uppercase())
         translationService = CorruptingTranslationService()
-        translator = DocumentTranslator(
-            translationService = translationService,
-            tableValidationMode = validationMode,
-        )
+        translator =
+            DocumentTranslator(
+                translationService = translationService,
+                tableValidationMode = validationMode,
+            )
     }
 
     @And("the translation service corrupts {string} to {string}")
-    fun `the translation service corrupts text`(sourceText: String, corruptedText: String) {
+    fun `the translation service corrupts text`(
+        sourceText: String,
+        corruptedText: String,
+    ) {
         translationService.corrupt(sourceText, corruptedText)
     }
 
     @Given("an AsciiDoc article with a valid table")
     fun `an asciidoc article with a valid table`() {
-        asciidocSource = """
+        asciidocSource =
+            """
 = Test Article
 
 [cols="1,3"]
@@ -56,12 +57,13 @@ class TableValidationSteps {
 |`-c`, `--clean`
 |Clean build directory
 |===
-""".trimIndent()
+            """.trimIndent()
     }
 
     @Given("an AsciiDoc article with a table containing {string}")
     fun `an asciidoc article with a table containing`(text: String) {
-        asciidocSource = """
+        asciidocSource =
+            """
 = Test Article
 
 [cols="1,3"]
@@ -71,12 +73,13 @@ class TableValidationSteps {
 |`-c`, `--clean`
 |$text
 |===
-""".trimIndent()
+            """.trimIndent()
     }
 
     @Given("an AsciiDoc article with a table having mismatched column counts")
     fun `an asciidoc article with a table having mismatched column counts`() {
-        asciidocSource = """
+        asciidocSource =
+            """
 = Test Article
 
 |===
@@ -84,12 +87,13 @@ class TableValidationSteps {
 
 |x |y
 |===
-""".trimIndent()
+            """.trimIndent()
     }
 
     @Given("an AsciiDoc article with a table having cols {string} but 3 columns")
     fun `an asciidoc article with a table having cols but 3 columns`(cols: String) {
-        asciidocSource = """
+        asciidocSource =
+            """
 = Test Article
 
 [cols="$cols"]
@@ -100,11 +104,14 @@ class TableValidationSteps {
 |Clean build directory
 |Extra cell
 |===
-""".trimIndent()
+            """.trimIndent()
     }
 
     @When("I translate the article from {string} to {string}")
-    fun `i translate the article from source to target`(sourceLang: String, targetLang: String) {
+    fun `i translate the article from source to target`(
+        sourceLang: String,
+        targetLang: String,
+    ) {
         thrownException = null
         translatedOutput = null
         try {
@@ -153,14 +160,18 @@ class TableValidationSteps {
     }
 
     @Given("a batch translator with {int} articles including {int} with a corrupted table")
-    fun `a batch translator with articles including corrupted`(total: Int, corrupted: Int) {
+    fun `a batch translator with articles including corrupted`(
+        total: Int,
+        corrupted: Int,
+    ) {
         val tempDir = createTempDirectory("doc-table-validation-batch-")
         val sourceDir = tempDir.resolve("source").toFile()
         batchOutputDir = tempDir.resolve("output").toFile()
         sourceDir.mkdirs()
         batchOutputDir!!.mkdirs()
 
-        val validArticle = """
+        val validArticle =
+            """
 = Article {n}
 
 Some paragraph text.
@@ -174,9 +185,10 @@ Some paragraph text.
 |===
 
 Another paragraph.
-""".trimIndent()
+            """.trimIndent()
 
-        val corruptedArticle = """
+        val corruptedArticle =
+            """
 = Corrupted Article
 
 Some paragraph text.
@@ -190,7 +202,7 @@ Some paragraph text.
 |===
 
 Another paragraph.
-""".trimIndent()
+            """.trimIndent()
 
         for (i in 1..total) {
             val file = sourceDir.resolve("article-$i.adoc")
@@ -201,23 +213,28 @@ Another paragraph.
             }
         }
 
-        val docTranslator = DocumentTranslator(
-            translationService = FakeTranslationService(" [EN]"),
-            tableValidationMode = ValidationMode.LENIENT,
-        )
+        val docTranslator =
+            DocumentTranslator(
+                translationService = FakeTranslationService(" [EN]"),
+                tableValidationMode = ValidationMode.LENIENT,
+            )
         batchTranslator = BatchDocumentTranslator(docTranslator)
     }
 
     @When("I run batch translation from {string} to {string}")
-    fun `i run batch translation from source to target`(sourceLang: String, targetLang: String) {
+    fun `i run batch translation from source to target`(
+        sourceLang: String,
+        targetLang: String,
+    ) {
         val tempDir = batchOutputDir!!.parentFile
         val sourceDir = tempDir.resolve("source")
-        val request = BatchTranslationRequest(
-            sourceDir = sourceDir,
-            outputDir = batchOutputDir!!,
-            sourceLanguage = sourceLang,
-            targetLanguage = targetLang,
-        )
+        val request =
+            BatchTranslationRequest(
+                sourceDir = sourceDir,
+                outputDir = batchOutputDir!!,
+                sourceLanguage = sourceLang,
+                targetLanguage = targetLang,
+            )
         batchTranslator!!.translateBatch(request)
     }
 
@@ -231,7 +248,9 @@ Another paragraph.
     fun `the report should contain invalid entry`(count: Int) {
         val reportFile = batchOutputDir!!.resolve("table-validation-report.json")
         val content = reportFile.readText()
-        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+        val mapper =
+            com.fasterxml.jackson.databind
+                .ObjectMapper()
         val node = mapper.readTree(content)
         val entries = node.get("entries")
         assertNotNull(entries, "Expected 'entries' field in report JSON")

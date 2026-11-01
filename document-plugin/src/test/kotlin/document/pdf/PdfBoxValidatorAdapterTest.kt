@@ -18,7 +18,6 @@ import java.io.File
  * versioned binary, no AsciidoctorJ spin-up (Ink Economy Law).
  */
 class PdfBoxValidatorAdapterTest {
-
     private val adapter = PdfBoxValidatorAdapter()
 
     @TempDir
@@ -103,8 +102,11 @@ class PdfBoxValidatorAdapterTest {
     }
 
     /** Builds a minimal PDF with [pages] pages, each either blank or carrying text. */
-    private fun minimalPdfFile(pages: Int, textPerPage: Boolean): File {
-        val file = File(tmp, "minimal-${pages}-${textPerPage}.pdf")
+    private fun minimalPdfFile(
+        pages: Int,
+        textPerPage: Boolean,
+    ): File {
+        val file = File(tmp, "minimal-$pages-$textPerPage.pdf")
         buildPdf(file) { doc ->
             repeat(pages) { index ->
                 if (textPerPage) {
@@ -117,7 +119,10 @@ class PdfBoxValidatorAdapterTest {
         return file
     }
 
-    private fun buildPdf(file: File, block: (PDDocument) -> Unit) {
+    private fun buildPdf(
+        file: File,
+        block: (PDDocument) -> Unit,
+    ) {
         PDDocument().use { doc ->
             block(doc)
             doc.save(file)

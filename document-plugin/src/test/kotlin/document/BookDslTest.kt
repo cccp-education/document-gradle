@@ -9,27 +9,27 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class BookDslTest {
-
     private fun objects(): ObjectFactory = ProjectBuilder.builder().build().objects
 
-    private fun dsl(): BookDsl = BookDsl(
-        pagesDir = objects().directoryProperty(),
-        photosDir = objects().directoryProperty(),
-        title = objects().property(String::class.java),
-        author = objects().property(String::class.java),
-        tocFile = objects().fileProperty(),
-        pdfsDir = objects().directoryProperty(),
-        validationMode = objects().property(ValidationMode::class.java),
-        matterPolicy = objects().property(MatterPolicyMode::class.java),
-        matterBreaks = objects().property(Boolean::class.java),
-        navigation = objects().property(Boolean::class.java),
-        sourceLanguage = objects().property(String::class.java),
-        targetLanguage = objects().property(String::class.java),
-        translateToAll = objects().property(Boolean::class.java),
-        targetLanguages = objects().listProperty(String::class.java),
-        publishFormats = objects().listProperty(String::class.java),
-        includeSource = objects().property(Boolean::class.java),
-    )
+    private fun dsl(): BookDsl =
+        BookDsl(
+            pagesDir = objects().directoryProperty(),
+            photosDir = objects().directoryProperty(),
+            title = objects().property(String::class.java),
+            author = objects().property(String::class.java),
+            tocFile = objects().fileProperty(),
+            pdfsDir = objects().directoryProperty(),
+            validationMode = objects().property(ValidationMode::class.java),
+            matterPolicy = objects().property(MatterPolicyMode::class.java),
+            matterBreaks = objects().property(Boolean::class.java),
+            navigation = objects().property(Boolean::class.java),
+            sourceLanguage = objects().property(String::class.java),
+            targetLanguage = objects().property(String::class.java),
+            translateToAll = objects().property(Boolean::class.java),
+            targetLanguages = objects().listProperty(String::class.java),
+            publishFormats = objects().listProperty(String::class.java),
+            includeSource = objects().property(Boolean::class.java),
+        )
 
     @Test
     fun `BookDsl holds pagesDir photosDir title and author properties`() {

@@ -19,13 +19,15 @@ import java.nio.file.Files
  * distinct from the epub-check steps.
  */
 class PdfCheckSteps {
-
     private lateinit var projectDir: File
     private lateinit var buildOutput: String
     private lateinit var reportFile: File
 
     @Given("a document gradle project with pdfCheck {string} and source {string}")
-    fun `a project with pdfCheck and source`(mode: String, source: String) {
+    fun `a project with pdfCheck and source`(
+        mode: String,
+        source: String,
+    ) {
         projectDir = Files.createTempDirectory("doc-pdf-check-").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"doc-pdf-check\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
@@ -50,35 +52,41 @@ class PdfCheckSteps {
 
     @When("the validateDocumentPdf pdf-check task runs successfully")
     fun `validateDocumentPdf runs successfully`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("validateDocumentPdf")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("validateDocumentPdf")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @When("the validateDocumentPdf pdf-check task runs and fails")
     fun `validateDocumentPdf runs and fails`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("validateDocumentPdf")
-            .withPluginClasspath()
-            .forwardOutput()
-            .buildAndFail()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("validateDocumentPdf")
+                .withPluginClasspath()
+                .forwardOutput()
+                .buildAndFail()
+                .output
     }
 
     @When("the PDF converted and validated with the pdf-check tasks")
     fun `pdf converted then validated`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("convertDocumentToPdf", "validateDocumentPdf")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("convertDocumentToPdf", "validateDocumentPdf")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @Then("no pdf-validation-report.json is written")

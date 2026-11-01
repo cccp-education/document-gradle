@@ -12,11 +12,13 @@ import java.io.File
  * LENIENT warns, OFF skips).
  */
 class ValidateDocumentXrefTaskFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
-    private fun writeBuild(xrefBlock: String, sourceContent: String) {
+    private fun writeBuild(
+        xrefBlock: String,
+        sourceContent: String,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-xref-task\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -35,19 +37,23 @@ class ValidateDocumentXrefTaskFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(sourceContent)
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `STRICT writes the report then fails the build on unresolved reference`() {

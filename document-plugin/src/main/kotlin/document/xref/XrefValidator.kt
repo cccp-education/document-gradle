@@ -18,7 +18,6 @@ package document.xref
  * titles) are intentionally out of scope.
  */
 object XrefValidator {
-
     private val ANCHOR = Regex("""\[\[([A-Za-z0-9_][A-Za-z0-9_.\-]*)(,[^\]]*)?\]\]""")
     private val BLOCK_ID = Regex("""\[#([A-Za-z0-9_][A-Za-z0-9_.\-]*)""")
     private val REF_ANGLE = Regex("""<<([A-Za-z0-9_][A-Za-z0-9_.\-]*)(,[^>]*)?>>""")
@@ -52,10 +51,11 @@ object XrefValidator {
      */
     fun validate(text: String): XrefValidationResult {
         val defined = extractAnchors(text)
-        val missing = extractReferences(text)
-            .filter { it !in defined }
-            .distinct()
-            .sorted()
+        val missing =
+            extractReferences(text)
+                .filter { it !in defined }
+                .distinct()
+                .sorted()
         return if (missing.isEmpty()) {
             XrefValidationResult.Valid
         } else {

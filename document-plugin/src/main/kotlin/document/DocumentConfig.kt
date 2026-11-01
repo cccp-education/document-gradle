@@ -29,10 +29,7 @@ data class DocumentConfig(
     val enrichPassthrough: Boolean = false,
     val theme: DocumentTheme = DocumentTheme(),
 ) {
+    fun outputFor(format: DocumentFormat): File = File(outputDir, "${source.name}.${format.extension}")
 
-    fun outputFor(format: DocumentFormat): File =
-        File(outputDir, "${source.name}.${format.extension}")
-
-    fun requiresEnrichment(): Boolean =
-        enrichPlantUml || enrichImages || enrichPassthrough
+    fun requiresEnrichment(): Boolean = enrichPlantUml || enrichImages || enrichPassthrough
 }

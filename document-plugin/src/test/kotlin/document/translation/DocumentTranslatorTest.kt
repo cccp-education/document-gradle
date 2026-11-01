@@ -4,12 +4,10 @@ import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DocumentTranslatorTest {
-
     private val fakeService = FakeTranslationService(" [EN]")
     private val translator = DocumentTranslator(fakeService)
 
@@ -292,10 +290,10 @@ Alice -> Bob: Bonjour
 
     @Test
     fun `translate handles translation failure gracefully`() {
-        val failingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult =
-                TranslationResult.Failure("LLM unavailable")
-        }
+        val failingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult = TranslationResult.Failure("LLM unavailable")
+            }
         val failingTranslator = DocumentTranslator(failingService)
 
         val source = """title=Test
@@ -341,7 +339,10 @@ plugins {
 
         val result = translator.translate(source, "fr", "en")
 
-        assertTrue(result.startsWith("= Gradle: dossier resources visible dans l'IDE [EN]"), "expected translated title on first line, got: ${result.lineSequence().firstOrNull()}")
+        assertTrue(
+            result.startsWith("= Gradle: dossier resources visible dans l'IDE [EN]"),
+            "expected translated title on first line, got: ${result.lineSequence().firstOrNull()}",
+        )
         assertTrue(result.contains("@CherOliv"))
         assertTrue(result.contains("2019-08-16"))
         assertTrue(result.contains(":jbake-title:"))
@@ -400,10 +401,14 @@ Corps de l article.
 
         val result = translator.translate(source, "fr", "en")
 
-        assertTrue(result.contains(":jbake-summary: Un resume court de l article en francais [EN]"),
-            "jbake-summary must be translated, got: ${result.lines().find { it.contains(":jbake-summary:") }}")
-        assertTrue(result.contains(":jbake-description: Une description longue de l article en francais avec des details [EN]"),
-            "jbake-description must be translated, got: ${result.lines().find { it.contains(":jbake-description:") }}")
+        assertTrue(
+            result.contains(":jbake-summary: Un resume court de l article en francais [EN]"),
+            "jbake-summary must be translated, got: ${result.lines().find { it.contains(":jbake-summary:") }}",
+        )
+        assertTrue(
+            result.contains(":jbake-description: Une description longue de l article en francais avec des details [EN]"),
+            "jbake-description must be translated, got: ${result.lines().find { it.contains(":jbake-description:") }}",
+        )
     }
 
     @Test
@@ -423,10 +428,14 @@ Corps de l article.
 
         val result = translator.translate(source, "fr", "en")
 
-        assertTrue(result.contains(":summary: Un resume court en francais sans prefixe jbake [EN]"),
-            "asciidoc :summary: must be translated, got: ${result.lines().find { it.contains(":summary:") }}")
-        assertTrue(result.contains(":description: Une description longue en francais sans prefixe jbake [EN]"),
-            "asciidoc :description: must be translated, got: ${result.lines().find { it.contains(":description:") }}")
+        assertTrue(
+            result.contains(":summary: Un resume court en francais sans prefixe jbake [EN]"),
+            "asciidoc :summary: must be translated, got: ${result.lines().find { it.contains(":summary:") }}",
+        )
+        assertTrue(
+            result.contains(":description: Une description longue en francais sans prefixe jbake [EN]"),
+            "asciidoc :description: must be translated, got: ${result.lines().find { it.contains(":description:") }}",
+        )
     }
 
     @Test

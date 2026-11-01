@@ -44,14 +44,16 @@ data class BookLayout(
      */
     val emitNavigation: Boolean = false,
 ) {
-
     /**
      * Emits the AsciiDoc heading for a node at [level] with [title].
      *
      * @throws IllegalArgumentException if [level] < 1 (the root is emitted via
      *   [titlePage], never as a heading)
      */
-    fun heading(level: Int, title: String): String {
+    fun heading(
+        level: Int,
+        title: String,
+    ): String {
         require(level >= 1) { "heading level must be >= 1, got: $level" }
         return "=".repeat(level + 1) + " " + title
     }
@@ -75,10 +77,11 @@ data class BookLayout(
      * neighbour yields an empty string (nothing to emit).
      */
     fun navigationLinks(navigation: BookNavigation): String {
-        val links = buildList {
-            navigation.previous?.let { add("<<${it.ref},${it.title}>>") }
-            navigation.next?.let { add("<<${it.ref},${it.title}>>") }
-        }
+        val links =
+            buildList {
+                navigation.previous?.let { add("<<${it.ref},${it.title}>>") }
+                navigation.next?.let { add("<<${it.ref},${it.title}>>") }
+            }
         return links.joinToString(" | ")
     }
 
@@ -104,7 +107,10 @@ data class BookLayout(
      * by the assembler, so the HTML/PDF/EPUB outputs actually *embed* the page
      * scans instead of referencing missing resources (RSC-007 otherwise).
      */
-    fun titlePage(title: String, author: String): String {
+    fun titlePage(
+        title: String,
+        author: String,
+    ): String {
         val sb = StringBuilder()
         sb.append("= ").append(title).append("\n")
         sb.append(":author: ").append(author).append("\n")

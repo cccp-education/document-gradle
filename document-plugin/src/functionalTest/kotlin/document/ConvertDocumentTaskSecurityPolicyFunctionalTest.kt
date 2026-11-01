@@ -1,6 +1,5 @@
 package document
 
-import org.asciidoctor.SafeMode
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,7 +11,6 @@ import java.io.File
  * policy : coherence of AsciidoctorJ `SafeMode` × `includeGuard`.
  */
 class ConvertDocumentTaskSecurityPolicyFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -40,24 +38,37 @@ class ConvertDocumentTaskSecurityPolicyFunctionalTest {
         }
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun documentBlock(
+        safeMode: String,
+        includeGuard: String,
+    ) = "document {\n" +
+        "    source.set(file(\"doc.adoc\"))\n" +
+        "    converter { safeMode = SafeMode.$safeMode\n" +
+        "    includeGuard = IncludeGuardMode.$includeGuard }\n" +
+        "}"
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
+
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `STRICT include guard with UNSAFE safeMode fails the build fast`() {
         writeBuild(
-            documentBlock = "document {\n    source.set(file(\"doc.adoc\"))\n    converter { safeMode = SafeMode.UNSAFE\n    includeGuard = IncludeGuardMode.STRICT }\n}",
+            documentBlock = documentBlock("UNSAFE", "STRICT"),
         )
 
         val result = runAndFail("convertDocumentToHtml")
@@ -71,7 +82,7 @@ class ConvertDocumentTaskSecurityPolicyFunctionalTest {
     @Test
     fun `LENIENT include guard with UNSAFE safeMode warns but still converts`() {
         writeBuild(
-            documentBlock = "document {\n    source.set(file(\"doc.adoc\"))\n    converter { safeMode = SafeMode.UNSAFE\n    includeGuard = IncludeGuardMode.LENIENT }\n}",
+            documentBlock = documentBlock("UNSAFE", "LENIENT"),
         )
 
         val result = run("convertDocumentToHtml")
@@ -87,7 +98,7 @@ class ConvertDocumentTaskSecurityPolicyFunctionalTest {
     @Test
     fun `SERVER safeMode with STRICT include guard is coherent and converts`() {
         writeBuild(
-            documentBlock = "document {\n    source.set(file(\"doc.adoc\"))\n    converter { safeMode = SafeMode.SERVER\n    includeGuard = IncludeGuardMode.STRICT }\n}",
+            documentBlock = documentBlock("SERVER", "STRICT"),
         )
 
         val result = run("convertDocumentToHtml")

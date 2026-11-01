@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * S-088/S-223).
  */
 class BookMultilangSteps {
-
     private var source: String = "fr"
     private var requested: List<String> = emptyList()
     private var plan: List<BookLanguageTarget> = emptyList()
@@ -55,7 +54,10 @@ class BookMultilangSteps {
     }
 
     @Then("^book-multilang the plan contains \"([^\"]*)\" and \"([^\"]*)\"$")
-    fun `book-multilang the plan contains both`(first: String, second: String) {
+    fun `book-multilang the plan contains both`(
+        first: String,
+        second: String,
+    ) {
         val codes = plan.map { it.code }
         assertTrue(codes.contains(first) && codes.contains(second), "the plan must contain '$first' and '$second', got: $codes")
     }
@@ -71,7 +73,11 @@ class BookMultilangSteps {
     }
 
     @Then("^book-multilang target \"([^\"]*)\" maps to \"([^\"]*)\" for base \"([^\"]*)\"$")
-    fun `book-multilang target maps to a file name`(code: String, expected: String, base: String) {
+    fun `book-multilang target maps to a file name`(
+        code: String,
+        expected: String,
+        base: String,
+    ) {
         val target = plan.first { it.code == code }
         assertEquals(expected, target.fileName(base), "the file name must follow the convention")
     }

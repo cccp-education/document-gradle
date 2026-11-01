@@ -19,24 +19,28 @@ import java.io.File
  * contract).
  */
 class LibEpubCheckAdapter : EpubCheckRunner {
-
     /** Collecting report — one line per epubcheck message (WARN/ERROR/FATAL). */
     private class CollectingReport : MasterReport() {
         val messages = mutableListOf<String>()
 
-        override fun message(message: Message, location: EPUBLocation, vararg args: Any?) {
+        override fun message(
+            message: Message,
+            location: EPUBLocation,
+            vararg args: Any?,
+        ) {
             val severity = message.severity
             if (severity == Severity.SUPPRESSED || severity == Severity.USAGE || severity == Severity.INFO) {
                 return
             }
             val id = message.id
             val text = message.message.format(*args)
-            val at = buildString {
-                append(location.path)
-                if (location.line > 0) {
-                    append(":").append(location.line)
+            val at =
+                buildString {
+                    append(location.path)
+                    if (location.line > 0) {
+                        append(":").append(location.line)
+                    }
                 }
-            }
             messages += "$id $severity: $text ($at)"
         }
 
@@ -46,7 +50,11 @@ class LibEpubCheckAdapter : EpubCheckRunner {
 
         // feature/value can be null from the Java side — nullable to avoid
         // a Kotlin NullPointerException on the callback boundary.
-        override fun info(feature: String?, featureReport: com.adobe.epubcheck.util.FeatureEnum, value: String?) {
+        override fun info(
+            feature: String?,
+            featureReport: com.adobe.epubcheck.util.FeatureEnum,
+            value: String?,
+        ) {
             // Informations are not EPUB issues — ignored.
         }
 
@@ -63,7 +71,10 @@ class LibEpubCheckAdapter : EpubCheckRunner {
         }
         val report = CollectingReport()
         return try {
-            val exit = com.adobe.epubcheck.api.EpubCheck(file, report).doValidate()
+            val exit =
+                com.adobe.epubcheck.api
+                    .EpubCheck(file, report)
+                    .doValidate()
             if (exit == 0 && report.messages.isEmpty()) {
                 EpubValidationResult.Valid
             } else {

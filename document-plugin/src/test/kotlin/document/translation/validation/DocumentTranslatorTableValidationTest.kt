@@ -1,16 +1,14 @@
 package document.translation.validation
 
-import document.translation.DocumentTranslator
-import document.translation.FakeTranslationService
 import contracts.i18n.TranslationRequest
 import contracts.i18n.TranslationResult
 import contracts.i18n.TranslationService
+import document.translation.DocumentTranslator
+import document.translation.FakeTranslationService
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DocumentTranslatorTableValidationTest {
-
     private val fakeService = FakeTranslationService(" [EN]")
     private val translator = DocumentTranslator(fakeService)
 
@@ -41,16 +39,18 @@ status=published
 
     @Test
     fun `table with corrupted delimiter after translation is detected`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 1") {
-                    "Valeur |=== broken [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 1") {
+                            "Valeur |=== broken [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val corruptingTranslator = DocumentTranslator(corruptingService)
 
         val source = """title=Corrupted Table
@@ -76,16 +76,18 @@ status=published
 
     @Test
     fun `table with column mismatch after translation is detected`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Valeur 2") {
-                    "Valeur 2 [EN] | Extra Column [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Valeur 2") {
+                            "Valeur 2 [EN] | Extra Column [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val corruptingTranslator = DocumentTranslator(corruptingService)
 
         val source = """title=Mismatch Table
@@ -235,16 +237,18 @@ status=published
 
     @Test
     fun `table with delimiter in header cell after translation is detected`() {
-        val corruptingService = object : TranslationService {
-            override fun translate(request: TranslationRequest): TranslationResult {
-                val corrupted = if (request.sourceText == "Colonne A") {
-                    "Colonne |=== A [EN]"
-                } else {
-                    request.sourceText + " [EN]"
+        val corruptingService =
+            object : TranslationService {
+                override fun translate(request: TranslationRequest): TranslationResult {
+                    val corrupted =
+                        if (request.sourceText == "Colonne A") {
+                            "Colonne |=== A [EN]"
+                        } else {
+                            request.sourceText + " [EN]"
+                        }
+                    return TranslationResult.Success(corrupted)
                 }
-                return TranslationResult.Success(corrupted)
             }
-        }
         val corruptingTranslator = DocumentTranslator(corruptingService)
 
         val source = """title=Header Corruption

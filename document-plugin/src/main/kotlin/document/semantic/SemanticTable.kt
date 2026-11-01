@@ -85,13 +85,17 @@ data class SemanticTable(
          * - a `required` role with a blank cell yields a finding, ordered by row
          *   then schema column order.
          */
-        fun projection(raw: RawTable, schema: SemanticTableSchema): SemanticTable {
+        fun projection(
+            raw: RawTable,
+            schema: SemanticTableSchema,
+        ): SemanticTable {
             val records = raw.rows.map { cells -> projectRow(raw, cells, schema) }
-            val findings = records.flatMapIndexed { rowIndex, record ->
-                schema.columns
-                    .filter { it.required && record.isBlank(it.role) }
-                    .map { SemanticFinding(rowIndex, it.role, "required role '${it.role}' is blank") }
-            }
+            val findings =
+                records.flatMapIndexed { rowIndex, record ->
+                    schema.columns
+                        .filter { it.required && record.isBlank(it.role) }
+                        .map { SemanticFinding(rowIndex, it.role, "required role '${it.role}' is blank") }
+                }
             return SemanticTable(name = schema.name, raw = raw, records = records, findings = findings)
         }
 
@@ -102,12 +106,13 @@ data class SemanticTable(
         ): SemanticRow {
             val values = LinkedHashMap<String, String>(schema.columns.size)
             schema.columns.forEach { column ->
-                val index = when {
-                    column.index != null -> column.index
-                    column.header != null ->
-                        raw.header.indexOfFirst { it.equals(column.header, ignoreCase = true) }
-                    else -> -1
-                }
+                val index =
+                    when {
+                        column.index != null -> column.index
+                        column.header != null ->
+                            raw.header.indexOfFirst { it.equals(column.header, ignoreCase = true) }
+                        else -> -1
+                    }
                 val value = cells.getOrNull(index) ?: ""
                 values[column.role] = value
             }

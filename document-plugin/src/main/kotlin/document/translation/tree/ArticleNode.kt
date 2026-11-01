@@ -11,7 +11,6 @@ package document.translation.tree
  * Pure domain: no I/O, no Gradle, no LLM.
  */
 sealed interface ArticleNode {
-
     val owner: ArticleLeafOwner
 
     /** A heading and everything it owns until the next heading of the same or lower level. */

@@ -19,14 +19,14 @@ import kotlin.test.assertTrue
  * failure permanent (the batch reports 0 errors without ever converging).
  */
 class TranslationResilienceTest {
-
     private val parser = AsciiDocParser()
     private val renderer = AsciiDocRenderer()
 
     @TempDir
     lateinit var tempDir: File
 
-    private fun sourceArticle(): String = """= Intro
+    private fun sourceArticle(): String =
+        """= Intro
 
 == Heading One
 
@@ -44,9 +44,14 @@ Second paragraph.
         val sourceFile = tempDir.resolve("source.adoc").apply { writeText(sourceArticle()) }
         val targetFile = tempDir.resolve("target.adoc")
 
-        val checksums = contentService.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, emptyMap(), "fr", "en"
-        )
+        val checksums =
+            contentService.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                emptyMap(),
+                "fr",
+                "en",
+            )
 
         // index 1 = first paragraph (translated), index 3 = second paragraph (failed)
         assertEquals(BlockTranslationStatus.TRANSLATED, checksums.getValue("1").status)
@@ -62,9 +67,14 @@ Second paragraph.
         val sourceFile = tempDir.resolve("source.adoc").apply { writeText(sourceArticle()) }
         val targetFile = tempDir.resolve("target.adoc")
 
-        val checksums = contentService.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, emptyMap(), "fr", "en"
-        )
+        val checksums =
+            contentService.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                emptyMap(),
+                "fr",
+                "en",
+            )
 
         assertTrue(checksums.values.all { it.status == BlockTranslationStatus.TRANSLATED })
         assertTrue(targetFile.readText().contains("Second paragraph. [EN]"))
@@ -77,18 +87,32 @@ Second paragraph.
         val sourceFile = tempDir.resolve("source.adoc").apply { writeText(sourceArticle()) }
         val targetFile = tempDir.resolve("target.adoc")
 
-        val firstRun = firstService.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, emptyMap(), "fr", "en"
-        )
+        val firstRun =
+            firstService.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                emptyMap(),
+                "fr",
+                "en",
+            )
         assertEquals(BlockTranslationStatus.PENDING, firstRun.getValue("3").status)
 
         // The pool recovered: same source, same hashes.
-        val recovered = ContentTranslationService(
-            FlakyTranslationService { false }, parser, renderer, jbakeRenderer = JbakeNativeRenderer()
-        )
-        val secondRun = recovered.translateSingleFileWithBlockDelta(
-            sourceFile, targetFile, firstRun, "fr", "en"
-        )
+        val recovered =
+            ContentTranslationService(
+                FlakyTranslationService { false },
+                parser,
+                renderer,
+                jbakeRenderer = JbakeNativeRenderer(),
+            )
+        val secondRun =
+            recovered.translateSingleFileWithBlockDelta(
+                sourceFile,
+                targetFile,
+                firstRun,
+                "fr",
+                "en",
+            )
 
         assertEquals(BlockTranslationStatus.TRANSLATED, secondRun.getValue("3").status)
         assertTrue(targetFile.readText().contains("Second paragraph. [EN]"))
@@ -99,13 +123,16 @@ Second paragraph.
         val sourceArticle = parser.parse(sourceArticle())
         val previousTranslated = parser.parse(sourceArticle())
         val currentHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
-        val previousEntries = currentHashes.mapValues {
-            BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED)
-        }
+        val previousEntries =
+            currentHashes.mapValues {
+                BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED)
+            }
         // force index 1 (first paragraph) to be re-translated
         val previous = previousEntries.toMutableMap()
         previous["1"] = BlockChecksumEntry("different", BlockTranslationStatus.TRANSLATED)
-        val delta = document.translation.delta.BlockDelta.compute(previous, currentHashes)
+        val delta =
+            document.translation.delta.BlockDelta
+                .compute(previous, currentHashes)
 
         val failing = FlakyTranslationService { it == "First paragraph." }
         val translator = DocumentTranslator(failing)
@@ -133,7 +160,7 @@ Second paragraph.
     }
 
     private class FlakyTranslationService(
-        private val failFor: (String) -> Boolean
+        private val failFor: (String) -> Boolean,
     ) : TranslationService {
         override fun translate(request: TranslationRequest): TranslationResult =
             if (failFor(request.sourceText)) {

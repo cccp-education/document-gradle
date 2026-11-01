@@ -11,7 +11,6 @@ import java.io.File
  * deterministic function of the file).
  */
 fun interface EpubCheckRunner {
-
     /**
      * Validates [file] (an EPUB binary) and returns the [EpubValidationResult].
      * Implementations must not throw for a non-conforming file — a failed

@@ -27,12 +27,12 @@ class OllamaDocumentLlmProvider(
     private val model: String = System.getenv("OLLAMA_MODEL") ?: DEFAULT_MODEL,
     private val timeout: Duration = Duration.ofMinutes(5),
 ) : DocumentLlmProvider {
-
     private val log = LoggerFactory.getLogger(OllamaDocumentLlmProvider::class.java)
 
     private val chatModel by lazy {
         log.info("[OllamaDocumentLlmProvider] Creating OllamaChatModel: baseUrl={}, model={}", baseUrl, model)
-        OllamaChatModel.builder()
+        OllamaChatModel
+            .builder()
             .baseUrl(baseUrl)
             .modelName(model)
             .timeout(timeout)

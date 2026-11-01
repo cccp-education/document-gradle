@@ -9,31 +9,33 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class DocumentTranslatorPlantUmlValidationTest {
-
     private val fakeService = FakeTranslationService(" [EN]")
 
-    private fun alwaysInvalidValidator(): PlantUmlSyntaxValidator = object : PlantUmlSyntaxValidator {
-        override fun validate(
-            plantumlCode: String,
-            articleTitle: String,
-            blockIndex: Int,
-            strategy: String,
-        ): PlantUmlValidationResult = PlantUmlValidationResult.Invalid(
-            articleTitle = articleTitle,
-            blockIndex = blockIndex,
-            strategy = strategy,
-            reason = "Simulated corruption: unmatched quotes in label",
-        )
-    }
+    private fun alwaysInvalidValidator(): PlantUmlSyntaxValidator =
+        object : PlantUmlSyntaxValidator {
+            override fun validate(
+                plantumlCode: String,
+                articleTitle: String,
+                blockIndex: Int,
+                strategy: String,
+            ): PlantUmlValidationResult =
+                PlantUmlValidationResult.Invalid(
+                    articleTitle = articleTitle,
+                    blockIndex = blockIndex,
+                    strategy = strategy,
+                    reason = "Simulated corruption: unmatched quotes in label",
+                )
+        }
 
     @Test
     fun `plantUML validation in LENIENT mode warns but does not throw`() {
-        val translator = DocumentTranslator(
-            fakeService,
-            plantUmlPort = FakePlantUmlPort(fakeService),
-            plantUmlValidationMode = ValidationMode.LENIENT,
-            plantUmlSyntaxValidator = alwaysInvalidValidator(),
-        )
+        val translator =
+            DocumentTranslator(
+                fakeService,
+                plantUmlPort = FakePlantUmlPort(fakeService),
+                plantUmlValidationMode = ValidationMode.LENIENT,
+                plantUmlSyntaxValidator = alwaysInvalidValidator(),
+            )
 
         val source = """title=Diagram
 date=2026-07-20
@@ -59,12 +61,13 @@ class "Utilisateur"
 
     @Test
     fun `plantUML validation in STRICT mode throws TranslationException`() {
-        val translator = DocumentTranslator(
-            fakeService,
-            plantUmlPort = FakePlantUmlPort(fakeService),
-            plantUmlValidationMode = ValidationMode.STRICT,
-            plantUmlSyntaxValidator = alwaysInvalidValidator(),
-        )
+        val translator =
+            DocumentTranslator(
+                fakeService,
+                plantUmlPort = FakePlantUmlPort(fakeService),
+                plantUmlValidationMode = ValidationMode.STRICT,
+                plantUmlSyntaxValidator = alwaysInvalidValidator(),
+            )
 
         val source = """title=Diagram
 date=2026-07-20
@@ -92,12 +95,13 @@ class "Utilisateur"
 
     @Test
     fun `plantUML validation in OFF mode skips validation`() {
-        val translator = DocumentTranslator(
-            fakeService,
-            plantUmlPort = FakePlantUmlPort(fakeService),
-            plantUmlValidationMode = ValidationMode.OFF,
-            plantUmlSyntaxValidator = alwaysInvalidValidator(),
-        )
+        val translator =
+            DocumentTranslator(
+                fakeService,
+                plantUmlPort = FakePlantUmlPort(fakeService),
+                plantUmlValidationMode = ValidationMode.OFF,
+                plantUmlSyntaxValidator = alwaysInvalidValidator(),
+            )
 
         val source = """title=Diagram
 date=2026-07-20
@@ -123,11 +127,12 @@ class "Utilisateur"
 
     @Test
     fun `valid plantUML diagram passes validation in LENIENT mode`() {
-        val translator = DocumentTranslator(
-            fakeService,
-            plantUmlPort = FakePlantUmlPort(fakeService),
-            plantUmlValidationMode = ValidationMode.LENIENT,
-        )
+        val translator =
+            DocumentTranslator(
+                fakeService,
+                plantUmlPort = FakePlantUmlPort(fakeService),
+                plantUmlValidationMode = ValidationMode.LENIENT,
+            )
 
         val source = """title=Diagram
 date=2026-07-20
@@ -155,12 +160,13 @@ class "Service"
 
     @Test
     fun `multiple plantUML blocks accumulate validation results`() {
-        val translator = DocumentTranslator(
-            fakeService,
-            plantUmlPort = FakePlantUmlPort(fakeService),
-            plantUmlValidationMode = ValidationMode.LENIENT,
-            plantUmlSyntaxValidator = alwaysInvalidValidator(),
-        )
+        val translator =
+            DocumentTranslator(
+                fakeService,
+                plantUmlPort = FakePlantUmlPort(fakeService),
+                plantUmlValidationMode = ValidationMode.LENIENT,
+                plantUmlSyntaxValidator = alwaysInvalidValidator(),
+            )
 
         val source = """title=Diagrams
 date=2026-07-20

@@ -27,7 +27,6 @@ import kotlin.test.assertTrue
  * All step texts carry the `book-images ` prefix (anti-glue-collision pattern).
  */
 class BookImagesSteps {
-
     private var scansDir: File = Files.createTempDirectory("book-images").toFile().apply { deleteOnExit() }
     private var sections: List<BookSection> = emptyList()
     private var content: String = ""
@@ -43,7 +42,10 @@ class BookImagesSteps {
     }
 
     @Then("book-images the scan of page {int} is {string}")
-    fun `book-images the scan of page is`(page: Int, expected: String) {
+    fun `book-images the scan of page is`(
+        page: Int,
+        expected: String,
+    ) {
         val scan = BookImageResolver.scanFor(page, scansDir)
         assertEquals(expected, scan?.name, "scan of page $page mismatch")
     }
@@ -54,7 +56,10 @@ class BookImagesSteps {
     }
 
     @Given("^book-images a page \"([^\"]+)\" containing$")
-    fun `book-images a page containing`(fileName: String, body: String) {
+    fun `book-images a page containing`(
+        fileName: String,
+        body: String,
+    ) {
         scansDir.mkdirs()
         File(scansDir, fileName).writeText(body.trimIndent())
     }
@@ -122,9 +127,10 @@ class BookImagesSteps {
     @Given("^book-images a TOC with refs (.+)$")
     fun `book-images a TOC with refs`(refsText: String) {
         val refs = Regex("\"([^\"]+)\"").findAll(refsText).map { it.groupValues[1] }.toList()
-        sections = refs.mapIndexed { index, ref ->
-            BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
-        }
+        sections =
+            refs.mapIndexed { index, ref ->
+                BookSection(ref = ref, title = "Section $ref", page = index + 1, pdfFile = "%03d.adoc".format(index + 1))
+            }
     }
 
     @Given("book-images OCR pages for every referenced section")
@@ -188,7 +194,8 @@ class BookImagesSteps {
     }
 
     private fun currentPage(): File =
-        scansDir.listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
+        scansDir
+            .listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
             ?.single()
             ?: error("exactly one page must be present, got: ${scansDir.list()}")
 

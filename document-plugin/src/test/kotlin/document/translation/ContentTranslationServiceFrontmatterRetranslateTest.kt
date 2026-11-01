@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 class ContentTranslationServiceFrontmatterRetranslateTest {
-
     private val fakeTranslator = FakeTranslationService(" [EN]")
     private val service = ContentTranslationService(fakeTranslator)
 
@@ -69,10 +68,14 @@ Body of the article in English already translated.
         assertTrue(result.retranslated, "stale summary must be re-translated")
         assertEquals(setOf("summary"), result.staleKeys)
         val updated = targetFile.readText()
-        assertTrue(updated.contains(":jbake-summary: Resume FR [EN]"),
-            "stale summary must be translated, got: ${updated.lines().find { it.contains(":jbake-summary:") }}")
-        assertTrue(updated.contains("Body of the article in English already translated."),
-            "body blocks must be preserved (economie d'encre), got: ${updated.substringAfter(":jbake-status: published")}")
+        assertTrue(
+            updated.contains(":jbake-summary: Resume FR [EN]"),
+            "stale summary must be translated, got: ${updated.lines().find { it.contains(":jbake-summary:") }}",
+        )
+        assertTrue(
+            updated.contains("Body of the article in English already translated."),
+            "body blocks must be preserved (economie d'encre), got: ${updated.substringAfter(":jbake-status: published")}",
+        )
     }
 
     @Test
@@ -103,8 +106,10 @@ Body of the article in English already translated.
         assertTrue(result.retranslated)
         assertEquals(setOf("summary"), result.staleKeys)
         val updated = targetFile.readText()
-        assertTrue(updated.contains(":summary: Resume FR sans prefixe jbake [EN]"),
-            "asciidoc stale summary must be translated, got: ${updated.lines().find { it.contains(":summary:") }}")
+        assertTrue(
+            updated.contains(":summary: Resume FR sans prefixe jbake [EN]"),
+            "asciidoc stale summary must be translated, got: ${updated.lines().find { it.contains(":summary:") }}",
+        )
         assertTrue(updated.contains("Body of the article in English already translated."))
     }
 
@@ -134,8 +139,10 @@ Body already in English.
         assertTrue(result.retranslated)
         assertEquals(setOf("title"), result.staleKeys)
         val updated = targetFile.readText()
-        assertTrue(updated.startsWith("= Titre FR non traduit [EN]"),
-            "stale title must be translated, got first line: ${updated.lines().firstOrNull()}")
+        assertTrue(
+            updated.startsWith("= Titre FR non traduit [EN]"),
+            "stale title must be translated, got first line: ${updated.lines().firstOrNull()}",
+        )
         assertTrue(updated.contains("Body already in English."))
     }
 
@@ -224,6 +231,13 @@ Body already translated.
         assertTrue(updated.contains("Body already translated."))
     }
 
-    private fun createTempFile(prefix: String, suffix: String, content: String): File =
-        File.createTempFile(prefix, suffix).apply { writeText(content); deleteOnExit() }
+    private fun createTempFile(
+        prefix: String,
+        suffix: String,
+        content: String,
+    ): File =
+        File.createTempFile(prefix, suffix).apply {
+            writeText(content)
+            deleteOnExit()
+        }
 }

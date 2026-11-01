@@ -24,8 +24,10 @@ import java.io.File
  * [write] target, deterministic field order.
  */
 object BookOcrIssueReport {
-
-    fun write(issues: List<BookOcrIssue>, file: File) {
+    fun write(
+        issues: List<BookOcrIssue>,
+        file: File,
+    ) {
         val json =
             buildString {
                 append("[\n")
@@ -48,6 +50,5 @@ object BookOcrIssueReport {
         file.writeText(json)
     }
 
-    private fun quote(value: String): String =
-        "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    private fun quote(value: String): String = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }

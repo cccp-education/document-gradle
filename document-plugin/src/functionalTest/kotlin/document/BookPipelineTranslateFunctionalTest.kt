@@ -19,7 +19,6 @@ import java.io.File
  * target language the pipeline stays byte-identical (backward compatible).
  */
 class BookPipelineTranslateFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -36,7 +35,10 @@ class BookPipelineTranslateFunctionalTest {
         )
     }
 
-    private fun writeBuild(targetLine: String, outputs: String) {
+    private fun writeBuild(
+        targetLine: String,
+        outputs: String,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-bookpipeline-translate\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -66,11 +68,13 @@ class BookPipelineTranslateFunctionalTest {
         writePages()
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     @Test
     fun `bookPipeline publishes the translated HTML when a target language is set`() {

@@ -4,18 +4,20 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class BatchDocumentTranslatorTest {
-
     @TempDir
     lateinit var tempDir: File
 
     private val fakeService = FakeTranslationService(" [EN]")
     private val translator = BatchDocumentTranslator(DocumentTranslator(fakeService))
 
-    private fun adoc(name: String, content: String): File {
+    private fun adoc(
+        name: String,
+        content: String,
+    ): File {
         val file = tempDir.resolve(name)
         file.parentFile.mkdirs()
         file.writeText(content)
@@ -29,9 +31,10 @@ class BatchDocumentTranslatorTest {
         adoc("src/article2.adoc", jumble("Article Deux", "Texte deux en francais"))
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(2, result.count)
         assertTrue(result.success)
@@ -48,9 +51,10 @@ class BatchDocumentTranslatorTest {
         adoc("src/2026/new.adoc", jumble("New", "Nouveau texte"))
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(2, result.count)
         assertTrue(outputDir.resolve("2019/old.adoc").exists())
@@ -64,9 +68,10 @@ class BatchDocumentTranslatorTest {
         adoc("src/draft/skip.adoc", jumble("Skip", "Passer"))
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en", excludeRelativePaths = setOf("draft")),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en", excludeRelativePaths = setOf("draft")),
+            )
 
         assertEquals(1, result.count)
         assertTrue(outputDir.resolve("blog/keep.adoc").exists())
@@ -81,9 +86,10 @@ class BatchDocumentTranslatorTest {
         tempDir.resolve("src/image.png").writeText("not adoc")
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(1, result.count)
         assertTrue(outputDir.resolve("article.adoc").exists())
@@ -95,9 +101,10 @@ class BatchDocumentTranslatorTest {
         val sourceDir = tempDir.resolve("empty").apply { mkdirs() }
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(0, result.count)
         assertTrue(result.success)
@@ -105,19 +112,20 @@ class BatchDocumentTranslatorTest {
 
     @Test
     fun `translateBatch degrades gracefully when LLM fails — source text written, no errors`() {
-        val failingService = object : contracts.i18n.TranslationService {
-            override fun translate(request: contracts.i18n.TranslationRequest) =
-                contracts.i18n.TranslationResult.Failure("LLM down")
-        }
+        val failingService =
+            object : contracts.i18n.TranslationService {
+                override fun translate(request: contracts.i18n.TranslationRequest) = contracts.i18n.TranslationResult.Failure("LLM down")
+            }
         val translatorWithFailure = BatchDocumentTranslator(DocumentTranslator(failingService))
         val sourceDir = tempDir.resolve("src").apply { mkdirs() }
         adoc("src/a.adoc", jumble("A", "Texte A"))
         adoc("src/b.adoc", jumble("B", "Texte B"))
         val outputDir = tempDir.resolve("out")
 
-        val result = translatorWithFailure.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translatorWithFailure.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(2, result.count, "both files written even on LLM failure (graceful degradation)")
         assertFalse(result.hasErrors, "LLM failure is graceful — not a batch error")
@@ -142,19 +150,23 @@ class BatchDocumentTranslatorTest {
     @Test
     fun `translateBatch translates JBake native articles preserving structure`() {
         val sourceDir = tempDir.resolve("src").apply { mkdirs() }
-        adoc("src/jbake.adoc", """= Mon Article JBake
+        adoc(
+            "src/jbake.adoc",
+            """= Mon Article JBake
 @CherOliv
 2026-07-21
 :jbake-type: post
 :jbake-status: published
 
 Ceci est un article au format JBake native.
-""")
+""",
+        )
         val outputDir = tempDir.resolve("out")
 
-        val result = translator.translateBatch(
-            BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
-        )
+        val result =
+            translator.translateBatch(
+                BatchTranslationRequest(sourceDir, outputDir, "fr", "en"),
+            )
 
         assertEquals(1, result.count)
         val content = outputDir.resolve("jbake.adoc").readText()
@@ -163,7 +175,10 @@ Ceci est un article au format JBake native.
         assertTrue(content.contains(":jbake-type: post"))
     }
 
-    private fun jumble(title: String, body: String): String =
+    private fun jumble(
+        title: String,
+        body: String,
+    ): String =
         """title=$title
 date=2026-07-20
 type=page

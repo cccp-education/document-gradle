@@ -6,13 +6,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TableValidationReportTest {
-
     @Test
     fun `fromResults creates report with entries`() {
-        val results = listOf(
-            TableValidationResult.Invalid("Article 1", 0, "cols count mismatch"),
-            TableValidationResult.Invalid("Article 2", 1, "delimiter in cell"),
-        )
+        val results =
+            listOf(
+                TableValidationResult.Invalid("Article 1", 0, "cols count mismatch"),
+                TableValidationResult.Invalid("Article 2", 1, "delimiter in cell"),
+            )
 
         val report = TableValidationReport.fromResults(results)
 
@@ -35,9 +35,10 @@ class TableValidationReportTest {
 
     @Test
     fun `toJson produces valid JSON`() {
-        val results = listOf(
-            TableValidationResult.Invalid("Article 1", 0, "cols count mismatch"),
-        )
+        val results =
+            listOf(
+                TableValidationResult.Invalid("Article 1", 0, "cols count mismatch"),
+            )
         val report = TableValidationReport.fromResults(results)
 
         val json = report.toJson()
@@ -70,9 +71,10 @@ class TableValidationReportTest {
 
     @Test
     fun `report entry with null reason omits field`() {
-        val results = listOf(
-            TableValidationResult.Invalid("Article", 0, ""),
-        )
+        val results =
+            listOf(
+                TableValidationResult.Invalid("Article", 0, ""),
+            )
         val report = TableValidationReport.fromResults(results)
 
         val json = report.toJson()

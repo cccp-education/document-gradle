@@ -16,11 +16,11 @@ import org.junit.jupiter.api.Test
  * deterministic (language-major, then requested format order).
  */
 class BookPublicationPlannerTest {
-
-    private val languages = listOf(
-        BookLanguageTarget(code = "en", name = "English", nativeName = "English", rtl = false),
-        BookLanguageTarget(code = "de", name = "German", nativeName = "Deutsch", rtl = false),
-    )
+    private val languages =
+        listOf(
+            BookLanguageTarget(code = "en", name = "English", nativeName = "English", rtl = false),
+            BookLanguageTarget(code = "de", name = "German", nativeName = "Deutsch", rtl = false),
+        )
 
     @Test
     fun `no format yields an empty no-op plan`() {
@@ -136,13 +136,14 @@ class BookPublicationPlannerTest {
 
     @Test
     fun `includeSource publishes the source book in every requested format first`() {
-        val plan = BookPublicationPlanner.plan(
-            languages,
-            baseName = "book",
-            requestedFormats = listOf("html", "pdf"),
-            sourceLanguage = "fr",
-            includeSource = true,
-        )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName = "book",
+                requestedFormats = listOf("html", "pdf"),
+                sourceLanguage = "fr",
+                includeSource = true,
+            )
 
         assertEquals(
             listOf("book.html", "book.pdf", "book-en.html", "book-en.pdf", "book-de.html", "book-de.pdf"),
@@ -153,13 +154,14 @@ class BookPublicationPlannerTest {
 
     @Test
     fun `includeSource pairs the assembled source book with its output`() {
-        val plan = BookPublicationPlanner.plan(
-            languages,
-            baseName = "book",
-            requestedFormats = listOf("epub"),
-            sourceLanguage = "fr",
-            includeSource = true,
-        )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName = "book",
+                requestedFormats = listOf("epub"),
+                sourceLanguage = "fr",
+                includeSource = true,
+            )
         val source = plan.single { it.isSource }
 
         assertEquals("fr", source.language)
@@ -170,26 +172,28 @@ class BookPublicationPlannerTest {
 
     @Test
     fun `includeSource with no format stays a strict no-op`() {
-        val plan = BookPublicationPlanner.plan(
-            languages,
-            baseName = "book",
-            requestedFormats = emptyList(),
-            sourceLanguage = "fr",
-            includeSource = true,
-        )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName = "book",
+                requestedFormats = emptyList(),
+                sourceLanguage = "fr",
+                includeSource = true,
+            )
 
         assertTrue(plan.isEmpty(), "no format selected must be a no-op even with includeSource")
     }
 
     @Test
     fun `includeSource applies the base name to the source book`() {
-        val plan = BookPublicationPlanner.plan(
-            languages,
-            baseName = "livre",
-            requestedFormats = listOf("html"),
-            sourceLanguage = "fr",
-            includeSource = true,
-        )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages,
+                baseName = "livre",
+                requestedFormats = listOf("html"),
+                sourceLanguage = "fr",
+                includeSource = true,
+            )
         val source = plan.single { it.isSource }
 
         assertEquals("livre.adoc", source.sourceFileName)
@@ -199,11 +203,12 @@ class BookPublicationPlannerTest {
     @Test
     fun `every document format is resolvable by its lowercase name`() {
         val names = DocumentFormat.ALL.map { it.name.lowercase() }
-        val plan = BookPublicationPlanner.plan(
-            languages.take(1),
-            baseName = "book",
-            requestedFormats = names,
-        )
+        val plan =
+            BookPublicationPlanner.plan(
+                languages.take(1),
+                baseName = "book",
+                requestedFormats = names,
+            )
 
         assertEquals(DocumentFormat.ALL.size, plan.size, "every catalog format must be resolvable")
         assertEquals(names, plan.map { it.format.name.lowercase() })

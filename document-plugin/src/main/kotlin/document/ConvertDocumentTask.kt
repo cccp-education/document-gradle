@@ -1,9 +1,17 @@
 package document
 
+import document.security.DocumentIncludeGuard
+import document.security.DocumentSecurityPolicy
+import document.security.IncludeGuardMode
+import document.security.SecurityAdvice
+import document.xref.XrefValidationMode
+import document.xref.XrefValidationResult
+import document.xref.XrefValidator
+import org.asciidoctor.SafeMode
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.asciidoctor.SafeMode
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
@@ -14,14 +22,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
-import document.security.DocumentIncludeGuard
-import document.security.DocumentSecurityPolicy
-import document.security.IncludeGuardMode
-import document.security.SecurityAdvice
-import document.xref.XrefValidationMode
-import document.xref.XrefValidationResult
-import document.xref.XrefValidator
-import org.gradle.api.GradleException
 
 /**
  * Tache de conversion AsciiDoc -> format (AsciidoctorJ).
@@ -35,8 +35,7 @@ import org.gradle.api.GradleException
  * correspond au hash stocke en metadata du fichier genere, on ne re-convertit pas.
  */
 @DisableCachingByDefault(because = "Idempotence is applicative — source hash is stored in generated file metadata")
-abstract class ConvertDocumentTask() : DefaultTask() {
-
+abstract class ConvertDocumentTask : DefaultTask() {
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty
@@ -98,12 +97,13 @@ abstract class ConvertDocumentTask() : DefaultTask() {
 
     @get:Internal
     val theme: DocumentTheme
-        get() = DocumentTheme(
-            pdfTheme = pdfThemeFile.orNull?.asFile,
-            htmlStylesheet = htmlStylesheetFile.orNull?.asFile,
-            epubStylesheet = epubStylesheetFile.orNull?.asFile,
-            logo = logoFile.orNull?.asFile,
-        )
+        get() =
+            DocumentTheme(
+                pdfTheme = pdfThemeFile.orNull?.asFile,
+                htmlStylesheet = htmlStylesheetFile.orNull?.asFile,
+                epubStylesheet = epubStylesheetFile.orNull?.asFile,
+                logo = logoFile.orNull?.asFile,
+            )
 
     @TaskAction
     fun convert() {
@@ -168,19 +168,20 @@ abstract class ConvertDocumentTask() : DefaultTask() {
             SecurityAdvice.Valid -> Unit
         }
 
-        val content = when (fmt) {
-            DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme, safeMode.get())
-            DocumentFormat.PDF -> {
-                convertBinary(docSource, output, logger, "pdf", docTheme, safeMode.get())
-                return
+        val content =
+            when (fmt) {
+                DocumentFormat.HTML -> DocumentConverter.convertToHtml(docSource, docTheme, safeMode.get())
+                DocumentFormat.PDF -> {
+                    convertBinary(docSource, output, logger, "pdf", docTheme, safeMode.get())
+                    return
+                }
+                DocumentFormat.EPUB -> {
+                    convertBinary(docSource, output, logger, "epub3", docTheme, safeMode.get())
+                    return
+                }
+                DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource, safeMode.get())
+                DocumentFormat.MANPAGE -> DocumentConverter.convertToManPage(docSource, safeMode.get())
             }
-            DocumentFormat.EPUB -> {
-                convertBinary(docSource, output, logger, "epub3", docTheme, safeMode.get())
-                return
-            }
-            DocumentFormat.DOCBOOK -> DocumentConverter.convertToDocBook(docSource, safeMode.get())
-            DocumentFormat.MANPAGE -> DocumentConverter.convertToManPage(docSource, safeMode.get())
-        }
 
         if (DocumentConverter.shouldSkipConversion(docSource, output)) {
             logger.info("{} skip — sortie existante pour source inchangee : {}", name, output.absolutePath)

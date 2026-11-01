@@ -11,5 +11,5 @@ data class ThemeConfig(
     val accentColor: String = "",
     val backgroundColor: String = "",
     val textColor: String = "",
-    val headingFont: String = ""
+    val headingFont: String = "",
 )

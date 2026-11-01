@@ -2,8 +2,8 @@ package document.htmllint
 
 import document.validation.HtmlLinkLintMode
 import document.validation.HtmlLinkLintReport
-import document.validation.HtmlLinkLinter
 import document.validation.HtmlLinkLintResult
+import document.validation.HtmlLinkLinter
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
@@ -21,7 +21,6 @@ import java.nio.file.Files
  * how a future `lintHtmlDocument` task would surface findings.
  */
 class HtmlLinkLintSteps {
-
     private lateinit var html: String
     private lateinit var mode: HtmlLinkLintMode
     private var outcome: String = "none"
@@ -29,21 +28,28 @@ class HtmlLinkLintSteps {
     private var thrown: Throwable? = null
 
     @Given("a htmllint html document with mode {string} and content {string}")
-    fun `a document with mode and content`(mode: String, content: String) {
+    fun `a document with mode and content`(
+        mode: String,
+        content: String,
+    ) {
         this.mode = HtmlLinkLintMode.valueOf(mode)
         this.html = content
-        this.reportFile = Files.createTempDirectory("doc-htmllint-").toFile()
-            .resolve("html-link-lint-report.json")
+        this.reportFile =
+            Files
+                .createTempDirectory("doc-htmllint-")
+                .toFile()
+                .resolve("html-link-lint-report.json")
     }
 
     @When("the htmllint validation runs")
     fun `the validation runs`() {
         val result = HtmlLinkLinter.validate(html)
-        outcome = when (mode) {
-            HtmlLinkLintMode.OFF -> "skip"
-            HtmlLinkLintMode.LENIENT -> if (result is HtmlLinkLintResult.Invalid) "warn" else "valid"
-            HtmlLinkLintMode.STRICT -> if (result is HtmlLinkLintResult.Invalid) "reject" else "valid"
-        }
+        outcome =
+            when (mode) {
+                HtmlLinkLintMode.OFF -> "skip"
+                HtmlLinkLintMode.LENIENT -> if (result is HtmlLinkLintResult.Invalid) "warn" else "valid"
+                HtmlLinkLintMode.STRICT -> if (result is HtmlLinkLintResult.Invalid) "reject" else "valid"
+            }
         if (outcome != "skip") {
             val report = HtmlLinkLintReport.fromResult(result, HtmlLinkLinter.hasTableOfContents(html))
             reportFile.writeText(report.toJson())

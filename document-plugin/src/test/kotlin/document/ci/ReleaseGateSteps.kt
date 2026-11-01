@@ -14,18 +14,19 @@ import kotlin.test.assertTrue
  * S-088/S-223).
  */
 class ReleaseGateSteps {
-
     private val tagGate = "if: startsWith(github.ref, 'refs/tags/v')"
     private val needs = "needs: [test]"
     private val gpg = "uses: crazy-max/ghaction-import-gpg@v6"
     private val publishSignal = "CCCP_PUBLISH: \"true\""
-    private val ossrh = """
+    private val ossrh =
+        """
         ossrhUsername=0dollar{{ secrets.OSSRH_USERNAME }}
         ossrhPassword=0dollar{{ secrets.OSSRH_PASSWORD }}
-    """.trimIndent().replace("0dollar", "$")
+        """.trimIndent().replace("0dollar", "$")
     private val publishTask = "run: ./gradlew publishAggregationToCentralPortal"
 
-    private val base = """
+    private val base =
+        """
         jobs:
           test:
             steps:
@@ -43,7 +44,7 @@ class ReleaseGateSteps {
                 env:
                   CI: "true"
                   $publishSignal
-    """.trimIndent()
+        """.trimIndent()
 
     private var workflow: String = base
     private var drop: String = ""

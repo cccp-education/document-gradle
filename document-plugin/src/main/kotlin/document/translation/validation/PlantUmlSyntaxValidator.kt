@@ -17,7 +17,6 @@ interface PlantUmlSyntaxValidator {
 }
 
 private class PlantumlServiceSyntaxValidator : PlantUmlSyntaxValidator {
-
     private val plantumlService = PlantumlService()
 
     override fun validate(
@@ -25,15 +24,15 @@ private class PlantumlServiceSyntaxValidator : PlantUmlSyntaxValidator {
         articleTitle: String,
         blockIndex: Int,
         strategy: String,
-    ): PlantUmlValidationResult {
-        return when (val result = plantumlService.validateSyntax(plantumlCode)) {
+    ): PlantUmlValidationResult =
+        when (val result = plantumlService.validateSyntax(plantumlCode)) {
             is SyntaxValidationResult.Valid -> PlantUmlValidationResult.Valid
-            is SyntaxValidationResult.Invalid -> PlantUmlValidationResult.Invalid(
-                articleTitle = articleTitle,
-                blockIndex = blockIndex,
-                strategy = strategy,
-                reason = result.errorMessage,
-            )
+            is SyntaxValidationResult.Invalid ->
+                PlantUmlValidationResult.Invalid(
+                    articleTitle = articleTitle,
+                    blockIndex = blockIndex,
+                    strategy = strategy,
+                    reason = result.errorMessage,
+                )
         }
-    }
 }

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
  * AsciidoctorJ — so they are fully unit-testable in isolation.
  */
 class SemanticTableSchemaTest {
-
     @Test
     fun `a column targets a zero-based index`() {
         val column = SemanticColumnSpec(index = 2, role = "objective")
@@ -74,13 +73,15 @@ class SemanticTableSchemaTest {
 
     @Test
     fun `a schema exposes its name and columns`() {
-        val schema = SemanticTableSchema(
-            name = "planning",
-            columns = listOf(
-                SemanticColumnSpec(index = 0, role = "reference"),
-                SemanticColumnSpec(header = "Title", role = "title"),
-            ),
-        )
+        val schema =
+            SemanticTableSchema(
+                name = "planning",
+                columns =
+                    listOf(
+                        SemanticColumnSpec(index = 0, role = "reference"),
+                        SemanticColumnSpec(header = "Title", role = "title"),
+                    ),
+            )
 
         assertEquals("planning", schema.name)
         assertEquals(listOf("reference", "title"), schema.columns.map { it.role })
@@ -105,10 +106,11 @@ class SemanticTableSchemaTest {
         assertThrows(IllegalArgumentException::class.java) {
             SemanticTableSchema(
                 name = "planning",
-                columns = listOf(
-                    SemanticColumnSpec(index = 0, role = "reference"),
-                    SemanticColumnSpec(index = 1, role = "reference"),
-                ),
+                columns =
+                    listOf(
+                        SemanticColumnSpec(index = 0, role = "reference"),
+                        SemanticColumnSpec(index = 1, role = "reference"),
+                    ),
             )
         }
     }

@@ -19,7 +19,6 @@ import java.io.File
  * verifier la reutilisation (baby-step TDD, [AsciidoctorHolderTest]).
  */
 internal object AsciidoctorHolder {
-
     @Volatile
     private var instance: Asciidoctor? = null
 
@@ -38,10 +37,14 @@ internal object AsciidoctorHolder {
         instance = null
     }
 
-    fun convertFile(source: File, options: Options): String? = synchronized(lock) {
-        val asciidoctor = instance ?: provider().also { instance = it }
-        asciidoctor.convertFile(source, options)
-    }
+    fun convertFile(
+        source: File,
+        options: Options,
+    ): String? =
+        synchronized(lock) {
+            val asciidoctor = instance ?: provider().also { instance = it }
+            asciidoctor.convertFile(source, options)
+        }
 
     /**
      * Loads the AsciidoctorJ object model (AST) of [source] with the same shared
@@ -52,8 +55,12 @@ internal object AsciidoctorHolder {
      * non-trusted document (OCR/LLM) cannot trigger filesystem access through
      * macros during the lifting.
      */
-    fun load(source: File, options: Options): Document = synchronized(lock) {
-        val asciidoctor = instance ?: provider().also { instance = it }
-        asciidoctor.loadFile(source, options)
-    }
+    fun load(
+        source: File,
+        options: Options,
+    ): Document =
+        synchronized(lock) {
+            val asciidoctor = instance ?: provider().also { instance = it }
+            asciidoctor.loadFile(source, options)
+        }
 }

@@ -4,12 +4,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 class CliGitLogParserTest {
-
     @TempDir
     lateinit var repoDir: File
 
@@ -21,10 +20,11 @@ class CliGitLogParserTest {
     }
 
     private fun runGit(vararg args: String): String {
-        val process = ProcessBuilder("git", *args)
-            .directory(repoDir)
-            .redirectErrorStream(true)
-            .start()
+        val process =
+            ProcessBuilder("git", *args)
+                .directory(repoDir)
+                .redirectErrorStream(true)
+                .start()
         val output = process.inputStream.bufferedReader().readText()
         process.waitFor()
         return output

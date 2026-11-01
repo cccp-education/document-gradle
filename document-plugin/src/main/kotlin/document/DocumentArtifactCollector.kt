@@ -17,8 +17,9 @@ import java.io.File
  * @property outputDir the directory where the document pipeline writes
  *   its artifacts (typically build/docs/document)
  */
-class DocumentArtifactCollector(private val outputDir: File) {
-
+class DocumentArtifactCollector(
+    private val outputDir: File,
+) {
     companion object {
         private val RELEASE_NOTES_EXTENSIONS = setOf("adoc", "md", "json")
     }
@@ -38,7 +39,10 @@ class DocumentArtifactCollector(private val outputDir: File) {
      *   with [DocumentArtifactEntry.exists] reflecting whether the file
      *   is present on disk
      */
-    fun collect(sourceAdoc: String, outputFileName: String = "document"): List<DocumentArtifactEntry> {
+    fun collect(
+        sourceAdoc: String,
+        outputFileName: String = "document",
+    ): List<DocumentArtifactEntry> {
         if (!outputDir.exists()) return emptyList()
 
         val entries = mutableListOf<DocumentArtifactEntry>()
@@ -50,12 +54,14 @@ class DocumentArtifactCollector(private val outputDir: File) {
             val fileName = "$outputFileName.${format.extension}"
             val file = File(outputDir, fileName)
             if (file.exists()) {
-                entries.add(DocumentArtifactEntry(
-                    path = file.absolutePath,
-                    format = format,
-                    sourceAdoc = sourceAdoc,
-                    exists = true
-                ))
+                entries.add(
+                    DocumentArtifactEntry(
+                        path = file.absolutePath,
+                        format = format,
+                        sourceAdoc = sourceAdoc,
+                        exists = true,
+                    ),
+                )
             }
         }
 
@@ -78,22 +84,29 @@ class DocumentArtifactCollector(private val outputDir: File) {
     fun collectReleaseNotes(releaseNotesDir: File): List<ReleaseNotesArtifactEntry> {
         if (!releaseNotesDir.exists() || !releaseNotesDir.isDirectory) return emptyList()
 
-        return releaseNotesDir.listFiles { file ->
-            file.isFile && file.extension.lowercase() in RELEASE_NOTES_EXTENSIONS
-        }?.map { file ->
-            ReleaseNotesArtifactEntry.fromFile(path = file.absolutePath, exists = true)
-        } ?: emptyList()
+        return releaseNotesDir
+            .listFiles { file ->
+                file.isFile && file.extension.lowercase() in RELEASE_NOTES_EXTENSIONS
+            }?.map { file ->
+                ReleaseNotesArtifactEntry.fromFile(path = file.absolutePath, exists = true)
+            } ?: emptyList()
     }
 
-    private fun addIfExists(fileName: String, sourceAdoc: String, entries: MutableList<DocumentArtifactEntry>) {
+    private fun addIfExists(
+        fileName: String,
+        sourceAdoc: String,
+        entries: MutableList<DocumentArtifactEntry>,
+    ) {
         val file = File(outputDir, fileName)
         if (file.exists()) {
-            entries.add(DocumentArtifactEntry(
-                path = file.absolutePath,
-                format = DocumentFormat.HTML,
-                sourceAdoc = sourceAdoc,
-                exists = true
-            ))
+            entries.add(
+                DocumentArtifactEntry(
+                    path = file.absolutePath,
+                    format = DocumentFormat.HTML,
+                    sourceAdoc = sourceAdoc,
+                    exists = true,
+                ),
+            )
         }
     }
 }

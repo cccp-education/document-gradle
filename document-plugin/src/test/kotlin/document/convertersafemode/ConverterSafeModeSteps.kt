@@ -4,9 +4,9 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.gradle.testkit.runner.GradleRunner
-import kotlin.test.assertTrue
 import java.io.File
 import java.nio.file.Files
+import kotlin.test.assertTrue
 
 /**
  * Step definitions for the `@converter-safe-mode` scenarios (DOC-CR3-2).
@@ -18,7 +18,6 @@ import java.nio.file.Files
  * `` prefix (anti-glue-collision pattern).
  */
 class ConverterSafeModeSteps {
-
     private lateinit var projectDir: File
     private lateinit var buildOutput: String
 
@@ -69,13 +68,15 @@ class ConverterSafeModeSteps {
 
     @When("the plugin is applied and printSafeMode runs")
     fun `the plugin is applied and printSafeMode runs`() {
-        buildOutput = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("printSafeMode", "-q")
-            .withPluginClasspath()
-            .forwardOutput()
-            .build()
-            .output
+        buildOutput =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("printSafeMode", "-q")
+                .withPluginClasspath()
+                .forwardOutput()
+                .build()
+                .output
     }
 
     @Then("the convertDocumentToHtml task safeMode is {string}")

@@ -29,7 +29,6 @@ data class MatterPolicy(
     val frontRoots: Set<String> = setOf("0"),
     val backRoots: Set<String> = setOf("9"),
 ) {
-
     init {
         require(frontRoots.intersect(backRoots).isEmpty()) {
             "front and back roots must not overlap, got: ${frontRoots.intersect(backRoots)}"
@@ -74,8 +73,10 @@ data class MatterPolicy(
          * (named factory mirroring the constructor for readability at call
          * sites that only care about the roots).
          */
-        fun of(frontRoots: Set<String>, backRoots: Set<String>): MatterPolicy =
-            MatterPolicy(frontRoots = frontRoots, backRoots = backRoots)
+        fun of(
+            frontRoots: Set<String>,
+            backRoots: Set<String>,
+        ): MatterPolicy = MatterPolicy(frontRoots = frontRoots, backRoots = backRoots)
 
         /**
          * Derives a policy from a real table of contents.
@@ -104,7 +105,10 @@ data class MatterPolicy(
          * The single entry point the Gradle wiring uses to turn the DSL/CLI
          * [MatterPolicyMode] knob into a domain policy.
          */
-        fun forMode(mode: MatterPolicyMode, sections: List<BookSection>): MatterPolicy =
+        fun forMode(
+            mode: MatterPolicyMode,
+            sections: List<BookSection>,
+        ): MatterPolicy =
             when (mode) {
                 MatterPolicyMode.DERIVED -> derive(sections)
                 MatterPolicyMode.LEGACY -> DEFAULT

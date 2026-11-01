@@ -1,7 +1,7 @@
 package document.translation
 
-import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationService
+import document.translation.validation.ValidationMode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory
 
 @DisableCachingByDefault(because = "Translation output depends on LLM which is non-deterministic")
 abstract class TranslateDocumentTask : DefaultTask() {
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val sourceFile: RegularFileProperty
@@ -63,22 +62,25 @@ abstract class TranslateDocumentTask : DefaultTask() {
         val srcLang = sourceLanguage.get()
         val tgtLang = targetLanguage.get()
         val mode = llmMode.get()
-        val validationMode = try {
-            ValidationMode.valueOf(tableValidationMode.get().uppercase())
-        } catch (_: IllegalArgumentException) {
-            ValidationMode.LENIENT
-        }
-        val plantUmlValidationMode = try {
-            ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
-        } catch (_: IllegalArgumentException) {
-            ValidationMode.LENIENT
-        }
+        val validationMode =
+            try {
+                ValidationMode.valueOf(tableValidationMode.get().uppercase())
+            } catch (_: IllegalArgumentException) {
+                ValidationMode.LENIENT
+            }
+        val plantUmlValidationMode =
+            try {
+                ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
+            } catch (_: IllegalArgumentException) {
+                ValidationMode.LENIENT
+            }
 
-        val translationService: TranslationService = when (mode.lowercase()) {
-            "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
-            "ollama" -> PooledOllamaTranslationAdapter.create()
-            else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
-        }
+        val translationService: TranslationService =
+            when (mode.lowercase()) {
+                "fake" -> FakeTranslationService(" [${tgtLang.uppercase()}]")
+                "ollama" -> PooledOllamaTranslationAdapter.create()
+                else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
+            }
 
         val translator = DocumentTranslator(translationService, tableValidationMode = validationMode, plantUmlValidationMode = plantUmlValidationMode)
         val original = source.readText()

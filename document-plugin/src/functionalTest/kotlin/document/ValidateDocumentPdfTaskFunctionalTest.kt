@@ -15,11 +15,13 @@ import java.io.File
  * Economy Law).
  */
 class ValidateDocumentPdfTaskFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
-    private fun writeBuild(pdfBlock: String, sourceContent: String) {
+    private fun writeBuild(
+        pdfBlock: String,
+        sourceContent: String,
+    ) {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"test-pdf-task\"\n")
         projectDir.resolve("build.gradle.kts").writeText(
             """
@@ -38,19 +40,23 @@ class ValidateDocumentPdfTaskFunctionalTest {
         projectDir.resolve("doc.adoc").writeText(sourceContent)
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
 
-    private fun runAndFail(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .forwardOutput()
-        .buildAndFail()
+    private fun runAndFail(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .forwardOutput()
+            .buildAndFail()
 
     @Test
     fun `OFF skips validation without writing a report`() {

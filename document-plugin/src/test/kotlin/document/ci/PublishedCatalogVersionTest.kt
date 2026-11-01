@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * D5-RACE, S-029).
  */
 class PublishedCatalogVersionTest {
-
     @Test
     fun `returns the injected property value`() {
         val value = PublishedCatalogVersion.require("document.publishedCatalog.documentVersion") { "0.0.18" }
@@ -23,8 +22,7 @@ class PublishedCatalogVersionTest {
     fun `a missing property is an explicit error, never a silent green`() {
         assertThatThrownBy {
             PublishedCatalogVersion.require("document.publishedCatalog.documentVersion") { null }
-        }
-            .isInstanceOf(IllegalStateException::class.java)
+        }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("document.publishedCatalog.documentVersion")
     }
 

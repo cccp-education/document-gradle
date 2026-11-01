@@ -6,34 +6,36 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TableTest {
-
     @Test
     fun `extractTranslatable returns only translatable Text nodes`() {
-        val table = Table(
-            cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
-            header = listOf(
-                Row(
+        val table =
+            Table(
+                cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
+                header =
                     listOf(
-                        Cell(listOf(PivotInline.Text("Option", translatable = true))),
-                        Cell(listOf(PivotInline.Text("Description", translatable = true))),
-                    ),
-                ),
-            ),
-            body = listOf(
-                Row(
-                    listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("-c", translatable = false),
-                                PivotInline.Text(", ", translatable = false),
-                                PivotInline.Code("--clean", translatable = false),
+                                Cell(listOf(PivotInline.Text("Option", translatable = true))),
+                                Cell(listOf(PivotInline.Text("Description", translatable = true))),
                             ),
                         ),
-                        Cell(listOf(PivotInline.Text("Nettoyer le repertoire", translatable = true))),
                     ),
-                ),
-            ),
-        )
+                body =
+                    listOf(
+                        Row(
+                            listOf(
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("-c", translatable = false),
+                                        PivotInline.Text(", ", translatable = false),
+                                        PivotInline.Code("--clean", translatable = false),
+                                    ),
+                                ),
+                                Cell(listOf(PivotInline.Text("Nettoyer le repertoire", translatable = true))),
+                            ),
+                        ),
+                    ),
+            )
 
         val segments = table.extractTranslatable()
 
@@ -51,24 +53,26 @@ class TableTest {
 
     @Test
     fun `extractTranslatable skips non-Text nodes and non-translatable Text`() {
-        val table = Table(
-            cols = emptyList(),
-            header = emptyList(),
-            body = listOf(
-                Row(
+        val table =
+            Table(
+                cols = emptyList(),
+                header = emptyList(),
+                body =
                     listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("code", translatable = false),
-                                PivotInline.Bold("bold", translatable = true),
-                                PivotInline.Text("text", translatable = false),
-                                PivotInline.Text("translatable", translatable = true),
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("code", translatable = false),
+                                        PivotInline.Bold("bold", translatable = true),
+                                        PivotInline.Text("text", translatable = false),
+                                        PivotInline.Text("translatable", translatable = true),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
-                ),
-            ),
-        )
+            )
 
         val segments = table.extractTranslatable()
 
@@ -78,37 +82,42 @@ class TableTest {
 
     @Test
     fun `reinject round-trip preserves structure`() {
-        val original = Table(
-            cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
-            header = listOf(
-                Row(
+        val original =
+            Table(
+                cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
+                header =
                     listOf(
-                        Cell(listOf(PivotInline.Text("Option", translatable = true))),
-                        Cell(listOf(PivotInline.Text("Description", translatable = true))),
-                    ),
-                ),
-            ),
-            body = listOf(
-                Row(
-                    listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("-c", translatable = false),
-                                PivotInline.Text(", ", translatable = false),
-                                PivotInline.Code("--clean", translatable = false),
+                                Cell(listOf(PivotInline.Text("Option", translatable = true))),
+                                Cell(listOf(PivotInline.Text("Description", translatable = true))),
                             ),
                         ),
-                        Cell(listOf(PivotInline.Text("Clean build dir", translatable = true))),
                     ),
-                ),
-            ),
-        )
+                body =
+                    listOf(
+                        Row(
+                            listOf(
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("-c", translatable = false),
+                                        PivotInline.Text(", ", translatable = false),
+                                        PivotInline.Code("--clean", translatable = false),
+                                    ),
+                                ),
+                                Cell(listOf(PivotInline.Text("Clean build dir", translatable = true))),
+                            ),
+                        ),
+                    ),
+            )
 
         val segments = original.extractTranslatable()
-        val translations = segments.mapIndexed { idx, seg ->
-            val key = (seg.rowIndex * 10000) + (seg.cellIndex * 100) + seg.inlineIndex
-            key to "TRANSLATED_$idx"
-        }.toMap()
+        val translations =
+            segments
+                .mapIndexed { idx, seg ->
+                    val key = (seg.rowIndex * 10000) + (seg.cellIndex * 100) + seg.inlineIndex
+                    key to "TRANSLATED_$idx"
+                }.toMap()
 
         val result = original.reinject(translations)
 
@@ -122,22 +131,24 @@ class TableTest {
 
     @Test
     fun `reinject does not modify non-translatable nodes`() {
-        val table = Table(
-            cols = emptyList(),
-            header = emptyList(),
-            body = listOf(
-                Row(
+        val table =
+            Table(
+                cols = emptyList(),
+                header = emptyList(),
+                body =
                     listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("unchanged", translatable = false),
-                                PivotInline.Text("unchanged", translatable = false),
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("unchanged", translatable = false),
+                                        PivotInline.Text("unchanged", translatable = false),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
-                ),
-            ),
-        )
+            )
 
         val result = table.reinject(emptyMap())
 
@@ -147,31 +158,34 @@ class TableTest {
 
     @Test
     fun `toAsciiDoc produces valid AsciiDoc table with cols`() {
-        val table = Table(
-            cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
-            header = listOf(
-                Row(
+        val table =
+            Table(
+                cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
+                header =
                     listOf(
-                        Cell(listOf(PivotInline.Text("Option", translatable = true))),
-                        Cell(listOf(PivotInline.Text("Description", translatable = true))),
-                    ),
-                ),
-            ),
-            body = listOf(
-                Row(
-                    listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("-c", translatable = false),
-                                PivotInline.Text(", ", translatable = false),
-                                PivotInline.Code("--clean", translatable = false),
+                                Cell(listOf(PivotInline.Text("Option", translatable = true))),
+                                Cell(listOf(PivotInline.Text("Description", translatable = true))),
                             ),
                         ),
-                        Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
                     ),
-                ),
-            ),
-        )
+                body =
+                    listOf(
+                        Row(
+                            listOf(
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("-c", translatable = false),
+                                        PivotInline.Text(", ", translatable = false),
+                                        PivotInline.Code("--clean", translatable = false),
+                                    ),
+                                ),
+                                Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
+                            ),
+                        ),
+                    ),
+            )
 
         val adoc = table.toAsciiDoc()
 
@@ -185,18 +199,20 @@ class TableTest {
 
     @Test
     fun `toAsciiDoc produces table without cols when empty`() {
-        val table = Table(
-            cols = emptyList(),
-            header = emptyList(),
-            body = listOf(
-                Row(
+        val table =
+            Table(
+                cols = emptyList(),
+                header = emptyList(),
+                body =
                     listOf(
-                        Cell(listOf(PivotInline.Text("A", translatable = true))),
-                        Cell(listOf(PivotInline.Text("B", translatable = true))),
+                        Row(
+                            listOf(
+                                Cell(listOf(PivotInline.Text("A", translatable = true))),
+                                Cell(listOf(PivotInline.Text("B", translatable = true))),
+                            ),
+                        ),
                     ),
-                ),
-            ),
-        )
+            )
 
         val adoc = table.toAsciiDoc()
 
@@ -208,31 +224,34 @@ class TableTest {
 
     @Test
     fun `toAsciiDoc round-trip is byte-identical`() {
-        val original = Table(
-            cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
-            header = listOf(
-                Row(
+        val original =
+            Table(
+                cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
+                header =
                     listOf(
-                        Cell(listOf(PivotInline.Text("Option", translatable = true))),
-                        Cell(listOf(PivotInline.Text("Description", translatable = true))),
-                    ),
-                ),
-            ),
-            body = listOf(
-                Row(
-                    listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("-c", translatable = false),
-                                PivotInline.Text(", ", translatable = false),
-                                PivotInline.Code("--clean", translatable = false),
+                                Cell(listOf(PivotInline.Text("Option", translatable = true))),
+                                Cell(listOf(PivotInline.Text("Description", translatable = true))),
                             ),
                         ),
-                        Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
                     ),
-                ),
-            ),
-        )
+                body =
+                    listOf(
+                        Row(
+                            listOf(
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("-c", translatable = false),
+                                        PivotInline.Text(", ", translatable = false),
+                                        PivotInline.Code("--clean", translatable = false),
+                                    ),
+                                ),
+                                Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
+                            ),
+                        ),
+                    ),
+            )
 
         val adoc = original.toAsciiDoc()
         val parser = AsciiDocParser()
@@ -249,31 +268,34 @@ class TableTest {
 
     @Test
     fun `toHtml produces valid HTML table`() {
-        val table = Table(
-            cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
-            header = listOf(
-                Row(
+        val table =
+            Table(
+                cols = listOf(ColSpec(width = 1), ColSpec(width = 3)),
+                header =
                     listOf(
-                        Cell(listOf(PivotInline.Text("Option", translatable = true))),
-                        Cell(listOf(PivotInline.Text("Description", translatable = true))),
-                    ),
-                ),
-            ),
-            body = listOf(
-                Row(
-                    listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Code("-c", translatable = false),
-                                PivotInline.Text(", ", translatable = false),
-                                PivotInline.Code("--clean", translatable = false),
+                                Cell(listOf(PivotInline.Text("Option", translatable = true))),
+                                Cell(listOf(PivotInline.Text("Description", translatable = true))),
                             ),
                         ),
-                        Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
                     ),
-                ),
-            ),
-        )
+                body =
+                    listOf(
+                        Row(
+                            listOf(
+                                Cell(
+                                    listOf(
+                                        PivotInline.Code("-c", translatable = false),
+                                        PivotInline.Text(", ", translatable = false),
+                                        PivotInline.Code("--clean", translatable = false),
+                                    ),
+                                ),
+                                Cell(listOf(PivotInline.Text("Clean build", translatable = true))),
+                            ),
+                        ),
+                    ),
+            )
 
         val html = table.toHtml()
 
@@ -289,18 +311,20 @@ class TableTest {
 
     @Test
     fun `toHtml produces table without thead when no header`() {
-        val table = Table(
-            cols = emptyList(),
-            header = emptyList(),
-            body = listOf(
-                Row(
+        val table =
+            Table(
+                cols = emptyList(),
+                header = emptyList(),
+                body =
                     listOf(
-                        Cell(listOf(PivotInline.Text("A", translatable = true))),
-                        Cell(listOf(PivotInline.Text("B", translatable = true))),
+                        Row(
+                            listOf(
+                                Cell(listOf(PivotInline.Text("A", translatable = true))),
+                                Cell(listOf(PivotInline.Text("B", translatable = true))),
+                            ),
+                        ),
                     ),
-                ),
-            ),
-        )
+            )
 
         val html = table.toHtml()
 
@@ -312,23 +336,25 @@ class TableTest {
 
     @Test
     fun `toHtml renders bold and link inline`() {
-        val table = Table(
-            cols = emptyList(),
-            header = emptyList(),
-            body = listOf(
-                Row(
+        val table =
+            Table(
+                cols = emptyList(),
+                header = emptyList(),
+                body =
                     listOf(
-                        Cell(
+                        Row(
                             listOf(
-                                PivotInline.Bold("important", translatable = true),
-                                PivotInline.Text(" see ", translatable = true),
-                                PivotInline.Link("https://example.com", "docs", translatable = true),
+                                Cell(
+                                    listOf(
+                                        PivotInline.Bold("important", translatable = true),
+                                        PivotInline.Text(" see ", translatable = true),
+                                        PivotInline.Link("https://example.com", "docs", translatable = true),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
-                ),
-            ),
-        )
+            )
 
         val html = table.toHtml()
 
@@ -338,11 +364,12 @@ class TableTest {
 
     @Test
     fun `cell with colSpan and rowSpan produces correct HTML attrs`() {
-        val cell = Cell(
-            inline = listOf(PivotInline.Text("spanned", translatable = true)),
-            colSpan = 2,
-            rowSpan = 3,
-        )
+        val cell =
+            Cell(
+                inline = listOf(PivotInline.Text("spanned", translatable = true)),
+                colSpan = 2,
+                rowSpan = 3,
+            )
 
         val attrs = cell.htmlAttrs()
 
@@ -352,10 +379,11 @@ class TableTest {
 
     @Test
     fun `cell with alignment produces correct HTML style`() {
-        val cell = Cell(
-            inline = listOf(PivotInline.Text("centered", translatable = true)),
-            halign = HAlign.CENTER,
-        )
+        val cell =
+            Cell(
+                inline = listOf(PivotInline.Text("centered", translatable = true)),
+                halign = HAlign.CENTER,
+            )
 
         val attrs = cell.htmlAttrs()
 

@@ -5,16 +5,18 @@ import contracts.pipeline.ReleaseNotesConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 class AsciidocReleaseNotesRendererTest {
-
     private val renderer = AsciidocReleaseNotesRenderer()
 
-    private fun commit(type: String, scope: String? = null, message: String = "msg") =
-        ConventionalCommit(type = type, scope = scope, message = message, hash = "h", date = "d")
+    private fun commit(
+        type: String,
+        scope: String? = null,
+        message: String = "msg",
+    ) = ConventionalCommit(type = type, scope = scope, message = message, hash = "h", date = "d")
 
     @Test
     fun `format is asciidoc`() {
@@ -41,11 +43,12 @@ class AsciidocReleaseNotesRendererTest {
 
     @Test
     fun `render groups commits by category in config order`() {
-        val commits = listOf(
-            commit("fix", message = "bug 1"),
-            commit("feat", message = "feature 1"),
-            commit("fix", message = "bug 2"),
-        )
+        val commits =
+            listOf(
+                commit("fix", message = "bug 1"),
+                commit("feat", message = "feature 1"),
+                commit("fix", message = "bug 2"),
+            )
         val content = renderer.render(commits, ReleaseNotesConfig())
         val featIndex = content.indexOf("== Nouveautés")
         val fixIndex = content.indexOf("== Corrections")
@@ -82,7 +85,9 @@ class AsciidocReleaseNotesRendererTest {
     }
 
     @Test
-    fun `renderToFile writes content to file and returns it`(@TempDir dir: File) {
+    fun `renderToFile writes content to file and returns it`(
+        @TempDir dir: File,
+    ) {
         val output = dir.resolve("release-notes.adoc")
         val result = renderer.renderToFile(listOf(commit("feat", message = "hello")), ReleaseNotesConfig(version = "1.0.0"), output)
         assertEquals(output, result)
@@ -92,7 +97,9 @@ class AsciidocReleaseNotesRendererTest {
     }
 
     @Test
-    fun `renderToFile creates parent directories`(@TempDir dir: File) {
+    fun `renderToFile creates parent directories`(
+        @TempDir dir: File,
+    ) {
         val output = dir.resolve("build/release-notes/v1.adoc")
         renderer.renderToFile(listOf(commit("feat")), ReleaseNotesConfig(), output)
         assertTrue(output.isFile)

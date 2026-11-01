@@ -1,5 +1,7 @@
 package document.translation
 
+import contracts.i18n.TranslationService
+import contracts.plantuml.PlantUmlTranslationPort
 import document.translation.delta.BlockChecksum
 import document.translation.delta.BlockChecksumEntry
 import document.translation.delta.BlockDelta
@@ -7,10 +9,6 @@ import document.translation.delta.BlockTranslationStatus
 import document.translation.validation.PlantUmlValidationResult
 import document.translation.validation.TableValidationResult
 import document.translation.validation.ValidationMode
-import contracts.i18n.TranslationRequest
-import contracts.i18n.TranslationResult
-import contracts.i18n.TranslationService
-import contracts.plantuml.PlantUmlTranslationPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -61,21 +59,26 @@ class ContentTranslationService(
         langDir: File,
         sourceLanguage: String,
         targetLanguage: String,
-        excludeRelativePaths: Set<String> = emptySet()
+        excludeRelativePaths: Set<String> = emptySet(),
     ): ContentTranslationResult {
-        val adocFiles = langDir.walkTopDown()
-            .filter { it.isFile && it.extension == "adoc" }
-            .filter { file ->
-                val relPath = file.relativeTo(langDir).path
-                val dirsToCheck = generateSequence(relPath) { path ->
-                    path.lastIndexOf('/').let { if (it > 0) path.substring(0, it) else null }
-                }.toSet()
-                excludeRelativePaths.none { it in dirsToCheck || relPath.startsWith("$it/") }
-            }
-            .toList()
+        val adocFiles =
+            langDir
+                .walkTopDown()
+                .filter { it.isFile && it.extension == "adoc" }
+                .filter { file ->
+                    val relPath = file.relativeTo(langDir).path
+                    val dirsToCheck =
+                        generateSequence(relPath) { path ->
+                            path.lastIndexOf('/').let { if (it > 0) path.substring(0, it) else null }
+                        }.toSet()
+                    excludeRelativePaths.none { it in dirsToCheck || relPath.startsWith("$it/") }
+                }.toList()
 
-        log.info("[translate] Traduction $targetLanguage — ${adocFiles.size} fichiers .adoc dans {} (parallelism={})",
-            langDir.name, parallelism)
+        log.info(
+            "[translate] Traduction $targetLanguage — ${adocFiles.size} fichiers .adoc dans {} (parallelism={})",
+            langDir.name,
+            parallelism,
+        )
 
         if (parallelism <= 1) {
             return translateSequential(adocFiles, langDir, sourceLanguage, targetLanguage)
@@ -87,10 +90,12 @@ class ContentTranslationService(
         files: List<File>,
         langDir: File,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ): ContentTranslationResult {
-        log.info("[translateFiles] Traduction $targetLanguage — ${files.size} fichiers .adoc (parallelism={})",
-            parallelism)
+        log.info(
+            "[translateFiles] Traduction $targetLanguage — ${files.size} fichiers .adoc (parallelism={})",
+            parallelism,
+        )
 
         if (parallelism <= 1) {
             return translateSequential(files, langDir, sourceLanguage, targetLanguage)
@@ -102,7 +107,7 @@ class ContentTranslationService(
         adocFiles: List<File>,
         langDir: File,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ): ContentTranslationResult {
         val translated = mutableListOf<String>()
         val errors = mutableListOf<String>()
@@ -115,14 +120,18 @@ class ContentTranslationService(
                 translated.add(relPath)
                 log.info("[translate] [{}] OK : {}", targetLanguage, relPath)
             } catch (e: Exception) {
-                val msg = "${relPath}: ${e.message}"
+                val msg = "$relPath: ${e.message}"
                 errors.add(msg)
                 log.warn("[translate] [{}] ERREUR : {}", targetLanguage, msg)
             }
         }
 
-        log.info("[translate] [{}] Terminé — {} traduits, {} erreurs",
-            targetLanguage, translated.size, errors.size)
+        log.info(
+            "[translate] [{}] Terminé — {} traduits, {} erreurs",
+            targetLanguage,
+            translated.size,
+            errors.size,
+        )
         return ContentTranslationResult(translated, errors)
     }
 
@@ -130,41 +139,47 @@ class ContentTranslationService(
         adocFiles: List<File>,
         langDir: File,
         sourceLanguage: String,
-        targetLanguage: String
-    ): ContentTranslationResult = runBlocking {
-        val translated = ConcurrentLinkedQueue<String>()
-        val errors = ConcurrentLinkedQueue<String>()
-        val semaphore = Semaphore(parallelism)
+        targetLanguage: String,
+    ): ContentTranslationResult =
+        runBlocking {
+            val translated = ConcurrentLinkedQueue<String>()
+            val errors = ConcurrentLinkedQueue<String>()
+            val semaphore = Semaphore(parallelism)
 
-        coroutineScope {
-            adocFiles.mapIndexed { idx, file ->
-                async(Dispatchers.IO) {
-                    semaphore.withPermit {
-                        val relPath = file.relativeTo(langDir).path
-                        log.info("[translate] [{}] {}/{} Traduction de : {}", targetLanguage, idx + 1, adocFiles.size, relPath)
-                        try {
-                            translateSingleFile(file, sourceLanguage, targetLanguage)
-                            translated.add(relPath)
-                            log.info("[translate] [{}] OK : {}", targetLanguage, relPath)
-                        } catch (e: Exception) {
-                            val msg = "${relPath}: ${e.message}"
-                            errors.add(msg)
-                            log.warn("[translate] [{}] ERREUR : {}", targetLanguage, msg)
+            coroutineScope {
+                adocFiles
+                    .mapIndexed { idx, file ->
+                        async(Dispatchers.IO) {
+                            semaphore.withPermit {
+                                val relPath = file.relativeTo(langDir).path
+                                log.info("[translate] [{}] {}/{} Traduction de : {}", targetLanguage, idx + 1, adocFiles.size, relPath)
+                                try {
+                                    translateSingleFile(file, sourceLanguage, targetLanguage)
+                                    translated.add(relPath)
+                                    log.info("[translate] [{}] OK : {}", targetLanguage, relPath)
+                                } catch (e: Exception) {
+                                    val msg = "$relPath: ${e.message}"
+                                    errors.add(msg)
+                                    log.warn("[translate] [{}] ERREUR : {}", targetLanguage, msg)
+                                }
+                            }
                         }
-                    }
-                }
-            }.awaitAll()
-        }
+                    }.awaitAll()
+            }
 
-        log.info("[translate] [{}] Terminé — {} traduits, {} erreurs",
-            targetLanguage, translated.size, errors.size)
-        ContentTranslationResult(translated.toList(), errors.toList())
-    }
+            log.info(
+                "[translate] [{}] Terminé — {} traduits, {} erreurs",
+                targetLanguage,
+                translated.size,
+                errors.size,
+            )
+            ContentTranslationResult(translated.toList(), errors.toList())
+        }
 
     private fun translateSingleFile(
         file: File,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ) {
         val original = file.readText()
         val rendered = documentTranslator.translate(original, sourceLanguage, targetLanguage)
@@ -176,32 +191,38 @@ class ContentTranslationService(
         targetFile: File,
         previousBlockChecksums: Map<String, BlockChecksumEntry>,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ): Map<String, BlockChecksumEntry> {
         val sourceText = sourceFile.readText()
         val sourceArticle = parser.parse(sourceText)
         val currentBlockHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
         documentTranslator.clearTranslationFailures()
-        val rendered: String = if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
-            documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
-        } else {
-            val previousTranslatedArticle = parser.parse(targetFile.readText())
-            val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
-            if (delta.isEmpty()) {
-                // No block changed: the previous statuses are carried over by the
-                // caller (the stored map is compared hash-by-hash) — but a PENDING
-                // block with an unchanged hash is re-translated by BlockDelta, so
-                // an empty delta means every block is genuinely TRANSLATED.
-                return currentBlockHashes.mapValues {
-                    BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED)
+        val rendered: String =
+            if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
+                documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
+            } else {
+                val previousTranslatedArticle = parser.parse(targetFile.readText())
+                val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
+                if (delta.isEmpty()) {
+                    // No block changed: the previous statuses are carried over by the
+                    // caller (the stored map is compared hash-by-hash) — but a PENDING
+                    // block with an unchanged hash is re-translated by BlockDelta, so
+                    // an empty delta means every block is genuinely TRANSLATED.
+                    return currentBlockHashes.mapValues {
+                        BlockChecksumEntry(it.value, BlockTranslationStatus.TRANSLATED)
+                    }
                 }
+                val translatedArticle =
+                    documentTranslator.translateArticleWithDelta(
+                        sourceArticle,
+                        previousTranslatedArticle,
+                        delta,
+                        sourceLanguage,
+                        targetLanguage,
+                    )
+                val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+                outputRenderer.render(translatedArticle)
             }
-            val translatedArticle = documentTranslator.translateArticleWithDelta(
-                sourceArticle, previousTranslatedArticle, delta, sourceLanguage, targetLanguage
-            )
-            val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
-            outputRenderer.render(translatedArticle)
-        }
         targetFile.writeText(rendered)
         // DOC-TRANSLATE-RESILIENCE — a block whose LLM call failed is stored as
         // PENDING, never TRANSLATED: the next delta re-attempts it instead of
@@ -214,7 +235,7 @@ class ContentTranslationService(
         sourceFile: File,
         targetFile: File,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ): FrontmatterRetranslationResult {
         if (!targetFile.exists()) {
             return FrontmatterRetranslationResult(retranslated = false, staleKeys = emptySet())
@@ -225,9 +246,12 @@ class ContentTranslationService(
         if (!staleReport.stale) {
             return FrontmatterRetranslationResult(retranslated = false, staleKeys = emptySet())
         }
-        val retranslatedFrontmatter = documentTranslator.translateFrontmatter(
-            sourceArticle.frontmatter, sourceLanguage, targetLanguage
-        )
+        val retranslatedFrontmatter =
+            documentTranslator.translateFrontmatter(
+                sourceArticle.frontmatter,
+                sourceLanguage,
+                targetLanguage,
+            )
         val mergedArticle = PivotArticle(retranslatedFrontmatter, targetArticle.blocks)
         val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
         targetFile.writeText(outputRenderer.render(mergedArticle))
@@ -237,7 +261,7 @@ class ContentTranslationService(
     internal fun translateArticle(
         article: PivotArticle,
         sourceLanguage: String,
-        targetLanguage: String
+        targetLanguage: String,
     ): PivotArticle = documentTranslator.translateArticle(article, sourceLanguage, targetLanguage)
 
     fun drainTableValidationResults(): List<TableValidationResult.Invalid> {
@@ -255,12 +279,12 @@ class ContentTranslationService(
 
 data class ContentTranslationResult(
     val filesTranslated: List<String>,
-    val errors: List<String>
+    val errors: List<String>,
 ) {
     val success: Boolean get() = errors.isEmpty()
 }
 
 data class FrontmatterRetranslationResult(
     val retranslated: Boolean,
-    val staleKeys: Set<String>
+    val staleKeys: Set<String>,
 )

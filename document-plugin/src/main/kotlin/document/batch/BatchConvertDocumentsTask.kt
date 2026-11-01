@@ -2,7 +2,6 @@ package document.batch
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -14,11 +13,9 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import org.slf4j.LoggerFactory
-import java.io.File
 
 @DisableCachingByDefault(because = "Batch conversion depends on source file timestamps")
 abstract class BatchConvertDocumentsTask : DefaultTask() {
-
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val sourceDir: DirectoryProperty
@@ -49,11 +46,12 @@ abstract class BatchConvertDocumentsTask : DefaultTask() {
         val fmtList = formats.get()
         val recurse = recursive.get()
 
-        val adocFiles = if (recurse) {
-            src.walkTopDown().filter { it.isFile && it.extension == "adoc" }.toList()
-        } else {
-            src.listFiles { f -> f.isFile && f.extension == "adoc" }?.toList() ?: emptyList()
-        }
+        val adocFiles =
+            if (recurse) {
+                src.walkTopDown().filter { it.isFile && it.extension == "adoc" }.toList()
+            } else {
+                src.listFiles { f -> f.isFile && f.extension == "adoc" }?.toList() ?: emptyList()
+            }
 
         logger.info("batchConvertDocuments — {} fichiers .adoc trouves dans {}", adocFiles.size, src.absolutePath)
 
@@ -61,14 +59,15 @@ abstract class BatchConvertDocumentsTask : DefaultTask() {
             val relPath = adocFile.relativeTo(src)
             val baseName = adocFile.nameWithoutExtension
             for (fmt in fmtList) {
-                val ext = when (fmt) {
-                    "html" -> "html"
-                    "pdf" -> "pdf"
-                    "epub" -> "epub"
-                    "docbook" -> "xml"
-                    "manpage" -> "man"
-                    else -> fmt
-                }
+                val ext =
+                    when (fmt) {
+                        "html" -> "html"
+                        "pdf" -> "pdf"
+                        "epub" -> "epub"
+                        "docbook" -> "xml"
+                        "manpage" -> "man"
+                        else -> fmt
+                    }
                 val targetDir = out.resolve(relPath.parent ?: "")
                 targetDir.mkdirs()
                 val targetFile = targetDir.resolve("$baseName.$ext")

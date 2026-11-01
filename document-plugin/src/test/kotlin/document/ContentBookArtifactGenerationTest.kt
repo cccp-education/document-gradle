@@ -1,6 +1,5 @@
 package document
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Tag
@@ -24,14 +23,14 @@ import java.io.File
  */
 @Tag("integration")
 class ContentBookArtifactGenerationTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
         private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
         private val PUBLISH = System.getProperty("content.book.publish") != null
     }
 
@@ -51,13 +50,14 @@ class ContentBookArtifactGenerationTest {
             val page = File(CONTENT_SCANS, section.pdfFile)
             if (page.isFile) page.readText().trim() else ""
         }
-        val assembled = BookAssembler.assemble(
-            tree = tree,
-            layout = BookLayout(),
-            title = "Content Book",
-            author = "CCCP Education",
-            resolveContent = resolver,
-        )
+        val assembled =
+            BookAssembler.assemble(
+                tree = tree,
+                layout = BookLayout(),
+                title = "Content Book",
+                author = "CCCP Education",
+                resolveContent = resolver,
+            )
         assertTrue(assembled.content.isNotBlank(), "assembled book must not be blank")
         assertTrue(assembled.content.contains("[[1.0.0]]"), "cross-reference anchor must be emitted")
 
@@ -90,10 +90,11 @@ class ContentBookArtifactGenerationTest {
         )
 
         if (PUBLISH) {
-            val outDir = File(
-                CONTENT_DIR,
-                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable",
-            ).apply { mkdirs() }
+            val outDir =
+                File(
+                    CONTENT_DIR,
+                    "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable",
+                ).apply { mkdirs() }
             bookAdoc.copyTo(outDir.resolve("book.adoc"), overwrite = true)
             html.copyTo(outDir.resolve("book.html"), overwrite = true)
             pdf.copyTo(outDir.resolve("book.pdf"), overwrite = true)

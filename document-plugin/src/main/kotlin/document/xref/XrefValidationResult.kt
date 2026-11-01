@@ -15,5 +15,7 @@ sealed class XrefValidationResult {
      *
      * @param missing the sorted list of unresolved reference ids (deduplicated)
      */
-    data class Invalid(val missing: List<String>) : XrefValidationResult()
+    data class Invalid(
+        val missing: List<String>,
+    ) : XrefValidationResult()
 }

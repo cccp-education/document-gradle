@@ -50,9 +50,10 @@ data class DocumentMetadata(
     val tableSemanticsPath: String? = null,
 ) {
     companion object {
-        private val mapper: ObjectMapper = ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        private val mapper: ObjectMapper =
+            ObjectMapper()
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
         /**
          * Writes metadata as a pretty-printed JSON file to the given directory.
@@ -61,7 +62,10 @@ data class DocumentMetadata(
          * @param metadata the metadata to persist
          * @return the created [File] handle
          */
-        fun writeTo(dir: File, metadata: DocumentMetadata): File {
+        fun writeTo(
+            dir: File,
+            metadata: DocumentMetadata,
+        ): File {
             dir.mkdirs()
             val file = File(dir, "metadata.json")
             file.writeText(mapper.writeValueAsString(metadata))
@@ -92,18 +96,19 @@ data class DocumentMetadata(
             releaseNotesRenderer: String? = null,
             validationStatus: String? = null,
             tableSemanticsPath: String? = null,
-        ): DocumentMetadata = DocumentMetadata(
-            source = "new-orleans",
-            type = type,
-            sessions = sessions,
-            generatedAt = Instant.now().toString(),
-            model = model,
-            version = "1.0",
-            dependencies = dependencies,
-            releaseNotesPath = releaseNotesPath,
-            releaseNotesRenderer = releaseNotesRenderer,
-            validationStatus = validationStatus,
-            tableSemanticsPath = tableSemanticsPath,
-        )
+        ): DocumentMetadata =
+            DocumentMetadata(
+                source = "new-orleans",
+                type = type,
+                sessions = sessions,
+                generatedAt = Instant.now().toString(),
+                model = model,
+                version = "1.0",
+                dependencies = dependencies,
+                releaseNotesPath = releaseNotesPath,
+                releaseNotesRenderer = releaseNotesRenderer,
+                validationStatus = validationStatus,
+                tableSemanticsPath = tableSemanticsPath,
+            )
     }
 }

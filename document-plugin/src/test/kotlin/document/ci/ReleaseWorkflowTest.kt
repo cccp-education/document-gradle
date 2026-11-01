@@ -1,7 +1,7 @@
 package document.ci
 
-import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
 /**
@@ -16,8 +16,8 @@ import kotlin.test.assertTrue
  * credentials from repository secrets.
  */
 class ReleaseWorkflowTest {
-
-    private val compliant = """
+    private val compliant =
+        """
         name: Test
         on:
           push:
@@ -100,11 +100,13 @@ class ReleaseWorkflowTest {
 
     @Test
     fun `the real workflow is compliant`() {
-        val workflow = java.io.File(System.getProperty("user.dir"))
-            .absoluteFile
-            .parentFile
-            .resolve(".github/workflows/test.yml")
-            .readText(kotlin.text.Charsets.UTF_8)
+        val workflow =
+            java.io
+                .File(System.getProperty("user.dir"))
+                .absoluteFile
+                .parentFile
+                .resolve(".github/workflows/test.yml")
+                .readText(kotlin.text.Charsets.UTF_8)
 
         val verdict = ReleaseWorkflow.check(workflow)
 

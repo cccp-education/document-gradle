@@ -1,7 +1,7 @@
 package document.translation
 
-import document.translation.validation.ValidationMode
 import contracts.i18n.TranslationService
+import document.translation.validation.ValidationMode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory
 
 @DisableCachingByDefault(because = "Batch translation output depends on LLM which is non-deterministic")
 abstract class TranslateDocumentBatchTask : DefaultTask {
-
     constructor() {
         group = "document"
         description = "Batch-translates all AsciiDoc files in a directory from source language to target language via LLM. — DOC-TRANSLATE-BATCH"
@@ -79,35 +78,60 @@ abstract class TranslateDocumentBatchTask : DefaultTask {
         val tree = treeMode.getOrElse(false)
         val skip = skipExisting.getOrElse(false)
         val excludesRaw = excludePaths.get().trim()
-        val excludes = if (excludesRaw.isEmpty()) emptySet()
-            else excludesRaw.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-        val validationMode = try {
-            ValidationMode.valueOf(tableValidationMode.get().uppercase())
-        } catch (_: IllegalArgumentException) {
-            ValidationMode.LENIENT
-        }
-        val plantUmlValidationMode = try {
-            ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
-        } catch (_: IllegalArgumentException) {
-            ValidationMode.LENIENT
-        }
+        val excludes =
+            if (excludesRaw.isEmpty()) {
+                emptySet()
+            } else {
+                excludesRaw
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .toSet()
+            }
+        val validationMode =
+            try {
+                ValidationMode.valueOf(tableValidationMode.get().uppercase())
+            } catch (_: IllegalArgumentException) {
+                ValidationMode.LENIENT
+            }
+        val plantUmlValidationMode =
+            try {
+                ValidationMode.valueOf(plantUmlValidationMode.get().uppercase())
+            } catch (_: IllegalArgumentException) {
+                ValidationMode.LENIENT
+            }
 
-        logger.info("translateDocumentBatch — {} ({}→{}) treeMode={} skipExisting={} excludes={} tableValidation={} plantUmlValidation={}", src.absolutePath, srcLang, tgtLang, tree, skip, excludes, validationMode, plantUmlValidationMode)
-
-        val translationService: TranslationService = when (mode.lowercase()) {
-            "fake" -> if (tree) NumberedFakeTranslationService() else FakeTranslationService(" [${tgtLang.uppercase()}]")
-            "ollama" -> PooledOllamaTranslationAdapter.create()
-            else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
-        }
-
-        val batchTranslator = if (tree) {
-            BatchDocumentTranslator(TreeTranslationAdapter(translationService))
-        } else {
-            BatchDocumentTranslator(DocumentTranslator(translationService, tableValidationMode = validationMode, plantUmlValidationMode = plantUmlValidationMode))
-        }
-        val result = batchTranslator.translateBatch(
-            BatchTranslationRequest(src, out, srcLang, tgtLang, excludes, skip),
+        logger.info(
+            "translateDocumentBatch — {} ({}→{}) treeMode={} skipExisting={} excludes={} tableValidation={} plantUmlValidation={}",
+            src.absolutePath,
+            srcLang,
+            tgtLang,
+            tree,
+            skip,
+            excludes,
+            validationMode,
+            plantUmlValidationMode,
         )
+
+        val translationService: TranslationService =
+            when (mode.lowercase()) {
+                "fake" -> if (tree) NumberedFakeTranslationService() else FakeTranslationService(" [${tgtLang.uppercase()}]")
+                "ollama" -> PooledOllamaTranslationAdapter.create()
+                else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
+            }
+
+        val batchTranslator =
+            if (tree) {
+                BatchDocumentTranslator(TreeTranslationAdapter(translationService))
+            } else {
+                BatchDocumentTranslator(
+                    DocumentTranslator(translationService, tableValidationMode = validationMode, plantUmlValidationMode = plantUmlValidationMode),
+                )
+            }
+        val result =
+            batchTranslator.translateBatch(
+                BatchTranslationRequest(src, out, srcLang, tgtLang, excludes, skip),
+            )
 
         logger.info("translateDocumentBatch done — {} translated, {} errors", result.count, result.errors.size)
         if (result.hasErrors) {

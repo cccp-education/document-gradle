@@ -8,17 +8,22 @@ enum class BlockTranslationStatus { TRANSLATED, PENDING }
 
 data class BlockChecksumEntry(
     val hash: String,
-    val status: BlockTranslationStatus
+    val status: BlockTranslationStatus,
 ) {
     companion object {
         fun parse(raw: String): BlockChecksumEntry {
             val parts = raw.split(":", limit = 2)
             val hash = parts[0]
-            val status = if (parts.size > 1) {
-                try { BlockTranslationStatus.valueOf(parts[1]) } catch (_: Exception) { BlockTranslationStatus.PENDING }
-            } else {
-                BlockTranslationStatus.PENDING
-            }
+            val status =
+                if (parts.size > 1) {
+                    try {
+                        BlockTranslationStatus.valueOf(parts[1])
+                    } catch (_: Exception) {
+                        BlockTranslationStatus.PENDING
+                    }
+                } else {
+                    BlockTranslationStatus.PENDING
+                }
             return BlockChecksumEntry(hash, status)
         }
     }
@@ -27,7 +32,6 @@ data class BlockChecksumEntry(
 }
 
 object BlockChecksum {
-
     fun sha256(block: PivotBlock): String {
         val payload = serialize(block)
         val digest = MessageDigest.getInstance("SHA-256")
@@ -57,46 +61,48 @@ object BlockChecksum {
      */
     fun resolveStatuses(
         currentHashes: Map<String, String>,
-        failedBlockKeys: Set<String>
+        failedBlockKeys: Set<String>,
     ): Map<String, BlockChecksumEntry> =
         currentHashes.mapValues { (key, hash) ->
-            val status = if (key in failedBlockKeys) {
-                BlockTranslationStatus.PENDING
-            } else {
-                BlockTranslationStatus.TRANSLATED
-            }
+            val status =
+                if (key in failedBlockKeys) {
+                    BlockTranslationStatus.PENDING
+                } else {
+                    BlockTranslationStatus.TRANSLATED
+                }
             BlockChecksumEntry(hash, status)
         }
 
-    private fun isChecksumRelevant(block: PivotBlock): Boolean = when (block) {
-        is PivotBlock.Hr -> false
-        is PivotBlock.BlockMacro -> false
-        else -> true
-    }
+    private fun isChecksumRelevant(block: PivotBlock): Boolean =
+        when (block) {
+            is PivotBlock.Hr -> false
+            is PivotBlock.BlockMacro -> false
+            else -> true
+        }
 
-    private fun serialize(block: PivotBlock): String = when (block) {
-        is PivotBlock.Heading -> "H${block.level}:${block.text}"
-        is PivotBlock.Paragraph -> "P:${serializeInlines(block.inline)}"
-        is PivotBlock.ListBlock -> "L:${block.ordered}:${block.items.map { serializeInlines(it) }.joinToString("|")}"
-        is PivotBlock.Table -> "T:${serializeRows(block.header)}:${block.rows.map { serializeRows(it) }.joinToString("|")}"
-        is PivotBlock.Admonition -> "A:${block.kind}:${block.blocks.map { serialize(it) }.joinToString("|")}"
-        is PivotBlock.Source -> "S:${block.language}:${block.content}"
-        is PivotBlock.DescriptionList -> "D:${block.items.map { serializeInlines(it.term) + "=" + serializeInlines(it.definition) }.joinToString("|")}"
-        is PivotBlock.BlockMacro -> "M:${block.name}:${block.target}"
-        PivotBlock.Hr -> "HR"
-    }
+    private fun serialize(block: PivotBlock): String =
+        when (block) {
+            is PivotBlock.Heading -> "H${block.level}:${block.text}"
+            is PivotBlock.Paragraph -> "P:${serializeInlines(block.inline)}"
+            is PivotBlock.ListBlock -> "L:${block.ordered}:${block.items.map { serializeInlines(it) }.joinToString("|")}"
+            is PivotBlock.Table -> "T:${serializeRows(block.header)}:${block.rows.map { serializeRows(it) }.joinToString("|")}"
+            is PivotBlock.Admonition -> "A:${block.kind}:${block.blocks.map { serialize(it) }.joinToString("|")}"
+            is PivotBlock.Source -> "S:${block.language}:${block.content}"
+            is PivotBlock.DescriptionList -> "D:${block.items.map { serializeInlines(it.term) + "=" + serializeInlines(it.definition) }.joinToString("|")}"
+            is PivotBlock.BlockMacro -> "M:${block.name}:${block.target}"
+            PivotBlock.Hr -> "HR"
+        }
 
-    private fun serializeInlines(inlines: List<PivotInline>): String =
-        inlines.joinToString("|") { serializeInline(it) }
+    private fun serializeInlines(inlines: List<PivotInline>): String = inlines.joinToString("|") { serializeInline(it) }
 
-    private fun serializeRows(rows: List<List<PivotInline>>): String =
-        rows.joinToString("|") { serializeInlines(it) }
+    private fun serializeRows(rows: List<List<PivotInline>>): String = rows.joinToString("|") { serializeInlines(it) }
 
-    private fun serializeInline(inline: PivotInline): String = when (inline) {
-        is PivotInline.Text -> "T:${inline.text}"
-        is PivotInline.Bold -> "B:${inline.text}"
-        is PivotInline.Code -> "C:${inline.text}"
-        is PivotInline.Link -> "L:${inline.url}:${inline.label}"
-        PivotInline.LineBreak -> "BR"
-    }
+    private fun serializeInline(inline: PivotInline): String =
+        when (inline) {
+            is PivotInline.Text -> "T:${inline.text}"
+            is PivotInline.Bold -> "B:${inline.text}"
+            is PivotInline.Code -> "C:${inline.text}"
+            is PivotInline.Link -> "L:${inline.url}:${inline.label}"
+            PivotInline.LineBreak -> "BR"
+        }
 }

@@ -51,7 +51,6 @@ data class BookConfig(
     /** DOC-BOOK-PUBLISH (US-5) — also publish the assembled source book (opt-in). */
     val includeSource: Boolean? = null,
 ) {
-
     /**
      * `true` when no book pipeline is configured — the serialiser omits the block.
      *

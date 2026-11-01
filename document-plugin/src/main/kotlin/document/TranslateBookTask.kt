@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory
  */
 @DisableCachingByDefault(because = "Translation output depends on LLM which is non-deterministic")
 abstract class TranslateBookTask : DefaultTask() {
-
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Optional
@@ -144,9 +143,10 @@ abstract class TranslateBookTask : DefaultTask() {
 
         val translationService = resolveTranslationService(llmMode.getOrElse("ollama"), target)
 
-        val runner = BookTranslationRunner(
-            BookTranslator(translationService, documentTranslator = DocumentTranslator(translationService)),
-        )
+        val runner =
+            BookTranslationRunner(
+                BookTranslator(translationService, documentTranslator = DocumentTranslator(translationService)),
+            )
         runner.translateAndPublish(
             BookTranslationRequest(
                 tree = BookTreeBuilder.fromSections(sections),
@@ -174,10 +174,13 @@ abstract class TranslateBookTask : DefaultTask() {
         )
     }
 
-    private fun resolveTranslationService(mode: String, target: String): TranslationService =
+    private fun resolveTranslationService(
+        mode: String,
+        target: String,
+    ): TranslationService =
         when (mode.lowercase()) {
             "fake" -> FakeTranslationService(" [${target.uppercase()}]")
             "ollama" -> PooledOllamaTranslationAdapter.create()
-            else -> throw IllegalArgumentException("Unknown llmMode: '${mode}' — expected 'ollama' or 'fake'")
+            else -> throw IllegalArgumentException("Unknown llmMode: '$mode' — expected 'ollama' or 'fake'")
         }
 }

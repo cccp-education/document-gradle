@@ -20,7 +20,6 @@ import java.io.File
  * A deterministic fake LLM (`translateLlmMode=fake`) keeps the run offline.
  */
 class BookMultilangFunctionalTest {
-
     @TempDir
     lateinit var projectDir: File
 
@@ -65,11 +64,13 @@ class BookMultilangFunctionalTest {
         writePages()
     }
 
-    private fun run(vararg arguments: String) = GradleRunner.create()
-        .withProjectDir(projectDir)
-        .withArguments(*arguments)
-        .withPluginClasspath()
-        .build()
+    private fun run(vararg arguments: String) =
+        GradleRunner
+            .create()
+            .withProjectDir(projectDir)
+            .withArguments(*arguments)
+            .withPluginClasspath()
+            .build()
 
     private fun docsDir(): File = projectDir.resolve("build/docs/document")
 

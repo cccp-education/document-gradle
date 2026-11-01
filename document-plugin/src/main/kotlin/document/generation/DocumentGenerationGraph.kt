@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory
 class DocumentGenerationGraph(
     private val llmProvider: DocumentLlmProvider,
 ) {
-
     private val log = LoggerFactory.getLogger(DocumentGenerationGraph::class.java)
 
     /**
@@ -34,40 +33,44 @@ class DocumentGenerationGraph(
      */
     fun execute(initialState: DocumentGenerationState): DocumentGenerationState {
         var state = initialState
-        state = try {
-            buildPromptNode(state)
-        } catch (e: Exception) {
-            log.warn("[DocumentGenerationGraph] buildPrompt failed: {}", e.message)
-            return state.copy(error = "BuildPromptFailed: ${e.message}")
-        }
-        state = try {
-            callLlmNode(state)
-        } catch (e: Exception) {
-            log.warn("[DocumentGenerationGraph] callLlm failed: {}", e.message)
-            return state.copy(error = "LlmCallFailed: ${e.message}")
-        }
-        state = try {
-            validateAsciiDocNode(state)
-        } catch (e: Exception) {
-            log.warn("[DocumentGenerationGraph] validateAsciiDoc failed: {}", e.message)
-            return state.copy(error = "ValidationFailed: ${e.message}")
-        }
+        state =
+            try {
+                buildPromptNode(state)
+            } catch (e: Exception) {
+                log.warn("[DocumentGenerationGraph] buildPrompt failed: {}", e.message)
+                return state.copy(error = "BuildPromptFailed: ${e.message}")
+            }
+        state =
+            try {
+                callLlmNode(state)
+            } catch (e: Exception) {
+                log.warn("[DocumentGenerationGraph] callLlm failed: {}", e.message)
+                return state.copy(error = "LlmCallFailed: ${e.message}")
+            }
+        state =
+            try {
+                validateAsciiDocNode(state)
+            } catch (e: Exception) {
+                log.warn("[DocumentGenerationGraph] validateAsciiDoc failed: {}", e.message)
+                return state.copy(error = "ValidationFailed: ${e.message}")
+            }
         return state
     }
 
     private fun buildPromptNode(state: DocumentGenerationState): DocumentGenerationState {
-        val full = buildString {
-            if (state.systemPrompt.isNotBlank()) {
-                appendLine(state.systemPrompt)
+        val full =
+            buildString {
+                if (state.systemPrompt.isNotBlank()) {
+                    appendLine(state.systemPrompt)
+                    appendLine()
+                }
+                appendLine("Genere un document AsciiDoc structure repondant a la demande suivante.")
+                appendLine("Le document doit commencer par un titre de niveau 0 (= Titre).")
+                appendLine("Utilise le sectionnement AsciiDoc standard (==, ===).")
                 appendLine()
+                appendLine("DEMANDE:")
+                appendLine(state.prompt)
             }
-            appendLine("Genere un document AsciiDoc structure repondant a la demande suivante.")
-            appendLine("Le document doit commencer par un titre de niveau 0 (= Titre).")
-            appendLine("Utilise le sectionnement AsciiDoc standard (==, ===).")
-            appendLine()
-            appendLine("DEMANDE:")
-            appendLine(state.prompt)
-        }
         log.debug("[DocumentGenerationGraph] built prompt: {} chars", full.length)
         return state.copy(rawOutput = full)
     }

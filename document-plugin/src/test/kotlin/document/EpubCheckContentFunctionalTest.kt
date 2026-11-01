@@ -25,12 +25,12 @@ import java.util.zip.ZipOutputStream
  * is absent.
  */
 class EpubCheckContentFunctionalTest {
-
     companion object {
-        private val CONTENT_BOOK_EPUB = File(
-            "/home/cheroliv/workspace/office/metiers/FPA",
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.epub",
-        )
+        private val CONTENT_BOOK_EPUB =
+            File(
+                "/home/cheroliv/workspace/office/metiers/FPA",
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/livre-navigable/book.epub",
+            )
     }
 
     @Test
@@ -57,11 +57,16 @@ class EpubCheckContentFunctionalTest {
         // epubcheck therefore reports a container violation.
         val copy = File.createTempFile("content-book-corrupted", ".epub")
         copy.deleteOnExit()
-        val entries = ZipFile(CONTENT_BOOK_EPUB).use { zip ->
-            zip.entries().asSequence().filter { it.name != "mimetype" }.map { entry ->
-                zip.getInputStream(entry).use { input -> entry.name to input.readBytes() }
-            }.toList()
-        }
+        val entries =
+            ZipFile(CONTENT_BOOK_EPUB).use { zip ->
+                zip
+                    .entries()
+                    .asSequence()
+                    .filter { it.name != "mimetype" }
+                    .map { entry ->
+                        zip.getInputStream(entry).use { input -> entry.name to input.readBytes() }
+                    }.toList()
+            }
         ZipOutputStream(copy.outputStream().buffered()).use { out ->
             entries.forEach { (name, data) ->
                 out.putNextEntry(ZipEntry(name))

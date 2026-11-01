@@ -1,6 +1,5 @@
 package document.translation
 
-import contracts.plantuml.PlantUmlBlock
 import contracts.plantuml.PlantUmlTranslationOutcome
 import contracts.plantuml.PlantUmlTranslationPort
 import contracts.plantuml.PlantUmlTranslationRequest
@@ -17,7 +16,6 @@ import kotlin.test.assertTrue
  * port is wired, it takes precedence.
  */
 class DocumentTranslatorPlantUmlPortTest {
-
     private val fakeService = FakeTranslationService(" [EN]")
 
     private val echoPort =

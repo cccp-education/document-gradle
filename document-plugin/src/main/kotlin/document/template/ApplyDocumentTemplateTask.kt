@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory
 
 @DisableCachingByDefault(because = "Template output depends on variable values which may change between builds")
 abstract class ApplyDocumentTemplateTask : DefaultTask() {
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val templateFile: RegularFileProperty

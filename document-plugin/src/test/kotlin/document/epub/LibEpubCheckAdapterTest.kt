@@ -15,7 +15,6 @@ import java.util.zip.ZipOutputStream
  * binary, no AsciidoctorJ spin-up (Ink Economy Law).
  */
 class LibEpubCheckAdapterTest {
-
     private val adapter = LibEpubCheckAdapter()
 
     @TempDir
@@ -72,15 +71,17 @@ class LibEpubCheckAdapterTest {
     /** Builds a minimal valid EPUB3 (EPUB 3.0): mimetype first + container.xml + OPF + nav + chapter. */
     private fun minimalEpubFile(): File {
         val mimetype = "application/epub+zip".toByteArray()
-        val container = """
+        val container =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
               <rootfiles>
                 <rootfile full-path="EPUB/content.opf" media-type="application/oebps-package+xml"/>
               </rootfiles>
             </container>
-        """.trimIndent().toByteArray()
-        val opf = """
+            """.trimIndent().toByteArray()
+        val opf =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id">
               <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -97,8 +98,9 @@ class LibEpubCheckAdapterTest {
                 <itemref idref="ch1"/>
               </spine>
             </package>
-        """.trimIndent().toByteArray()
-        val nav = """
+            """.trimIndent().toByteArray()
+        val nav =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:type="frontmatter toc">
               <head><title>TOC</title></head>
@@ -106,14 +108,15 @@ class LibEpubCheckAdapterTest {
                 <nav epub:type="toc"><ol><li><a href="ch1.xhtml">Chapter 1</a></li></ol></nav>
               </body>
             </html>
-        """.trimIndent().toByteArray()
-        val ch1 = """
+            """.trimIndent().toByteArray()
+        val ch1 =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
               <head><title>Chapter 1</title></head>
               <body><h1>Chapter 1</h1><p>Hello.</p></body>
             </html>
-        """.trimIndent().toByteArray()
+            """.trimIndent().toByteArray()
 
         val file = File(tmp, "minimal.epub")
         ZipOutputStream(file.outputStream().buffered()).use { zip ->

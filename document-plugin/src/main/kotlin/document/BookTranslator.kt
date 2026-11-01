@@ -1,9 +1,9 @@
 package document
 
+import contracts.i18n.TranslationService
 import document.translation.AsciiDocParser
 import document.translation.AsciiDocRenderer
 import document.translation.DocumentTranslator
-import contracts.i18n.TranslationService
 
 /**
  * Translates a structured [BookTree] into a target language.
@@ -39,7 +39,6 @@ class BookTranslator(
     private val documentTranslator: DocumentTranslator = DocumentTranslator(translationService),
     private val renderer: AsciiDocRenderer = AsciiDocRenderer(),
 ) {
-
     /**
      * @param tree the source book tree
      * @param resolveContent the content resolver of the source book (maps a
@@ -60,21 +59,27 @@ class BookTranslator(
 
         val titleCache = mutableMapOf<String, String>()
         val title: (String) -> String = { text ->
-            if (text.isBlank()) text
-            else titleCache.getOrPut(text) { translateField(text, sourceLanguage, targetLanguage) }
+            if (text.isBlank()) {
+                text
+            } else {
+                titleCache.getOrPut(text) { translateField(text, sourceLanguage, targetLanguage) }
+            }
         }
 
-        val translatedRoot = tree.root.copy(
-            children = tree.root.children.map { translateNode(it, title) },
-        )
-        val translatedLeaves = tree.leaves.map { section ->
-            section.copy(title = title(section.title))
-        }
-        val translatedTree = BookTree(
-            root = translatedRoot,
-            nodesByRef = index(translatedRoot),
-            leaves = translatedLeaves,
-        )
+        val translatedRoot =
+            tree.root.copy(
+                children = tree.root.children.map { translateNode(it, title) },
+            )
+        val translatedLeaves =
+            tree.leaves.map { section ->
+                section.copy(title = title(section.title))
+            }
+        val translatedTree =
+            BookTree(
+                root = translatedRoot,
+                nodesByRef = index(translatedRoot),
+                leaves = translatedLeaves,
+            )
 
         val bodyResolver: (BookSection) -> String = { section ->
             resolveContent(section).let { raw ->
@@ -85,26 +90,37 @@ class BookTranslator(
         return TranslatedBook(translatedTree, bodyResolver)
     }
 
-    private fun translateNode(node: BookNode, translateTitle: (String) -> String): BookNode {
-        return node.copy(
+    private fun translateNode(
+        node: BookNode,
+        translateTitle: (String) -> String,
+    ): BookNode =
+        node.copy(
             title = translateTitle(node.title),
             source = node.source?.copy(title = translateTitle(node.source.title)),
             children = node.children.map { translateNode(it, translateTitle) },
         )
-    }
 
-    private fun translateBody(raw: String, title: String, sourceLanguage: String, targetLanguage: String): String {
+    private fun translateBody(
+        raw: String,
+        title: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): String {
         val blocks = parser.parseBody(raw)
         if (blocks.isEmpty()) return raw
         val translated = documentTranslator.translateBlocks(blocks, sourceLanguage, targetLanguage, title)
         return renderer.renderBlocks(translated)
     }
 
-    private fun translateField(text: String, sourceLanguage: String, targetLanguage: String): String =
-        documentTranslator.translateField(text, sourceLanguage, targetLanguage)
+    private fun translateField(
+        text: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): String = documentTranslator.translateField(text, sourceLanguage, targetLanguage)
 
     private fun index(root: BookNode): Map<String, BookNode> {
         val map = LinkedHashMap<String, BookNode>()
+
         fun walk(node: BookNode) {
             map[node.ref] = node
             node.children.forEach { walk(it) }

@@ -30,14 +30,14 @@ import java.io.File
  * absent.
  */
 class BookPipelineTranslateContentFunctionalTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
         private val CONTENT_TOC = File(CONTENT_DIR, "toc.adoc")
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
 
         /** Bounded but real subset — one structured book, a handful of OCR pages. */
         private const val MAX_PAGES = 6
@@ -56,20 +56,33 @@ class BookPipelineTranslateContentFunctionalTest {
         val tocLines = CONTENT_TOC.readText().lines()
         val header = tocLines.firstOrNull { it.trim().startsWith("|") }
         assumeTrue(header != null) { "the content TOC carries no header row" }
-        data class TocEntry(val line: String, val ref: String, val fileName: String)
-        val referenced = tocLines.mapNotNull { line ->
-            val cells = line.trim().split("|").map { it.trim() }.drop(1)
-            if (cells.size < 4) return@mapNotNull null
-            val ref = cells[0]
-            val fileName = cells[3]
-            if (Regex("""\d+(\.\d+)*""").matches(ref) && fileName.endsWith(".adoc") &&
-                File(CONTENT_SCANS, fileName).isFile
-            ) {
-                TocEntry(line, ref, fileName)
-            } else {
-                null
-            }
-        }.take(MAX_PAGES)
+
+        data class TocEntry(
+            val line: String,
+            val ref: String,
+            val fileName: String,
+        )
+        val referenced =
+            tocLines
+                .mapNotNull { line ->
+                    val cells =
+                        line
+                            .trim()
+                            .split("|")
+                            .map { it.trim() }
+                            .drop(1)
+                    if (cells.size < 4) return@mapNotNull null
+                    val ref = cells[0]
+                    val fileName = cells[3]
+                    if (Regex("""\d+(\.\d+)*""").matches(ref) &&
+                        fileName.endsWith(".adoc") &&
+                        File(CONTENT_SCANS, fileName).isFile
+                    ) {
+                        TocEntry(line, ref, fileName)
+                    } else {
+                        null
+                    }
+                }.take(MAX_PAGES)
         assumeTrue(referenced.size >= 3) { "at least three referenced real content pages are required" }
         val tocRefs = referenced.map { it.ref }.toSet()
 
@@ -110,11 +123,13 @@ class BookPipelineTranslateContentFunctionalTest {
             """.trimIndent(),
         )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("bookPipeline")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("bookPipeline")
+                .withPluginClasspath()
+                .build()
 
         for (task in listOf(
             ":assembleBook",
@@ -168,11 +183,14 @@ class BookPipelineTranslateContentFunctionalTest {
         assertTrue(htmlContent.contains("[EN]"), "the rendered HTML must carry the translated content")
         assertTrue(pdf.readText(Charsets.ISO_8859_1).startsWith("%PDF"), "PDF must be a valid PDF document")
         assertTrue(
-            epub.readBytes().take(4).toByteArray().contentEquals("PK\u0003\u0004".toByteArray()),
+            epub
+                .readBytes()
+                .take(4)
+                .toByteArray()
+                .contentEquals("PK\u0003\u0004".toByteArray()),
             "EPUB must be a zip archive",
         )
     }
 
-    private fun anchorRefs(content: String): Set<String> =
-        Regex("""\[\[([^\]]+)\]\]""").findAll(content).map { it.groupValues[1] }.toSet()
+    private fun anchorRefs(content: String): Set<String> = Regex("""\[\[([^\]]+)\]\]""").findAll(content).map { it.groupValues[1] }.toSet()
 }

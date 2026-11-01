@@ -17,7 +17,6 @@ data class DocumentEnrichConfig(
     val images: Boolean = false,
     val passthrough: Boolean = false,
 ) {
-
     /**
      * Whether any enrichment step is active.
      */

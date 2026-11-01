@@ -18,7 +18,6 @@ import java.io.File
  * Ink Economy Law: pure file lookup, deterministic, no re-OCR, no mutation.
  */
 object BookImageResolver {
-
     private val EXTENSIONS = listOf("png", "jpg", "jpeg", "webp")
 
     /**
@@ -35,7 +34,10 @@ object BookImageResolver {
      *
      * @return the resolved scan file, or `null` when none exists
      */
-    fun scanForBase(baseName: String, dir: File): File? {
+    fun scanForBase(
+        baseName: String,
+        dir: File,
+    ): File? {
         val match = PHYSICAL_KEY.find(baseName) ?: return exact(baseName, dir)
         val page = match.groupValues[1].toIntOrNull() ?: return exact(baseName, dir)
         val split = match.groupValues.getOrNull(2)?.takeIf { it.isNotEmpty() }
@@ -57,23 +59,34 @@ object BookImageResolver {
      *
      * @return the resolved scan file, or `null` when none exists
      */
-    fun scanFor(page: Int, dir: File): File? {
+    fun scanFor(
+        page: Int,
+        dir: File,
+    ): File? {
         exact(page.toString(), dir)?.let { return it }
         if (page < 100) exact(page.toString().padStart(3, '0'), dir)?.let { return it }
         return split(page, dir)
     }
 
-    private fun exact(baseName: String, dir: File): File? {
+    private fun exact(
+        baseName: String,
+        dir: File,
+    ): File? {
         if (!dir.isDirectory) return null
-        return EXTENSIONS.asSequence()
+        return EXTENSIONS
+            .asSequence()
             .map { File(dir, "$baseName.$it") }
             .firstOrNull { it.isFile }
     }
 
-    private fun split(page: Int, dir: File): File? {
+    private fun split(
+        page: Int,
+        dir: File,
+    ): File? {
         if (!dir.isDirectory) return null
-        val pattern = Regex("""^(${page}|${page.toString().padStart(3, '0')})_\d+\.(png|jpg|jpeg|webp)$""", RegexOption.IGNORE_CASE)
-        return dir.listFiles { f -> f.isFile && pattern.matches(f.name) }
+        val pattern = Regex("""^($page|${page.toString().padStart(3, '0')})_\d+\.(png|jpg|jpeg|webp)$""", RegexOption.IGNORE_CASE)
+        return dir
+            .listFiles { f -> f.isFile && pattern.matches(f.name) }
             ?.sortedBy { it.name }
             ?.firstOrNull()
     }

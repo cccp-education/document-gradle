@@ -17,13 +17,13 @@ import org.junit.jupiter.api.Test
  * second test guards the real N0 catalog.
  */
 class BookLanguagePlannerTest {
-
-    private val catalog = listOf(
-        SupportedLanguage(code = "en", name = "English", nativeName = "English"),
-        SupportedLanguage(code = "fr", name = "French", nativeName = "Français"),
-        SupportedLanguage(code = "de", name = "German", nativeName = "Deutsch"),
-        SupportedLanguage(code = "ar", name = "Arabic", nativeName = "العربية", rtl = true),
-    )
+    private val catalog =
+        listOf(
+            SupportedLanguage(code = "en", name = "English", nativeName = "English"),
+            SupportedLanguage(code = "fr", name = "French", nativeName = "Français"),
+            SupportedLanguage(code = "de", name = "German", nativeName = "Deutsch"),
+            SupportedLanguage(code = "ar", name = "Arabic", nativeName = "العربية", rtl = true),
+        )
 
     @Test
     fun `translateToAll derives every catalog language except the source one`() {

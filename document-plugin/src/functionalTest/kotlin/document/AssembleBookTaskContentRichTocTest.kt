@@ -31,17 +31,18 @@ import java.io.File
  * when the corpus is absent.
  */
 class AssembleBookTaskContentRichTocTest {
-
     companion object {
         private val CONTENT_DIR = File("/home/cheroliv/workspace/office/metiers/FPA")
-        private val CONTENT_RICH_TOC = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc",
-        )
-        private val CONTENT_SCANS = File(
-            CONTENT_DIR,
-            "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
-        )
+        private val CONTENT_RICH_TOC =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/Devenir_Formateur_Professionnel_d_Adultes_FPA_II.adoc",
+            )
+        private val CONTENT_SCANS =
+            File(
+                CONTENT_DIR,
+                "Devenir_Formateur_Professionnel_d_Adultes_FPA_II/scans",
+            )
     }
 
     @TempDir
@@ -73,15 +74,18 @@ class AssembleBookTaskContentRichTocTest {
         // the corpus provides; resolution happens by page number, not file name).
         CONTENT_RICH_TOC.copyTo(projectDir.resolve("content/toc.adoc"), overwrite = true)
         val pagesDir = projectDir.resolve("content/pages").apply { mkdirs() }
-        CONTENT_SCANS.listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
+        CONTENT_SCANS
+            .listFiles { f -> f.extension.equals("adoc", ignoreCase = true) }
             ?.forEach { it.copyTo(pagesDir.resolve(it.name), overwrite = true) }
         assumeTrue(pagesDir.listFiles()?.isNotEmpty() == true) { "no scan pages copied" }
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("assembleBook")
-            .withPluginClasspath()
-            .build()
+        val result =
+            GradleRunner
+                .create()
+                .withProjectDir(projectDir)
+                .withArguments("assembleBook")
+                .withPluginClasspath()
+                .build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":assembleBook")?.outcome)
 

@@ -1,12 +1,10 @@
 package document.translation
 
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AsciiDocRendererTest {
-
     private val parser = AsciiDocParser()
     private val renderer = AsciiDocRenderer()
 
@@ -171,15 +169,17 @@ Content here.
 
     @Test
     fun `empty article renders minimal valid document`() {
-        val article = PivotArticle(
-            frontmatter = PivotFrontmatter(
-                title = "Empty",
-                date = "2026-01-01",
-                type = "page",
-                status = "published"
-            ),
-            blocks = emptyList()
-        )
+        val article =
+            PivotArticle(
+                frontmatter =
+                    PivotFrontmatter(
+                        title = "Empty",
+                        date = "2026-01-01",
+                        type = "page",
+                        status = "published",
+                    ),
+                blocks = emptyList(),
+            )
         val rendered = renderer.render(article)
         assertTrue(rendered.startsWith("title=Empty"))
         assertTrue(rendered.contains("~~~~~~"))
@@ -200,12 +200,18 @@ resultat attendu.
         val article = parser.parse(original)
         val rendered = renderer.render(article)
 
-        assertTrue(rendered.contains("depuis le dossier ou est le fichier +"),
-            "Roundtrip should preserve + continuation on first line")
-        assertTrue(rendered.contains("ouvrir un terminal et copier coller +"),
-            "Roundtrip should preserve + continuation on second line")
-        assertTrue(rendered.contains("resultat attendu."),
-            "Roundtrip should preserve last line without +")
+        assertTrue(
+            rendered.contains("depuis le dossier ou est le fichier +"),
+            "Roundtrip should preserve + continuation on first line",
+        )
+        assertTrue(
+            rendered.contains("ouvrir un terminal et copier coller +"),
+            "Roundtrip should preserve + continuation on second line",
+        )
+        assertTrue(
+            rendered.contains("resultat attendu."),
+            "Roundtrip should preserve last line without +",
+        )
     }
 
     @Test

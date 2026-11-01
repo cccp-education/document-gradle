@@ -18,7 +18,6 @@ import java.io.File
  * produces the same enriched document.
  */
 object DocumentEnricher {
-
     private val INCLUDE_PATTERN = Regex("""include::([^\[\]]+)\[\]""")
     private const val MAX_INCLUDE_DEPTH = 10
 
@@ -28,11 +27,12 @@ object DocumentEnricher {
      * @param source the source AsciiDoc file (read-only)
      * @return the enriched AsciiDoc content (includes resolved, blocks preserved)
      */
-    fun enrich(source: DocumentSource): String {
-        return resolveIncludes(source.file, depth = 0)
-    }
+    fun enrich(source: DocumentSource): String = resolveIncludes(source.file, depth = 0)
 
-    private fun resolveIncludes(file: File, depth: Int): String {
+    private fun resolveIncludes(
+        file: File,
+        depth: Int,
+    ): String {
         require(depth <= MAX_INCLUDE_DEPTH) {
             "Include recursion depth exceeded ($MAX_INCLUDE_DEPTH) — possible circular include in ${file.name}"
         }

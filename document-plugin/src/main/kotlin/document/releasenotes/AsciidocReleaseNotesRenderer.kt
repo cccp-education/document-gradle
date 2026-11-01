@@ -15,10 +15,12 @@ import java.io.File
  *   - Optional "Téléchargement" section when [ReleaseNotesConfig.includeDownloads]
  */
 class AsciidocReleaseNotesRenderer : ReleaseNotesRenderer {
-
     override val format: String = "asciidoc"
 
-    override fun render(commits: List<ConventionalCommit>, config: ReleaseNotesConfig): String {
+    override fun render(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+    ): String {
         if (commits.isEmpty()) return ""
         val version = config.version ?: "SNAPSHOT"
         val sb = StringBuilder()
@@ -40,7 +42,11 @@ class AsciidocReleaseNotesRenderer : ReleaseNotesRenderer {
         return sb.toString()
     }
 
-    override fun renderToFile(commits: List<ConventionalCommit>, config: ReleaseNotesConfig, outputFile: File): File {
+    override fun renderToFile(
+        commits: List<ConventionalCommit>,
+        config: ReleaseNotesConfig,
+        outputFile: File,
+    ): File {
         val content = render(commits, config)
         outputFile.parentFile.mkdirs()
         outputFile.writeText(content)

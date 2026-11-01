@@ -18,7 +18,6 @@ import org.asciidoctor.SafeMode
  * read, only the two enum values are classified.
  */
 object DocumentSecurityPolicy {
-
     /**
      * Classifies the [safeMode] × [includeGuard] combination.
      *
@@ -26,11 +25,15 @@ object DocumentSecurityPolicy {
      *   (LENIENT include guard + UNSAFE SafeMode) or [SecurityAdvice.Reject]
      *   (STRICT include guard + UNSAFE SafeMode).
      */
-    fun advise(safeMode: SafeMode, includeGuard: IncludeGuardMode): SecurityAdvice {
+    fun advise(
+        safeMode: SafeMode,
+        includeGuard: IncludeGuardMode,
+    ): SecurityAdvice {
         if (safeMode == SafeMode.UNSAFE && includeGuard != IncludeGuardMode.OFF) {
-            val reason = "include guard $includeGuard is active but AsciidoctorJ SafeMode is UNSAFE — " +
-                "non-include filesystem access (images, data URIs, themes, :docdir:) stays unrestricted; " +
-                "set safeMode to at least SERVER"
+            val reason =
+                "include guard $includeGuard is active but AsciidoctorJ SafeMode is UNSAFE — " +
+                    "non-include filesystem access (images, data URIs, themes, :docdir:) stays unrestricted; " +
+                    "set safeMode to at least SERVER"
             return if (includeGuard == IncludeGuardMode.STRICT) {
                 SecurityAdvice.Reject(reason)
             } else {

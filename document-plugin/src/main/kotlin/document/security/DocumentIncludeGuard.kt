@@ -16,7 +16,6 @@ import java.io.File
  * Deterministic and side-effect free except for the optional warning callback.
  */
 object DocumentIncludeGuard {
-
     /**
      * Audits [text] (the AsciiDoc source) resolved against [baseDir].
      *

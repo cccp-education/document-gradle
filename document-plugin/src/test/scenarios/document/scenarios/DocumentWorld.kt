@@ -7,7 +7,6 @@ import java.io.File
 import java.nio.file.Files
 
 class DocumentWorld {
-
     var projectDir: File? = null
     var buildResult: BuildResult? = null
     var lastConfigJson: String? = null
@@ -15,14 +14,14 @@ class DocumentWorld {
     fun createGradleProject(): File {
         val dir = Files.createTempDirectory("doc-bdd").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -31,7 +30,7 @@ class DocumentWorld {
     fun createPublishableGradleProject(): File {
         val dir = Files.createTempDirectory("doc-bdd-pub").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -83,7 +82,7 @@ class DocumentWorld {
                     }
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -92,7 +91,7 @@ class DocumentWorld {
     fun createGradleProjectWithFakeLlm(existingOutput: Boolean = false): File {
         val dir = Files.createTempDirectory("doc-bdd-fake").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -105,13 +104,13 @@ class DocumentWorld {
                 prompt.set("Genere une introduction pour un plugin Gradle documentaire.")
                 systemPrompt.set("Tu es un redacteur technique expert en AsciiDoc.")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         if (existingOutput) {
             val outDir = dir.resolve("build/docs/document")
             outDir.mkdirs()
             dir.resolve("build/docs/document/document.adoc").writeText(
-                "// document-gradle generated — prompt hash: placeholder\n= Document Existant\n"
+                "// document-gradle generated — prompt hash: placeholder\n= Document Existant\n",
             )
         }
         projectDir = dir
@@ -121,7 +120,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSource(existingHtmlOutput: Boolean = false): File {
         val dir = Files.createTempDirectory("doc-bdd-html").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -132,7 +131,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -141,13 +140,13 @@ class DocumentWorld {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers HTML5.
-            """.trimIndent()
+            """.trimIndent(),
         )
         if (existingHtmlOutput) {
             val outDir = dir.resolve("build/docs/document")
             outDir.mkdirs()
             dir.resolve("build/docs/document/document.html").writeText(
-                "<!DOCTYPE html>\n<html><body>placeholder</body></html>\n"
+                "<!DOCTYPE html>\n<html><body>placeholder</body></html>\n",
             )
         }
         projectDir = dir
@@ -157,7 +156,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceAndExistingEpub(): File {
         val dir = Files.createTempDirectory("doc-bdd-epub").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -168,7 +167,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -177,13 +176,13 @@ class DocumentWorld {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers EPUB3.
-            """.trimIndent()
+            """.trimIndent(),
         )
         val outDir = dir.resolve("build/docs/document")
         outDir.mkdirs()
         // EPUB est un zip — signature PK\x03\x04
         dir.resolve("build/docs/document/document.epub").writeBytes(
-            byteArrayOf(0x50, 0x4B, 0x03, 0x04)
+            byteArrayOf(0x50, 0x4B, 0x03, 0x04),
         )
         projectDir = dir
         return dir
@@ -192,7 +191,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocManpageSource(): File {
         val dir = Files.createTempDirectory("doc-bdd-man").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -203,7 +202,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         // AsciiDoc manpage — doctype manpage + section 1
         dir.resolve("source.adoc").writeText(
@@ -229,7 +228,7 @@ class DocumentWorld {
 
             *-h, --help*::
             Print help message.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -238,7 +237,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceContainingPlantuml(): File {
         val dir = Files.createTempDirectory("doc-bdd-puml").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -250,7 +249,7 @@ class DocumentWorld {
                 source.set(file("source.adoc"))
                 enrichPlantUml.set(true)
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -265,7 +264,7 @@ class DocumentWorld {
             Bob -> Alice: hi
             @enduml
             ----
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -274,7 +273,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceContainingPassthrough(): File {
         val dir = Files.createTempDirectory("doc-bdd-pass").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -286,7 +285,7 @@ class DocumentWorld {
                 source.set(file("source.adoc"))
                 enrichPassthrough.set(true)
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -299,7 +298,7 @@ class DocumentWorld {
             ++++
 
             Paragraphe suivant.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -308,7 +307,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceContainingInclude(): File {
         val dir = Files.createTempDirectory("doc-bdd-inc").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -319,7 +318,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("chapter.adoc").writeText("== Chapitre Inclu\n\nTexte du chapitre inclus.")
         dir.resolve("source.adoc").writeText(
@@ -327,7 +326,7 @@ class DocumentWorld {
             = Document avec Include
 
             include::chapter.adoc[]
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -336,7 +335,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceAndCustomTheme(): File {
         val dir = Files.createTempDirectory("doc-bdd-theme").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -353,7 +352,7 @@ class DocumentWorld {
                     logo.set(file("logo.png"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -362,7 +361,7 @@ class DocumentWorld {
             == Introduction
 
             Document avec theme custom pour la conversion multi-format.
-            """.trimIndent()
+            """.trimIndent(),
         )
         // Fichiers theme fournis (vides — AsciidoctorJ ignore les absents avec warning)
         dir.resolve("talaria-theme.yml").writeText(
@@ -370,7 +369,7 @@ class DocumentWorld {
             extends: default
             page:
               size: A4
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("talaria.css").writeText("body { font-family: serif; }")
         dir.resolve("epub.css").writeText("body { margin: 0; }")
@@ -382,7 +381,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceAndExistingPdf(): File {
         val dir = Files.createTempDirectory("doc-bdd-pdf").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -393,7 +392,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -402,7 +401,7 @@ class DocumentWorld {
             == Introduction
 
             Ceci est un paragraphe de test pour la conversion AsciiDoc vers PDF.
-            """.trimIndent()
+            """.trimIndent(),
         )
         val outDir = dir.resolve("build/docs/document")
         outDir.mkdirs()
@@ -414,7 +413,7 @@ class DocumentWorld {
     fun createGradleProjectWithAsciiDocSourceAndConvertedHtml(): File {
         val dir = Files.createTempDirectory("doc-bdd-n3").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
         dir.resolve("build.gradle.kts").writeText(
             """
@@ -425,7 +424,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -434,7 +433,7 @@ class DocumentWorld {
             == Introduction
 
             Contenu pour le test N3 retrieve.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         executeGradle("convertDocumentToHtml")
@@ -489,7 +488,8 @@ class DocumentWorld {
     fun executeGradle(vararg tasks: String): BuildResult {
         require(projectDir != null) { "Project directory must be initialized" }
         return try {
-            GradleRunner.create()
+            GradleRunner
+                .create()
                 .withProjectDir(projectDir!!)
                 .withArguments(tasks.toList() + "--stacktrace")
                 .withPluginClasspath()
@@ -517,24 +517,28 @@ class DocumentWorld {
         return docsDir.listFiles { file -> file.isFile && file.extension == "adoc" }?.toList() ?: emptyList()
     }
 
-    fun createGradleProjectWithOcrPages(photos: Boolean = false, formats: Boolean = false): File {
+    fun createGradleProjectWithOcrPages(
+        photos: Boolean = false,
+        formats: Boolean = false,
+    ): File {
         val dir = Files.createTempDirectory("doc-bdd-book").toFile()
         dir.resolve("settings.gradle.kts").writeText(
-            "rootProject.name = \"${dir.name}\"\n"
+            "rootProject.name = \"${dir.name}\"\n",
         )
-        val dsl = buildString {
-            appendLine("plugins { id(\"education.cccp.document\") }")
-            appendLine()
-            appendLine("document {")
-            appendLine("    bookPagesDir.set(file(\"pages\"))")
-            if (photos) appendLine("    bookPhotosDir.set(file(\"photos\"))")
-            appendLine("    bookTitle.set(\"Test Book\")")
-            appendLine("    bookAuthor.set(\"Test Author\")")
-            if (formats) {
-                appendLine("    source.set(file(\"build/docs/document/book.adoc\"))")
+        val dsl =
+            buildString {
+                appendLine("plugins { id(\"education.cccp.document\") }")
+                appendLine()
+                appendLine("document {")
+                appendLine("    bookPagesDir.set(file(\"pages\"))")
+                if (photos) appendLine("    bookPhotosDir.set(file(\"photos\"))")
+                appendLine("    bookTitle.set(\"Test Book\")")
+                appendLine("    bookAuthor.set(\"Test Author\")")
+                if (formats) {
+                    appendLine("    source.set(file(\"build/docs/document/book.adoc\"))")
+                }
+                appendLine("}")
             }
-            appendLine("}")
-        }
         dir.resolve("build.gradle.kts").writeText(dsl)
 
         val pagesDir = dir.resolve("pages").apply { mkdirs() }
@@ -565,7 +569,7 @@ class DocumentWorld {
                 bookTitle.set("Cross Borough Book")
                 bookAuthor.set("Runner N3")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = dir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst page for runner-gradle.")
@@ -591,7 +595,7 @@ class DocumentWorld {
                 bookTitle.set("Combined N3 Book")
                 bookAuthor.set("Runner N3")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val pagesDir = dir.resolve("pages").apply { mkdirs() }
         pagesDir.resolve("001-page.adoc").writeText("== Chapter 1\n\nFirst combined N3 page.")
@@ -636,7 +640,7 @@ class DocumentWorld {
                     passthrough.set(true)
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText("= Document Enrich\n\nContenu.\n")
         projectDir = dir
@@ -660,7 +664,7 @@ class DocumentWorld {
                     epub.set(true)
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText("= Document Outputs\n\nContenu.\n")
         projectDir = dir
@@ -684,31 +688,35 @@ class DocumentWorld {
                     language.set("fr")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText("= Document Metadata\n\nContenu.\n")
         projectDir = dir
         return dir
     }
 
-    fun createGradleProjectWithUnifiedBookBlock(photos: Boolean = false, titleAndAuthor: Boolean = true): File {
+    fun createGradleProjectWithUnifiedBookBlock(
+        photos: Boolean = false,
+        titleAndAuthor: Boolean = true,
+    ): File {
         val dir = Files.createTempDirectory("doc-bdd-book-dsl").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
-        val dsl = buildString {
-            appendLine("plugins { id(\"education.cccp.document\") }")
-            appendLine()
-            appendLine("document {")
-            appendLine("    source.set(file(\"book-source.adoc\"))")
-            appendLine("    book {")
-            appendLine("        pagesDir.set(file(\"pages\"))")
-            if (photos) appendLine("        photosDir.set(file(\"photos\"))")
-            if (titleAndAuthor) {
-                appendLine("        title.set(\"DSL Book\")")
-                appendLine("        author.set(\"DSL Author\")")
+        val dsl =
+            buildString {
+                appendLine("plugins { id(\"education.cccp.document\") }")
+                appendLine()
+                appendLine("document {")
+                appendLine("    source.set(file(\"book-source.adoc\"))")
+                appendLine("    book {")
+                appendLine("        pagesDir.set(file(\"pages\"))")
+                if (photos) appendLine("        photosDir.set(file(\"photos\"))")
+                if (titleAndAuthor) {
+                    appendLine("        title.set(\"DSL Book\")")
+                    appendLine("        author.set(\"DSL Author\")")
+                }
+                appendLine("    }")
+                appendLine("}")
             }
-            appendLine("    }")
-            appendLine("}")
-        }
         dir.resolve("build.gradle.kts").writeText(dsl)
         dir.resolve("book-source.adoc").writeText("= DSL Book\n\nSource for the book pipeline.\n")
 
@@ -738,7 +746,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -749,7 +757,7 @@ class DocumentWorld {
             image::photo.png[Photo descriptive]
 
             Paragraphe suivant.
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("photo.png").writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47))
         projectDir = dir
@@ -768,7 +776,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -788,7 +796,7 @@ class DocumentWorld {
                 println("hello")
             }
             ----
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -806,7 +814,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -830,7 +838,7 @@ class DocumentWorld {
 
             *--pdf*::
             Generate PDF output.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -848,7 +856,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -865,7 +873,7 @@ class DocumentWorld {
 
             . Premier
             . Deuxieme
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -883,7 +891,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -896,7 +904,7 @@ class DocumentWorld {
             TIP: Ceci est une astuce.
 
             WARNING: Ceci est un avertissement.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -914,7 +922,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -924,7 +932,7 @@ class DocumentWorld {
 
             [sidebar]
             Contenu du sidebar dans un bloc.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -942,7 +950,7 @@ class DocumentWorld {
             document {
                 source.set(file("source.adoc"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("source.adoc").writeText(
             """
@@ -954,19 +962,20 @@ class DocumentWorld {
             .References
             * [[[ref1]]] Author, *Title*, 2026.
             * [[[ref2]]] Author2, *Title2*, 2026.
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
     }
 
-    fun extractEpubXhtml(epub: File): String {
-        return java.util.zip.ZipFile(epub).use { zf ->
-            zf.entries().toList()
+    fun extractEpubXhtml(epub: File): String =
+        java.util.zip.ZipFile(epub).use { zf ->
+            zf
+                .entries()
+                .toList()
                 .filter { it.name.endsWith(".xhtml") && it.name.startsWith("EPUB/") }
                 .joinToString("\n") { entry -> zf.getInputStream(entry).bufferedReader().readText() }
         }
-    }
 
     fun createGradleProjectWithFullUnifiedDslBlock(): File {
         val dir = Files.createTempDirectory("doc-bdd-full").toFile()
@@ -1001,7 +1010,7 @@ class DocumentWorld {
                     language.set("fr")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         dir.resolve("livre.adoc").writeText("= Mon Livre\n\nContenu.\n")
         dir.resolve("theme.yml").writeText("extends: default\npage:\n  size: A4\n")
@@ -1030,7 +1039,7 @@ class DocumentWorld {
             plugins {
                 id("education.cccp.document")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         runGit(dir, "init")
         runGit(dir, "config", "user.email", "bdd@example.com")
@@ -1052,7 +1061,7 @@ class DocumentWorld {
                     rendererType.set("markdown")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         runGit(dir, "init")
         runGit(dir, "config", "user.email", "bdd@example.com")
@@ -1078,7 +1087,7 @@ class DocumentWorld {
                     ))
                 }
             }
-            """.trimIndent().replace("education.ccp.document", "education.cccp.document")
+            """.trimIndent().replace("education.ccp.document", "education.cccp.document"),
         )
         runGit(dir, "init")
         runGit(dir, "config", "user.email", "bdd@example.com")
@@ -1101,7 +1110,7 @@ class DocumentWorld {
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         runGit(dir, "init")
         runGit(dir, "config", "user.email", "bdd@example.com")
@@ -1114,9 +1123,10 @@ class DocumentWorld {
         val dir = projectDir ?: return
         dir.resolve("README.md").appendText("# $message\n")
         runGit(dir, "add", ".")
-        val pb = ProcessBuilder("git", "commit", "-m", message)
-            .directory(dir)
-            .redirectErrorStream(true)
+        val pb =
+            ProcessBuilder("git", "commit", "-m", message)
+                .directory(dir)
+                .redirectErrorStream(true)
         pb.environment()["GIT_AUTHOR_DATE"] = "2026-07-05T10:00:00"
         pb.environment()["GIT_COMMITTER_DATE"] = "2026-07-05T10:00:00"
         val p = pb.start()
@@ -1126,10 +1136,11 @@ class DocumentWorld {
 
     fun gitTag(name: String) {
         val dir = projectDir ?: return
-        val p = ProcessBuilder("git", "tag", name)
-            .directory(dir)
-            .redirectErrorStream(true)
-            .start()
+        val p =
+            ProcessBuilder("git", "tag", name)
+                .directory(dir)
+                .redirectErrorStream(true)
+                .start()
         p.inputStream.bufferedReader().readText()
         p.waitFor()
     }
@@ -1149,11 +1160,15 @@ class DocumentWorld {
         return dir.listFiles { _, name -> name.endsWith(".md") }?.firstOrNull()
     }
 
-    private fun runGit(dir: File, vararg args: String): String {
-        val process = ProcessBuilder("git", *args)
-            .directory(dir)
-            .redirectErrorStream(true)
-            .start()
+    private fun runGit(
+        dir: File,
+        vararg args: String,
+    ): String {
+        val process =
+            ProcessBuilder("git", *args)
+                .directory(dir)
+                .redirectErrorStream(true)
+                .start()
         val output = process.inputStream.bufferedReader().readText()
         process.waitFor()
         return output
@@ -1185,7 +1200,7 @@ class DocumentWorld {
                     outputFileName.set("my-doc")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1207,7 +1222,7 @@ class DocumentWorld {
                     variables.put("title", "Doc")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1230,7 +1245,7 @@ class DocumentWorld {
                     failOnMissingVariable.set(false)
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1254,7 +1269,7 @@ class DocumentWorld {
                     formats.set(listOf("html", "pdf"))
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1264,7 +1279,8 @@ class DocumentWorld {
         val dir = Files.createTempDirectory("doc-bdd-translate").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs").apply { mkdirs() }
-        srcDir.resolve("article.adoc").writeText("""title=Bonjour le monde
+        srcDir.resolve("article.adoc").writeText(
+            """title=Bonjour le monde
 date=2026-07-20
 type=page
 status=published
@@ -1277,7 +1293,8 @@ Ceci est un paragraphe en francais.
 == Conclusion
 
 Fin du document.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1292,7 +1309,7 @@ Fin du document.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1302,7 +1319,8 @@ Fin du document.
         val dir = Files.createTempDirectory("doc-bdd-translate-code").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs").apply { mkdirs() }
-        srcDir.resolve("article.adoc").writeText("""title=Code Example
+        srcDir.resolve("article.adoc").writeText(
+            """title=Code Example
 date=2026-07-20
 type=page
 status=published
@@ -1316,7 +1334,8 @@ public class Hello {}
 ----
 
 Some text after code.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1331,7 +1350,7 @@ Some text after code.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1341,7 +1360,8 @@ Some text after code.
         val dir = Files.createTempDirectory("doc-bdd-translate-jbake").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs").apply { mkdirs() }
-        srcDir.resolve("article.adoc").writeText("""= Gradle: dossier resources visible dans l'IDE
+        srcDir.resolve("article.adoc").writeText(
+            """= Gradle: dossier resources visible dans l'IDE
 @CherOliv
 2019-08-16
 :jbake-title: Gradle: dossier resources visible dans l'IDE
@@ -1362,7 +1382,8 @@ plugins {
     id "groovy"
 }
 ----
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1377,7 +1398,7 @@ plugins {
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1387,7 +1408,8 @@ plugins {
         val dir = Files.createTempDirectory("doc-bdd-translate-asciidoc-attrs").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs").apply { mkdirs() }
-        srcDir.resolve("article.adoc").writeText("""= Article avec attributs AsciiDoc
+        srcDir.resolve("article.adoc").writeText(
+            """= Article avec attributs AsciiDoc
 @CherOliv
 2026-08-18
 :jbake-title: Article avec attributs AsciiDoc
@@ -1398,7 +1420,8 @@ plugins {
 :description: Une description longue en francais sans prefixe jbake
 
 Corps de l article en francais.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1413,7 +1436,7 @@ Corps de l article en francais.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1423,7 +1446,8 @@ Corps de l article en francais.
         val dir = Files.createTempDirectory("doc-bdd-batch-translate").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
-        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+        srcDir.resolve("article1.adoc").writeText(
+            """title=Article Un
 date=2026-07-20
 type=page
 status=published
@@ -1432,8 +1456,10 @@ status=published
 == Introduction
 
 Texte un en francais.
-""")
-        srcDir.resolve("article2.adoc").writeText("""title=Article Deux
+""",
+        )
+        srcDir.resolve("article2.adoc").writeText(
+            """title=Article Deux
 date=2026-07-20
 type=page
 status=published
@@ -1442,7 +1468,8 @@ status=published
 == Section
 
 Texte deux en francais.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1457,7 +1484,7 @@ Texte deux en francais.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1469,22 +1496,26 @@ Texte deux en francais.
         val srcDir = dir.resolve("src/docs").apply { mkdirs() }
         srcDir.resolve("blog").mkdirs()
         srcDir.resolve("draft").mkdirs()
-        srcDir.resolve("blog/keep.adoc").writeText("""title=Keep
+        srcDir.resolve("blog/keep.adoc").writeText(
+            """title=Keep
 date=2026-07-20
 type=page
 status=published
 ~~~~~~
 
 Garder.
-""")
-        srcDir.resolve("draft/skip.adoc").writeText("""title=Skip
+""",
+        )
+        srcDir.resolve("draft/skip.adoc").writeText(
+            """title=Skip
 date=2026-07-20
 type=page
 status=published
 ~~~~~~
 
 Passer.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1500,7 +1531,7 @@ Passer.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1510,7 +1541,8 @@ Passer.
         val dir = Files.createTempDirectory("doc-bdd-batch-dl").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
-        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+        srcDir.resolve("article1.adoc").writeText(
+            """title=Article Un
 date=2026-07-20
 type=page
 status=published
@@ -1518,7 +1550,8 @@ status=published
 
 https://a.com[label]:: First definition.
 https://b.com[label]:: Second definition.
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1533,7 +1566,7 @@ https://b.com[label]:: Second definition.
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir
@@ -1543,7 +1576,8 @@ https://b.com[label]:: Second definition.
         val dir = Files.createTempDirectory("doc-bdd-batch-macro").toFile()
         dir.resolve("settings.gradle.kts").writeText("rootProject.name = \"${dir.name}\"\n")
         val srcDir = dir.resolve("src/docs/blog").apply { mkdirs() }
-        srcDir.resolve("article1.adoc").writeText("""title=Article Un
+        srcDir.resolve("article1.adoc").writeText(
+            """title=Article Un
 date=2026-07-20
 type=page
 status=published
@@ -1551,7 +1585,8 @@ status=published
 
 image::a.png[First]
 image::b.png[Second]
-""")
+""",
+        )
         dir.resolve("build.gradle.kts").writeText(
             """
             plugins {
@@ -1566,7 +1601,7 @@ image::b.png[Second]
                     llmMode.set("fake")
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         projectDir = dir
         return dir

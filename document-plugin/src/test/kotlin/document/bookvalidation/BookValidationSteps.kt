@@ -8,10 +8,10 @@ import io.cucumber.java.Before
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.gradle.api.GradleException
 import java.io.File
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Step definitions for the `@book-validation` scenarios (DOC-BOOK-VALIDATE-4).
@@ -22,7 +22,6 @@ import java.io.File
  * `book-validation ` prefix (anti-glue-collision pattern).
  */
 class BookValidationSteps {
-
     private lateinit var pagesDir: File
     private var toc: MutableList<BookSection> = mutableListOf()
     private var result: BookValidationResult? = null
@@ -30,18 +29,22 @@ class BookValidationSteps {
 
     @Before
     fun setup() {
-        pagesDir = File.createTempFile("book-validation-", "").apply {
-            delete()
-            mkdirs()
-            deleteOnExit()
-        }
+        pagesDir =
+            File.createTempFile("book-validation-", "").apply {
+                delete()
+                mkdirs()
+                deleteOnExit()
+            }
         toc = mutableListOf()
         result = null
         enforcedFailure = null
     }
 
     @Given("book-validation a TOC with ref {string} at page {int}")
-    fun `a TOC with ref at page`(ref: String, page: Int) {
+    fun `a TOC with ref at page`(
+        ref: String,
+        page: Int,
+    ) {
         toc.add(
             BookSection(
                 ref = ref,
@@ -53,7 +56,10 @@ class BookValidationSteps {
     }
 
     @Given("book-validation an OCR page {string} with content {string}")
-    fun `an OCR page with content`(fileName: String, content: String) {
+    fun `an OCR page with content`(
+        fileName: String,
+        content: String,
+    ) {
         File(pagesDir, fileName).writeText(content)
     }
 
@@ -96,7 +102,10 @@ class BookValidationSteps {
     }
 
     @Then("book-validation reason {int} mentions {string}")
-    fun `reason mentions`(index: Int, snippet: String) {
+    fun `reason mentions`(
+        index: Int,
+        snippet: String,
+    ) {
         val reasons = (result as? BookValidationResult.Invalid)?.reasons ?: emptyList()
         val actual = reasons.getOrElse(index - 1) { "MISSING" }
         assertTrue(actual.contains(snippet), "reason $index: '$actual' does not mention '$snippet'")

@@ -15,7 +15,6 @@ import kotlin.test.assertTrue
  * 21 languages. A technical *fragment* is short; a sentence is prose.
  */
 class TextTranslatableClassifierTest {
-
     @Test
     fun `a short disk-size fragment stays technical`() {
         assertFalse(TextTranslatableClassifier.isTranslatable("128 Go"))

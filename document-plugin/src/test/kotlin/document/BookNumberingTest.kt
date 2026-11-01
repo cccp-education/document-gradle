@@ -2,19 +2,19 @@ package document
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class BookNumberingTest {
-
     private fun sampleTree(): BookTree {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1.1", title = "Chapter 1", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "1.2", title = "Chapter 2", page = 3, pdfFile = "003.adoc"),
-            BookSection(ref = "1.2.1", title = "Sub-section", page = 4, pdfFile = "004.adoc"),
-            BookSection(ref = "2", title = "Part II", page = 5, pdfFile = "005.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1.1", title = "Chapter 1", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "1.2", title = "Chapter 2", page = 3, pdfFile = "003.adoc"),
+                BookSection(ref = "1.2.1", title = "Sub-section", page = 4, pdfFile = "004.adoc"),
+                BookSection(ref = "2", title = "Part II", page = 5, pdfFile = "005.adoc"),
+            )
         return BookTreeBuilder.fromSections(sections)
     }
 
@@ -46,11 +46,12 @@ class BookNumberingTest {
 
     @Test
     fun `node numbering equals the source table-of-contents ref`() {
-        val sections = listOf(
-            BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "2.3", title = "Chap 3", page = 3, pdfFile = "003.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "1", title = "Part I", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "2", title = "Part II", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "2.3", title = "Chap 3", page = 3, pdfFile = "003.adoc"),
+            )
         val tree2 = BookTreeBuilder.fromSections(sections)
         // the hierarchical number is the ref itself (scanned-book TOC convention)
         assertEquals("2.3", BookNumbering.number(tree2, "2.3"))

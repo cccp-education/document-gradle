@@ -21,7 +21,6 @@ import java.io.File
  * yields the same section list, and no file is mutated.
  */
 object BookTocParser {
-
     private val REF_PATTERN = Regex("""^\d+(\.\d+)*$""")
     private val CELL_SPLIT = Regex("""\|""")
 

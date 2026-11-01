@@ -3,7 +3,8 @@ package document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * TDD anchor for the scanned-content rigorous-layout reconstruction (BOOK-6).
@@ -25,9 +26,10 @@ import kotlin.test.*
  * real corpus) — baby-step TDD/BDD before wiring into [AssembleBookTask].
  */
 class ContentBookAssemblyTest {
-
     @Test
-    fun `ContentPageResolver resolves a section to its zero-padded scan adoc and continuation pages`(@TempDir dir: File) {
+    fun `ContentPageResolver resolves a section to its zero-padded scan adoc and continuation pages`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("055.adoc").writeText("== 1-1.2 Title\nBody page 55")
         scans.resolve("055_2.adoc").writeText("Continuation of page 55")
@@ -44,7 +46,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `ContentPageResolver returns empty string for a missing scan page without throwing`(@TempDir dir: File) {
+    fun `ContentPageResolver returns empty string for a missing scan page without throwing`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         val resolver = ContentPageResolver(scans)
         val missing = BookSection(ref = "1.0.1", title = "Intro", page = 8, pdfFile = "008.pdf")
@@ -52,7 +56,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `BookOcrFailureDetector locates illisible pages with their section and reports empty pages`(@TempDir dir: File) {
+    fun `BookOcrFailureDetector locates illisible pages with their section and reports empty pages`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("073.adoc").writeText("== 2-1.1 ...\nsome text [ILLISIBLE] trailing")
         scans.resolve("040.adoc").writeText("   \n\t  ") // truncated / empty body
@@ -62,11 +68,12 @@ class ContentBookAssemblyTest {
                 "used by the detector so this page is not falsely flagged.",
         )
 
-        val sections = listOf(
-            BookSection("2.1.1", "Numerique et chronobiologie", 73, "073.pdf"),
-            BookSection("1.2.1.1", "Organiser le contenu", 40, "040.pdf"),
-            BookSection("1.1.1", "Identifier les referenciels", 22, "022.pdf"),
-        )
+        val sections =
+            listOf(
+                BookSection("2.1.1", "Numerique et chronobiologie", 73, "073.pdf"),
+                BookSection("1.2.1.1", "Organiser le contenu", 40, "040.pdf"),
+                BookSection("1.1.1", "Identifier les referenciels", 22, "022.pdf"),
+            )
         val issues = BookOcrFailureDetector.detect(scans, sections)
         assertEquals(2, issues.size, "two pages must be flagged: 73 (illisible) and 40 (too short)")
 
@@ -81,7 +88,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `BookOcrFailureDetector maps an unowned failed page to a null section for human triage`(@TempDir dir: File) {
+    fun `BookOcrFailureDetector maps an unowned failed page to a null section for human triage`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("190.adoc").writeText("[ILLISIBLE]")
         val issues = BookOcrFailureDetector.detect(scans, emptyList())
@@ -92,7 +101,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `IMAGE_MISSING flags an image directive whose referenced file does not exist next to the page`(@TempDir dir: File) {
+    fun `IMAGE_MISSING flags an image directive whose referenced file does not exist next to the page`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         // The scan itself exists but the page references an image file that
         // was never captured (ghost image — 3 real RSC-007 findings in the
@@ -111,7 +122,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `IMAGE_MISSING flags the inline image macro whose referenced file does not exist next to the page`(@TempDir dir: File) {
+    fun `IMAGE_MISSING flags the inline image macro whose referenced file does not exist next to the page`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         // The inline macro (single colon, e.g. `image:brain.jpg[...]`) is the
         // form the real corpus uses on pages 61 and 83_1 — both produced RSC-007
@@ -131,7 +144,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `IMAGE_MISSING is silent when the referenced image file exists`(@TempDir dir: File) {
+    fun `IMAGE_MISSING is silent when the referenced image file exists`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("011.adoc").writeText(
             "== 1.0.2.2 Photo\n" +
@@ -144,7 +159,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `TABLE_SUSPECT flags a linearised table row that lost its final cells`(@TempDir dir: File) {
+    fun `TABLE_SUSPECT flags a linearised table row that lost its final cells`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         // OCR linearised a table: pipe-separated fragments trailing a body line
         // (11 real cases in the published corpus — cells lost at line end).
@@ -162,7 +179,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `STRUCT_SUSPECT flags an invalid part directive in the body`(@TempDir dir: File) {
+    fun `STRUCT_SUSPECT flags an invalid part directive in the body`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("030.adoc").writeText(
             "== 1.2.1 Partie\n" +
@@ -176,7 +195,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `STRUCT_SUSPECT flags an out-of-sequence page marker`(@TempDir dir: File) {
+    fun `STRUCT_SUSPECT flags an out-of-sequence page marker`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("031.adoc").writeText(
             "== 1.2.2 Suite\n" +
@@ -190,7 +211,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `one page can carry several distinct issues without losing any signal`(@TempDir dir: File) {
+    fun `one page can carry several distinct issues without losing any signal`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("040.adoc").writeText(
             "== 1.3.1 Multiple\n" +
@@ -209,7 +232,9 @@ class ContentBookAssemblyTest {
     }
 
     @Test
-    fun `issue report carries the detail evidence and keeps whole-page issues unchanged`(@TempDir dir: File) {
+    fun `issue report carries the detail evidence and keeps whole-page issues unchanged`(
+        @TempDir dir: File,
+    ) {
         val scans = dir.resolve("scans").apply { mkdirs() }
         scans.resolve("073.adoc").writeText("[ILLISIBLE]")
         scans.resolve("050.adoc").writeText(

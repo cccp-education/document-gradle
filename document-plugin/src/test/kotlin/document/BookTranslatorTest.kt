@@ -16,25 +16,26 @@ import kotlin.test.assertTrue
  * contract with a deterministic `TranslationService` fake (no TestKit, no LLM).
  */
 class BookTranslatorTest {
-
     private val translator = BookTranslator(FakeTranslationService(" [EN]"))
 
     private fun tree(): BookTree {
-        val sections = listOf(
-            BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
-            BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
-            BookSection(ref = "1.1", title = "Chapter One", page = 3, pdfFile = "003.adoc"),
-            BookSection(ref = "1.2", title = "Chapter Two", page = 4, pdfFile = "004.adoc"),
-        )
+        val sections =
+            listOf(
+                BookSection(ref = "0.1", title = "Preface", page = 1, pdfFile = "001.adoc"),
+                BookSection(ref = "1", title = "Part I", page = 2, pdfFile = "002.adoc"),
+                BookSection(ref = "1.1", title = "Chapter One", page = 3, pdfFile = "003.adoc"),
+                BookSection(ref = "1.2", title = "Chapter Two", page = 4, pdfFile = "004.adoc"),
+            )
         return BookTreeBuilder.fromSections(sections)
     }
 
-    private val bodies = mapOf(
-        1 to "Front matter sentence.",
-        2 to "Part body sentence.",
-        3 to "Chapter body sentence.",
-        4 to "Second chapter body sentence.",
-    )
+    private val bodies =
+        mapOf(
+            1 to "Front matter sentence.",
+            2 to "Part body sentence.",
+            3 to "Chapter body sentence.",
+            4 to "Second chapter body sentence.",
+        )
 
     private fun resolver(): (BookSection) -> String = { section -> bodies[section.page].orEmpty() }
 
@@ -133,13 +134,15 @@ class BookTranslatorTest {
         val source = tree()
         val original = BookAssembler.assemble(source, BookLayout(), "My Book", "Author", resolver()).content
         val translated = translator.translate(source, resolver(), "fr", "en")
-        val regenerated = BookAssembler.assemble(
-            translated.tree,
-            BookLayout(),
-            "My Book",
-            "Author",
-            translated.bodyResolver,
-        ).content
+        val regenerated =
+            BookAssembler
+                .assemble(
+                    translated.tree,
+                    BookLayout(),
+                    "My Book",
+                    "Author",
+                    translated.bodyResolver,
+                ).content
 
         assertEquals(anchors(original), anchors(regenerated), "the anchor count must be preserved")
         assertTrue(regenerated.contains(":doctype: book"), "doctype must survive")
@@ -152,13 +155,15 @@ class BookTranslatorTest {
     fun `navigation labels follow the translated titles`() {
         val source = tree()
         val translated = translator.translate(source, resolver(), "fr", "en")
-        val regenerated = BookAssembler.assemble(
-            translated.tree,
-            BookLayout(emitNavigation = true, pageBreakBetweenNodes = false),
-            "My Book",
-            "Author",
-            translated.bodyResolver,
-        ).content
+        val regenerated =
+            BookAssembler
+                .assemble(
+                    translated.tree,
+                    BookLayout(emitNavigation = true, pageBreakBetweenNodes = false),
+                    "My Book",
+                    "Author",
+                    translated.bodyResolver,
+                ).content
 
         assertTrue(
             regenerated.contains("<<1.1,Chapter One [EN]>>"),

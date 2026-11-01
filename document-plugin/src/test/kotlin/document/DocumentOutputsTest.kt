@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class DocumentOutputsTest {
-
     @Test
     fun `DocumentOutputs default has only html true`() {
         val outputs = DocumentOutputs()
@@ -31,17 +30,27 @@ class DocumentOutputsTest {
 
     @Test
     fun `DocumentOutputs enabledFormats returns empty when all flags false`() {
-        val outputs = DocumentOutputs(
-            html = false, pdf = false, epub = false, docbook = false, manpage = false,
-        )
+        val outputs =
+            DocumentOutputs(
+                html = false,
+                pdf = false,
+                epub = false,
+                docbook = false,
+                manpage = false,
+            )
         assertTrue(outputs.enabledFormats().isEmpty())
     }
 
     @Test
     fun `DocumentOutputs all returns all five formats enabled`() {
-        val outputs = DocumentOutputs(
-            html = true, pdf = true, epub = true, docbook = true, manpage = true,
-        )
+        val outputs =
+            DocumentOutputs(
+                html = true,
+                pdf = true,
+                epub = true,
+                docbook = true,
+                manpage = true,
+            )
         assertEquals(5, outputs.enabledFormats().size)
     }
 }

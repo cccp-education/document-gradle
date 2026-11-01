@@ -1,14 +1,13 @@
 package document.generation
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
 
 class AsciiDocValidatorTest {
-
     @Test
     fun `AsciiDoc valide avec titre de niveau 0`() {
         assertTrue(AsciiDocValidator.isValid("= Mon Document\n\nContenu."))
@@ -31,7 +30,6 @@ class AsciiDocValidatorTest {
 }
 
 class DocumentGenerationGraphTest {
-
     @Test
     fun `execute produit un AsciiDoc valide avec un FakeLlmProvider`() {
         val graph = DocumentGenerationGraph(FakeDocumentLlmProvider())
@@ -71,10 +69,11 @@ class DocumentGenerationGraphTest {
     @Test
     fun `buildPromptNode inclut le system prompt et la demande utilisateur`() {
         val graph = DocumentGenerationGraph(FakeDocumentLlmProvider())
-        val initial = DocumentGenerationState(
-            prompt = "Genere un manuel utilisateur.",
-            systemPrompt = "Tu es un redacteur technique expert.",
-        )
+        val initial =
+            DocumentGenerationState(
+                prompt = "Genere un manuel utilisateur.",
+                systemPrompt = "Tu es un redacteur technique expert.",
+            )
 
         val result = graph.execute(initial)
 

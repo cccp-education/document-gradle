@@ -23,7 +23,6 @@ import java.security.MessageDigest
  * metadata du fichier genere. Ne pas re-convertir un resultat valide.
  */
 object DocumentConverter {
-
     private const val METADATA_MARKER = "<!-- document-gradle — source hash:"
 
     /**
@@ -37,9 +36,7 @@ object DocumentConverter {
         source: DocumentSource,
         theme: DocumentTheme = DocumentTheme(),
         safeMode: SafeMode = SafeMode.UNSAFE,
-    ): String {
-        return convert(source, "html5", theme, safeMode)
-    }
+    ): String = convert(source, "html5", theme, safeMode)
 
     /**
      * Convertit un [DocumentSource] en PDF (backend pdf d'AsciidoctorJ) et ecrit
@@ -90,9 +87,10 @@ object DocumentConverter {
      * @param source le fichier AsciiDoc source (lecture seule)
      * @return le contenu DocBook 5 produit
      */
-    fun convertToDocBook(source: DocumentSource, safeMode: SafeMode = SafeMode.UNSAFE): String {
-        return convert(source, "docbook5", safeMode = safeMode)
-    }
+    fun convertToDocBook(
+        source: DocumentSource,
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ): String = convert(source, "docbook5", safeMode = safeMode)
 
     /**
      * Convertit un [DocumentSource] en page de manuel UNIX (backend manpage d'AsciidoctorJ).
@@ -103,9 +101,10 @@ object DocumentConverter {
      * @param source le fichier AsciiDoc source (lecture seule, doctype manpage)
      * @return le contenu troff produit
      */
-    fun convertToManPage(source: DocumentSource, safeMode: SafeMode = SafeMode.UNSAFE): String {
-        return convert(source, "manpage", safeMode = safeMode)
-    }
+    fun convertToManPage(
+        source: DocumentSource,
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ): String = convert(source, "manpage", safeMode = safeMode)
 
     /**
      * Convertit un [DocumentSource] vers le backend AsciidoctorJ demande.
@@ -172,11 +171,13 @@ object DocumentConverter {
         outputFile: java.io.File?,
         safeMode: SafeMode = SafeMode.UNSAFE,
     ): Options {
-        val builder = Options.builder()
-            .backend(backend)
-            .safe(safeMode)
-            .standalone(true)
-            .option("sourcemap", "true")
+        val builder =
+            Options
+                .builder()
+                .backend(backend)
+                .safe(safeMode)
+                .standalone(true)
+                .option("sourcemap", "true")
 
         if (outputFile != null) {
             builder.toFile(outputFile)
@@ -202,12 +203,16 @@ object DocumentConverter {
      * @param output le fichier de sortie existant (ou absent)
      * @return true si le fichier existe et que le hash source correspond au hash stocke en metadata
      */
-    fun shouldSkipConversion(source: DocumentSource, output: File): Boolean {
+    fun shouldSkipConversion(
+        source: DocumentSource,
+        output: File,
+    ): Boolean {
         if (!output.exists()) return false
         val expectedHash = sourceHash(source)
-        val firstLines = output.bufferedReader().useLines { sequence ->
-            sequence.take(3).joinToString("\n")
-        }
+        val firstLines =
+            output.bufferedReader().useLines { sequence ->
+                sequence.take(3).joinToString("\n")
+            }
         return firstLines.contains("$METADATA_MARKER $expectedHash")
     }
 
@@ -217,7 +222,8 @@ object DocumentConverter {
      */
     fun sourceHash(source: DocumentSource): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(source.readText().toByteArray())
+        return digest
+            .digest(source.readText().toByteArray())
             .joinToString("") { "%02x".format(it) }
     }
 
@@ -225,8 +231,7 @@ object DocumentConverter {
      * Construit l'en-tete de metadata insere au debut du fichier de sortie.
      * Permet l'invalidation par hash de source (economie d'encre).
      */
-    fun buildMetadataHeader(source: DocumentSource): String =
-        "$METADATA_MARKER ${sourceHash(source)} -->\n"
+    fun buildMetadataHeader(source: DocumentSource): String = "$METADATA_MARKER ${sourceHash(source)} -->\n"
 
     /**
      * Decide si la conversion d'un format binaire (PDF, EPUB) doit etre skippee.
@@ -238,7 +243,10 @@ object DocumentConverter {
      * @param output le fichier de sortie binaire existant (ou absent)
      * @return true si le fichier existe, le sidecar existe et le hash correspond
      */
-    fun shouldSkipBinaryConversion(source: DocumentSource, output: java.io.File): Boolean {
+    fun shouldSkipBinaryConversion(
+        source: DocumentSource,
+        output: java.io.File,
+    ): Boolean {
         if (!output.exists()) return false
         val sidecar = java.io.File(output.parentFile, output.name + BINARY_HASH_SUFFIX)
         if (!sidecar.exists()) return false
@@ -253,7 +261,10 @@ object DocumentConverter {
      * @param source le fichier AsciiDoc source
      * @param output le fichier de sortie binaire
      */
-    fun writeBinaryMetadataHeader(source: DocumentSource, output: java.io.File) {
+    fun writeBinaryMetadataHeader(
+        source: DocumentSource,
+        output: java.io.File,
+    ) {
         val sidecar = java.io.File(output.parentFile, output.name + BINARY_HASH_SUFFIX)
         sidecar.writeText(sourceHash(source))
     }

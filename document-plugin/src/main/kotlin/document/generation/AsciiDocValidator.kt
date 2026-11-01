@@ -10,7 +10,6 @@ package document.generation
  * la sortie du LLM avant de l'accepter comme document final.
  */
 object AsciiDocValidator {
-
     private val level0TitleRegex = Regex("(?m)^\\s*=\\s+.+")
 
     /**

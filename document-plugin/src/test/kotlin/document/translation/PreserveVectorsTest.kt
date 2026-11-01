@@ -17,14 +17,25 @@ import kotlin.test.assertEquals
  * the sibling checkout is absent (isolated CI), never silently passed.
  */
 class PreserveVectorsTest {
-
     private val vectors: List<Vector> = loadVectors()
 
     @Test
     fun `the shared vectors pin the N0 rule`() {
         assertEquals(
-            listOf("macro", "macro-with-target", "inline-code", "anchor", "attribute-reference", "url",
-                "block-attribute", "fence", "prose-with-macro", "prose", "disk-size", "technology"),
+            listOf(
+                "macro",
+                "macro-with-target",
+                "inline-code",
+                "anchor",
+                "attribute-reference",
+                "url",
+                "block-attribute",
+                "fence",
+                "prose-with-macro",
+                "prose",
+                "disk-size",
+                "technology",
+            ),
             vectors.map { it.id },
         )
     }
@@ -61,7 +72,8 @@ class PreserveVectorsTest {
             .takeIf { it.isFile }
 
     private fun loadVectors(): List<Vector> =
-        vectorsFile().readLines()
+        vectorsFile()
+            .readLines()
             .map { it.trim() }
             .filter { it.isNotEmpty() && !it.startsWith("#") }
             .map { line ->
@@ -70,8 +82,9 @@ class PreserveVectorsTest {
             }
 
     private fun vectorsFile(): File {
-        val url = javaClass.classLoader.getResource("document/translation/preserve-vectors.tsv")
-            ?: error("preserve-vectors.tsv missing")
+        val url =
+            javaClass.classLoader.getResource("document/translation/preserve-vectors.tsv")
+                ?: error("preserve-vectors.tsv missing")
         return File(url.toURI())
     }
 

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import document.security.DocumentSecurityPolicy
 import document.security.IncludeGuardMode
-import document.security.IncludeValidationResult
 import document.security.IncludePathValidator
+import document.security.IncludeValidationResult
 import document.security.SecurityAdvice
 import document.xref.XrefValidationMode
 import document.xref.XrefValidationResult
@@ -27,7 +27,6 @@ import java.io.File
  * (the task) performs I/O (read source, read HTML, write report). The orchestrator only classifies.
  */
 object DocumentValidator {
-
     fun validate(
         text: String,
         baseDir: File,
@@ -37,55 +36,59 @@ object DocumentValidator {
         htmlLintMode: HtmlLinkLintMode = HtmlLinkLintMode.OFF,
         html: String? = null,
     ): DocumentValidationReport {
-        val includeEntry = if (includeGuardMode == IncludeGuardMode.OFF) {
-            IncludeGuardReportEntry(status = "OFF")
-        } else {
-            when (val result = IncludePathValidator.validate(text, baseDir)) {
-                is IncludeValidationResult.Valid ->
-                    IncludeGuardReportEntry(status = "VALID")
-                is IncludeValidationResult.Invalid ->
-                    IncludeGuardReportEntry(
-                        status = "INVALID",
-                        reason = result.reason,
-                        offendingTarget = result.offendingTarget,
-                        line = result.line,
-                    )
+        val includeEntry =
+            if (includeGuardMode == IncludeGuardMode.OFF) {
+                IncludeGuardReportEntry(status = "OFF")
+            } else {
+                when (val result = IncludePathValidator.validate(text, baseDir)) {
+                    is IncludeValidationResult.Valid ->
+                        IncludeGuardReportEntry(status = "VALID")
+                    is IncludeValidationResult.Invalid ->
+                        IncludeGuardReportEntry(
+                            status = "INVALID",
+                            reason = result.reason,
+                            offendingTarget = result.offendingTarget,
+                            line = result.line,
+                        )
+                }
             }
-        }
 
-        val xrefEntry = if (xrefMode == XrefValidationMode.OFF) {
-            null
-        } else {
-            when (val result = XrefValidator.validate(text)) {
-                is XrefValidationResult.Valid -> XrefReportEntry(status = "VALID")
-                is XrefValidationResult.Invalid -> XrefReportEntry(status = "MISSING", missing = result.missing)
+        val xrefEntry =
+            if (xrefMode == XrefValidationMode.OFF) {
+                null
+            } else {
+                when (val result = XrefValidator.validate(text)) {
+                    is XrefValidationResult.Valid -> XrefReportEntry(status = "VALID")
+                    is XrefValidationResult.Invalid -> XrefReportEntry(status = "MISSING", missing = result.missing)
+                }
             }
-        }
 
-        val securityEntry = when (val advice = DocumentSecurityPolicy.advise(safeMode, includeGuardMode)) {
-            is SecurityAdvice.Valid -> SecurityReportEntry(advice = "VALID")
-            is SecurityAdvice.Warn -> SecurityReportEntry(advice = "WARN", reason = advice.reason)
-            is SecurityAdvice.Reject -> SecurityReportEntry(advice = "REJECT", reason = advice.reason)
-        }
+        val securityEntry =
+            when (val advice = DocumentSecurityPolicy.advise(safeMode, includeGuardMode)) {
+                is SecurityAdvice.Valid -> SecurityReportEntry(advice = "VALID")
+                is SecurityAdvice.Warn -> SecurityReportEntry(advice = "WARN", reason = advice.reason)
+                is SecurityAdvice.Reject -> SecurityReportEntry(advice = "REJECT", reason = advice.reason)
+            }
 
         // Fourth guard (DOC-VALIDATE-HTML-LINT) — audits the *rendered* HTML when a mode
         // other than OFF is requested. A missing HTML file (html == null) under a non-OFF
         // mode is a DEAD finding pointing at the conversion prerequisite, not a silent skip.
-        val htmlLintEntry = when {
-            htmlLintMode == HtmlLinkLintMode.OFF -> null
-            html == null ->
-                HtmlLintReportEntry(
-                    status = "DEAD",
-                    deadLinks = listOf("<html-file-missing>"),
-                    reason = "htmlLintMode=${htmlLintMode.name} requires the rendered HTML of convertDocumentToHtml",
-                )
-            else ->
-                when (val result = HtmlLinkLinter.validate(html)) {
-                    is HtmlLinkLintResult.Valid -> HtmlLintReportEntry(status = "VALID")
-                    is HtmlLinkLintResult.Invalid ->
-                        HtmlLintReportEntry(status = "DEAD", deadLinks = result.deadLinks)
-                }
-        }
+        val htmlLintEntry =
+            when {
+                htmlLintMode == HtmlLinkLintMode.OFF -> null
+                html == null ->
+                    HtmlLintReportEntry(
+                        status = "DEAD",
+                        deadLinks = listOf("<html-file-missing>"),
+                        reason = "htmlLintMode=${htmlLintMode.name} requires the rendered HTML of convertDocumentToHtml",
+                    )
+                else ->
+                    when (val result = HtmlLinkLinter.validate(html)) {
+                        is HtmlLinkLintResult.Valid -> HtmlLintReportEntry(status = "VALID")
+                        is HtmlLinkLintResult.Invalid ->
+                            HtmlLintReportEntry(status = "DEAD", deadLinks = result.deadLinks)
+                    }
+            }
 
         return DocumentValidationReport(
             includeGuard = includeEntry,
@@ -143,8 +146,7 @@ data class DocumentValidationReport(
     val security: SecurityReportEntry,
     val htmlLint: HtmlLintReportEntry? = null,
 ) {
-    fun toJson(): String =
-        ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(this)
+    fun toJson(): String = ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(this)
 
     /**
      * Derived overall status of the composite validation (DOC-METADATA-VALIDATION) :
@@ -160,21 +162,25 @@ data class DocumentValidationReport(
             xref?.status == "MISSING" ||
             security.advice == "REJECT" ||
             htmlLint?.status == "DEAD"
-        ) "FAIL" else "PASS"
+        ) {
+            "FAIL"
+        } else {
+            "PASS"
+        }
 
     companion object {
         private val mapper: ObjectMapper =
             ObjectMapper()
                 .registerModule(
-                    com.fasterxml.jackson.module.kotlin.KotlinModule.Builder().build(),
-                )
-                .enable(SerializationFeature.INDENT_OUTPUT)
+                    com.fasterxml.jackson.module.kotlin.KotlinModule
+                        .Builder()
+                        .build(),
+                ).enable(SerializationFeature.INDENT_OUTPUT)
 
         /**
          * Deserializes a consolidated validation report (JSON produced by [toJson]).
          * Nullability mirrors the data class : `xref` is absent when mode was OFF.
          */
-        fun fromJson(json: String): DocumentValidationReport =
-            mapper.readValue(json, DocumentValidationReport::class.java)
+        fun fromJson(json: String): DocumentValidationReport = mapper.readValue(json, DocumentValidationReport::class.java)
     }
 }

@@ -18,7 +18,6 @@ import java.nio.file.Files
  * (anti-glue pattern from S-223).
  */
 class N3CollectCustomSteps {
-
     private lateinit var projectDir: File
 
     @Given("an n3-collect document project")
@@ -50,7 +49,8 @@ class N3CollectCustomSteps {
 
     @When("the HTML conversion runs with a custom output file name")
     fun `the html conversion runs with a custom output file name`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml", "-Pdocument.outputFileName=custom")
             .withPluginClasspath()
@@ -59,7 +59,8 @@ class N3CollectCustomSteps {
 
     @When("the collectDocumentRetrieve task runs with the same custom output file name")
     fun `the collect task runs with the same custom output file name`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("collectDocumentRetrieve", "-Pdocument.outputFileName=custom")
             .withPluginClasspath()
@@ -68,7 +69,8 @@ class N3CollectCustomSteps {
 
     @When("the HTML conversion runs with the default output file name")
     fun `the html conversion runs with the default output file name`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("convertDocumentToHtml")
             .withPluginClasspath()
@@ -77,7 +79,8 @@ class N3CollectCustomSteps {
 
     @When("the collectDocumentRetrieve task runs with default configuration")
     fun `the collect task runs with default configuration`() {
-        GradleRunner.create()
+        GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withArguments("collectDocumentRetrieve")
             .withPluginClasspath()
