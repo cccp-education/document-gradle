@@ -44,17 +44,17 @@ class PivotYamlRenderer {
         isLast: Boolean,
     ) {
         sb.append("$indent- ")
-        when (block) {
-            is PivotBlock.Heading -> renderHeading(block, sb, indent)
-            is PivotBlock.Paragraph -> renderParagraph(block, sb, indent)
-            is PivotBlock.ListBlock -> renderList(block, sb, indent)
-            is PivotBlock.Table -> renderTable(block, sb, indent)
-            is PivotBlock.Admonition -> renderAdmonition(block, sb, indent)
-            is PivotBlock.DescriptionList -> renderDescriptionList(block, sb, indent)
-            is PivotBlock.BlockMacro -> renderBlockMacro(block, sb, indent)
-            is PivotBlock.Source -> renderSource(block, sb, indent)
-            PivotBlock.Hr -> renderHr(sb, indent)
-        }
+        block.fold(
+            heading = { renderHeading(it, sb, indent) },
+            paragraph = { renderParagraph(it, sb, indent) },
+            listBlock = { renderList(it, sb, indent) },
+            table = { renderTable(it, sb, indent) },
+            admonition = { renderAdmonition(it, sb, indent) },
+            source = { renderSource(it, sb, indent) },
+            descriptionList = { renderDescriptionList(it, sb, indent) },
+            blockMacro = { renderBlockMacro(it, sb, indent) },
+            hr = { renderHr(sb, indent) },
+        )
     }
 
     private fun renderHeading(

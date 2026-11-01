@@ -50,17 +50,17 @@ class AsciiDocRenderer : ArticleRenderer {
         block: PivotBlock,
         sb: StringBuilder,
     ) {
-        when (block) {
-            is PivotBlock.Heading -> renderHeading(block, sb)
-            is PivotBlock.Paragraph -> renderParagraph(block, sb)
-            is PivotBlock.ListBlock -> renderList(block, sb)
-            is PivotBlock.Table -> renderTable(block, sb)
-            is PivotBlock.Admonition -> renderAdmonition(block, sb)
-            is PivotBlock.DescriptionList -> renderDescriptionList(block, sb)
-            is PivotBlock.BlockMacro -> renderBlockMacro(block, sb)
-            is PivotBlock.Source -> renderSource(block, sb)
-            is PivotBlock.Hr -> sb.appendLine("---")
-        }
+        block.fold(
+            heading = { renderHeading(it, sb) },
+            paragraph = { renderParagraph(it, sb) },
+            listBlock = { renderList(it, sb) },
+            table = { renderTable(it, sb) },
+            admonition = { renderAdmonition(it, sb) },
+            source = { renderSource(it, sb) },
+            descriptionList = { renderDescriptionList(it, sb) },
+            blockMacro = { renderBlockMacro(it, sb) },
+            hr = { sb.appendLine("---") },
+        )
     }
 
     private fun renderHeading(
