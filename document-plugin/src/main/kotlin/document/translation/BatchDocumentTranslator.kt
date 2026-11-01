@@ -48,16 +48,20 @@ class BatchDocumentTranslator(
             }
             try {
                 val original = file.readText()
-                val rendered = documentTranslator.translate(original, srcLang, tgtLang)
+                // XF-FP3-1 — the diagnostics are *returned*, never read from the
+                // translator: the instance is stateless, so nothing leaks from one
+                // file to the next and no `clear()` is needed.
+                val outcome =
+                    if (documentTranslator is DocumentTranslator) {
+                        documentTranslator.translateOutcome(original, srcLang, tgtLang)
+                    } else {
+                        DocumentTranslation(documentTranslator.translate(original, srcLang, tgtLang))
+                    }
                 outputFile.parentFile.mkdirs()
-                outputFile.writeText(rendered)
+                outputFile.writeText(outcome.content)
                 translated.add(relPath)
-                if (documentTranslator is DocumentTranslator) {
-                    allTableValidationResults.addAll(documentTranslator.tableValidationResults)
-                    documentTranslator.tableValidationResults.clear()
-                    allPlantUmlValidationResults.addAll(documentTranslator.plantUmlValidationResults)
-                    documentTranslator.plantUmlValidationResults.clear()
-                }
+                allTableValidationResults.addAll(outcome.trace.tableValidationResults)
+                allPlantUmlValidationResults.addAll(outcome.trace.plantUmlValidationResults)
             } catch (e: Exception) {
                 val msg = "$relPath: ${e.message}"
                 errors.add(msg)

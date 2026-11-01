@@ -53,10 +53,10 @@ class "Utilisateur"
 ----
 """
 
-        val result = translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertTrue(result.contains("@startuml"))
-        assertEquals(1, translator.plantUmlValidationResults.size)
+        assertTrue(outcome.content.contains("@startuml"))
+        assertEquals(1, outcome.trace.plantUmlValidationResults.size)
     }
 
     @Test
@@ -119,10 +119,10 @@ class "Utilisateur"
 ----
 """
 
-        val result = translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertTrue(result.contains("@startuml"))
-        assertTrue(translator.plantUmlValidationResults.isEmpty())
+        assertTrue(outcome.content.contains("@startuml"))
+        assertTrue(outcome.trace.plantUmlValidationResults.isEmpty())
     }
 
     @Test
@@ -152,10 +152,10 @@ class "Service"
 ----
 """
 
-        val result = translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertTrue(result.contains("@startuml"))
-        assertTrue(translator.plantUmlValidationResults.isEmpty())
+        assertTrue(outcome.content.contains("@startuml"))
+        assertTrue(outcome.trace.plantUmlValidationResults.isEmpty())
     }
 
     @Test
@@ -193,9 +193,9 @@ class "B"
 ----
 """
 
-        val result = translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertTrue(result.contains("@startuml"))
-        assertEquals(2, translator.plantUmlValidationResults.size)
+        assertTrue(outcome.content.contains("@startuml"))
+        assertEquals(2, outcome.trace.plantUmlValidationResults.size)
     }
 }

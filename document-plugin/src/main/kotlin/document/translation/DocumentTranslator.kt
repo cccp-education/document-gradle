@@ -15,6 +15,16 @@ import document.translation.validation.TableValidationResult
 import document.translation.validation.ValidationMode
 import org.slf4j.LoggerFactory
 
+/**
+ * Leaf-by-leaf AsciiDoc translator (one service call per translatable fragment).
+ *
+ * XF-FP3-1 — the translator is **stateless**: every pass threads an immutable
+ * [TranslationTrace] through the recursive fold and **returns** it with the
+ * result ([ArticleTranslation], [BlocksTranslation], [DocumentTranslation]).
+ * There is no ambient `currentTopLevelIndex`, no mutable result collection, and
+ * no `clear()` for the caller to remember — a reused instance cannot leak the
+ * diagnostics of a previous document into the next one.
+ */
 class DocumentTranslator(
     private val translationService: TranslationService,
     private val parser: AsciiDocParser = AsciiDocParser(),
@@ -35,51 +45,50 @@ class DocumentTranslator(
 ) : ArticleTranslator {
     private val log = LoggerFactory.getLogger(DocumentTranslator::class.java)
 
-    val tableValidationResults: MutableList<TableValidationResult.Invalid> = mutableListOf()
-    val plantUmlValidationResults: MutableList<PlantUmlValidationResult.Invalid> = mutableListOf()
-
-    /**
-     * DOC-TRANSLATE-RESILIENCE — indices (as `String`, matching [BlockChecksum]
-     * keys) of the top-level blocks whose LLM call returned a
-     * [TranslationResult.Failure]. Such a block must NOT be persisted as
-     * `TRANSLATED`: [ContentTranslationService] maps these indices to
-     * `PENDING` so the next batch re-attempts them instead of freezing the
-     * silent French fallback forever.
-     */
-    val translationFailures: MutableSet<String> = linkedSetOf()
-
-    private var currentTopLevelIndex: String? = null
-
-    fun clearTranslationFailures() {
-        translationFailures.clear()
-    }
-
     override fun translate(
         asciidoc: String,
         sourceLanguage: String,
         targetLanguage: String,
-    ): String {
-        clearTranslationFailures()
+    ): String = translateOutcome(asciidoc, sourceLanguage, targetLanguage).content
+
+    /**
+     * Translates a whole document and returns the rendered content **with** the
+     * diagnostics of the pass (failures, table / PlantUML validation findings).
+     */
+    internal fun translateOutcome(
+        asciidoc: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): DocumentTranslation {
         val article = parser.parse(asciidoc)
-        val translated = translateArticle(article, sourceLanguage, targetLanguage)
+        val translated = translateArticleOutcome(article, sourceLanguage, targetLanguage)
         val outputRenderer = if (article.frontmatter.isJbakeNative) jbakeRenderer else renderer
-        return outputRenderer.render(translated)
+        return DocumentTranslation(outputRenderer.render(translated.article), translated.trace)
     }
 
     internal fun translateArticle(
         article: PivotArticle,
         sourceLanguage: String,
         targetLanguage: String,
-    ): PivotArticle {
+    ): PivotArticle = translateArticleOutcome(article, sourceLanguage, targetLanguage).article
+
+    internal fun translateArticleOutcome(
+        article: PivotArticle,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): ArticleTranslation {
         val translatedFrontmatter = translateFrontmatter(article.frontmatter, sourceLanguage, targetLanguage)
-        val translatedBlocks = translateBlocks(article.blocks, sourceLanguage, targetLanguage, article.frontmatter.title)
-        return PivotArticle(translatedFrontmatter, translatedBlocks)
+        val translatedBlocks = translateBlocksOutcome(article.blocks, sourceLanguage, targetLanguage, article.frontmatter.title)
+        return ArticleTranslation(
+            PivotArticle(translatedFrontmatter, translatedBlocks.blocks),
+            translatedBlocks.trace,
+        )
     }
 
     /**
      * Translates a raw list of pivot blocks, preserving non-translatable content
      * (source code, HR, block macros, backtick spans) and keeping the table /
-     * PlantUML validation indices consistent with [translateArticle].
+     * PlantUML validation indices consistent with [translateArticleOutcome].
      *
      * EPIC DOC-BOOK-TRANSLATE — US-1 exposes this entry point for a *body
      * fragment* (a book page has no frontmatter): [document.BookTranslator]
@@ -93,29 +102,59 @@ class DocumentTranslator(
         sourceLanguage: String,
         targetLanguage: String,
         articleTitle: String = "",
-    ): List<PivotBlock> {
+    ): List<PivotBlock> = translateBlocksOutcome(blocks, sourceLanguage, targetLanguage, articleTitle).blocks
+
+    internal fun translateBlocksOutcome(
+        blocks: List<PivotBlock>,
+        sourceLanguage: String,
+        targetLanguage: String,
+        articleTitle: String = "",
+    ): BlocksTranslation {
         var tableIndex = 0
         var plantUmlIndex = 0
-        return blocks.mapIndexed { index, block ->
-            currentTopLevelIndex = index.toString()
-            try {
-                when {
-                    block is PivotBlock.Table -> {
-                        val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, tableIndex)
-                        tableIndex++
-                        result
+        var trace = TranslationTrace.EMPTY
+        val translated =
+            blocks.mapIndexed { index, block ->
+                val outcome =
+                    when {
+                        block is PivotBlock.Table -> {
+                            val result =
+                                translateBlock(
+                                    block,
+                                    sourceLanguage,
+                                    targetLanguage,
+                                    articleTitle,
+                                    tableIndex = tableIndex,
+                                    topLevelIndex = index.toString(),
+                                )
+                            tableIndex++
+                            result
+                        }
+                        block is PivotBlock.Source && block.language == "plantuml" -> {
+                            val result =
+                                translateBlock(
+                                    block,
+                                    sourceLanguage,
+                                    targetLanguage,
+                                    articleTitle,
+                                    plantUmlIndex = plantUmlIndex,
+                                    topLevelIndex = index.toString(),
+                                )
+                            plantUmlIndex++
+                            result
+                        }
+                        else ->
+                            translateBlock(
+                                block,
+                                sourceLanguage,
+                                targetLanguage,
+                                topLevelIndex = index.toString(),
+                            )
                     }
-                    block is PivotBlock.Source && block.language == "plantuml" -> {
-                        val result = translateBlock(block, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex = plantUmlIndex)
-                        plantUmlIndex++
-                        result
-                    }
-                    else -> translateBlock(block, sourceLanguage, targetLanguage)
-                }
-            } finally {
-                currentTopLevelIndex = null
+                trace = trace.merge(outcome.trace)
+                outcome.block
             }
-        }
+        return BlocksTranslation(translated, trace)
     }
 
     internal fun translateArticleWithDelta(
@@ -124,8 +163,23 @@ class DocumentTranslator(
         delta: BlockDelta,
         sourceLanguage: String,
         targetLanguage: String,
-    ): PivotArticle {
-        if (delta.isEmpty()) return previousTranslated
+    ): PivotArticle =
+        translateArticleWithDeltaOutcome(
+            sourceArticle,
+            previousTranslated,
+            delta,
+            sourceLanguage,
+            targetLanguage,
+        ).article
+
+    internal fun translateArticleWithDeltaOutcome(
+        sourceArticle: PivotArticle,
+        previousTranslated: PivotArticle,
+        delta: BlockDelta,
+        sourceLanguage: String,
+        targetLanguage: String,
+    ): ArticleTranslation {
+        if (delta.isEmpty()) return ArticleTranslation(previousTranslated)
         val translatedFrontmatter = translateFrontmatter(sourceArticle.frontmatter, sourceLanguage, targetLanguage)
         val preservedIndices = delta.preservedBlocks.toSet()
         val tableIndexByOriginalIndex = mutableMapOf<Int, Int>()
@@ -142,30 +196,40 @@ class DocumentTranslator(
                 plantUmlIndex++
             }
         }
+        var trace = TranslationTrace.EMPTY
         val translatedBlocks =
             sourceArticle.blocks.mapIndexed { idx, block ->
-                if (idx.toString() in preservedIndices) {
-                    previousTranslated.blocks.getOrNull(idx) ?: translateBlock(block, sourceLanguage, targetLanguage)
-                } else {
-                    currentTopLevelIndex = idx.toString()
-                    try {
+                val outcome =
+                    if (idx.toString() in preservedIndices) {
+                        previousTranslated.blocks.getOrNull(idx)?.let { BlockTranslation(it) }
+                            ?: translateBlock(block, sourceLanguage, targetLanguage, topLevelIndex = idx.toString())
+                    } else {
                         when {
-                            block is PivotBlock.Table -> {
-                                val ti = tableIndexByOriginalIndex[idx] ?: 0
-                                translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, ti)
-                            }
-                            block is PivotBlock.Source && block.language == "plantuml" -> {
-                                val pi = plantUmlIndexByOriginalIndex[idx] ?: 0
-                                translateBlock(block, sourceLanguage, targetLanguage, sourceArticle.frontmatter.title, plantUmlIndex = pi)
-                            }
-                            else -> translateBlock(block, sourceLanguage, targetLanguage)
+                            block is PivotBlock.Table ->
+                                translateBlock(
+                                    block,
+                                    sourceLanguage,
+                                    targetLanguage,
+                                    sourceArticle.frontmatter.title,
+                                    tableIndex = tableIndexByOriginalIndex[idx] ?: 0,
+                                    topLevelIndex = idx.toString(),
+                                )
+                            block is PivotBlock.Source && block.language == "plantuml" ->
+                                translateBlock(
+                                    block,
+                                    sourceLanguage,
+                                    targetLanguage,
+                                    sourceArticle.frontmatter.title,
+                                    plantUmlIndex = plantUmlIndexByOriginalIndex[idx] ?: 0,
+                                    topLevelIndex = idx.toString(),
+                                )
+                            else -> translateBlock(block, sourceLanguage, targetLanguage, topLevelIndex = idx.toString())
                         }
-                    } finally {
-                        currentTopLevelIndex = null
                     }
-                }
+                trace = trace.merge(outcome.trace)
+                outcome.block
             }
-        return PivotArticle(translatedFrontmatter, translatedBlocks)
+        return ArticleTranslation(PivotArticle(translatedFrontmatter, translatedBlocks), trace)
     }
 
     internal fun translateFrontmatter(
@@ -173,20 +237,20 @@ class DocumentTranslator(
         sourceLanguage: String,
         targetLanguage: String,
     ): PivotFrontmatter {
-        val translatedTitle = doTranslate(fm.title, sourceLanguage, targetLanguage)
+        val translatedTitle = doTranslate(fm.title, sourceLanguage, targetLanguage).text
         val translatedJbakeAttrs = fm.jbakeAttributes.toMutableMap()
         translatedJbakeAttrs["summary"]?.let {
-            translatedJbakeAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage)
+            translatedJbakeAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage).text
         }
         translatedJbakeAttrs["description"]?.let {
-            translatedJbakeAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage)
+            translatedJbakeAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage).text
         }
         val translatedAsciidocAttrs = fm.asciidocAttributes.toMutableMap()
         translatedAsciidocAttrs["summary"]?.let {
-            translatedAsciidocAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage)
+            translatedAsciidocAttrs["summary"] = doTranslate(it, sourceLanguage, targetLanguage).text
         }
         translatedAsciidocAttrs["description"]?.let {
-            translatedAsciidocAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage)
+            translatedAsciidocAttrs["description"] = doTranslate(it, sourceLanguage, targetLanguage).text
         }
         return fm.copy(
             title = translatedTitle,
@@ -202,101 +266,141 @@ class DocumentTranslator(
         articleTitle: String = "",
         tableIndex: Int = 0,
         plantUmlIndex: Int = 0,
-    ): PivotBlock =
+        topLevelIndex: String? = null,
+    ): BlockTranslation =
         block.fold(
             heading = {
-                val translated = doTranslate(it.text, sourceLanguage, targetLanguage)
-                it.copy(text = translated)
+                val field = doTranslate(it.text, sourceLanguage, targetLanguage)
+                BlockTranslation(it.copy(text = field.text), traceOf(topLevelIndex, field))
             },
-            paragraph = { it.copy(inline = translateInlines(it.inline, sourceLanguage, targetLanguage)) },
+            paragraph = {
+                val inlines = translateInlines(it.inline, sourceLanguage, targetLanguage, topLevelIndex)
+                BlockTranslation(it.copy(inline = inlines.inlines), inlines.trace)
+            },
             listBlock = {
-                it.copy(
-                    items =
-                        it.items.map { items ->
-                            translateInlines(items, sourceLanguage, targetLanguage)
-                        },
-                )
+                var trace = TranslationTrace.EMPTY
+                val items =
+                    it.items.map { item ->
+                        val inlines = translateInlines(item, sourceLanguage, targetLanguage, topLevelIndex)
+                        trace = trace.merge(inlines.trace)
+                        inlines.inlines
+                    }
+                BlockTranslation(it.copy(items = items), trace)
             },
             table = {
-                val translated =
-                    it.copy(
-                        header =
-                            it.header.map { cells ->
-                                translateInlines(cells, sourceLanguage, targetLanguage)
-                            },
-                        rows =
-                            it.rows.map { row ->
-                                row.map { cells ->
-                                    translateInlines(cells, sourceLanguage, targetLanguage)
-                                }
-                            },
-                    )
-                validateTranslatedTable(translated, articleTitle, tableIndex)
-                translated
+                var trace = TranslationTrace.EMPTY
+                val header =
+                    it.header.map { cells ->
+                        val inlines = translateInlines(cells, sourceLanguage, targetLanguage, topLevelIndex)
+                        trace = trace.merge(inlines.trace)
+                        inlines.inlines
+                    }
+                val rows =
+                    it.rows.map { row ->
+                        row.map { cells ->
+                            val inlines = translateInlines(cells, sourceLanguage, targetLanguage, topLevelIndex)
+                            trace = trace.merge(inlines.trace)
+                            inlines.inlines
+                        }
+                    }
+                val translated = it.copy(header = header, rows = rows)
+                BlockTranslation(translated, trace.merge(validateTranslatedTable(translated, articleTitle, tableIndex)))
             },
             admonition = {
-                it.copy(
-                    blocks = it.blocks.map { inner -> translateBlock(inner, sourceLanguage, targetLanguage) },
-                )
+                var trace = TranslationTrace.EMPTY
+                val inner =
+                    it.blocks.map { b ->
+                        val outcome = translateBlock(b, sourceLanguage, targetLanguage, topLevelIndex = topLevelIndex)
+                        trace = trace.merge(outcome.trace)
+                        outcome.block
+                    }
+                BlockTranslation(it.copy(blocks = inner), trace)
             },
             source = {
                 if (it.language == "plantuml" && plantUmlPort != null) {
                     translatePlantUmlWithPort(it, sourceLanguage, targetLanguage, articleTitle, plantUmlIndex)
                 } else {
-                    it
+                    BlockTranslation(it)
                 }
             },
             descriptionList = {
-                it.copy(
-                    items =
-                        it.items.map { item ->
-                            DescriptionItem(
-                                term = translateInlines(item.term, sourceLanguage, targetLanguage),
-                                definition = translateInlines(item.definition, sourceLanguage, targetLanguage),
-                            )
-                        },
-                )
+                var trace = TranslationTrace.EMPTY
+                val items =
+                    it.items.map { item ->
+                        val term = translateInlines(item.term, sourceLanguage, targetLanguage, topLevelIndex)
+                        val definition = translateInlines(item.definition, sourceLanguage, targetLanguage, topLevelIndex)
+                        trace = trace.merge(term.trace).merge(definition.trace)
+                        DescriptionItem(term = term.inlines, definition = definition.inlines)
+                    }
+                BlockTranslation(it.copy(items = items), trace)
             },
-            blockMacro = { it },
-            hr = { it },
+            blockMacro = { BlockTranslation(it) },
+            hr = { BlockTranslation(it) },
         )
 
     private fun translateInlines(
         inlines: List<PivotInline>,
         sourceLanguage: String,
         targetLanguage: String,
-    ): List<PivotInline> = inlines.map { translateInline(it, sourceLanguage, targetLanguage) }
+        topLevelIndex: String?,
+    ): InlinesTranslation {
+        var trace = TranslationTrace.EMPTY
+        val translated =
+            inlines.map { inline ->
+                val outcome = translateInline(inline, sourceLanguage, targetLanguage, topLevelIndex)
+                trace = trace.merge(outcome.trace)
+                outcome.inline
+            }
+        return InlinesTranslation(translated, trace)
+    }
 
     private fun translateInline(
         inline: PivotInline,
         sourceLanguage: String,
         targetLanguage: String,
-    ): PivotInline =
+        topLevelIndex: String?,
+    ): InlineTranslation =
         when (inline) {
-            is PivotInline.Text -> {
-                if (inline.translatable) {
-                    inline.copy(text = doTranslate(inline.text, sourceLanguage, targetLanguage))
-                } else {
-                    inline
-                }
-            }
-            is PivotInline.Bold -> {
-                if (inline.translatable) {
-                    inline.copy(text = doTranslate(inline.text, sourceLanguage, targetLanguage))
-                } else {
-                    inline
-                }
-            }
-            is PivotInline.Code -> inline
-            is PivotInline.Link -> {
-                if (inline.translatable) {
-                    inline.copy(label = doTranslate(inline.label, sourceLanguage, targetLanguage))
-                } else {
-                    inline
-                }
-            }
-            is PivotInline.LineBreak -> inline
+            is PivotInline.Text ->
+                translateTranslatableInline(
+                    inline.translatable,
+                    inline.text,
+                    sourceLanguage,
+                    targetLanguage,
+                    topLevelIndex,
+                ) { inline.copy(text = it) }
+            is PivotInline.Bold ->
+                translateTranslatableInline(
+                    inline.translatable,
+                    inline.text,
+                    sourceLanguage,
+                    targetLanguage,
+                    topLevelIndex,
+                ) { inline.copy(text = it) }
+            is PivotInline.Link ->
+                translateTranslatableInline(
+                    inline.translatable,
+                    inline.label,
+                    sourceLanguage,
+                    targetLanguage,
+                    topLevelIndex,
+                ) { inline.copy(label = it) }
+            is PivotInline.Code -> InlineTranslation(inline)
+            is PivotInline.LineBreak -> InlineTranslation(inline)
         }
+
+    private fun translateTranslatableInline(
+        translatable: Boolean,
+        text: String,
+        sourceLanguage: String,
+        targetLanguage: String,
+        topLevelIndex: String?,
+        rebuild: (String) -> PivotInline,
+    ): InlineTranslation {
+        if (!translatable) return InlineTranslation(rebuild(text))
+        val field = doTranslate(text, sourceLanguage, targetLanguage)
+        return InlineTranslation(rebuild(field.text), traceOf(topLevelIndex, field))
+    }
 
     /**
      * US-4 PLT-DIAGRAM-OWNERSHIP (option A) — delegates a `[plantuml]` block to the
@@ -311,7 +415,7 @@ class DocumentTranslator(
         targetLanguage: String,
         articleTitle: String,
         blockIndex: Int,
-    ): PivotBlock.Source {
+    ): BlockTranslation {
         val request =
             PlantUmlTranslationRequest(
                 block = PlantUmlBlock(raw = block.content),
@@ -324,10 +428,10 @@ class DocumentTranslator(
                 val translated = block.copy(content = outcome.block.raw)
                 // Validate only a translated block (the source was validated upstream
                 // by the port's round-trip gate; a preserved block carries no new risk).
-                validateTranslatedPlantUml(translated.content, articleTitle, blockIndex, strategy = "n0-port")
-                translated
+                val trace = validateTranslatedPlantUml(translated.content, articleTitle, blockIndex, strategy = "n0-port")
+                BlockTranslation(translated, trace)
             }
-            is PlantUmlTranslationOutcome.Preserved -> block
+            is PlantUmlTranslationOutcome.Preserved -> BlockTranslation(block)
         }
     }
 
@@ -336,37 +440,39 @@ class DocumentTranslator(
         articleTitle: String,
         blockIndex: Int,
         strategy: String,
-    ) {
-        if (plantUmlValidationMode == ValidationMode.OFF) return
+    ): TranslationTrace {
+        if (plantUmlValidationMode == ValidationMode.OFF) return TranslationTrace.EMPTY
         val result = plantUmlSyntaxValidator.validate(plantumlCode, articleTitle, blockIndex, strategy)
         if (result is PlantUmlValidationResult.Invalid) {
-            plantUmlValidationResults.add(result)
             val msg = "PlantUML validation failed in article '$articleTitle' block #$blockIndex (strategy=$strategy): ${result.reason}"
             when (plantUmlValidationMode) {
                 ValidationMode.STRICT -> throw TranslationException(msg)
                 ValidationMode.LENIENT -> log.warn(msg)
                 ValidationMode.OFF -> {}
             }
+            return TranslationTrace(plantUmlValidationResults = listOf(result))
         }
+        return TranslationTrace.EMPTY
     }
 
     private fun validateTranslatedTable(
         table: PivotBlock.Table,
         articleTitle: String,
         tableIndex: Int,
-    ) {
-        if (tableValidationMode == ValidationMode.OFF) return
+    ): TranslationTrace {
+        if (tableValidationMode == ValidationMode.OFF) return TranslationTrace.EMPTY
         val dddTable = toDddTable(table)
         val result = TableSyntaxValidator.validate(dddTable, articleTitle, tableIndex)
         if (result is TableValidationResult.Invalid) {
-            tableValidationResults.add(result)
             val msg = "Table validation failed in article '$articleTitle' table #$tableIndex: ${result.reason}"
             when (tableValidationMode) {
                 ValidationMode.STRICT -> throw TranslationException(msg)
                 ValidationMode.LENIENT -> log.warn(msg)
                 ValidationMode.OFF -> {}
             }
+            return TranslationTrace(tableValidationResults = listOf(result))
         }
+        return TranslationTrace.EMPTY
     }
 
     private fun toDddTable(table: PivotBlock.Table): Table {
@@ -392,20 +498,28 @@ class DocumentTranslator(
         text: String,
         sourceLanguage: String,
         targetLanguage: String,
-    ): String {
-        if (text.isBlank()) return text
+    ): FieldTranslation {
+        if (text.isBlank()) return FieldTranslation(text, failed = false)
         val request = TranslationRequest(text, sourceLanguage, targetLanguage)
         return when (val result = translationService.translate(request)) {
-            is TranslationResult.Success -> result.translatedText
-            is TranslationResult.Failure -> {
-                // DOC-TRANSLATE-RESILIENCE — the silent French fallback is kept
-                // (the rendered article stays complete), but the owning top-level
-                // block is remembered so it is stored as PENDING, never TRANSLATED.
-                currentTopLevelIndex?.let { translationFailures.add(it) }
-                text
-            }
+            is TranslationResult.Success -> FieldTranslation(result.translatedText, failed = false)
+            // DOC-TRANSLATE-RESILIENCE — the silent French fallback is kept
+            // (the rendered article stays complete), but the owning top-level
+            // block is reported so it is stored as PENDING, never TRANSLATED.
+            is TranslationResult.Failure -> FieldTranslation(text, failed = true)
         }
     }
+
+    /** Attributes a failed field to the current top-level block (if any). */
+    private fun traceOf(
+        topLevelIndex: String?,
+        field: FieldTranslation,
+    ): TranslationTrace =
+        if (field.failed && topLevelIndex != null) {
+            TranslationTrace(translationFailures = setOf(topLevelIndex))
+        } else {
+            TranslationTrace.EMPTY
+        }
 
     /**
      * Translates a single text field (a title, a label) through the same
@@ -419,5 +533,27 @@ class DocumentTranslator(
         text: String,
         sourceLanguage: String,
         targetLanguage: String,
-    ): String = doTranslate(text, sourceLanguage, targetLanguage)
+    ): String = doTranslate(text, sourceLanguage, targetLanguage).text
+
+    /** A translated top-level block and the diagnostics produced while translating it. */
+    private data class BlockTranslation(
+        val block: PivotBlock,
+        val trace: TranslationTrace = TranslationTrace.EMPTY,
+    )
+
+    private data class InlinesTranslation(
+        val inlines: List<PivotInline>,
+        val trace: TranslationTrace = TranslationTrace.EMPTY,
+    )
+
+    private data class InlineTranslation(
+        val inline: PivotInline,
+        val trace: TranslationTrace = TranslationTrace.EMPTY,
+    )
+
+    /** Result of one service call: the text to keep, and whether it is a silent fallback. */
+    private data class FieldTranslation(
+        val text: String,
+        val failed: Boolean,
+    )
 }

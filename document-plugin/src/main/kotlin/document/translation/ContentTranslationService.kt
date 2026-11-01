@@ -55,6 +55,20 @@ class ContentTranslationService(
         )
     }
 
+    /**
+     * Findings accumulated by *this service instance* from the traces returned by
+     * the (stateless) [DocumentTranslator] (XF-FP3-1). The previous design read
+     * and cleared mutable collections owned by the translator; here the ownership
+     * is local to the run, which is what `drain…` actually means.
+     */
+    private val tableValidationResults = ConcurrentLinkedQueue<TableValidationResult.Invalid>()
+    private val plantUmlValidationResults = ConcurrentLinkedQueue<PlantUmlValidationResult.Invalid>()
+
+    private fun record(trace: TranslationTrace) {
+        tableValidationResults.addAll(trace.tableValidationResults)
+        plantUmlValidationResults.addAll(trace.plantUmlValidationResults)
+    }
+
     fun translate(
         langDir: File,
         sourceLanguage: String,
@@ -182,8 +196,9 @@ class ContentTranslationService(
         targetLanguage: String,
     ) {
         val original = file.readText()
-        val rendered = documentTranslator.translate(original, sourceLanguage, targetLanguage)
-        file.writeText(rendered)
+        val outcome = documentTranslator.translateOutcome(original, sourceLanguage, targetLanguage)
+        record(outcome.trace)
+        file.writeText(outcome.content)
     }
 
     fun translateSingleFileWithBlockDelta(
@@ -196,10 +211,11 @@ class ContentTranslationService(
         val sourceText = sourceFile.readText()
         val sourceArticle = parser.parse(sourceText)
         val currentBlockHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
-        documentTranslator.clearTranslationFailures()
-        val rendered: String =
+        val trace: TranslationTrace =
             if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
-                documentTranslator.translate(sourceText, sourceLanguage, targetLanguage)
+                val translated = documentTranslator.translateOutcome(sourceText, sourceLanguage, targetLanguage)
+                targetFile.writeText(translated.content)
+                translated.trace
             } else {
                 val previousTranslatedArticle = parser.parse(targetFile.readText())
                 val delta = BlockDelta.compute(previous = previousBlockChecksums, current = currentBlockHashes)
@@ -213,7 +229,7 @@ class ContentTranslationService(
                     }
                 }
                 val translatedArticle =
-                    documentTranslator.translateArticleWithDelta(
+                    documentTranslator.translateArticleWithDeltaOutcome(
                         sourceArticle,
                         previousTranslatedArticle,
                         delta,
@@ -221,14 +237,15 @@ class ContentTranslationService(
                         targetLanguage,
                     )
                 val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
-                outputRenderer.render(translatedArticle)
+                targetFile.writeText(outputRenderer.render(translatedArticle.article))
+                translatedArticle.trace
             }
-        targetFile.writeText(rendered)
+        record(trace)
         // DOC-TRANSLATE-RESILIENCE — a block whose LLM call failed is stored as
         // PENDING, never TRANSLATED: the next delta re-attempts it instead of
         // freezing the silent French fallback (BlockDelta preserves a TRANSLATED
         // block whose hash is unchanged).
-        return BlockChecksum.resolveStatuses(currentBlockHashes, documentTranslator.translationFailures.toSet())
+        return BlockChecksum.resolveStatuses(currentBlockHashes, trace.translationFailures)
     }
 
     fun retranslateFrontmatter(
@@ -262,17 +279,21 @@ class ContentTranslationService(
         article: PivotArticle,
         sourceLanguage: String,
         targetLanguage: String,
-    ): PivotArticle = documentTranslator.translateArticle(article, sourceLanguage, targetLanguage)
+    ): PivotArticle {
+        val outcome = documentTranslator.translateArticleOutcome(article, sourceLanguage, targetLanguage)
+        record(outcome.trace)
+        return outcome.article
+    }
 
     fun drainTableValidationResults(): List<TableValidationResult.Invalid> {
-        val results = documentTranslator.tableValidationResults.toList()
-        documentTranslator.tableValidationResults.clear()
+        val results = tableValidationResults.toList()
+        tableValidationResults.clear()
         return results
     }
 
     fun drainPlantUmlValidationResults(): List<PlantUmlValidationResult.Invalid> {
-        val results = documentTranslator.plantUmlValidationResults.toList()
-        documentTranslator.plantUmlValidationResults.clear()
+        val results = plantUmlValidationResults.toList()
+        plantUmlValidationResults.clear()
         return results
     }
 }

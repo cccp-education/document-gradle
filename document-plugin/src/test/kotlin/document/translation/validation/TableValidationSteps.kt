@@ -5,6 +5,7 @@ import document.translation.BatchTranslationRequest
 import document.translation.DocumentTranslator
 import document.translation.FakeTranslationService
 import document.translation.TranslationException
+import document.translation.TranslationTrace
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -24,6 +25,7 @@ class TableValidationSteps {
     private var translatedOutput: String? = null
     private var thrownException: Exception? = null
     private var batchOutputDir: File? = null
+    private var trace: TranslationTrace = TranslationTrace.EMPTY
 
     @Given("a document translator with validation mode {string}")
     fun `a document translator with validation mode`(mode: String) {
@@ -114,8 +116,11 @@ class TableValidationSteps {
     ) {
         thrownException = null
         translatedOutput = null
+        trace = TranslationTrace.EMPTY
         try {
-            translatedOutput = translator!!.translate(asciidocSource, sourceLang, targetLang)
+            val outcome = translator!!.translateOutcome(asciidocSource, sourceLang, targetLang)
+            translatedOutput = outcome.content
+            trace = outcome.trace
         } catch (e: Exception) {
             thrownException = e
         }
@@ -128,19 +133,19 @@ class TableValidationSteps {
 
     @And("no validation errors should be reported")
     fun `no validation errors should be reported`() {
-        val results = translator!!.tableValidationResults
+        val results = trace.tableValidationResults
         assertTrue(results.isEmpty(), "Expected no validation errors but got: $results")
     }
 
     @And("{int} validation error should be reported")
     fun `validation error should be reported`(count: Int) {
-        val results = translator!!.tableValidationResults
+        val results = trace.tableValidationResults
         assertEquals(count, results.size, "Expected $count validation error(s) but got ${results.size}: $results")
     }
 
     @And("the validation error should mention {string}")
     fun `the validation error should mention`(text: String) {
-        val results = translator!!.tableValidationResults
+        val results = trace.tableValidationResults
         assertTrue(results.isNotEmpty(), "Expected at least one validation error")
         val found = results.any { it.reason.contains(text) }
         assertTrue(found, "Expected a validation error mentioning '$text' but got: ${results.map { it.reason }}")

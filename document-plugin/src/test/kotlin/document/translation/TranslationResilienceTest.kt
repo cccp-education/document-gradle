@@ -136,9 +136,10 @@ Second paragraph.
 
         val failing = FlakyTranslationService { it == "First paragraph." }
         val translator = DocumentTranslator(failing)
-        translator.translateArticleWithDelta(sourceArticle, previousTranslated, delta, "fr", "en")
+        val outcome =
+            translator.translateArticleWithDeltaOutcome(sourceArticle, previousTranslated, delta, "fr", "en")
 
-        assertTrue("1" in translator.translationFailures)
+        assertTrue("1" in outcome.trace.translationFailures)
     }
 
     @Test

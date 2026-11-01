@@ -116,11 +116,11 @@ status=published
 |===
 """
 
-        val result = translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertContains(result, "Valeur |=== broken [EN]")
-        assertContains(result, "Colonne A [EN]")
-        assertTrue(translator.tableValidationResults.isEmpty())
+        assertContains(outcome.content, "Valeur |=== broken [EN]")
+        assertContains(outcome.content, "Colonne A [EN]")
+        assertTrue(outcome.trace.tableValidationResults.isEmpty())
     }
 
     @Test
@@ -240,9 +240,9 @@ status=published
 |===
 """
 
-        translator.translate(source, "fr", "en")
+        val outcome = translator.translateOutcome(source, "fr", "en")
 
-        assertTrue(translator.tableValidationResults.isNotEmpty())
-        assertTrue(translator.tableValidationResults.any { it.reason.contains("|===") })
+        assertTrue(outcome.trace.tableValidationResults.isNotEmpty())
+        assertTrue(outcome.trace.tableValidationResults.any { it.reason.contains("|===") })
     }
 }
