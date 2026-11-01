@@ -111,41 +111,43 @@ class TreeTranslationAdapter(
             subPath: List<Int>,
             out: MutableList<Leaf>,
         ) {
-            when (block) {
-                is PivotBlock.Heading -> {
-                    if (block.translatable && block.text.isNotBlank()) {
-                        out.add(Leaf(block.text, LeafPath.Inline(blockIndex, subPath, -1)))
+            block.fold(
+                heading = {
+                    if (it.translatable && it.text.isNotBlank()) {
+                        out.add(Leaf(it.text, LeafPath.Inline(blockIndex, subPath, -1)))
                     }
-                }
-                is PivotBlock.Paragraph -> collectInlines(block.inline, blockIndex, subPath, out)
-                is PivotBlock.ListBlock -> {
-                    block.items.forEachIndexed { itemIdx, item ->
+                },
+                paragraph = { collectInlines(it.inline, blockIndex, subPath, out) },
+                listBlock = {
+                    it.items.forEachIndexed { itemIdx, item ->
                         collectInlines(item, blockIndex, subPath + itemIdx, out)
                     }
-                }
-                is PivotBlock.Table -> {
-                    block.header.forEachIndexed { rowIdx, cells ->
+                },
+                table = {
+                    it.header.forEachIndexed { rowIdx, cells ->
                         collectInlines(cells, blockIndex, subPath + listOf(-10 - rowIdx), out)
                     }
-                    block.rows.forEachIndexed { rowIdx, cells ->
+                    it.rows.forEachIndexed { rowIdx, cells ->
                         cells.forEachIndexed { cellIdx, cell ->
                             collectInlines(cell, blockIndex, subPath + listOf(rowIdx, cellIdx), out)
                         }
                     }
-                }
-                is PivotBlock.Admonition -> {
-                    block.blocks.forEachIndexed { innerIdx, inner ->
+                },
+                admonition = {
+                    it.blocks.forEachIndexed { innerIdx, inner ->
                         collectBlock(inner, blockIndex, subPath + listOf(-20 - innerIdx), out)
                     }
-                }
-                is PivotBlock.DescriptionList -> {
-                    block.items.forEachIndexed { itemIdx, item ->
+                },
+                source = {},
+                descriptionList = {
+                    it.items.forEachIndexed { itemIdx, item ->
                         collectInlines(item.term, blockIndex, subPath + listOf(-30 - itemIdx, 0), out)
                         collectInlines(item.definition, blockIndex, subPath + listOf(-30 - itemIdx, 1), out)
                     }
-                }
-                is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> Unit
-            }
+                },
+                blockMacro = {},
+                hr = {},
+            )
         }
 
         private fun collectInlines(
@@ -195,30 +197,34 @@ class TreeTranslationAdapter(
         }
 
         private fun applyBlock(block: PivotBlock): PivotBlock =
-            when (block) {
-                is PivotBlock.Heading -> {
-                    if (block.translatable && block.text.isNotBlank()) block.copy(text = replace(block.text)) else block
-                }
-                is PivotBlock.Paragraph -> block.copy(inline = applyInlines(block.inline))
-                is PivotBlock.ListBlock -> block.copy(items = block.items.map { applyInlines(it) })
-                is PivotBlock.Table ->
-                    block.copy(
-                        header = block.header.map { applyInlines(it) },
-                        rows = block.rows.map { row -> row.map { applyInlines(it) } },
+            block.fold(
+                heading = {
+                    if (it.translatable && it.text.isNotBlank()) it.copy(text = replace(it.text)) else it
+                },
+                paragraph = { it.copy(inline = applyInlines(it.inline)) },
+                listBlock = { it.copy(items = it.items.map { item -> applyInlines(item) }) },
+                table = {
+                    it.copy(
+                        header = it.header.map { row -> applyInlines(row) },
+                        rows = it.rows.map { row -> row.map { cell -> applyInlines(cell) } },
                     )
-                is PivotBlock.Admonition -> block.copy(blocks = block.blocks.map { applyBlock(it) })
-                is PivotBlock.DescriptionList ->
-                    block.copy(
+                },
+                admonition = { it.copy(blocks = it.blocks.map { inner -> applyBlock(inner) }) },
+                source = { it },
+                descriptionList = {
+                    it.copy(
                         items =
-                            block.items.map { item ->
+                            it.items.map { item ->
                                 DescriptionItem(
                                     term = applyInlines(item.term),
                                     definition = applyInlines(item.definition),
                                 )
                             },
                     )
-                is PivotBlock.BlockMacro, is PivotBlock.Source, is PivotBlock.Hr -> block
-            }
+                },
+                blockMacro = { it },
+                hr = { it },
+            )
 
         private fun applyInlines(inlines: List<PivotInline>): List<PivotInline> =
             inlines.map { inline ->
