@@ -1,5 +1,5 @@
 [versions]
-document = "0.0.26"
+document = "0.0.27"
 asciidoctorj = "3.0.1"
 asciidoctorj-diagram = "3.2.1"
 asciidoctorj-diagram-plantuml = "1.2026.2"
