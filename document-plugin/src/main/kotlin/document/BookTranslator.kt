@@ -4,6 +4,7 @@ import contracts.i18n.TranslationService
 import document.translation.AsciiDocParser
 import document.translation.AsciiDocRenderer
 import document.translation.DocumentTranslator
+import document.translation.TranslationTrace
 
 /**
  * Translates a structured [BookTree] into a target language.
@@ -46,12 +47,18 @@ class BookTranslator(
      * @param sourceLanguage the language of the source (e.g. `fr`)
      * @param targetLanguage the language to translate to; blank or identical to
      *   [sourceLanguage] means "no translation" (no-op)
+     * @param onPageTrace XF-FP3-2 — invoked **once per translated page** with the
+     *   diagnostics of its pass (table / PlantUML findings). The translator stays
+     *   stateless: the caller owns whatever accumulator it needs
+     *   ([BookTranslationRunner] merges them into a per-book report). Pages whose
+     *   raw content is blank, and the no-op path, report nothing.
      */
     fun translate(
         tree: BookTree,
         resolveContent: (BookSection) -> String,
         sourceLanguage: String,
         targetLanguage: String,
+        onPageTrace: (BookSection, TranslationTrace) -> Unit = { _, _ -> },
     ): TranslatedBook {
         if (targetLanguage.isBlank() || targetLanguage == sourceLanguage || tree.leaves.isEmpty()) {
             return TranslatedBook(tree, resolveContent)
@@ -83,7 +90,7 @@ class BookTranslator(
 
         val bodyResolver: (BookSection) -> String = { section ->
             resolveContent(section).let { raw ->
-                if (raw.isBlank()) raw else translateBody(raw, section.title, sourceLanguage, targetLanguage)
+                if (raw.isBlank()) raw else translateBody(raw, section, sourceLanguage, targetLanguage, onPageTrace)
             }
         }
 
@@ -102,14 +109,16 @@ class BookTranslator(
 
     private fun translateBody(
         raw: String,
-        title: String,
+        section: BookSection,
         sourceLanguage: String,
         targetLanguage: String,
+        onPageTrace: (BookSection, TranslationTrace) -> Unit,
     ): String {
         val blocks = parser.parseBody(raw)
         if (blocks.isEmpty()) return raw
-        val translated = documentTranslator.translateBlocks(blocks, sourceLanguage, targetLanguage, title)
-        return renderer.renderBlocks(translated)
+        val outcome = documentTranslator.translateBlocksOutcome(blocks, sourceLanguage, targetLanguage, section.title)
+        onPageTrace(section, outcome.trace)
+        return renderer.renderBlocks(outcome.blocks)
     }
 
     private fun translateField(

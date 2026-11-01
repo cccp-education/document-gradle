@@ -1,5 +1,6 @@
 package document
 
+import document.translation.TranslationTrace
 import java.io.File
 
 /**
@@ -37,12 +38,17 @@ class BookTranslationRunner(
      * @return the assembled [BookAssemblyResult] (already written to disk)
      */
     fun translateAndPublish(request: BookTranslationRequest): BookAssemblyResult {
+        // XF-FP3-2 — collect the diagnostics of every translated page (keyed by
+        // section ref: a page resolved twice reports the same trace twice), so the
+        // book's table / PlantUML findings are written instead of discarded.
+        val pageTraces = LinkedHashMap<String, TranslationTrace>()
         val translated =
             translator.translate(
                 tree = request.tree,
                 resolveContent = request.resolveContent,
                 sourceLanguage = request.sourceLanguage,
                 targetLanguage = request.targetLanguage,
+                onPageTrace = { section, trace -> pageTraces[section.ref] = trace },
             )
 
         val baseLayout =
@@ -81,6 +87,10 @@ class BookTranslationRunner(
             }
 
         result.writeTo(request.outputFile)
+        // XF-FP3-2 — persist the merged diagnostics next to the book (per language);
+        // a clean book writes nothing (Ink Economy Law).
+        val trace = pageTraces.values.fold(TranslationTrace.EMPTY) { acc, page -> acc.merge(page) }
+        BookValidationReports.write(trace, request.outputFile.parentFile, request.targetLanguage)
         return result
     }
 }
