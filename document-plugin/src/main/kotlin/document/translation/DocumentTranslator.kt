@@ -172,6 +172,16 @@ class DocumentTranslator(
             targetLanguage,
         ).article
 
+    /**
+     * P2 (CHE-I18N-COMPLETION) — a delta is only safe when the previous variant
+     * has the **same block structure** as the source. The historical bug preserved
+     * blocks by index: when the variant had the same block count but a different
+     * kind sequence (a duplicated `[plantuml]` compensating a lost paragraph), the
+     * preserved block at an index was the wrong one and the diagram was written at
+     * the wrong position. A divergent structure therefore falls back to a **full
+     * translation of the source** (never an index alignment), which rebuilds the
+     * variant from the authoritative AST.
+     */
     internal fun translateArticleWithDeltaOutcome(
         sourceArticle: PivotArticle,
         previousTranslated: PivotArticle,
@@ -179,6 +189,9 @@ class DocumentTranslator(
         sourceLanguage: String,
         targetLanguage: String,
     ): ArticleTranslation {
+        if (!isStructurallyAligned(sourceArticle, previousTranslated)) {
+            return translateArticleOutcome(sourceArticle, sourceLanguage, targetLanguage)
+        }
         if (delta.isEmpty()) return ArticleTranslation(previousTranslated)
         val translatedFrontmatter = translateFrontmatter(sourceArticle.frontmatter, sourceLanguage, targetLanguage)
         val preservedIndices = delta.preservedBlocks.toSet()
@@ -231,6 +244,35 @@ class DocumentTranslator(
             }
         return ArticleTranslation(PivotArticle(translatedFrontmatter, translatedBlocks), trace)
     }
+
+    /**
+     * True when [previousTranslated] keeps the exact block-kind sequence of
+     * [sourceArticle]. A preserved block is reused **by index**, so the two
+     * articles must agree on every slot; comparing the total block count alone is
+     * not enough (a duplicated diagram can mask a lost paragraph).
+     */
+    private fun isStructurallyAligned(
+        sourceArticle: PivotArticle,
+        previousTranslated: PivotArticle,
+    ): Boolean {
+        if (sourceArticle.blocks.size != previousTranslated.blocks.size) return false
+        return structureSignature(sourceArticle.blocks) == structureSignature(previousTranslated.blocks)
+    }
+
+    private fun structureSignature(blocks: List<PivotBlock>): List<String> =
+        blocks.map { block ->
+            when (block) {
+                is PivotBlock.Heading -> "heading:${block.level}"
+                is PivotBlock.Paragraph -> "paragraph"
+                is PivotBlock.ListBlock -> "list:${block.ordered}"
+                is PivotBlock.Table -> "table"
+                is PivotBlock.Admonition -> "admonition:${block.kind}"
+                is PivotBlock.Source -> "source:${block.language.lowercase()}"
+                is PivotBlock.DescriptionList -> "description-list"
+                is PivotBlock.BlockMacro -> "block-macro:${block.name}"
+                PivotBlock.Hr -> "hr"
+            }
+        }
 
     internal fun translateFrontmatter(
         fm: PivotFrontmatter,

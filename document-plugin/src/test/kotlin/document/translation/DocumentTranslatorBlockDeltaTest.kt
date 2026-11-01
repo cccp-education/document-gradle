@@ -197,6 +197,95 @@ Second paragraphe.
         assertTrue(para.inline[0].toString().contains("[EN]"))
     }
 
+    @Test
+    fun `translateArticleWithDelta re-translates the whole source when the block count differs`() {
+        val sourceArticle =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-08-04", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Heading(2, "Intro", translatable = true),
+                        PivotBlock.Paragraph(listOf(PivotInline.Text("One", translatable = true))),
+                        PivotBlock.Paragraph(listOf(PivotInline.Text("Two", translatable = true))),
+                    ),
+            )
+        val previousTranslated =
+            PivotArticle(
+                frontmatter = sourceArticle.frontmatter.copy(title = "Test [OLD]"),
+                blocks =
+                    listOf(
+                        PivotBlock.Heading(2, "Intro [OLD]", translatable = true),
+                        PivotBlock.Paragraph(listOf(PivotInline.Text("One [OLD]", translatable = true))),
+                    ),
+            )
+        val currentHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
+        val previousEntries = currentHashes.mapValues { translated(it.value) }
+        val delta = BlockDelta.compute(previous = previousEntries, current = currentHashes)
+
+        val translator = DocumentTranslator(fakeService)
+        val result =
+            translator.translateArticleWithDelta(
+                sourceArticle,
+                previousTranslated,
+                delta,
+                "fr",
+                "en",
+            )
+
+        assertEquals(3, result.blocks.size)
+        val heading = result.blocks[0] as PivotBlock.Heading
+        assertEquals("Intro [EN]", heading.text)
+        val one = result.blocks[1] as PivotBlock.Paragraph
+        assertTrue(one.inline[0].toString().contains("[EN]"))
+        val two = result.blocks[2] as PivotBlock.Paragraph
+        assertTrue(two.inline[0].toString().contains("[EN]"))
+    }
+
+    @Test
+    fun `translateArticleWithDelta re-translates the whole source when the block kinds diverge`() {
+        val sourceArticle =
+            PivotArticle(
+                frontmatter = PivotFrontmatter("Test", "2026-08-04", "page", "published"),
+                blocks =
+                    listOf(
+                        PivotBlock.Heading(2, "Intro", translatable = true),
+                        PivotBlock.Paragraph(listOf(PivotInline.Text("Body", translatable = true))),
+                        PivotBlock.Source("plantuml", "@startuml\nA --> B\n@enduml"),
+                    ),
+            )
+        val previousTranslated =
+            PivotArticle(
+                frontmatter = sourceArticle.frontmatter.copy(title = "Test [OLD]"),
+                blocks =
+                    listOf(
+                        PivotBlock.Heading(2, "Intro [OLD]", translatable = true),
+                        PivotBlock.Source("plantuml", "@startuml\nA --> B [OLD]\n@enduml"),
+                        PivotBlock.Paragraph(listOf(PivotInline.Text("Body [OLD]", translatable = true))),
+                    ),
+            )
+        val currentHashes = BlockChecksum.computeForBlocks(sourceArticle.blocks)
+        val previousEntries = currentHashes.mapValues { translated(it.value) }.toMutableMap()
+        previousEntries["2"] = BlockChecksumEntry("diagram-pending", BlockTranslationStatus.PENDING)
+        val delta = BlockDelta.compute(previous = previousEntries, current = currentHashes)
+
+        val translator = DocumentTranslator(fakeService)
+        val result =
+            translator.translateArticleWithDelta(
+                sourceArticle,
+                previousTranslated,
+                delta,
+                "fr",
+                "en",
+            )
+
+        assertEquals(3, result.blocks.size)
+        assertTrue(result.blocks[0] is PivotBlock.Heading)
+        assertTrue(result.blocks[1] is PivotBlock.Paragraph)
+        assertTrue(result.blocks[2] is PivotBlock.Source)
+        val heading = result.blocks[0] as PivotBlock.Heading
+        assertEquals("Intro [EN]", heading.text)
+    }
+
     private class CountingTranslationService : TranslationService {
         override fun translate(request: TranslationRequest): TranslationResult = TranslationResult.Success("${request.sourceText} [EN]")
     }
