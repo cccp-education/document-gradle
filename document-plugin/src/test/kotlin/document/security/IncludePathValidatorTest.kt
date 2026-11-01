@@ -62,7 +62,6 @@ class IncludePathValidatorTest {
         val text = "include::../secret.adoc[]\n"
         val result = IncludePathValidator.validate(text, baseDir)
         assertTrue(result is IncludeValidationResult.Invalid, "attendu Invalid, obtenu $result")
-        result as IncludeValidationResult.Invalid
         assertTrue(result.reason.contains("escapes") || result.reason.contains("traversal"), result.reason)
         assertEquals("../secret.adoc", result.offendingTarget)
     }
@@ -72,7 +71,6 @@ class IncludePathValidatorTest {
         val text = "include::/etc/passwd[]\n"
         val result = IncludePathValidator.validate(text, baseDir)
         assertTrue(result is IncludeValidationResult.Invalid, "attendu Invalid, obtenu $result")
-        result as IncludeValidationResult.Invalid
         assertTrue(result.reason.contains("absolute"), result.reason)
     }
 
@@ -81,7 +79,6 @@ class IncludePathValidatorTest {
         val text = "= Title\n\n\ninclude::../../etc/secret.adoc[]\n"
         val result = IncludePathValidator.validate(text, baseDir)
         assertTrue(result is IncludeValidationResult.Invalid, "attendu Invalid, obtenu $result")
-        result as IncludeValidationResult.Invalid
         assertEquals(4, result.line)
     }
 
@@ -90,7 +87,6 @@ class IncludePathValidatorTest {
         val text = "include::ok.adoc[]\ninclude::../bad.adoc[]\ninclude::alsook.adoc[]\n"
         val result = IncludePathValidator.validate(text, baseDir)
         assertTrue(result is IncludeValidationResult.Invalid, "attendu Invalid, obtenu $result")
-        result as IncludeValidationResult.Invalid
         assertEquals("../bad.adoc", result.offendingTarget)
     }
 

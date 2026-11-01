@@ -44,7 +44,7 @@ class BookValidatorStructureTest {
         val result = BookValidator.validateStructure(validSections())
 
         assertTrue(result is BookValidationResult.Valid, "a complete structure must be valid")
-        assertEquals(7, (result as BookValidationResult.Valid).pageCount)
+        assertEquals(7, result.pageCount)
     }
 
     @Test
@@ -59,7 +59,7 @@ class BookValidatorStructureTest {
 
         assertTrue(result is BookValidationResult.Invalid, "a ref jump must be invalid")
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.any { it.contains("1.1") },
+            result.reasons.any { it.contains("1.1") },
             "the missing parent ref must be reported, got: ${result.reasons}",
         )
     }
@@ -79,7 +79,7 @@ class BookValidatorStructureTest {
             "top-level refs are structurally continuous but the book lacks FRONT/BACK matter",
         )
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.none { it.contains("continuity") },
+            result.reasons.none { it.contains("continuity") },
             "no continuity finding must be raised for top-level refs, got: ${result.reasons}",
         )
     }
@@ -98,7 +98,7 @@ class BookValidatorStructureTest {
 
         assertTrue(result is BookValidationResult.Invalid, "a duplicated (ref, page) pair must be invalid")
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.any { it.contains("duplicate", ignoreCase = true) },
+            result.reasons.any { it.contains("duplicate", ignoreCase = true) },
             "the duplicate must be reported, got: ${result.reasons}",
         )
     }
@@ -119,7 +119,7 @@ class BookValidatorStructureTest {
         val result = BookValidator.validateStructure(sections)
 
         assertTrue(result is BookValidationResult.Valid, "multi-page sections must stay valid, got: $result")
-        assertEquals(7, (result as BookValidationResult.Valid).pageCount)
+        assertEquals(7, result.pageCount)
     }
 
     @Test
@@ -135,7 +135,7 @@ class BookValidatorStructureTest {
 
         assertTrue(result is BookValidationResult.Invalid, "a page regression must be invalid")
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.any { it.contains("page order", ignoreCase = true) },
+            result.reasons.any { it.contains("page order", ignoreCase = true) },
             "the page regression must be reported, got: ${result.reasons}",
         )
     }
@@ -152,7 +152,7 @@ class BookValidatorStructureTest {
 
         assertTrue(result is BookValidationResult.Invalid, "a book without BACK matter must be invalid")
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.any { it.contains("BACK", ignoreCase = true) },
+            result.reasons.any { it.contains("BACK", ignoreCase = true) },
             "the missing BACK matter must be reported, got: ${result.reasons}",
         )
     }
@@ -197,7 +197,7 @@ class BookValidatorStructureTest {
 
         assertTrue(result is BookValidationResult.Invalid)
         assertTrue(
-            (result as BookValidationResult.Invalid).reasons.any { it.contains("BACK", ignoreCase = true) },
+            result.reasons.any { it.contains("BACK", ignoreCase = true) },
             "a required BACK must still be reported, got: ${result.reasons}",
         )
     }
@@ -243,7 +243,7 @@ class BookValidatorStructureTest {
         val result = BookValidator.validateStructure(sections)
 
         assertTrue(result is BookValidationResult.Invalid)
-        val reasons = (result as BookValidationResult.Invalid).reasons
+        val reasons = result.reasons
         assertTrue(reasons.size >= 3, "continuity, duplicate and page-order findings must all be reported, got: $reasons")
     }
 }

@@ -35,7 +35,7 @@ class BookNumberingNavigationTest {
         val nav = BookNumbering.navigation(tree, "1.0.1")
         assertNull(nav.previous, "the first section has no previous")
         assertNotNull(nav.next, "the first section must have a next")
-        assertEquals("1.0.2", nav.next?.ref, "next must be the next distinct section, not the same ref")
+        assertEquals("1.0.2", nav.next.ref, "next must be the next distinct section, not the same ref")
     }
 
     @Test
@@ -43,7 +43,7 @@ class BookNumberingNavigationTest {
         val tree = multiPageTree()
         val nav = BookNumbering.navigation(tree, "1.0.2")
         assertNotNull(nav.previous, "the last section must have a previous")
-        assertEquals("1.0.1", nav.previous?.ref, "previous must be the previous distinct section")
+        assertEquals("1.0.1", nav.previous.ref, "previous must be the previous distinct section")
         assertNull(nav.next, "the last distinct section has no next")
     }
 

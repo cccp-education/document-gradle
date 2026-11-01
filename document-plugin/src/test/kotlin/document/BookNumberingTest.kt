@@ -83,9 +83,9 @@ class BookNumberingTest {
         val tree = sampleTree()
         val nav = BookNumbering.navigation(tree, "1.2")
         assertNotNull(nav.previous)
-        assertEquals("1.1", nav.previous?.ref)
+        assertEquals("1.1", nav.previous.ref)
         assertNotNull(nav.next)
-        assertEquals("1.2.1", nav.next?.ref)
+        assertEquals("1.2.1", nav.next.ref)
     }
 
     @Test

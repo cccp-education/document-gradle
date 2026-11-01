@@ -68,7 +68,7 @@ class HtmlLinkLinterTest {
         val html = """<a href="#missing">dead</a>"""
         val result = HtmlLinkLinter.validate(html)
         assertTrue(result is HtmlLinkLintResult.Invalid)
-        assertEquals(listOf("missing"), (result as HtmlLinkLintResult.Invalid).deadLinks)
+        assertEquals(listOf("missing"), result.deadLinks)
     }
 
     @Test
@@ -76,7 +76,7 @@ class HtmlLinkLinterTest {
         val html = """<a href="#z">z</a><a href="#a">a</a><a href="#z">z</a>"""
         val result = HtmlLinkLinter.validate(html)
         assertTrue(result is HtmlLinkLintResult.Invalid)
-        assertEquals(listOf("a", "z"), (result as HtmlLinkLintResult.Invalid).deadLinks)
+        assertEquals(listOf("a", "z"), result.deadLinks)
     }
 
     @Test

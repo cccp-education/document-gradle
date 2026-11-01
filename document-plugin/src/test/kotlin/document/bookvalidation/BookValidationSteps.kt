@@ -116,7 +116,7 @@ class BookValidationSteps {
         val failure = enforcedFailure
         assertTrue(failure != null, "expected a build failure (GradleException) to be raised")
         assertTrue(
-            failure!!.message?.contains(snippet) == true,
+            failure.message?.contains(snippet) == true,
             "failure message '${failure.message}' does not mention '$snippet'",
         )
     }

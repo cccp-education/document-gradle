@@ -191,7 +191,7 @@ class AsciiDocParserTableTest {
     }
 
     @Test
-    fun `parses a| asciidoc style cell`() {
+    fun `parses an asciidoc style cell`() {
         val lines =
             listOf(
                 "|===",
@@ -211,7 +211,7 @@ class AsciiDocParserTableTest {
     }
 
     @Test
-    fun `parses h| header style cell`() {
+    fun `parses a header style cell`() {
         val lines =
             listOf(
                 "|===",
