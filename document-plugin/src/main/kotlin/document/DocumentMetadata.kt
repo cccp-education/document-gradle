@@ -53,7 +53,7 @@ data class DocumentMetadata(
         private val mapper: ObjectMapper =
             ObjectMapper()
                 .enable(SerializationFeature.INDENT_OUTPUT)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
 
         /**
          * Writes metadata as a pretty-printed JSON file to the given directory.

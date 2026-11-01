@@ -28,7 +28,7 @@ data class PdfValidationReport(
     fun toJson(): String =
         ObjectMapper()
             .registerModule(KotlinModule.Builder().build())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .writerWithDefaultPrettyPrinter()
             .writeValueAsString(this)
 

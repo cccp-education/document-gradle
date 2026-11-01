@@ -51,7 +51,7 @@ abstract class LintHtmlDocumentTask : DefaultTask() {
                         logger.lifecycle("HTML link linting passed: no dead internal links found.")
                     }
                     is HtmlLinkLintResult.Invalid -> {
-                        val invalid = result as HtmlLinkLintResult.Invalid
+                        val invalid = result
                         val deadLinks = invalid.deadLinks.joinToString { "\"$it\"" }
                         val message = "HTML link linting failed: dead internal link(s) found: $deadLinks"
                         when (mode) {

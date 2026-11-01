@@ -114,7 +114,7 @@ abstract class AssembleBookTask : DefaultTask() {
 
         val toc = tocFile.orNull?.asFile
         val tocPresent = toc != null && toc.exists()
-        val sections = if (tocPresent) BookTocParser.parse(toc!!) else emptyList()
+        val sections = if (tocPresent) BookTocParser.parse(toc) else emptyList()
 
         // DOC-BOOK-MATTER — resolve the matter policy against the real TOC.
         // DERIVED (default) adopts the convention roots only when the TOC
