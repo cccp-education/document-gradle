@@ -171,23 +171,24 @@ object DocumentConverter {
         outputFile: java.io.File?,
         safeMode: SafeMode = SafeMode.UNSAFE,
     ): Options {
+        val request = conversionRequest(backend, theme, format, outputFile, safeMode)
         val builder =
             Options
                 .builder()
-                .backend(backend)
-                .safe(safeMode)
-                .standalone(true)
-                .option("sourcemap", "true")
+                .backend(request.backend)
+                .safe(request.safeMode)
+                .standalone(request.standalone)
+                .option("sourcemap", request.sourcemap.toString())
 
-        if (outputFile != null) {
-            builder.toFile(outputFile)
+        if (request.outputFile != null) {
+            builder.toFile(request.outputFile)
         } else {
             builder.toFile(false)
         }
 
-        if (format != null && !theme.isEmpty()) {
+        if (request.attributes.isNotEmpty()) {
             val attrs = Attributes.builder()
-            theme.toAttributes(format).forEach { (key, value) ->
+            request.attributes.forEach { (key, value) ->
                 attrs.attribute(key, value)
             }
             builder.attributes(attrs.build())
@@ -195,6 +196,32 @@ object DocumentConverter {
 
         return builder.build()
     }
+
+    /**
+     * Builds the pure [AsciidoctorConversionRequest] that [buildOptions] adapts to AsciidoctorJ.
+     *
+     * WARN-14 — this is the assertable contract: tests read the request (backend,
+     * safe-mode, output, attributes) instead of the deprecated `Options.map()`.
+     *
+     * @param backend the AsciidoctorJ backend ("html5", "pdf", "epub3", "docbook5", "manpage")
+     * @param theme the visual theme to apply (attributes injected per format)
+     * @param format the [DocumentFormat] (null -> no theme attributes injected)
+     * @param outputFile the output file (null -> in-memory String conversion)
+     * @param safeMode the AsciidoctorJ safe-mode guard (UNSAFE/SERVER/SECURE)
+     */
+    internal fun conversionRequest(
+        backend: String,
+        theme: DocumentTheme,
+        format: DocumentFormat?,
+        outputFile: java.io.File?,
+        safeMode: SafeMode = SafeMode.UNSAFE,
+    ): AsciidoctorConversionRequest =
+        AsciidoctorConversionRequest(
+            backend = backend,
+            safeMode = safeMode,
+            outputFile = outputFile,
+            attributes = if (format != null && !theme.isEmpty()) theme.toAttributes(format) else emptyMap(),
+        )
 
     /**
      * Decide si la conversion doit etre skippee (economie d'encre).

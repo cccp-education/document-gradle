@@ -1,6 +1,5 @@
 package document
 
-import org.asciidoctor.Options
 import org.asciidoctor.SafeMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -145,9 +144,95 @@ class DocumentConverterTest {
     }
 
     // --- DOC-CR3-2 : SafeMode configurable ---
+    // WARN-14 : the assertions target the pure `AsciidoctorConversionRequest` seam
+    // instead of `Options.map()` (deprecated "for internal use only" in AsciidoctorJ 3).
 
     @Test
-    fun `buildOptions applique le SafeMode fourni`() {
+    fun `conversionRequest applique le SafeMode fourni`() {
+        val request =
+            DocumentConverter.conversionRequest(
+                backend = "html5",
+                theme = DocumentTheme(),
+                format = DocumentFormat.HTML,
+                outputFile = null,
+                safeMode = SafeMode.SERVER,
+            )
+
+        assertEquals(SafeMode.SERVER, request.safeMode, "le SafeMode fourni doit etre reflete dans la requete")
+    }
+
+    @Test
+    fun `conversionRequest utilise UNSAFE par defaut pour backward-compat`() {
+        val request =
+            DocumentConverter.conversionRequest(
+                backend = "html5",
+                theme = DocumentTheme(),
+                format = DocumentFormat.HTML,
+                outputFile = null,
+            )
+
+        assertEquals(SafeMode.UNSAFE, request.safeMode, "le defaut doit rester UNSAFE (backward-compat)")
+    }
+
+    @Test
+    fun `conversionRequest applique SECURE quand fourni`() {
+        val request =
+            DocumentConverter.conversionRequest(
+                backend = "pdf",
+                theme = DocumentTheme(),
+                format = DocumentFormat.PDF,
+                outputFile = File(tempDir(), "out.pdf"),
+                safeMode = SafeMode.SECURE,
+            )
+
+        assertEquals(SafeMode.SECURE, request.safeMode, "le SafeMode SECURE doit etre reflete dans la requete")
+    }
+
+    @Test
+    fun `conversionRequest decrit backend standalone sourcemap et sortie`() {
+        val output = File(tempDir(), "out.pdf")
+
+        val request =
+            DocumentConverter.conversionRequest(
+                backend = "pdf",
+                theme = DocumentTheme(),
+                format = DocumentFormat.PDF,
+                outputFile = output,
+                safeMode = SafeMode.UNSAFE,
+            )
+
+        assertEquals("pdf", request.backend)
+        assertTrue(request.standalone, "la conversion standalone doit etre demandee")
+        assertTrue(request.sourcemap, "la sourcemap doit etre demandee")
+        assertEquals(output, request.outputFile, "le fichier de sortie doit etre transporte")
+        assertTrue(request.attributes.isEmpty(), "un theme vide n'injecte aucun attribut")
+    }
+
+    @Test
+    fun `conversionRequest injecte les attributs du theme par format`() {
+        val dir = tempDir()
+        val theme = DocumentTheme(pdfTheme = File(dir, "theme.yml"), logo = File(dir, "logo.png"))
+
+        val request =
+            DocumentConverter.conversionRequest(
+                backend = "pdf",
+                theme = theme,
+                format = DocumentFormat.PDF,
+                outputFile = File(dir, "out.pdf"),
+                safeMode = SafeMode.UNSAFE,
+            )
+
+        assertEquals(
+            mapOf(
+                "pdf-theme" to File(dir, "theme.yml").absolutePath,
+                "pdf-front-cover-image" to File(dir, "logo.png").absolutePath,
+            ),
+            request.attributes,
+        )
+    }
+
+    @Test
+    fun `buildOptions produit des Options AsciidoctorJ depuis la requete`() {
         val options =
             DocumentConverter.buildOptions(
                 backend = "html5",
@@ -157,34 +242,7 @@ class DocumentConverterTest {
                 safeMode = SafeMode.SERVER,
             )
 
-        assertEquals(SafeMode.SERVER, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode fourni doit etre reflete dans les Options")
-    }
-
-    @Test
-    fun `buildOptions utilise UNSAFE par defaut pour backward-compat`() {
-        val options =
-            DocumentConverter.buildOptions(
-                backend = "html5",
-                theme = DocumentTheme(),
-                format = DocumentFormat.HTML,
-                outputFile = null,
-            )
-
-        assertEquals(SafeMode.UNSAFE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le defaut doit rester UNSAFE (backward-compat)")
-    }
-
-    @Test
-    fun `buildOptions applique SECURE quand fourni`() {
-        val options =
-            DocumentConverter.buildOptions(
-                backend = "pdf",
-                theme = DocumentTheme(),
-                format = DocumentFormat.PDF,
-                outputFile = File(tempDir(), "out.pdf"),
-                safeMode = SafeMode.SECURE,
-            )
-
-        assertEquals(SafeMode.SECURE, SafeMode.safeMode(options.map()[Options.SAFE] as Int), "le SafeMode SECURE doit etre reflete dans les Options")
+        assertNotNull(options)
     }
 
     @Test
