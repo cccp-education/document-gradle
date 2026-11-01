@@ -19,7 +19,7 @@ import document.translation.validation.TableValidationResult
  * @property tableValidationResults invalid table syntax found in the produced document.
  * @property plantUmlValidationResults invalid PlantUML syntax found in the produced document.
  */
-internal data class TranslationTrace(
+data class TranslationTrace(
     val translationFailures: Set<String> = emptySet(),
     val tableValidationResults: List<TableValidationResult.Invalid> = emptyList(),
     val plantUmlValidationResults: List<PlantUmlValidationResult.Invalid> = emptyList(),
@@ -36,8 +36,13 @@ internal data class TranslationTrace(
     }
 }
 
-/** A rendered document and the diagnostics of the pass that produced it. */
-internal data class DocumentTranslation(
+/**
+ * A rendered document and the diagnostics of the pass that produced it.
+ *
+ * Public because it is the result type of the [TracedArticleTranslator]
+ * capability (XF-FP3-3).
+ */
+data class DocumentTranslation(
     val content: String,
     val trace: TranslationTrace = TranslationTrace.EMPTY,
 )

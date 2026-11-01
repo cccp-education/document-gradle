@@ -42,7 +42,7 @@ class DocumentTranslator(
     private val plantUmlPort: PlantUmlTranslationPort? = null,
     /** Document-side syntax validation for the port path (report `DOC-PLANTUML-VALIDATE`). */
     private val plantUmlSyntaxValidator: PlantUmlSyntaxValidator = PlantUmlSyntaxValidator.create(),
-) : ArticleTranslator {
+) : TracedArticleTranslator {
     private val log = LoggerFactory.getLogger(DocumentTranslator::class.java)
 
     override fun translate(
@@ -55,7 +55,7 @@ class DocumentTranslator(
      * Translates a whole document and returns the rendered content **with** the
      * diagnostics of the pass (failures, table / PlantUML validation findings).
      */
-    internal fun translateOutcome(
+    override fun translateOutcome(
         asciidoc: String,
         sourceLanguage: String,
         targetLanguage: String,

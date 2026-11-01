@@ -52,10 +52,9 @@ class BatchDocumentTranslator(
                 // translator: the instance is stateless, so nothing leaks from one
                 // file to the next and no `clear()` is needed.
                 val outcome =
-                    if (documentTranslator is DocumentTranslator) {
-                        documentTranslator.translateOutcome(original, srcLang, tgtLang)
-                    } else {
-                        DocumentTranslation(documentTranslator.translate(original, srcLang, tgtLang))
+                    when (documentTranslator) {
+                        is TracedArticleTranslator -> documentTranslator.translateOutcome(original, srcLang, tgtLang)
+                        else -> DocumentTranslation(documentTranslator.translate(original, srcLang, tgtLang))
                     }
                 outputFile.parentFile.mkdirs()
                 outputFile.writeText(outcome.content)
