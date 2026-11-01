@@ -1,6 +1,7 @@
 package document.translation.tree
 
 import document.translation.PivotBlock
+import document.translation.fold
 
 /**
  * GBL-010 G-2 — the article as a document: its AsciiDoc AST as a tree.
@@ -90,43 +91,28 @@ object ArticleTreeAudit {
         block: PivotBlock,
         statusResolver: PlantUmlLeafStatusResolver?,
     ): ArticleNode.Leaf =
-        when (block) {
-            is PivotBlock.Heading ->
-                ArticleNode.Leaf("heading", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.Paragraph ->
-                ArticleNode.Leaf("paragraph", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.ListBlock ->
-                ArticleNode.Leaf("list", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.Table ->
-                ArticleNode.Leaf("table", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.Admonition ->
-                ArticleNode.Leaf("admonition", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.DescriptionList ->
-                ArticleNode.Leaf("description-list", block.translatable, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.Source ->
-                if (block.language.equals(PLANTUML, ignoreCase = true)) {
+        block.fold(
+            heading = { ArticleNode.Leaf("heading", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            paragraph = { ArticleNode.Leaf("paragraph", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            listBlock = { ArticleNode.Leaf("list", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            table = { ArticleNode.Leaf("table", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            admonition = { ArticleNode.Leaf("admonition", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            source = {
+                if (it.language.equals(PLANTUML, ignoreCase = true)) {
                     ArticleNode.Leaf(
                         kind = PLANTUML,
                         translatable = false,
                         owner = ArticleLeafOwner.PLANTUML,
-                        status = statusResolver?.resolve(block),
+                        status = statusResolver?.resolve(it),
                     )
                 } else {
                     ArticleNode.Leaf("source", false, ArticleLeafOwner.DOCUMENT)
                 }
-
-            is PivotBlock.BlockMacro ->
-                ArticleNode.Leaf("block-macro", false, ArticleLeafOwner.DOCUMENT)
-
-            is PivotBlock.Hr ->
-                ArticleNode.Leaf("hr", false, ArticleLeafOwner.DOCUMENT)
-        }
+            },
+            descriptionList = { ArticleNode.Leaf("description-list", it.translatable, ArticleLeafOwner.DOCUMENT) },
+            blockMacro = { ArticleNode.Leaf("block-macro", false, ArticleLeafOwner.DOCUMENT) },
+            hr = { ArticleNode.Leaf("hr", false, ArticleLeafOwner.DOCUMENT) },
+        )
 
     /** A mutable building node, frozen into the immutable [ArticleNode] tree. */
     private sealed interface Building {

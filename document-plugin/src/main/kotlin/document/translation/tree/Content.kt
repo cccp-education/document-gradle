@@ -4,6 +4,7 @@ import document.translation.PivotArticle
 import document.translation.PivotBlock
 import document.translation.PivotInline
 import document.translation.TextTranslatableClassifier
+import document.translation.fold
 
 data class Content(
     val pivot: PivotArticle,
@@ -13,17 +14,17 @@ data class Content(
     fun inlineTexts(): List<PivotInline> = pivot.blocks.flatMap { inlineOf(it) }
 
     private fun inlineOf(block: PivotBlock): List<PivotInline> =
-        when (block) {
-            is PivotBlock.Paragraph -> block.inline
-            is PivotBlock.ListBlock -> block.items.flatten()
-            is PivotBlock.Table -> block.header.flatten() + block.rows.flatten().flatten()
-            is PivotBlock.Admonition -> block.blocks.flatMap { inlineOf(it) }
-            is PivotBlock.Heading -> emptyList()
-            is PivotBlock.DescriptionList -> block.items.flatMap { it.term + it.definition }
-            is PivotBlock.BlockMacro -> emptyList()
-            is PivotBlock.Source -> emptyList()
-            is PivotBlock.Hr -> emptyList()
-        }
+        block.fold(
+            heading = { emptyList() },
+            paragraph = { it.inline },
+            listBlock = { it.items.flatten() },
+            table = { it.header.flatten() + it.rows.flatten().flatten() },
+            admonition = { it.blocks.flatMap { inner -> inlineOf(inner) } },
+            source = { emptyList() },
+            descriptionList = { it.items.flatMap { item -> item.term + item.definition } },
+            blockMacro = { emptyList() },
+            hr = { emptyList() },
+        )
 
     fun translatableSegments(): List<PivotInline> = inlineTexts().filter { it.translatable && TextTranslatableClassifier.isTranslatable(it.textValue()) }
 }
