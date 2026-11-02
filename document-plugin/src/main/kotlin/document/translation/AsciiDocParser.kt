@@ -375,8 +375,7 @@ class AsciiDocParser {
         return match?.groupValues?.get(1)
     }
 
-    private fun hasTableHeaderOption(line: String): Boolean =
-        line.contains("options=\"header\"") || line.contains("%header")
+    private fun hasTableHeaderOption(line: String): Boolean = line.contains("options=\"header\"") || line.contains("%header")
 
     private fun isTableAttributeLine(line: String): Boolean =
         line.startsWith("[cols=") || (line.startsWith("[") && line.endsWith("]") && hasTableHeaderOption(line))
