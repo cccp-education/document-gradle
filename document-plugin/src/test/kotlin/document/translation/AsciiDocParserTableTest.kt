@@ -431,11 +431,17 @@ class AsciiDocParserTableTest {
         // `"]` right after the value, and the renderer never emitted `options`.
         val adoc = "[cols=\"1,3\", options=\"header\"]\n|===\n| A | B\n| 1 | 2\n|===\n"
 
-        val table = parser.parse(adoc).blocks.filterIsInstance<PivotBlock.Table>().single()
+        val blocks = parser.parseBody(adoc)
+        val table = blocks.filterIsInstance<PivotBlock.Table>().single()
         assertTrue(table.headerOption)
         assertEquals("1,3", table.cols)
 
-        val rendered = AsciiDocRenderer().render(parser.parse(adoc))
+        val article =
+            PivotArticle(
+                PivotFrontmatter("T", "2026-01-01", "page", "published"),
+                blocks,
+            )
+        val rendered = AsciiDocRenderer().render(article)
         assertTrue(rendered.contains("[cols=\"1,3\",options=\"header\"]"), rendered)
     }
 
@@ -443,11 +449,17 @@ class AsciiDocParserTableTest {
     fun `parses options header attribute without cols and preserves it on render`() {
         val adoc = "[options=\"header\"]\n|===\n| A | B\n| 1 | 2\n|===\n"
 
-        val table = parser.parse(adoc).blocks.filterIsInstance<PivotBlock.Table>().single()
+        val blocks = parser.parseBody(adoc)
+        val table = blocks.filterIsInstance<PivotBlock.Table>().single()
         assertTrue(table.headerOption)
-        assertEquals(null, table.cols)
+        assertNull(table.cols)
 
-        val rendered = AsciiDocRenderer().render(parser.parse(adoc))
+        val article =
+            PivotArticle(
+                PivotFrontmatter("T", "2026-01-01", "page", "published"),
+                blocks,
+            )
+        val rendered = AsciiDocRenderer().render(article)
         assertTrue(rendered.contains("[options=\"header\"]"), rendered)
     }
 }
