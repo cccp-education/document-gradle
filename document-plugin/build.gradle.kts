@@ -15,7 +15,7 @@ version =
         .get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.120"))
+    implementation(platform("education.cccp:workspace-bom:0.0.121"))
 
     // kotlin-stdlib is pulled transitively (and pinned by the BOM). The
     // kotlin-stdlib-jdk8 shim is an empty 953-byte artifact since Kotlin 1.8
