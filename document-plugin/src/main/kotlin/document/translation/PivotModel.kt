@@ -28,6 +28,13 @@ sealed class PivotBlock {
         val cols: String?,
         val header: List<List<PivotInline>>,
         val rows: List<List<List<PivotInline>>>,
+        /**
+         * DOC-TABLE-OPTIONS (S-085) — the AsciiDoc `options="header"` (or
+         * `%header`) attribute was present on the source table. The renderer must
+         * emit it again: without it every translated table loses its header row
+         * (measured: 315 `table-options-lost` defects across the 21 variants).
+         */
+        val headerOption: Boolean = false,
     ) : PivotBlock() {
         override val translatable: Boolean
             get() = (header.flatten() + rows.flatten().flatten()).any { it.translatable }

@@ -4,6 +4,8 @@ data class Table(
     val cols: List<ColSpec>,
     val header: List<Row>,
     val body: List<Row>,
+    /** DOC-TABLE-OPTIONS (S-085) — `options="header"` was present in the source. */
+    val headerOption: Boolean = false,
 ) {
     val allRows: List<Row> get() = header + body
 
@@ -55,10 +57,10 @@ data class Table(
 
     fun toAsciiDoc(): String {
         val sb = StringBuilder()
-        if (cols.isNotEmpty()) {
-            val colSpec = cols.joinToString(",") { it.toAsciiDoc() }
-            sb.append("[cols=\"$colSpec\"]\n")
-        }
+        val attributes = mutableListOf<String>()
+        if (cols.isNotEmpty()) attributes += "cols=\"${cols.joinToString(",") { it.toAsciiDoc() }}\""
+        if (headerOption) attributes += "options=\"header\""
+        if (attributes.isNotEmpty()) sb.append("[${attributes.joinToString(",")}]\n")
         sb.append("|===\n")
         allRows.forEachIndexed { idx, row ->
             row.cells.forEach { cell ->

@@ -423,4 +423,31 @@ class AsciiDocParserTableTest {
         assertEquals(2, cell.colSpan)
         assertEquals(2, cell.rowSpan)
     }
+
+    @Test
+    fun `parses cols plus options header attribute and preserves both on render`() {
+        // DOC-TABLE-OPTIONS (S-085) — `[cols="1,3", options="header"]` (space before
+        // the second attribute) used to lose cols *and* options: the regex required
+        // `"]` right after the value, and the renderer never emitted `options`.
+        val adoc = "[cols=\"1,3\", options=\"header\"]\n|===\n| A | B\n| 1 | 2\n|===\n"
+
+        val table = parser.parse(adoc).blocks.filterIsInstance<PivotBlock.Table>().single()
+        assertTrue(table.headerOption)
+        assertEquals("1,3", table.cols)
+
+        val rendered = AsciiDocRenderer().render(parser.parse(adoc))
+        assertTrue(rendered.contains("[cols=\"1,3\",options=\"header\"]"), rendered)
+    }
+
+    @Test
+    fun `parses options header attribute without cols and preserves it on render`() {
+        val adoc = "[options=\"header\"]\n|===\n| A | B\n| 1 | 2\n|===\n"
+
+        val table = parser.parse(adoc).blocks.filterIsInstance<PivotBlock.Table>().single()
+        assertTrue(table.headerOption)
+        assertEquals(null, table.cols)
+
+        val rendered = AsciiDocRenderer().render(parser.parse(adoc))
+        assertTrue(rendered.contains("[options=\"header\"]"), rendered)
+    }
 }

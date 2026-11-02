@@ -118,9 +118,10 @@ class AsciiDocRenderer : ArticleRenderer {
         table: PivotBlock.Table,
         sb: StringBuilder,
     ) {
-        if (table.cols != null) {
-            sb.appendLine("[cols=\"${table.cols}\"]")
-        }
+        val attributes = mutableListOf<String>()
+        table.cols?.let { attributes += "cols=\"$it\"" }
+        if (table.headerOption) attributes += "options=\"header\""
+        if (attributes.isNotEmpty()) sb.appendLine("[${attributes.joinToString(",")}]")
         sb.appendLine("|===")
         if (table.header.isNotEmpty()) {
             sb.appendLine(

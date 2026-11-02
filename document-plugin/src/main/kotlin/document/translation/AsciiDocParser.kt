@@ -187,6 +187,14 @@ class AsciiDocParser {
                     blocks.add(block)
                     i = next
                 }
+                // DOC-TABLE-OPTIONS (S-085) — `[options="header"]` / `[%header,…]`
+                // with no `cols` attribute is a table attribute line, not an
+                // admonition: dropping it lost the header row on translation.
+                line.startsWith("[") && line.endsWith("]") && hasTableHeaderOption(line) -> {
+                    val (table, next) = parseTable(lines, i, cols = extractCols(line), headerOption = true)
+                    blocks.add(table)
+                    i = next
+                }
                 line.startsWith("[") && line.endsWith("]") && !line.startsWith("[cols") -> {
                     val kind = line.removeSurrounding("[", "]").trim()
                     if (kind in ADMONITION_KINDS) {
@@ -198,7 +206,13 @@ class AsciiDocParser {
                     }
                 }
                 line.startsWith("[cols=") -> {
-                    val (table, next) = parseTable(lines, i, cols = extractCols(line))
+                    val (table, next) =
+                        parseTable(
+                            lines,
+                            i,
+                            cols = extractCols(line),
+                            headerOption = hasTableHeaderOption(line),
+                        )
                     blocks.add(table)
                     i = next
                 }
@@ -354,18 +368,28 @@ class AsciiDocParser {
     }
 
     private fun extractCols(line: String): String? {
-        val match = Regex("\\[cols=\"([^\"]+)\"\\]").find(line)
+        // DOC-TABLE-OPTIONS (S-085) — the historical regex required `"]` right
+        // after the value, so `[cols="1,3", options="header"]` (space or second
+        // attribute) silently returned null: the column specs were lost too.
+        val match = Regex("\\[cols=\"([^\"]+)\"").find(line)
         return match?.groupValues?.get(1)
     }
+
+    private fun hasTableHeaderOption(line: String): Boolean =
+        line.contains("options=\"header\"") || line.contains("%header")
+
+    private fun isTableAttributeLine(line: String): Boolean =
+        line.startsWith("[cols=") || (line.startsWith("[") && line.endsWith("]") && hasTableHeaderOption(line))
 
     fun parseTableStructured(
         lines: List<String>,
         start: Int,
         cols: String?,
+        headerOption: Boolean = false,
     ): Pair<Table, Int> {
         val colSpecs = parseColSpecs(cols)
         var i = start
-        if (lines[i].startsWith("[cols=")) i++
+        if (isTableAttributeLine(lines[i])) i++
         if (i < lines.size && lines[i].startsWith("|===")) i++
         val cellLines = mutableListOf<String>()
         while (i < lines.size && !lines[i].startsWith("|===")) {
@@ -377,7 +401,7 @@ class AsciiDocParser {
         val rows = parseStructuredRows(cellLines)
         val header = if (rows.isNotEmpty()) listOf(rows.first()) else emptyList()
         val body = if (rows.size > 1) rows.drop(1) else emptyList()
-        return Table(colSpecs, header, body) to i
+        return Table(colSpecs, header, body, headerOption) to i
     }
 
     internal fun parseColSpecs(raw: String?): List<ColSpec> {
@@ -570,9 +594,10 @@ class AsciiDocParser {
         lines: List<String>,
         start: Int,
         cols: String?,
+        headerOption: Boolean = false,
     ): Pair<PivotBlock.Table, Int> {
         var i = start
-        if (lines[i].startsWith("[cols=")) i++
+        if (isTableAttributeLine(lines[i])) i++
         if (i < lines.size && lines[i].startsWith("|===")) i++
         val cellLines = mutableListOf<String>()
         while (i < lines.size && !lines[i].startsWith("|===")) {
@@ -583,11 +608,11 @@ class AsciiDocParser {
 
         val rows = parseTableRows(cellLines)
         if (rows.isEmpty()) {
-            return PivotBlock.Table(cols, header = emptyList(), rows = emptyList()) to i
+            return PivotBlock.Table(cols, header = emptyList(), rows = emptyList(), headerOption = headerOption) to i
         }
         val header = rows[0]
         val bodyRows = rows.drop(1)
-        return PivotBlock.Table(cols, header, bodyRows) to i
+        return PivotBlock.Table(cols, header, bodyRows, headerOption = headerOption) to i
     }
 
     private fun parseTableRows(cellLines: List<String>): List<List<List<PivotInline>>> {
