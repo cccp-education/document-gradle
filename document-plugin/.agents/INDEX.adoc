@@ -1,6 +1,7 @@
 = INDEX — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Session 291 (workspace S-224)_ : **DOC-A11Y socle** — rapport producteur `a11y-report.json` (HTML/EPUB/PDF) consommé par academy : domaine `document.a11y`, inspecteurs HTML/EPUB, auditeur, tâche `reportDocumentAccessibility` (advisory sauf `-Pdocument.a11yStrict=true`), 5 tests ; compiles + `validatePlugins` + `ktlintCheck` VERTS. Reste : correctifs de rendu (`lang`, `alt`, `epub:type`, métadonnées) + BDD.
 _Regles absolues_ : voir `AGENT.adoc`
 _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
 _DAG_ : N2 — Plugin Gradle de creation et publication AsciiDoc multi-format (WRITE + PUBLISH)

@@ -2929,9 +2929,20 @@ _Constat mesuré sur disque (grep sur `src/main`)._
 
 == EPIC DOC-A11Y — Accessibilité HTML/EPUB (~9 pts)
 
-*Statut* : 🔴 À FAIRE. *Dépend de* : `GBL-011` (EPIC transverse).
+*Statut* : 🟡 EN COURS (S-290 / workspace S-224) — **rapport producteur livré** ;
+reste les correctifs de rendu et la BDD. *Dépend de* : `GBL-011` (EPIC transverse).
 *Principe* : l'accessibilité se contrôle au **rendu**, pas à la validité. Le PDF reste
 hors périmètre et sa limite est déclarée.
+
+*Livré (S-290)* : domaine `document.a11y` (`DocumentA11yReport`, `DeliverableA11yReport`,
+`DocumentA11yFinding`, `DocumentA11yRules`/`Severity`), `HtmlAccessibilityInspector`
+(`lang`, `alt`, `th`, `h1`), `EpubAccessibilityInspector` (XHTML + métadonnées OPF
+`accessMode`/`accessibilityFeature`, ZIP tolérant), `DocumentA11yAuditor` (HTML/EPUB/PDF,
+limites PDF déclarées), tâche `reportDocumentAccessibility` (rapport
+`build/docs/document/a11y-report.json`, advisory sauf `-Pdocument.a11yStrict=true`,
+`mustRunAfter` les conversions) + 5 fichiers de tests. Le JSON respecte le contrat
+consommé par academy (`deliverables[].kind`, `findings[].rule/severity/location/message`,
+`limits`). Compiles + `validatePlugins` + `ktlintCheck` VERTS.
 
 |===
 | US | Contenu | Pts | Statut
@@ -2939,17 +2950,17 @@ hors périmètre et sa limite est déclarée.
 | DOC-A11Y-1
 | Rendu HTML accessible : `lang` par document et par changement de langue, hiérarchie de titres contiguë, `alt` obligatoire sur toute image, en-têtes de tableau (`<th scope>`), liens explicites
 | 3
-| 🔴 À FAIRE
+| 🟡 EN COURS (S-290) — inspector HTML livré (`lang`/`alt`/`th`/`h1`) ; reste les correctifs de rendu
 
 | DOC-A11Y-2
 | EPUB 3 accessible : `:lang:`, `epub:type` sur les sections, alternatives textuelles, `landmarks`, métadonnées `schema.org/accessMode`/`accessibilityFeature`
 | 3
-| 🔴 À FAIRE
+| 🟡 EN COURS (S-290) — inspector EPUB livré (XHTML + métadonnées OPF) ; reste les correctifs de rendu
 
 | DOC-A11Y-3
 | Tâche `reportDocumentAccessibility` (rapport JSON versionné) + porte de non-régression + déclaration explicite des limites PDF
 | 2
-| 🔴 À FAIRE
+| ✅ TERMINÉ (S-290) — `a11y-report.json` consommé par academy, advisory sauf `a11yStrict`
 
 | DOC-A11Y-4
 | BDD `@a11y` : alternatives manquantes, hiérarchie de titres cassée, tableau sans en-têtes, EPUB sans métadonnées d'accessibilité

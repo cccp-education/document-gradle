@@ -302,6 +302,7 @@ class DocumentPlugin : Plugin<Project> {
         registerValidateDocumentPdf(project, ext)
         registerValidateDocument(project, ext)
         registerLintHtmlDocument(project, ext)
+        registerReportDocumentAccessibility(project, ext)
         registerVerifyHtmlLinksTask(project, ext)
         registerCollectTableSemantics(project, ext)
     }
@@ -1154,6 +1155,35 @@ class DocumentPlugin : Plugin<Project> {
             // lint usable standalone (wired here because this registration runs after
             // registerBookPipeline).
             task.mustRunAfter("collectDocumentRetrieve", "convertDocumentToHtml")
+        }
+    }
+
+    /**
+     * DOC-A11Y / GBL-011-3 — writes the accessibility report consumed by
+     * academy's `ProducerReportInspector`.
+     *
+     * The artifacts directory is scanned after the conversions (mustRunAfter,
+     * never dependsOn: the report stays usable standalone). An absent directory
+     * yields an empty report, never a configuration failure.
+     */
+    private fun registerReportDocumentAccessibility(
+        project: Project,
+        ext: DocumentExtension,
+    ) {
+        project.tasks.register("reportDocumentAccessibility", ReportDocumentAccessibilityTask::class.java) { task ->
+            task.group = "document"
+            task.description =
+                "Écrit le rapport d'accessibilité (a11y-report.json) consommé par academy — DOC-A11Y / GBL-011-3"
+            task.artifacts.from(project.layout.buildDirectory.dir("docs/document"))
+            task.strict.set(cliProp(project, "a11yStrict").map { it.toBoolean() }.orElse(false))
+            task.reportFile.set(project.layout.buildDirectory.file("docs/document/a11y-report.json"))
+            task.mustRunAfter(
+                "convertDocumentToHtml",
+                "convertDocumentToEpub",
+                "convertDocumentToPdf",
+                "assembleBook",
+                "publishBookAllLanguages",
+            )
         }
     }
 
