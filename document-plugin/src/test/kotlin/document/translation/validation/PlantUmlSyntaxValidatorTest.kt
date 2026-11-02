@@ -87,7 +87,7 @@ class PlantUmlSyntaxValidatorTest {
         assertEquals("My Article", result.articleTitle)
         assertEquals(2, result.blockIndex)
         assertEquals("TranslateLabels", result.strategy)
-        assertTrue(result.reason.contains("@startuml"))
+        assertTrue(result.reason.contains("delimiters"))
     }
 
     @Test
@@ -102,7 +102,7 @@ class PlantUmlSyntaxValidatorTest {
         val result = validator.validate(code, "Article", 0, "TranslateLabels")
 
         assertIs<PlantUmlValidationResult.Invalid>(result)
-        assertTrue(result.reason.contains("@enduml"))
+        assertTrue(result.reason.contains("delimiters"))
     }
 
     @Test
@@ -112,7 +112,7 @@ class PlantUmlSyntaxValidatorTest {
         val result = validator.validate(code, "Article", 0, "TranslateLabels")
 
         assertIs<PlantUmlValidationResult.Invalid>(result)
-        assertTrue(result.reason.contains("@startuml"))
+        assertTrue(result.reason.contains("delimiters"))
     }
 
     @Test
