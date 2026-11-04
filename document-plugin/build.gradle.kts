@@ -115,6 +115,13 @@ tasks.named<Test>("test") {
         ws.versions.workspace.bom
             .get(),
     )
+
+    // DOC-TEST-PERF US-5 — the unit suite was the CI critical path after the
+    // layer split (6m37s). The tests are pure domain (no shared temp dir, no
+    // TestKit); two forks halve the execution while a single fork stays the
+    // fallback on single-core runners. functionalTest keeps one fork: its
+    // TestKit builds already fork Gradle and would contend.
+    maxParallelForks = Runtime.getRuntime().availableProcessors().coerceIn(1, 2)
 }
 
 // DOC-TRANSLATE-RESILIENCE — the resilience proof runs the production
