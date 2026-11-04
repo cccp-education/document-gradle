@@ -1,0 +1,66 @@
+= Session 028 (document) — 2026-11-04
+:toc: left
+:icons: font
+
+== Métadonnées
+
+[cols="1,4"]
+|===
+| Type | performance CI + couverture + garde de sortie
+| Code | EPIC DOC-TEST-PERF (US-1→6) + DOC-I18N-OUTPUT DOC-OUT-2
+| Titre | Tests : 29m26s → ~5-7 min, 73 scénarios orphelins restaurés, garde anti-duplication
+| Score | 10/10
+|===
+
+== 1. EPIC DOC-TEST-PERF (livré)
+
+Baseline mesurée (run `41745186552`) : `./gradlew build` = **29m26s** dans un
+seul job, avec **double exécution** de la couverture BDD (30 runners dédiés
+~7m47 **puis** l'agrégat `cucumberTest` ~15m58).
+
+* **US-1** — `test.yml` séparé en 6+ jobs (`static`, `unit`, `functional`,
+  `bdd` shards, `publish-local`) ; `check` n'est plus invoqué en CI.
+* **US-2** — l'agrégat `cucumberTest` est retiré de `check` (preuve
+  `check --dry-run` : agrégat absent, runners présents).
+* **US-3** — `CucumberShardPartitionTest` : partition disjointe/exhaustive,
+  `publish.needs` complet, dé-câblage présent, **et** garde « chaque
+  `.feature` est sélectionnée par au moins un runner ».
+* **US-4** — `document.feature` (`@document`) et `release-notes.feature`
+  (`@doc8`) étaient **orphelins** (aucun runner ne les sélectionnait) :
+  `CoreDocumentCucumberRunner` + spec `coreDocumentCucumberTest` (shard `e`)
+  → **73 scénarios restaurés, tous verts**.
+* **US-5** — `maxParallelForks = min(2, cpu)` sur `test` ; `functionalTest`
+  scindé en 2 shards de classes.
+* **US-6** — KPI consigné (seuil d'alerte PR > 10 min).
+
+**Résultat** (runs `41752801954` → `41852399486`) : wall-clock **5m47–7m05**
+selon la charge du runner, **−80 %**, couverture **augmentée** de 73 scénarios.
+Cadrage : `.agents/CADRAGE_EPIC_DOC_TEST_PERF.adoc`.
+
+== 2. DOC-I18N-OUTPUT — DOC-OUT-2 (livré)
+
+Défaut mesuré : `duplicated-content` (jusqu'à +123 % sur EN 0108, 9 fichiers en
+`hi`) — un bloc pouvait être réinséré plusieurs fois.
+
+* `TranslationOutputIntegrity` (domaine pur) : compare le nombre de blocs
+  **checksum-relevant** source ↔ rendu (même projection que le store de delta) ;
+  **duplication ⇒ échec avant écriture** ; troncature détectée sans échec
+  (relève de `PENDING`).
+* Branché sur les 3 chemins : `translateSingleFile` et les deux branches du
+  delta.
+* Preuves : 5 UT + 3 tests de service (renderer dupliquant → exception avant
+  écriture ; nominal ; **deux passes idempotentes**).
+* `DOC-OUT-1` requalifié ✅ (déjà livré S-290 via `PreserveCatalog`).
+
+**Reste** : `DOC-OUT-3` **bloqué** par `CB-I18N-SAFETY` (codebase N1, cadré
+S-077, non implémenté) ; `DOC-OUT-4` (BDD `@translation-output` + dogfooding
+corpus cheroliv).
+
+== 3. Hygiène de session
+
+* La session parallèle **S-291 (DOC-A11Y)** était active : ses fichiers
+  (`.agents/SESSIONS_HISTORY.adoc`, `TEST_COVERAGE_ANALYSIS.adoc`, archive,
+  rapport `291-*`) ont été **laissés intacts** ; tous les commits de cette
+  session ont été faits en `git commit --only <fichiers>`.
+* Gouvernance mise à jour : `BACKLOG` (EPIC DOC-TEST-PERF complet,
+  DOC-I18N-OUTPUT DOC-OUT-1/2), `.agents/INDEX.adoc`, cadrage.
