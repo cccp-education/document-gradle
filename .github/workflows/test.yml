@@ -101,7 +101,7 @@ jobs:
         include:
           - shard: a
             tasks: >-
-              n3PipelineCucumberTest tableSemanticCucumberTest articleTreeCucumberTest coreDocumentCucumberTest
+              n3PipelineCucumberTest tableSemanticCucumberTest articleTreeCucumberTest
               bookTreeCucumberTest bookImagesCucumberTest preserveCucumberTest
               tableTranslationCucumberTest
           - shard: b
@@ -121,6 +121,9 @@ jobs:
               ocrQualityCucumberTest htmlLinkLintCucumberTest tableValidationCucumberTest
               plantumlValidationCucumberTest crossBoroughCucumberTest
               translationResilienceCucumberTest
+          - shard: e
+            tasks: >-
+              coreDocumentCucumberTest
     steps:
       - uses: actions/checkout@v4
       - name: Verify Gradle wrapper version
