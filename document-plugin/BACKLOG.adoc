@@ -117,13 +117,13 @@ catalogue N0 : macros, attributs de bloc, specs de tableau, fences, identifiants
 et placeholders ne sont **jamais** envoyés au LLM ; tests RED sur `toc::[]`,
 `options="header"`, `include::`, `image::`
 | 3
-| 🟡 À FAIRE
+| ✅ S-290 (DOC-I18N-PRESERVE — `PreserveCatalog` N0 consommé par `TextTranslatableClassifier`, 4 UT + vecteurs partagés + BDD `@preserve`)
 
 | DOC-OUT-2
 | **Identité de bloc `(article, index, hash)` + writer strictement idempotent** —
 une clé de bloc ne peut être réinsérée qu'une fois ; assertion `taille(variante) < 1,2 × taille(référence)` au grain document ; déduplication prouvée par deux passes
 | 3
-| 🟡 À FAIRE
+| ✅ S-028 (garde structurelle `TranslationOutputIntegrity` branchée sur les 3 chemins d'écriture ; 5 UT + 2 tests service dont **deux passes idempotentes** ; la garde structurelle remplace l'heuristique de taille)
 
 | DOC-OUT-3
 | **Statut réel de sortie** — un refus LLM, un placeholder `__` restitué, une
@@ -142,6 +142,11 @@ sur la branche Data)
 
 *Total* : 4 US ~10 pts. *Dépend de* : `MEM-I18N-PRESERVE` (N0), `CB-I18N-SAFETY`
 (N1). *Doc* : `.agents/i18n_review.adoc` (S-263), `CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`.
+
+*Avancement S-028* : `DOC-OUT-1` ✅ (S-290) et `DOC-OUT-2` ✅ (garde
+structurelle `TranslationOutputIntegrity` + idempotence prouvée par deux
+passes). Reste `DOC-OUT-3` (statut réel, dépend de `CB-I18N-SAFETY`) et
+`DOC-OUT-4` (BDD `@translation-output` + dogfooding corpus).
 
 == 🟡 EPIC DOC-PLANTUML-DELEGATE — document délègue le bloc PlantUML (GBL-007)
 

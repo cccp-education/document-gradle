@@ -62,6 +62,21 @@ class TranslationOutputIntegrityServiceTest {
     }
 
     @Test
+    fun `a second pass with an unchanged source is idempotent`() {
+        writeSource()
+        val target = tempDir.resolve("article-en.adoc")
+        val service = ContentTranslationService(translationService = FakeTranslationService(" [EN]"))
+
+        val firstChecksums = service.translateSingleFileWithBlockDelta(source, target, emptyMap(), "fr", "en")
+        val firstContent = target.readText()
+
+        val secondChecksums = service.translateSingleFileWithBlockDelta(source, target, firstChecksums, "fr", "en")
+
+        assertTrue(firstContent == target.readText(), "the second pass must not append duplicated blocks")
+        assertTrue(firstChecksums.keys == secondChecksums.keys)
+    }
+
+    @Test
     fun `a normal translation writes the translated artefact`() {
         writeSource()
         val target = tempDir.resolve("article-en.adoc")
