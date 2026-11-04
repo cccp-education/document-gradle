@@ -198,6 +198,12 @@ class ContentTranslationService(
         val original = file.readText()
         val outcome = documentTranslator.translateOutcome(original, sourceLanguage, targetLanguage)
         record(outcome.trace)
+        // DOC-OUT-2 — never write a structurally duplicated/truncated artefact.
+        TranslationOutputIntegrity.requireNoDuplication(
+            sourceBlocks = parser.parse(original).blocks,
+            renderedBlocks = parser.parse(outcome.content).blocks,
+            articleLabel = file.name,
+        )
         file.writeText(outcome.content)
     }
 
@@ -214,6 +220,12 @@ class ContentTranslationService(
         val trace: TranslationTrace =
             if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
                 val translated = documentTranslator.translateOutcome(sourceText, sourceLanguage, targetLanguage)
+                // DOC-OUT-2 — a re-translation must not duplicate blocks.
+                TranslationOutputIntegrity.requireNoDuplication(
+                    sourceBlocks = sourceArticle.blocks,
+                    renderedBlocks = parser.parse(translated.content).blocks,
+                    articleLabel = sourceFile.name,
+                )
                 targetFile.writeText(translated.content)
                 translated.trace
             } else {
@@ -237,6 +249,13 @@ class ContentTranslationService(
                         targetLanguage,
                     )
                 val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+                // DOC-OUT-2 — the delta path is where a block could be re-inserted
+                // more than once; fail before writing the artefact.
+                TranslationOutputIntegrity.requireNoDuplication(
+                    sourceBlocks = sourceArticle.blocks,
+                    renderedBlocks = translatedArticle.article.blocks,
+                    articleLabel = sourceFile.name,
+                )
                 targetFile.writeText(outputRenderer.render(translatedArticle.article))
                 translatedArticle.trace
             }
