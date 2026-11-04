@@ -71,6 +71,60 @@ class CucumberShardPartitionTest {
     }
 
     @Test
+    fun `every feature is selected by at least one runner`() {
+        val featuresDir = File("src/test/resources/features")
+        assumeTrue(featuresDir.isDirectory, "features directory not found from ${File("").absolutePath}")
+
+        val features =
+            featuresDir
+                .listFiles { file -> file.extension == "feature" }
+                .orEmpty()
+                .sortedBy { it.name }
+        assumeTrue(features.isNotEmpty(), "no .feature files found")
+
+        val runnerSources =
+            listOf(File("src/test/scenarios"), File("src/test/kotlin"))
+                .filter { it.isDirectory }
+                .joinToString("\n") { dir ->
+                    dir
+                        .walkTopDown()
+                        .filter { it.isFile && it.extension == "kt" }
+                        .joinToString("\n") { it.readText() }
+                }
+
+        val tagTokens =
+            Regex("""FILTER_TAGS_PROPERTY_NAME, value = "([^"]+)"""")
+                .findAll(runnerSources)
+                .flatMap { match -> match.groupValues[1].split(Regex("""\s+or\s+|\s+and\s+""")) }
+                .map { it.trim() }
+                .toSet()
+        val featurePaths =
+            Regex("""FEATURES_PROPERTY_NAME, value = "([^"]+)"""")
+                .findAll(runnerSources)
+                .flatMap { match -> match.groupValues[1].split(",") }
+                .map { it.trim() }
+                .toSet()
+
+        val uncovered =
+            features
+                .filter { feature ->
+                    val tags =
+                        Regex("""@[A-Za-z0-9_-]+""")
+                            .findAll(feature.readText())
+                            .map { it.value }
+                            .toSet()
+                    val selectedByTag = tags.any { it in tagTokens }
+                    val selectedByPath = featurePaths.any { it.endsWith(feature.name) }
+                    !selectedByTag && !selectedByPath
+                }.map { it.name }
+
+        assertTrue(
+            uncovered.isEmpty(),
+            "features selected by no Cucumber runner (silently uncovered): $uncovered",
+        )
+    }
+
+    @Test
     fun `the aggregate cucumberTest is out of check`() {
         assumeTrue(buildFile.exists(), "build.gradle.kts not found from ${File("").absolutePath}")
 
