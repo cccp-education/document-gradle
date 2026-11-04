@@ -349,3 +349,23 @@ publishing {
     }
     repositories.mavenCentral()
 }
+
+// DOC-TEST-PERF US-2 — the aggregate `cucumberTest` re-runs the very same 30
+// tag-scoped suites the focused runners already execute (~16 min for nothing in
+// the monolithic build). The convention wires it to `check`; we unwire it here,
+// after the convention's own `afterEvaluate` (registered at plugin-apply time,
+// so this block runs last). Coverage contract remains the 30 focused runners
+// (`additionalTasksInCheck = true`); `cucumberTest` stays runnable on demand.
+afterEvaluate {
+    tasks.named("check") {
+        setDependsOn(
+            dependsOn.filterNot { dependency ->
+                when (dependency) {
+                    is TaskProvider<*> -> dependency.name == "cucumberTest"
+                    is Task -> dependency.name == "cucumberTest"
+                    else -> dependency.toString() == "cucumberTest"
+                }
+            },
+        )
+    }
+}

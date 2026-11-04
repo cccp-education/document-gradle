@@ -127,16 +127,17 @@ doit être corrigé et gardé.
 | 3
 | ✅ S-028 (en cours de preuve CI)
 | US-2
-| **Nettoyer le `check` local** — retirer l'agrégat dupliqué de `check`
-  (option de convention `aggregateInCheck` ou wiring local), prouver que la
-  couverture reste identique
+| **Nettoyer le `check` local** — l'agrégat `cucumberTest` est retiré de
+  `check` en `afterEvaluate` (après le câblage de la convention) ; preuve
+  `check --dry-run` : `:cucumberTest` absent, les 30 runners présents
 | 2
-| 🟡 À FAIRE
+| ✅ S-028
 | US-3
-| **Garde de partition** — test pur : 30 runners = union des shards, aucun
-  runner en double, `publish.needs` = tous les jobs test
+| **Garde de partition** — `CucumberShardPartitionTest` (JUnit, job `unit`) :
+  chaque runner déclaré apparaît exactement une fois dans le workflow,
+  `publish.needs` couvre tous les jobs, le dé-câblage de l'agrégat est présent
 | 2
-| 🟡 À FAIRE
+| ✅ S-028
 | US-4
 | **Trou de couverture** — runner/spec dédié pour `document.feature` et
   `release-notes.feature` + garde « chaque `.feature` est sélectionnée par au
