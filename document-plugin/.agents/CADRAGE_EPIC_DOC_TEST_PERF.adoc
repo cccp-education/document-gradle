@@ -7,8 +7,8 @@
 _Créé_ : 2026-11-04 — demande pilote : « le temps de test de document est trop
 important, lançons l'EPIC qui vise à casser ce temps d'exécution, que ce soit
 par la séparation ou la parallélisation ».
-_Statut_ : ✅ TERMINÉ (US-1, US-2, US-3, US-5, US-6 livrées ; **29m26s → 5m47s**) ;
-US-4 (trou de couverture préexistant) reste suivie hors performance.
+_Statut_ : ✅ **TERMINÉ (US-1 → US-6)** — **29m26s → ~5-7 min** (variance runner),
+et **73 scénarios orphelins remis en couverture**.
 
 == 1. Baseline mesurée (run CI `41745186552`, 2026-11-04, succès)
 
@@ -146,14 +146,30 @@ skipped (pas de tag). KPI ≤ 8 min atteint.
 
 **Wall-clock : 5m47s** (29m26s → 5m47s, **−80 %**), tous les jobs verts.
 
-== 1 quater. Suivi US-4 (hors performance)
+== 1 quater. US-4 — trou de couverture corrigé (run `41852399486`, succès)
 
-`document.feature` et `release-notes.feature` ne portent aucun tag d'un
-runner : leurs scénarios ne sont exécutés par aucune tâche, ni dédiée ni
-agrégée. Trou **préexistant** (indépendant de cet EPIC), à traiter par un
-runner/spec dédié + une garde « chaque `.feature` est sélectionnée par au
-moins un runner ». C'est le prochain chantier de correction, pas de
-performance.
+`document.feature` (`@document`) et `release-notes.feature` (`@doc8`) ne
+portaient aucun tag d'un runner : **73 scénarios n'étaient exécutés par aucune
+tâche**.
+
+* `CoreDocumentCucumberRunner` (glue `document.scenarios`, tags
+  `@document or @doc8`, features = dossier complet) ;
+* spec `coreDocumentCucumberTest` avec `runnerClass` → la tâche ne découvre
+  que ce suite ;
+* **shard `e`** dédié (3m15–3m50) pour ne pas rallonger shard `a`
+  (8m35 avant rééquilibrage) ;
+* garde `every feature is selected by at least one runner` ajoutée à
+  `CucumberShardPartitionTest` — c'est elle qui aurait détecté l'orphelin.
+
+**Résultat** : 73 scénarios exécutés et **verts** ; la couverture CI est
+désormais complète (30 + 1 runners).
+
+== 1 quinquies. Variance observée
+
+Le job `unit` (chemin critique) varie avec la charge du runner : **5m02 →
+7m05** sur les runs de la session. Le wall-clock reste **≤ 7m05**, très en
+dessous des 29m26 initiaux ; le seuil d'alerte US-6 (PR > 10 min) garde une
+marge.
 
 **Constat annexe (trou de couverture, à traiter en US-4)** : les 30 runners
 sont tous filtrés par tag ; `document.feature` et `release-notes.feature` ne
@@ -203,11 +219,12 @@ doit être corrigé et gardé.
 | 2
 | ✅ S-028
 | US-4
-| **Trou de couverture** — runner/spec dédié pour `document.feature` et
-  `release-notes.feature` + garde « chaque `.feature` est sélectionnée par au
-  moins un runner »
+| **Trou de couverture** — `CoreDocumentCucumberRunner` (`@document or @doc8`,
+  glue `document.scenarios`) + spec `coreDocumentCucumberTest` (shard `e`) ;
+  **73 scénarios restaurés, tous verts** ; garde « chaque `.feature` est
+  sélectionnée par au moins un runner »
 | 3
-| 🟡 À FAIRE
+| ✅ S-028
 | US-5
 | **Parallélisme intra-Gradle** — `maxParallelForks = min(2, cpu)` sur `test`
   (6m37s → 5m47s) et `functionalTest` scindé en 2 shards de classes

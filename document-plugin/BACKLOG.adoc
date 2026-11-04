@@ -19,13 +19,13 @@ les mêmes 30 suites (~15m58) — séquentiellement.
 | US-1 | Séparation + sharding CI : 6 jobs, 30 runners répartis 7/7/7/9, `check` non invoqué en CI (agrégat dupliqué supprimé), `publish` dépend de tous — **mesuré CI `41752801954` : 29m26s → 5m54s** | 3 | ✅ S-028
 | US-2 | Nettoyer le `check` local : l agrégat `cucumberTest` retiré de `check` en `afterEvaluate` ; `check --dry-run` prouve `:cucumberTest` absent et les 30 runners présents | 2 | ✅ S-028
 | US-3 | Garde de partition : `CucumberShardPartitionTest` (job `unit`) — chaque runner exactement une fois dans le workflow, `publish.needs` complet, dé-câblage de l agrégat présent | 2 | ✅ S-028
-| US-4 | Trou de couverture préexistant : `document.feature` et `release-notes.feature` ne matchent aucun tag runner → runner/spec dédié + garde « chaque `.feature` sélectionnée » | 3 | 🟡 À FAIRE
+| US-4 | Trou de couverture : `CoreDocumentCucumberRunner` (`@document or @doc8`, glue `document.scenarios`) + spec `coreDocumentCucumberTest` (shard `e`) — **73 scénarios restaurés, tous verts** ; garde « chaque `.feature` sélectionnée » | 3 | ✅ S-028
 | US-5 | Parallélisme intra-Gradle (`maxParallelForks`, cache home TestKit) si gain mesuré | 3 | 🟡 À FAIRE
 | US-6 | KPI & veille : durée par job, seuil PR > 10 min | 1 | 🟡 À FAIRE
 | *Total* | | *14* |
 |===
 
-KPI : wall-clock PR **29m26s → 5m47s** (objectif ≤ 8 min dépassé), à
+KPI : wall-clock PR **29m26s → ~5-7 min** (objectif ≤ 8 min dépassé), à
 couverture identique.
 
 '''
