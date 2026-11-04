@@ -7,37 +7,119 @@ on:
   pull_request:
     branches: [main, master]
 
+# DOC-TEST-PERF (US-1) — measured on run 41745186552 (2026-11-04):
+#   * the 30 dedicated Cucumber runners ran from 00:15:37 to 00:23:24 (~8 min) ;
+#   * the aggregate `cucumberTest` then re-ran the same 30 tag-scoped suites
+#     from 00:23:24 to 00:39:22 (~16 min of pure duplication) ;
+#   * total `./gradlew build` = 29m26s in a single job.
+# The layers are now separated into parallel jobs and the BDD layer is sharded
+# (disjoint groups of the existing runners). `check` is not invoked, so the
+# duplicated aggregate no longer runs in CI; every scenario still runs exactly
+# once through its focused runner.
 jobs:
-  test:
-    name: Build & Test
+  static:
+    name: Static (ktlint + validatePlugins)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Verify Gradle wrapper version
         uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
-
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Build and Test
-        id: build
-        run: ./gradlew build
+      - name: Lint and plugin validation
+        run: ./gradlew ktlintCheck validatePlugins
         working-directory: document-plugin
-        continue-on-error: true
 
-      # DOC-CI-DIAG — a red run must be diagnosable from the outside: the job
-      # logs require admin rights, but check-run annotations are public. One
-      # annotation per failing test case, then fail the job.
+  unit:
+    name: Unit (test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Gradle wrapper version
+        uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests
+        run: ./gradlew test
+        working-directory: document-plugin
+
+  functional:
+    name: Functional (TestKit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Gradle wrapper version
+        uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Functional tests
+        run: ./gradlew functionalTest
+        working-directory: document-plugin
+
+  bdd:
+    name: BDD shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: a
+            tasks: >-
+              n3PipelineCucumberTest tableSemanticCucumberTest articleTreeCucumberTest
+              bookTreeCucumberTest bookImagesCucumberTest preserveCucumberTest
+              tableTranslationCucumberTest
+          - shard: b
+            tasks: >-
+              frontmatterRetranslateCucumberTest includeGuardCucumberTest
+              n3CollectCustomCucumberTest bookMatterCucumberTest
+              bookNavigationCucumberTest bookTranslateCucumberTest
+              bookMultilangCucumberTest
+          - shard: c
+            tasks: >-
+              converterSafeModeCucumberTest xrefValidationCucumberTest
+              metadataValidationCucumberTest securityPolicyCucumberTest
+              bookPublishCucumberTest bookValidationCucumberTest releaseGateCucumberTest
+          - shard: d
+            tasks: >-
+              pdfCheckCucumberTest epubCheckCucumberTest documentValidationCucumberTest
+              ocrQualityCucumberTest htmlLinkLintCucumberTest tableValidationCucumberTest
+              plantumlValidationCucumberTest crossBoroughCucumberTest
+              translationResilienceCucumberTest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Gradle wrapper version
+        uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Cucumber scenarios (shard ${{ matrix.shard }})
+        run: ./gradlew ${{ matrix.tasks }}
+        working-directory: document-plugin
       - name: Report failing tests
-        if: steps.build.outcome == 'failure'
+        if: failure()
         working-directory: document-plugin
         shell: bash
         run: |
@@ -51,17 +133,29 @@ jobs:
             done < <(awk '/<testcase /{n=$0; sub(/.*name="/,"",n); sub(/".*/,"",n)} /<failure/{print n}' "$file")
           done < <(grep -rl '<failure' build/test-results 2>/dev/null || true)
           if [ "$found" -eq 0 ]; then
-            echo "::error title=build::Build failed without a test failure (see the Gradle log)"
+            echo "::error title=bdd-${{ matrix.shard }}::Build failed without a test failure (see the Gradle log)"
           fi
           exit 1
 
+  publish-local:
+    name: POM check (publishToMavenLocal)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Verify publishToMavenLocal (POM)
-        if: steps.build.outcome == 'success'
         run: ./gradlew publishToMavenLocal
         working-directory: document-plugin
 
   # DOC-CI-ISOLATION-4 — release gate. Publishing to Maven Central happens only
-  # from a `v*` tag, after the test job is green, and only when a GPG key is
+  # from a `v*` tag, after every test job is green, and only when a GPG key is
   # imported: Central rejects unsigned artefacts and a plain test job has no key
   # (the conventions plugin skips signing there). CCCP_PUBLISH re-enables signing
   # for this job; OSSRH secrets are materialised into ~/.gradle/gradle.properties,
@@ -71,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test]
+    needs: [static, unit, functional, bdd, publish-local]
 
     steps:
       - uses: actions/checkout@v4

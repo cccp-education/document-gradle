@@ -1,6 +1,35 @@
 = BACKLOG — Document Gradle (New Orleans 🟢)
 :toc:
 
+== 🟡 EPIC DOC-TEST-PERF — Temps d'exécution des tests (séparation + parallélisation)
+
+*Demande pilote* (2026-11-04) : « le temps de test de document est trop
+important, lançons l'EPIC qui vise à casser ce temps d'exécution, que ce soit
+par la séparation ou la parallélisation ».
+*Cadrage* : `.agents/CADRAGE_EPIC_DOC_TEST_PERF.adoc`.
+
+**Baseline mesurée** (run `41745186552`, succès, 2026-11-04) : `./gradlew build`
+= **29m26s** dans un seul job. Le build exécute **deux fois** la même couverture
+BDD — les 30 runners dédiés (~7m47) **puis** l'agrégat `cucumberTest` qui rejoue
+les mêmes 30 suites (~15m58) — séquentiellement.
+
+[cols="1,4,2,2"]
+|===
+| US | Description | Pts | Statut
+| US-1 | Séparation + sharding CI : 6 jobs, 30 runners répartis 7/7/7/9, `check` non invoqué en CI (agrégat dupliqué supprimé), `publish` dépend de tous | 3 | ✅ S-028
+| US-2 | Nettoyer le `check` local : retirer l'agrégat dupliqué (`aggregateInCheck` ou wiring local), couverture identique prouvée | 2 | 🟡 À FAIRE
+| US-3 | Garde de partition : 30 runners = union des shards, disjoints ; `publish.needs` complet (anti test fantôme) | 2 | 🟡 À FAIRE
+| US-4 | Trou de couverture préexistant : `document.feature` et `release-notes.feature` ne matchent aucun tag runner → runner/spec dédié + garde « chaque `.feature` sélectionnée » | 3 | 🟡 À FAIRE
+| US-5 | Parallélisme intra-Gradle (`maxParallelForks`, cache home TestKit) si gain mesuré | 3 | 🟡 À FAIRE
+| US-6 | KPI & veille : durée par job, seuil PR > 10 min | 1 | 🟡 À FAIRE
+| *Total* | | *14* |
+|===
+
+KPI : wall-clock PR **29m26s → ≤ 8 min** (puis ≤ 6 min après US-2/US-5), à
+couverture identique.
+
+'''
+
 == 🟡 EPIC GBL-010 — Arbre de traduction (branche Data : article → document → AST)
 
 *GBL* : EPIC transverse **GBL-010** (`CADRAGE_EPIC_GBL_010_ARBRE_TRADUCTION_SITE.adoc`,

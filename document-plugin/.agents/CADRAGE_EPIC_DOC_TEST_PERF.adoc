@@ -1,0 +1,136 @@
+= Cadrage — EPIC DOC-TEST-PERF « temps d'exécution des tests »
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+_Créé_ : 2026-11-04 — demande pilote : « le temps de test de document est trop
+important, lançons l'EPIC qui vise à casser ce temps d'exécution, que ce soit
+par la séparation ou la parallélisation ».
+_Statut_ : 🟡 EN COURS (US-1 livrée).
+
+== 1. Baseline mesurée (run CI `41745186552`, 2026-11-04, succès)
+
+Un seul job `Build & Test` exécute `./gradlew build`, **29m26s** au total
+(`00:15:17` → `00:44:43`).
+
+[cols="3,2,6"]
+|===
+| Segment | Durée | Preuve / commentaire
+
+| 30 runners Cucumber dédiés
+| **~7m47**
+| `00:15:37` → `00:23:24` : 30 tâches `*CucumberTest`, **une JVM chacune**
+
+| `cucumberTest` agrégé
+| **~15m58**
+| `00:23:24` → `00:39:22` : rejoue **les mêmes 30 suites** (tags identiques)
+  → **duplication pure**, le plus gros poste du build
+
+| `test` (unitaires)
+| 43 s
+| `00:39:22` → …
+
+| `functionalTest`
+| ~2m15 (+ builds TestKit imbriqués `validateDocumentPdf`,
+  `convertDocumentToHtml`, `validateDocumentXref`, `collectDocumentRetrieve`…)
+| Les FT lancent de vrais builds Gradle imbriqués (TestKit)
+
+| statique (ktlint, validatePlugins), compile, jars, POM
+| ~5 min cumulés
+| Répartis dans le même job
+|===
+
+**Diagnostic** : le build exécute **deux fois** la même couverture BDD
+(30 runners dédiés **+** l'agrégat `cucumberTest` qui découvre les mêmes
+`@Suite`), dans **un seul job séquentiel**. Aucun parallélisme.
+
+**Constat annexe (trou de couverture, à traiter en US-4)** : les 30 runners
+sont tous filtrés par tag ; `document.feature` et `release-notes.feature` ne
+portent **aucun** tag d'un runner → leurs scénarios ne sont exécutés par
+aucune tâche (ni dédiée, ni agrégée). Ce n'est pas causé par cet EPIC mais il
+doit être corrigé et gardé.
+
+== 2. Décisions
+
+. **Séparation par couche** : un job CI par couche (`static`, `unit`,
+  `functional`, `bdd`, `publish-local`) au lieu d'un `build` monolithique.
+. **Parallélisation BDD** : les **30 runners existants** sont répartis en
+  **4 shards disjoints et exhaustifs** (4 jobs matrice). Aucune sémantique de
+  test changée : chaque scénario garde son runner et son tag ; seule la
+  répartition d'exécution change. Preuve : 30 tâches uniques × 1.
+. **Suppression de la duplication en CI** : les jobs n'invoquent plus `check`
+  → l'agrégat `cucumberTest` (16 min) ne tourne plus. Le `check` local garde
+  son comportement (à nettoyer en US-2).
+. **Pas de perte de couverture** : la couverture CI devient exactement celle
+  des 30 runners — c'est déjà la couverture réelle ; le trou
+  `document`/`release-notes` est préexistant et traité à part.
+. **Garde à venir (US-3)** : un test qui vérifie que la partition des 30
+  runners est disjointe, exhaustive, et que `publish` dépend bien de tous les
+  jobs (anti « test fantôme », patron S-269/S-297).
+
+== 3. User Stories
+
+[cols="1,5,2,2"]
+|===
+| US | Description | Pts | Statut
+| US-1
+| **Séparation + sharding CI** — `test.yml` en 6 jobs (static, unit,
+  functional, bdd×4, publish-local) ; 30 runners répartis 7/7/7/9 ; `check`
+  plus invoqué en CI ; `publish` dépend de tous
+| 3
+| ✅ S-028 (en cours de preuve CI)
+| US-2
+| **Nettoyer le `check` local** — retirer l'agrégat dupliqué de `check`
+  (option de convention `aggregateInCheck` ou wiring local), prouver que la
+  couverture reste identique
+| 2
+| 🟡 À FAIRE
+| US-3
+| **Garde de partition** — test pur : 30 runners = union des shards, aucun
+  runner en double, `publish.needs` = tous les jobs test
+| 2
+| 🟡 À FAIRE
+| US-4
+| **Trou de couverture** — runner/spec dédié pour `document.feature` et
+  `release-notes.feature` + garde « chaque `.feature` est sélectionnée par au
+  moins un runner »
+| 3
+| 🟡 À FAIRE
+| US-5
+| **Parallélisme intra-Gradle** — `maxParallelForks` sur `test`/`functionalTest`
+  et cache du home TestKit (patron XB-FP-7) si le gain est mesuré
+| 3
+| 🟡 À FAIRE
+| US-6
+| **KPI & veille** — consigner la durée CI par job après stabilisation,
+  seuil d'alerte (PR > 10 min), documentation
+| 1
+| 🟡 À FAIRE
+| *Total* | | *14* |
+|===
+
+== 4. KPI
+
+[cols="3,2,2"]
+|===
+| Métrique | Avant | Cible
+
+| Wall-clock PR (`test.yml`)
+| **29m26s**
+| **≤ 8 min** (puis ≤ 6 min après US-2/US-5)
+
+| Couverture BDD
+| 30 runners (+ agrégat dupliqué)
+| 30 runners, zéro perte, agrégat hors CI
+|===
+
+== 5. Risques
+
+* **Déséquilibre des shards** : la mesure par tâche est bruitée (logs
+  entrelacés) ; US-3/US-6 rééquilibrent avec des durées réelles.
+* **Session parallèle** : le dépôt peut être en cours d'édition par une autre
+  session (S-291) ; les commits de cet EPIC sont faits en `--only` sur ses
+  propres fichiers.
+* **Trou de couverture préexistant** : ne pas le confondre avec une régression
+  de cet EPIC (US-4 le traite explicitement).

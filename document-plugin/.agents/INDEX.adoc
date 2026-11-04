@@ -1,6 +1,7 @@
 = INDEX — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Session 028 (DOC-TEST-PERF US-1)_ : **temps d'exécution des tests** — baseline mesurée **29m26s** (run `41745186552`) : le build exécute **deux fois** la couverture BDD (30 runners dédiés ~7m47 **puis** l'agrégat `cucumberTest` ~15m58) dans un seul job. `test.yml` séparé en 6 jobs (`static`, `unit`, `functional`, `bdd` ×4 shards disjoints 7/7/7/9, `publish-local`) ; `check` n'est plus invoqué en CI → l'agrégat dupliqué ne tourne plus ; `publish` dépend de tous. 30 runners uniques × 1 (aucun test perdu), YAML validé. Cadrage `.agents/CADRAGE_EPIC_DOC_TEST_PERF.adoc`, BACKLOG EPIC `DOC-TEST-PERF` (KPI ≤ 8 min). Constat annexe : `document.feature`/`release-notes.feature` ne matchent aucun tag runner (trou préexistant, US-4).
 _Session 291 (workspace S-224)_ : **DOC-A11Y socle** — rapport producteur `a11y-report.json` (HTML/EPUB/PDF) consommé par academy : domaine `document.a11y`, inspecteurs HTML/EPUB, auditeur, tâche `reportDocumentAccessibility` (advisory sauf `-Pdocument.a11yStrict=true`), 5 tests ; compiles + `validatePlugins` + `ktlintCheck` VERTS. Reste : correctifs de rendu (`lang`, `alt`, `epub:type`, métadonnées) + BDD.
 _Regles absolues_ : voir `AGENT.adoc`
 _Boundary_ : voir `.agents/ARCHITECTURE_BOUNDARY.adoc`
