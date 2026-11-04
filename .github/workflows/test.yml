@@ -101,7 +101,7 @@ jobs:
         include:
           - shard: a
             tasks: >-
-              n3PipelineCucumberTest tableSemanticCucumberTest articleTreeCucumberTest
+              n3PipelineCucumberTest tableSemanticCucumberTest articleTreeCucumberTest coreDocumentCucumberTest
               bookTreeCucumberTest bookImagesCucumberTest preserveCucumberTest
               tableTranslationCucumberTest
           - shard: b

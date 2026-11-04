@@ -142,6 +142,14 @@ cucumberConventions {
     additionalTasksInCheck = true
     additionalTasks =
         listOf(
+            // DOC-TEST-PERF US-4 — document.feature (@document) and
+            // release-notes.feature (@doc8) had no focused runner: their
+            // scenarios were executed by no task. The shared
+            // `document.scenarios` glue owns their steps.
+            CucumberTaskSpec(
+                name = "coreDocumentCucumberTest",
+                runnerClass = "document.scenarios.CoreDocumentCucumberRunner",
+            ),
             CucumberTaskSpec(
                 name = "preserveCucumberTest",
                 features = listOf("src/test/resources/features/preserve_n0.feature"),
