@@ -19,8 +19,8 @@ import kotlin.test.assertTrue
  * present (isolated module checkout).
  */
 class CucumberShardPartitionTest {
-
     private val buildFile: File get() = File("build.gradle.kts")
+
     private val workflowFile: File get() = File(repositoryRoot(), ".github/workflows/test.yml")
 
     private fun repositoryRoot(): File =
@@ -33,17 +33,19 @@ class CucumberShardPartitionTest {
         assumeTrue(buildFile.exists(), "build.gradle.kts not found from ${File("").absolutePath}")
         assumeTrue(workflowFile.exists(), "workflow not found at ${workflowFile.absolutePath}")
 
-        val declared = Regex("""name = "([A-Za-z0-9]+CucumberTest)"""")
-            .findAll(buildFile.readText())
-            .map { it.groupValues[1] }
-            .toSet()
+        val declared =
+            Regex("""name = "([A-Za-z0-9]+CucumberTest)"""")
+                .findAll(buildFile.readText())
+                .map { it.groupValues[1] }
+                .toSet()
         val workflow = workflowFile.readText()
 
         assertTrue(declared.size >= 30, "expected the 30 focused Cucumber runners, got ${declared.size}")
 
-        val occurrences = declared.associateWith { name ->
-            Regex("""\b${Regex.escape(name)}\b""").findAll(workflow).count()
-        }
+        val occurrences =
+            declared.associateWith { name ->
+                Regex("""\b${Regex.escape(name)}\b""").findAll(workflow).count()
+            }
         val missing = occurrences.filterValues { it == 0 }.keys.sorted()
         val duplicated = occurrences.filterValues { it > 1 }.keys.sorted()
 
@@ -56,7 +58,12 @@ class CucumberShardPartitionTest {
         assumeTrue(workflowFile.exists(), "workflow not found at ${workflowFile.absolutePath}")
 
         val publishBlock = workflowFile.readText().substringAfter("  publish:")
-        val needs = Regex("""needs:\s*\[([^\]]+)]""").find(publishBlock)?.groupValues?.get(1).orEmpty()
+        val needs =
+            Regex("""needs:\s*\[([^\]]+)]""")
+                .find(publishBlock)
+                ?.groupValues
+                ?.get(1)
+                .orEmpty()
 
         listOf("static", "unit", "functional", "bdd", "publish-local").forEach { job ->
             assertTrue(needs.contains(job), "publish.needs must include '$job' (got: '$needs')")
@@ -70,8 +77,9 @@ class CucumberShardPartitionTest {
         // DOC-TEST-PERF US-2: the aggregate duplicates the focused runners and
         // must stay wired out of `check` (it remains runnable on demand).
         val build = buildFile.readText()
+
         assertTrue(
-            Regex("""cucumberTest"\)|== "cucumberTest"""").containsMatchIn(build),
+            build.contains("""is TaskProvider<*> -> dependency.name == "cucumberTest""""),
             "the build must explicitly unwire the aggregate cucumberTest from check",
         )
         assertEquals(
