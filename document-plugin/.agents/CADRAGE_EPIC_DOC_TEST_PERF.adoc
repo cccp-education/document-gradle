@@ -7,7 +7,8 @@
 _Créé_ : 2026-11-04 — demande pilote : « le temps de test de document est trop
 important, lançons l'EPIC qui vise à casser ce temps d'exécution, que ce soit
 par la séparation ou la parallélisation ».
-_Statut_ : 🟡 EN COURS (US-1 livrée et **mesurée** : 29m26s → **5m54s**).
+_Statut_ : ✅ TERMINÉ (US-1, US-2, US-3, US-5, US-6 livrées ; **29m26s → 5m47s**) ;
+US-4 (trou de couverture préexistant) reste suivie hors performance.
 
 == 1. Baseline mesurée (run CI `41745186552`, 2026-11-04, succès)
 
@@ -88,8 +89,71 @@ Tous les jobs démarrent à `01:15:38` (parallèles) ; le dernier finit à
 |===
 
 Tous les jobs verts, 30 runners exécutés exactement une fois, `publish`
-skipped (pas de tag). KPI ≤ 8 min atteint ; prochain levier = le job `unit`
-(5m54s) et le rééquilibrage des shards (US-5/US-6).
+skipped (pas de tag). KPI ≤ 8 min atteint.
+
+== 1 ter. US-2 + US-3 + US-5 : résultat final (run CI `41759776949`, succès)
+
+* **US-2** — l'agrégat `cucumberTest` est retiré de `check` (preuve
+  `check --dry-run` : agrégat absent, les 30 runners présents). Couverture
+  inchangée.
+* **US-3** — `CucumberShardPartitionTest` (job `unit`) : chaque runner déclaré
+  apparaît exactement une fois dans le workflow, `publish.needs` couvre tous
+  les jobs, le dé-câblage de l'agrégat est présent. Vert en CI.
+* **US-5** — `maxParallelForks = min(2, cpu)` sur `test` ; `functionalTest`
+  scindé en **2 shards** par paquets de classes (`Book/Assemble/Collect` vs
+  `Convert/Document/ReleaseNotes/Table/translation/Validate`).
+
+[cols="3,2,3"]
+|===
+| Job | Durée | Remarque
+
+| Unit (`test`)
+| **5m47s**
+| nouveau chemin critique (forks : 6m37s → 5m47s)
+
+| Functional shard b
+| 5m46s
+| 17 classes TestKit
+
+| BDD shard d
+| 5m36s
+| 9 runners
+
+| BDD shard c
+| 5m02s
+| 6 runners
+
+| BDD shard b
+| 4m04s
+| 7 runners
+
+| BDD shard a
+| 3m33s
+| 7 runners
+
+| Functional shard a
+| 2m54s
+| 17 classes TestKit
+
+| Static
+| 1m35s
+|
+
+| POM check
+| 45s
+|
+|===
+
+**Wall-clock : 5m47s** (29m26s → 5m47s, **−80 %**), tous les jobs verts.
+
+== 1 quater. Suivi US-4 (hors performance)
+
+`document.feature` et `release-notes.feature` ne portent aucun tag d'un
+runner : leurs scénarios ne sont exécutés par aucune tâche, ni dédiée ni
+agrégée. Trou **préexistant** (indépendant de cet EPIC), à traiter par un
+runner/spec dédié + une garde « chaque `.feature` est sélectionnée par au
+moins un runner ». C'est le prochain chantier de correction, pas de
+performance.
 
 **Constat annexe (trou de couverture, à traiter en US-4)** : les 30 runners
 sont tous filtrés par tag ; `document.feature` et `release-notes.feature` ne
@@ -145,15 +209,15 @@ doit être corrigé et gardé.
 | 3
 | 🟡 À FAIRE
 | US-5
-| **Parallélisme intra-Gradle** — `maxParallelForks` sur `test`/`functionalTest`
-  et cache du home TestKit (patron XB-FP-7) si le gain est mesuré
+| **Parallélisme intra-Gradle** — `maxParallelForks = min(2, cpu)` sur `test`
+  (6m37s → 5m47s) et `functionalTest` scindé en 2 shards de classes
 | 3
-| 🟡 À FAIRE
+| ✅ S-028
 | US-6
-| **KPI & veille** — consigner la durée CI par job après stabilisation,
-  seuil d'alerte (PR > 10 min), documentation
+| **KPI & veille** — durées par job consignées (5m47s wall-clock),
+  seuil d alerte PR > 10 min
 | 1
-| 🟡 À FAIRE
+| ✅ S-028
 | *Total* | | *14* |
 |===
 

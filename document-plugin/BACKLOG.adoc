@@ -25,7 +25,7 @@ les mêmes 30 suites (~15m58) — séquentiellement.
 | *Total* | | *14* |
 |===
 
-KPI : wall-clock PR **29m26s → ≤ 8 min** (puis ≤ 6 min après US-2/US-5), à
+KPI : wall-clock PR **29m26s → 5m47s** (objectif ≤ 8 min dépassé), à
 couverture identique.
 
 '''
