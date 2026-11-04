@@ -7,7 +7,7 @@
 _Créé_ : 2026-11-04 — demande pilote : « le temps de test de document est trop
 important, lançons l'EPIC qui vise à casser ce temps d'exécution, que ce soit
 par la séparation ou la parallélisation ».
-_Statut_ : 🟡 EN COURS (US-1 livrée).
+_Statut_ : 🟡 EN COURS (US-1 livrée et **mesurée** : 29m26s → **5m54s**).
 
 == 1. Baseline mesurée (run CI `41745186552`, 2026-11-04, succès)
 
@@ -44,6 +44,52 @@ Un seul job `Build & Test` exécute `./gradlew build`, **29m26s** au total
 **Diagnostic** : le build exécute **deux fois** la même couverture BDD
 (30 runners dédiés **+** l'agrégat `cucumberTest` qui découvre les mêmes
 `@Suite`), dans **un seul job séquentiel**. Aucun parallélisme.
+
+== 1 bis. Résultat US-1 mesuré (run CI `41752801954`, succès)
+
+Tous les jobs démarrent à `01:15:38` (parallèles) ; le dernier finit à
+`01:21:32` → **wall-clock 5m54s** (**−80 %**, 29m26s → 5m54s).
+
+[cols="3,2,3"]
+|===
+| Job | Durée | Remarque
+
+| Unit (`test`)
+| **5m54s**
+| **nouveau chemin critique** (compilation + tests unitaires)
+
+| BDD shard d
+| 5m42s
+| 9 runners
+
+| BDD shard a
+| 4m33s
+| 7 runners
+
+| Functional (TestKit)
+| 4m54s
+| builds imbriqués
+
+| BDD shard b
+| 4m09s
+| 7 runners
+
+| BDD shard c
+| 4m07s
+| 7 runners
+
+| Static (ktlint + validatePlugins)
+| 1m33s
+|
+
+| POM check (`publishToMavenLocal`)
+| 54s
+|
+|===
+
+Tous les jobs verts, 30 runners exécutés exactement une fois, `publish`
+skipped (pas de tag). KPI ≤ 8 min atteint ; prochain levier = le job `unit`
+(5m54s) et le rééquilibrage des shards (US-5/US-6).
 
 **Constat annexe (trou de couverture, à traiter en US-4)** : les 30 runners
 sont tous filtrés par tag ; `document.feature` et `release-notes.feature` ne

@@ -16,7 +16,7 @@ les mêmes 30 suites (~15m58) — séquentiellement.
 [cols="1,4,2,2"]
 |===
 | US | Description | Pts | Statut
-| US-1 | Séparation + sharding CI : 6 jobs, 30 runners répartis 7/7/7/9, `check` non invoqué en CI (agrégat dupliqué supprimé), `publish` dépend de tous | 3 | ✅ S-028
+| US-1 | Séparation + sharding CI : 6 jobs, 30 runners répartis 7/7/7/9, `check` non invoqué en CI (agrégat dupliqué supprimé), `publish` dépend de tous — **mesuré CI `41752801954` : 29m26s → 5m54s** | 3 | ✅ S-028
 | US-2 | Nettoyer le `check` local : retirer l'agrégat dupliqué (`aggregateInCheck` ou wiring local), couverture identique prouvée | 2 | 🟡 À FAIRE
 | US-3 | Garde de partition : 30 runners = union des shards, disjoints ; `publish.needs` complet (anti test fantôme) | 2 | 🟡 À FAIRE
 | US-4 | Trou de couverture préexistant : `document.feature` et `release-notes.feature` ne matchent aucun tag runner → runner/spec dédié + garde « chaque `.feature` sélectionnée » | 3 | 🟡 À FAIRE
