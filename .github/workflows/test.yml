@@ -56,9 +56,26 @@ jobs:
         working-directory: document-plugin
 
   functional:
-    name: Functional (TestKit)
+    name: Functional shard ${{ matrix.shard }} (TestKit)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: a
+            tests: >-
+              --tests "document.AssembleBook*"
+              --tests "document.Book*"
+              --tests "document.Collect*"
+          - shard: b
+            tests: >-
+              --tests "document.Convert*"
+              --tests "document.Document*"
+              --tests "document.ReleaseNotes*"
+              --tests "document.Table*"
+              --tests "document.translation.*"
+              --tests "document.Validate*"
     steps:
       - uses: actions/checkout@v4
       - name: Verify Gradle wrapper version
@@ -70,8 +87,8 @@ jobs:
           distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Functional tests
-        run: ./gradlew functionalTest
+      - name: Functional tests (shard ${{ matrix.shard }})
+        run: ./gradlew functionalTest ${{ matrix.tests }}
         working-directory: document-plugin
 
   bdd:
