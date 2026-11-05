@@ -1,0 +1,43 @@
+= Session 292 — durcissement structurel de la traduction + publication Portal 0.0.31
+:date: 2026-11-05
+:statut: TERMINÉ
+
+== Mission
+
+Empêcher qu'une variante traduite perde ou duplique sa structure de blocs
+(échec du C6 ciblé : 4 `section-count-drift` introduits sur `en`, `0105`
+98 blocs rendus vs 96 attendus).
+
+== Livré
+
+* `TranslatedTextSanitizer` : CR/LF → espace, trim, échappement des marqueurs
+  de bloc en tête (`=`, `|`, `[`, `----`, `....`, `++++`) ; appliqué à tous les
+  textes traduits (titres, paragraphes, listes, tableaux, admonitions,
+  description lists). Les `PivotInline.LineBreak` intentionnels sont préservés.
+* Garde structurelle `ContentTranslationService.requireSameBlockStructure` :
+  rendu en mémoire, ré-parse, comparaison de signature (count + kind sequence)
+  avec la source ; en cas d'écart, `IllegalStateException` et **fichier non
+  écrit**. Couvre les 3 chemins d'écriture.
+* `DocumentTranslator.structureSignature` partagé (interne) entre le delta et
+  la garde.
+* Tests : 9 sanitizer + 6 garde (heading avec newline, paragraphe introduisant
+  `==`, marqueurs de tête, renderer qui perd/duplique un bloc, write nominal).
+* Commit code `61801cf` ; CI `42077356614` **verte** (Unit + BDD + Functional +
+  POM + static).
+
+== Publication Plugin Portal (fallback Sonatype)
+
+* `build.gradle.kts` : `com.gradle.plugin-publish 2.2.1` +
+  `compatibility { features { configurationCache = false } }` (commit `aad5e52`).
+* `document-plugin **0.0.31**` publié sur le **Gradle Plugin Portal**
+  (créé 2026-11-05 17:51:36), via override d'init script (le catalogue 0.0.122
+  déclare encore 0.0.30) ; POM importe `workspace-bom:0.0.122` (publié).
+  `publishToMavenLocal` 0.0.31 également fait pour le C6 local.
+* Central : bloqué jusqu'au 2026-12-01 (quota). Aucune publication Central.
+
+== Suite
+
+* Attente d'approbation Portal (`education.cccp.document`).
+* Quand Central rouvrira : publier la même 0.0.31.
+* C6 : le garde rejette les variantes structurellement fausses (11/15 sur `en`)
+  — la qualité du modèle reste le facteur limitant.
