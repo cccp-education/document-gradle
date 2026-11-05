@@ -1,0 +1,13 @@
+= COMPLETED_TASKS_ARCHIVE — novembre 2026 — document-gradle
+
+_Session 291 (2026-11-02) — DOC-A11Y socle (GBL-011-3)_
+
+- DOC-A11Y-3 : tâche `reportDocumentAccessibility` + rapport
+  `build/docs/document/a11y-report.json` + limites PDF déclarées (2 pts) —
+  consommé par academy (`ProducerReportInspector`)
+- DOC-A11Y-1/2 (socle) : inspecteurs HTML/EPUB (`lang`, `alt`, `th`, `h1`,
+  métadonnées OPF `accessMode`/`accessibilityFeature`) — correctifs de rendu
+  restants
+- Tests : `HtmlAccessibilityInspectorTest`, `EpubAccessibilityInspectorTest`,
+  `DocumentA11yReportTest`, `DocumentA11yAuditorTest`,
+  `ReportDocumentAccessibilityTaskTest`

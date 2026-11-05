@@ -1,0 +1,54 @@
+= Session 291 — DOC-A11Y socle : rapport d'accessibilité producteur (GBL-011-3)
+:toc: left
+:date: 2026-11-02
+:statut: 🟡 EN COURS — socle livré, CI en cours
+
+== Objet
+
+La session 223 a cadré `GBL-011` (accessibilité du livrable formation) et livré
+côté academy la porte qui **consomme** un `a11y-report.json`. Cette session livre
+le **producteur** du rapport côté `document` : les vérifications HTML/EPUB et le
+contrat JSON que l'academy lit déjà.
+
+== Livré
+
+- Domaine `document.a11y` : `DocumentA11yReport`, `DeliverableA11yReport`,
+  `DocumentA11yFinding`, `DocumentA11yRules`/`DocumentA11ySeverity`.
+- `HtmlAccessibilityInspector` : `lang` sur `<html>`, `alt` sur chaque `<img>`
+  (`alt=""` accepté), `th` si table, `h1`.
+- `EpubAccessibilityInspector` : lecture ZIP tolérante des XHTML + métadonnées
+  OPF `schema:accessMode`/`accessibilityFeature`.
+- `DocumentA11yAuditor` : HTML/EPUB inspectés, PDF déclaré `pdf-not-tagged` avec
+  la limite « PDF non PDF/UA ».
+- Tâche `reportDocumentAccessibility` : `build/docs/document/a11y-report.json`,
+  advisory par défaut, `-Pdocument.a11yStrict=true` pour échouer sur `ERROR`,
+  `mustRunAfter` les conversions (utilisable standalone).
+- 5 fichiers de tests : HTML, EPUB (fixture ZIP réelle), rapport, auditeur,
+  tâche (ProjectBuilder).
+
+*Contrat consommé par academy* : `deliverables[].kind`,
+`findings[].rule/severity/location/message`, `deliverables[].limits`.
+
+== Gates
+
+- `compileKotlin`, `compileTestKotlin`, `validatePlugins` : **VERTS**.
+- `ktlintCheck` : **VERT**.
+- `publishToMavenLocal` : **VERT**.
+- CI : commit `0533434` poussé ; run `41368355745` **en cours** (en file derrière
+  le run concurrent de release `document-plugin 0.0.29`, `41368345118`). La CI
+  document complète prend ~30 min : le vert sera vérifié en S-225.
+
+*Concurrence* : la release `document-plugin 0.0.29` (commit `a3b8c18`) est une
+session parallèle ; elle n'est pas incluse dans ce commit.
+
+== Reste
+
+- Correctifs de rendu : `:lang:` depuis `metadata.language`, `alt` sur les
+  images, `epub:type`/`landmarks`/métadonnées OPF.
+- BDD `@a11y` (les 5 tests actuels sont unitaires).
+- Dogfooding : générer le rapport sur le livre FPA et le faire consommer par
+  academy (sortie du `WARNING` `producer-report-missing`).
+
+== Prochaine session (292)
+
+Vérifier la CI `41368355745` ; puis correctifs de rendu + BDD + dogfooding.

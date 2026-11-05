@@ -1,4 +1,5 @@
 import build.CucumberTaskSpec
+import org.gradle.plugin.compatibility.compatibility
 
 plugins {
     id("education.cccp.build.gradle-plugin") version "0.0.14"
@@ -6,6 +7,8 @@ plugins {
     id("education.cccp.build.functional-test") version "0.0.14"
     id("education.cccp.build.cucumber") version "0.0.14"
     id("education.cccp.build.lint") version "0.0.14"
+    // Portal publication (fallback while Central quota is exhausted).
+    id("com.gradle.plugin-publish") version "2.2.1"
 }
 
 group = "education.cccp"
@@ -344,6 +347,11 @@ gradlePlugin {
             displayName = "Document Plugin"
             description = "Gradle plugin for AsciiDoc document creation and multi-format publication (HTML, PDF, EPUB, DocBook, ManPage) via AsciidoctorJ."
             tags.set(listOf("asciidoc", "documentation", "pdf", "html", "epub", "asciidoctorj", "publishing"))
+            compatibility {
+                features {
+                    configurationCache = false
+                }
+            }
         }
     }
 }
