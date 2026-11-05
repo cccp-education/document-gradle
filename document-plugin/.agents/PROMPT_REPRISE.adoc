@@ -1,76 +1,38 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 291
+:session: 293
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-290 (2026-10-31) — **DOC-I18N-PRESERVE** ✅ : le classifieur consomme `contracts.i18n.PreserveCatalog` (i18n-contracts 0.0.5) — pur markup jamais traduit, prose citant un marqueur toujours traduite ; 4 UT (11/11) + 5 scénarios BDD `@preserve`, pins ws `0.0.110`, **document 0.0.26 publié** (bundle `50f717a0`).
-:epic_actif: GBL-010 — branche Data côté document **close** (`G-2` S-286 + `G-2b` S-289).
-:epic_suivant: **bakery G-1b** (delta par sous-arbre, désormais débloqué) → **G-4** (audit unifié cheroliv.com) → **G-5** (reprise économie d'encre).
+:etat: S-292 — **durcissement structurel** ✅ : `TranslatedTextSanitizer` + garde `ContentTranslationService.requireSameBlockStructure` ; CI `42077356614` verte ; **document 0.0.31** Portal + mavenLocal (`configurationCache = false`) ; Central au 2026-12-01.
+:epic_actif: GBL-010 — branche Data close ; garde structurelle de traduction livrée.
+:epic_suivant: consommation document 0.0.31 dans le C6 (en cours) ; publication Central 0.0.31 au reset ; DOC-OUT-3/4.
 
-== Mission session 290 — sur décision pilote
+== Acquis S-292 (2026-11-05)
 
-. **bakery G-1b** (recommandé) — câbler l'audit de statut dans `MigrateContentI18nTask` /
-   `translateTemplates` : ne re-traiter que les nœuds non-verts, preuve second
-   passage no-op. Le statut des feuilles PlantUML vient maintenant de document.
-. **G-4** — audit d'arbre unifié (`translation-tree.json`) côté cheroliv.com,
-   fusion des rapports templates (bakery), article→AST (document) et feuilles
-   PlantUML.
-. **G-5** — reprise économie d'encre : purge/retry ciblés des nœuds non-verts,
-   preuve second passage no-op, `check` VERT.
-. **DOC-PLT-4** — re-générer les variantes gelées (`@startuml` bruts) — cross-borough
-   bakery/plantuml, coût LLM, **accord pilote requis**.
-. **DOC-PLT-5** — chaîne E2E bakery → document → port → plantuml (rendu non blanc).
-6. **DOC-FPA-PUBLISH-0** — STANDBY (déclenché par le livrable A1 Tombouctou).
+* `TranslatedTextSanitizer` : CR/LF → espace, trim, échappement des marqueurs
+  de bloc en tête (`=`, `|`, `[`, `----`, `....`, `++++`) ; appliqué à tous les
+  textes traduits ; `PivotInline.LineBreak` préservé.
+* `ContentTranslationService.requireSameBlockStructure` : rendu en mémoire,
+  ré-parse, signature source ↔ variante ; écart = `IllegalStateException`,
+  fichier **non écrit**. Couvre les 3 chemins d'écriture.
+* `DocumentTranslator.structureSignature` partagé (delta + garde).
+* Tests : 9 sanitizer + 6 garde. Commit `61801cf`, CI `42077356614` **verte**.
+* **Build** : `com.gradle.plugin-publish 2.2.1` + `compatibility { features {
+  configurationCache = false } }` (commit `aad5e52`).
+* **Portal** : `document-plugin 0.0.31` publié (créé 2026-11-05 17:51:36) via
+  override d'init script (catalogue 0.0.122 déclare encore 0.0.30) ; POM
+  importe `workspace-bom:0.0.122` (publié). `publishToMavenLocal` 0.0.31 fait.
 
-== État du code (S-289)
+== Mission session 293
 
-* **Version** : `0.0.25` (dérivée du catalogue ws `0.0.101`) ; toml local aligné.
-* **Pins** : `workspace-bom`/`workspace-catalog` `0.0.101`, `plantuml-plugin` `0.0.10`,
-  `plantuml-contracts` `0.0.1`.
-* **G-2b** : `document.translation.tree` — `ArticleLeafStatus`,
-  `PlantUmlLeafStatusResolver`, `ArticleNode.Leaf.status`,
-  `ArticleTreeReport.plantumlStatusCounts`.
-* **Preuve CI** : run `40230767305` — 10/10 UT + 7/7 BDD `@article-tree` PASSED.
-  L'unique échec global (`DocumentPluginPublicationTest`, drift toml `0.0.24` vs
-  ws `0.0.25`) est corrigé ; **CI de clôture VERTE** run `40233298431`
-  (commit `c87d9c3`, `Build & Test` success, `Publish` skipped sans tag).
-* **Historique** : trois commits `DOC-TRANSLATE` (`04ea837`, `4d002e4`, `d11b33c`)
-  d'une session parallèle ont embarqué des fichiers G-2b en cours (`git add -A`) ;
-  `4d002e4` est une photo intermédiaire non compilable, `d11b33c` est l'état complet.
+. Consommer **document 0.0.31** dans le C6 (le site l'a déjà utilisé en local
+   pour le pilote `en` : 4 traduits, 11 rejetés par la garde, 787/0).
+. Attendre l'approbation Portal (`education.cccp.document 0.0.31`).
+. Au 2026-12-01 : publier la même **0.0.31** sur Central ; re-pinner le runner.
+. Rester : DOC-OUT-3 (statut réel, dépend de CB-I18N-SAFETY), DOC-OUT-4 (BDD
+   dogfooding), et la reprise C6 côté site.
 
-== Pièges retenus (S-232..S-289)
+== Rappels
 
-1. *Snapshot collect* : `collectDocumentRetrieve` re-scan à chaque exécution.
-2. *`@InputFile` valide l'existence AVANT l'action* — `@Input @Optional Property<String>`.
-3. *`--tests` Gradle ne réduit PAS la découverte Cucumber* — filtrer par tag.
-4. *Polling Central* : `<latest>` peut rester périmé — tester le POM.
-5. *Drift catalogue ws* : MEMPHIS bump → garde RED. Réaligner les 3 sources.
-6. *Le parser pivot est LOSSY* — traduire le domaine, pas le livre assemblé.
-7. *(S-282) `publishToMavenLocal` d'une version déjà Central écrase le local.*
-8. *(S-289) `git add -A` cross-session embarque des fichiers non finis — indexer
-   explicitement les fichiers de sa session (piège #26).*
-9. *(S-289) `ArticleLeafStatus` est un vocabulaire de **rapport** document ; ne pas
-   le promouvoir en N0 (éviter un bump MEMPHIS). Les faits viennent de
-   `PlantUmlClassifier`/`PlantUmlSyntaxValidator`.*
-10. *(S-289) `PRESERVE` du classifieur N0 = `TRANSLATED` (terminal, économie
-    d'encre) — ce n'est pas une traduction sémantique.*
-11. *(S-289) Le validateur N0 est injecté ; aucun défaut silencieux « tout valide ».
-    Un futur appelant doit fournir l'adaptateur plantuml.*
-
-== Anti-glue Cucumber (règle de propriété — S-238)
-
-Chaque feature a UN runner propriétaire. **29 runners dédiés** (dernier :
-`translationResilienceCucumberTest`). G-2b étend le runner existant
-`articleTreeCucumberTest` — aucun 30e runner.
-
-== Méthode
-
-Baby-step DDD/TDD/BDD strict (RED → GREEN → REFACTOR), unit → functional →
-cucumber, économie d'encre. CONTRAINTE GLOBALE : *Zéro Python*. *Local = Build,
-Tests = CI*. English only code/tests/features (gouvernance .adoc en français).
-
-== À vérifier en ouverture
-
-1. `git status` (document-gradle) — working tree propre attendu.
-2. `JAVA_HOME=/home/cheroliv/.sdkman/candidates/java/25.0.4-tem` (JDK 25).
-3. `./gradlew compileKotlin compileTestKotlin compileFunctionalTestKotlin` VERT.
-4. Lire `BACKLOG.adoc` § GBL-010 ; ne pas relancer les tests localement.
+* **Local = Build, Tests = CI** : compiler seulement.
+* **Zéro Python** ; English only code/tests/features (gouvernance `.adoc` en FR).
+* Ne pas lire les fichiers gitignorés. Commit/push sur accord pilote.

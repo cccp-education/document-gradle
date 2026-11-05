@@ -11,3 +11,18 @@ _Session 291 (2026-11-02) — DOC-A11Y socle (GBL-011-3)_
 - Tests : `HtmlAccessibilityInspectorTest`, `EpubAccessibilityInspectorTest`,
   `DocumentA11yReportTest`, `DocumentA11yAuditorTest`,
   `ReportDocumentAccessibilityTaskTest`
+
+== Session 292 — 2026-11-05 — durcissement structurel + Portal 0.0.31
+
+=== Fait
+* `TranslatedTextSanitizer` + garde structurelle de la traduction (commit
+  `61801cf`, CI `42077356614` verte).
+* `com.gradle.plugin-publish 2.2.1` + `configurationCache = false` (commit
+  `aad5e52`).
+* `document-plugin 0.0.31` pubié sur le Plugin Portal (créé 2026-11-05
+  17:51:36) + mavenLocal ; Central au 2026-12-01.
+* Rapport `.agents/sessions/292-structural-hardening-portal.adoc`.
+
+=== Prochaine session
+* Consommation 0.0.31 dans le C6 ; approbation Portal ; publication Central
+  au reset ; DOC-OUT-3/4.
