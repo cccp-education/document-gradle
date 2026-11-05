@@ -259,21 +259,6 @@ class DocumentTranslator(
         return structureSignature(sourceArticle.blocks) == structureSignature(previousTranslated.blocks)
     }
 
-    private fun structureSignature(blocks: List<PivotBlock>): List<String> =
-        blocks.map { block ->
-            when (block) {
-                is PivotBlock.Heading -> "heading:${block.level}"
-                is PivotBlock.Paragraph -> "paragraph"
-                is PivotBlock.ListBlock -> "list:${block.ordered}"
-                is PivotBlock.Table -> "table"
-                is PivotBlock.Admonition -> "admonition:${block.kind}"
-                is PivotBlock.Source -> "source:${block.language.lowercase()}"
-                is PivotBlock.DescriptionList -> "description-list"
-                is PivotBlock.BlockMacro -> "block-macro:${block.name}"
-                PivotBlock.Hr -> "hr"
-            }
-        }
-
     internal fun translateFrontmatter(
         fm: PivotFrontmatter,
         sourceLanguage: String,
@@ -544,7 +529,8 @@ class DocumentTranslator(
         if (text.isBlank()) return FieldTranslation(text, failed = false)
         val request = TranslationRequest(text, sourceLanguage, targetLanguage)
         return when (val result = translationService.translate(request)) {
-            is TranslationResult.Success -> FieldTranslation(result.translatedText, failed = false)
+            is TranslationResult.Success ->
+                FieldTranslation(TranslatedTextSanitizer.sanitize(result.translatedText), failed = false)
             // DOC-TRANSLATE-RESILIENCE — the silent French fallback is kept
             // (the rendered article stays complete), but the owning top-level
             // block is reported so it is stored as PENDING, never TRANSLATED.
@@ -598,4 +584,27 @@ class DocumentTranslator(
         val text: String,
         val failed: Boolean,
     )
+
+    companion object {
+        /**
+         * Block count and kind sequence of [blocks].
+         *
+         * Shared by the delta alignment check and the rendered-output guard:
+         * a translation may replace text but must never change this signature.
+         */
+        internal fun structureSignature(blocks: List<PivotBlock>): List<String> =
+            blocks.map { block ->
+                when (block) {
+                    is PivotBlock.Heading -> "heading:${block.level}"
+                    is PivotBlock.Paragraph -> "paragraph"
+                    is PivotBlock.ListBlock -> "list:${block.ordered}"
+                    is PivotBlock.Table -> "table"
+                    is PivotBlock.Admonition -> "admonition:${block.kind}"
+                    is PivotBlock.Source -> "source:${block.language.lowercase()}"
+                    is PivotBlock.DescriptionList -> "description-list"
+                    is PivotBlock.BlockMacro -> "block-macro:${block.name}"
+                    PivotBlock.Hr -> "hr"
+                }
+            }
+    }
 }

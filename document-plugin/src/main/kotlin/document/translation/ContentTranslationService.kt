@@ -196,13 +196,22 @@ class ContentTranslationService(
         targetLanguage: String,
     ) {
         val original = file.readText()
+        val sourceArticle = parser.parse(original)
         val outcome = documentTranslator.translateOutcome(original, sourceLanguage, targetLanguage)
         record(outcome.trace)
+        val renderedBlocks = parser.parse(outcome.content).blocks
         // DOC-OUT-2 — never write a structurally duplicated/truncated artefact.
         TranslationOutputIntegrity.requireNoDuplication(
-            sourceBlocks = parser.parse(original).blocks,
-            renderedBlocks = parser.parse(outcome.content).blocks,
+            sourceBlocks = sourceArticle.blocks,
+            renderedBlocks = renderedBlocks,
             articleLabel = file.name,
+        )
+        // Structure is translation-invariant: a translated text that introduces
+        // a heading/table/delimiter must fail here, before the source is replaced.
+        requireSameBlockStructure(
+            sourceBlocks = sourceArticle.blocks,
+            renderedBlocks = renderedBlocks,
+            sourceLabel = file.path,
         )
         file.writeText(outcome.content)
     }
@@ -220,11 +229,17 @@ class ContentTranslationService(
         val trace: TranslationTrace =
             if (previousBlockChecksums.isEmpty() || !targetFile.exists()) {
                 val translated = documentTranslator.translateOutcome(sourceText, sourceLanguage, targetLanguage)
+                val renderedBlocks = parser.parse(translated.content).blocks
                 // DOC-OUT-2 — a re-translation must not duplicate blocks.
                 TranslationOutputIntegrity.requireNoDuplication(
                     sourceBlocks = sourceArticle.blocks,
-                    renderedBlocks = parser.parse(translated.content).blocks,
+                    renderedBlocks = renderedBlocks,
                     articleLabel = sourceFile.name,
+                )
+                requireSameBlockStructure(
+                    sourceBlocks = sourceArticle.blocks,
+                    renderedBlocks = renderedBlocks,
+                    sourceLabel = sourceFile.path,
                 )
                 targetFile.writeText(translated.content)
                 translated.trace
@@ -249,14 +264,23 @@ class ContentTranslationService(
                         targetLanguage,
                     )
                 val outputRenderer = if (sourceArticle.frontmatter.isJbakeNative) jbakeRenderer else renderer
+                // Render to a string first: the guard must run on what would
+                // actually be written, not on the pre-render pivot AST.
+                val rendered = outputRenderer.render(translatedArticle.article)
+                val renderedBlocks = parser.parse(rendered).blocks
                 // DOC-OUT-2 — the delta path is where a block could be re-inserted
                 // more than once; fail before writing the artefact.
                 TranslationOutputIntegrity.requireNoDuplication(
                     sourceBlocks = sourceArticle.blocks,
-                    renderedBlocks = translatedArticle.article.blocks,
+                    renderedBlocks = renderedBlocks,
                     articleLabel = sourceFile.name,
                 )
-                targetFile.writeText(outputRenderer.render(translatedArticle.article))
+                requireSameBlockStructure(
+                    sourceBlocks = sourceArticle.blocks,
+                    renderedBlocks = renderedBlocks,
+                    sourceLabel = sourceFile.path,
+                )
+                targetFile.writeText(rendered)
                 translatedArticle.trace
             }
         record(trace)
@@ -302,6 +326,40 @@ class ContentTranslationService(
         val outcome = documentTranslator.translateArticleOutcome(article, sourceLanguage, targetLanguage)
         record(outcome.trace)
         return outcome.article
+    }
+
+    /**
+     * Structural guard: the rendered variant must keep the source block
+     * signature (count **and** kind sequence). A translated text that opens a new
+     * heading/table/block or closes/loses one fails here, before the target file
+     * is written — a corrupt variant is never persisted.
+     */
+    private fun requireSameBlockStructure(
+        sourceBlocks: List<PivotBlock>,
+        renderedBlocks: List<PivotBlock>,
+        sourceLabel: String,
+    ) {
+        val expected = DocumentTranslator.structureSignature(sourceBlocks)
+        val actual = DocumentTranslator.structureSignature(renderedBlocks)
+        if (expected == actual) return
+        val index = firstStructureDivergence(expected, actual)
+        val expectedKind = expected.getOrNull(index) ?: "<end-of-document>"
+        val actualKind = actual.getOrNull(index) ?: "<end-of-document>"
+        throw IllegalStateException(
+            "Translation of '$sourceLabel' changed the AsciiDoc block structure at index $index: " +
+                "the source expects '$expectedKind' (${expected.size} blocks) but the rendered variant " +
+                "has '$actualKind' (${actual.size} blocks). Translation must only replace text, never " +
+                "introduce or drop a block; the target file was not written.",
+        )
+    }
+
+    private fun firstStructureDivergence(
+        expected: List<String>,
+        actual: List<String>,
+    ): Int {
+        val indices = 0 until maxOf(expected.size, actual.size)
+        return indices.firstOrNull { expected.getOrNull(it) != actual.getOrNull(it) }
+            ?: maxOf(expected.size, actual.size)
     }
 
     fun drainTableValidationResults(): List<TableValidationResult.Invalid> {
