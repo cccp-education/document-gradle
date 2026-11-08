@@ -6,6 +6,16 @@
 :epic_actif: GBL-010 — branche Data close ; garde structurelle de traduction livrée.
 :epic_suivant: consommation document 0.0.31 dans le C6 (en cours) ; publication Central 0.0.31 au reset ; DOC-OUT-3/4.
 
+== Décision pilote (2026-11-05) — C6 prose / modèle
+
+* `gpt-oss:120b-cloud` **refusé** pour le C6 prose ; le modèle reste
+  `nemotron-3-super:cloud` sur `localhost:11434`.
+* Le durcissement du prompt est porté par **bakery**
+  (`LlmServiceTranslationAdapter.buildPrompt`), pas par document ; la garde
+  structurelle 0.0.31 reste le filet (rejet, jamais de corruption).
+* Alternatives (`gemma4:31b-cloud`, `deepseek-v4.1-flash:cloud`) uniquement sur
+  décision pilote explicite.
+
 == Acquis S-292 (2026-11-05)
 
 * `TranslatedTextSanitizer` : CR/LF → espace, trim, échappement des marqueurs
