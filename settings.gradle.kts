@@ -14,7 +14,6 @@ pluginManagement.resolutionStrategy.eachPlugin {
     }
 }
 
-
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
