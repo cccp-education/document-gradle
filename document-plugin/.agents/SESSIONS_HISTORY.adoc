@@ -2,6 +2,7 @@
 
 |===
 | # | Date | Type | Sujet | Score
+| 291 | 2026-11-02 | feat DOC-A11Y DDD/TDD | **DOC-A11Y socle — rapport producteur `a11y-report.json` (GBL-011-3)** 🟡 — domaine `document.a11y`, inspecteurs HTML/EPUB, auditeur, tâche `reportDocumentAccessibility` (advisory sauf `a11yStrict`), 5 fichiers de tests ; commit `0533434`, CI `41368355745` en cours (file derrière la release 0.0.29). Reste : rendu (`lang`, `alt`, `epub:type`, OPF) + BDD + dogfooding FPA. | 8 |
 | 290 | 2026-10-31 | feat i18n N0 / DDD-TDD | **DOC-I18N-PRESERVE** ✅ — `TextTranslatableClassifier` consomme `contracts.i18n.PreserveCatalog` (i18n-contracts 0.0.5, BOM/catalog 0.0.110) : un fragment dont chaque lettre appartient à un marqueur préservé (macro, fence, code inline, ancre, référence d'attribut, URL) n'est plus jamais traduit ; la prose qui cite un marqueur reste traduisible ; les règles métier (tailles disque, listes de paquets) restent locales. 4 UT ajoutés (11/11). `document 0.0.26` publié (bundle `50f717a0`, AUTOMATIC). Rapport `.agents/sessions/290-doc-i18n-preserve-adoption.adoc`. | 9/10 |
 | 289 | 2026-10-25 | feat GBL-010 DDD/TDD/BDD | **GBL-010 G-2b — statut de feuille PlantUML délégué aux contrats N0** ✅ — `ArticleLeafStatus` (`MISSING`/`PENDING`/`TRANSLATED`/`BROKEN`) + `PlantUmlLeafStatusResolver` mappe les faits N0 (`PlantUmlClassifier` + `PlantUmlSyntaxValidator`) ; document ne réimplémente ni labels, ni classification, ni parsing. `ArticleNode.Leaf.status` (feuilles PlantUML uniquement), `ArticleTreeReport.plantumlStatusCounts` + `render()` par feuille et synthèse. Tests : 10 UT `ArticleTreeAuditTest` + 7 scénarios `@article-tree` (runner existant). Run `40230767305` : 10/10 UT + 7/7 BDD PASSED ; run global rouge sur 1 test hors G-2b (`DocumentPluginPublicationTest` — drift toml local `0.0.24` vs ws `0.0.101`), corrigé S-289 (`document = 0.0.25`). CI de clôture `40233298431` VERTE (commit `c87d9c3`). Gates locales : compiles 3 source sets + `assemble` + `validatePlugins` VERT. Zéro bump, zéro publication, zéro secret. Rapport : `.agents/sessions/289-gbl010-g2b-plantuml-leaf-status.adoc`. | 10/10
 | 288 | 2026-10-13 | release / consumer | **Consommation `plantuml-plugin 0.0.10`** ✅ — alignement DAG (release plantuml S-242/PLT-MAINTAIN). `plantuml-plugin 0.0.9 → 0.0.10`, pins `workspace-bom`/`workspace-catalog 0.0.78 → 0.0.87`. `compileKotlin` VERT (3 source sets) contre plantuml 0.0.10 + BOM 0.0.87. Zéro secret. Rapport `.agents/sessions/288-consume-plantuml-0.0.10.adoc`. | 9/10
@@ -579,3 +580,10 @@ Tests = CI). Zéro bump/publication, zéro secret. Piège #56.
 
 **Suite** : EPIC PUB 0.0.20 (document) + propagation bakery 0.0.23
 (`TemplateStructureGuard` + `PendingBlockRetry`) — accord pilote.
+
+== Session 293 — JitPack mirror (CNV-16) — 2026-11-09
+
+Publication JitPack de document-plugin 0.0.30. JitPack : 0.0.30 — POM HTTP 200 ;
+le tag v0.0.30 a aussi déclenché le workflow Central → échec doublon attendu.
+Shim `useModule` pour `education.cccp.build.*` (tag JitPack `0.0.15`).
+Rapport `293-jitpack-mirror.adoc`.

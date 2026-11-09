@@ -1,6 +1,21 @@
 = TEST_COVERAGE_ANALYSIS — document-gradle (New Orleans 🟢)
-:date: 2026-10-25
-:session: 289
+:date: 2026-11-02
+:session: 291
+
+== Session 291 — DOC-A11Y socle : rapport producteur `a11y-report.json` (GBL-011-3) 🟡
+
+*Périmètre* : `document.a11y` (`DocumentA11yReport`/`DeliverableA11yReport`/
+`DocumentA11yFinding`), `HtmlAccessibilityInspector`, `EpubAccessibilityInspector`,
+`DocumentA11yAuditor`, tâche `reportDocumentAccessibility`.
+*Note méthodo* : Local = Build, Tests = CI — preuve = run CI `41368355745`
+(commit `0533434`, en cours au moment de la clôture).
+*Nouveaux tests* : `HtmlAccessibilityInspectorTest` (5), `EpubAccessibilityInspectorTest` (4),
+`DocumentA11yReportTest` (2), `DocumentA11yAuditorTest` (3),
+`ReportDocumentAccessibilityTaskTest` (2).
+*Contrat* : `deliverables[].kind`, `findings[].rule/severity/location/message`,
+`deliverables[].limits` — consommé par academy.
+*Reste* : correctifs de rendu (`lang`, `alt`, `epub:type`, métadonnées OPF) +
+BDD `@a11y` + dogfooding FPA.
 
 == Session 289 — GBL-010 G-2b : statut de feuille PlantUML délégué (5 UT + 4 scénarios BDD)
 
