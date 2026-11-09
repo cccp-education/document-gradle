@@ -981,3 +981,7 @@ Relation contenant→contenu, pas parallelisme N2↔N2.
 
 Voir aussi : `TAXONOMIE_WORKSPACE.adoc` (racine workspace) pour l'ontologie complete.
 
+
+== Session 293 — JitPack mirror (CNV-16)
+
+Publication JitPack de document-plugin 0.0.30 (le tag v0.0.30 a aussi déclenché le workflow Central → échec doublon attendu). JitPack : 0.0.30 — POM HTTP 200.
