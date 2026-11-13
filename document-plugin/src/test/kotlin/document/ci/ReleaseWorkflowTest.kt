@@ -99,16 +99,32 @@ class ReleaseWorkflowTest {
     }
 
     @Test
+    fun `the publish task may live in the ci contract`() {
+        val delegated =
+            compliant.replace(
+                "./gradlew publishAggregationToCentralPortal",
+                "./ci/run.sh publish",
+            )
+
+        assertThat(ReleaseWorkflow.check(delegated).compliant).isFalse()
+        assertThat(
+            ReleaseWorkflow
+                .check(delegated, "./gradlew publishAggregationToCentralPortal")
+                .compliant,
+        ).isTrue()
+    }
+
+    @Test
     fun `the real workflow is compliant`() {
-        val workflow =
+        val repositoryRoot =
             java.io
                 .File(System.getProperty("user.dir"))
                 .absoluteFile
                 .parentFile
-                .resolve(".github/workflows/test.yml")
-                .readText(kotlin.text.Charsets.UTF_8)
+        val workflow = repositoryRoot.resolve(".github/workflows/test.yml").readText(kotlin.text.Charsets.UTF_8)
+        val contract = repositoryRoot.resolve("ci/run.sh").readText(kotlin.text.Charsets.UTF_8)
 
-        val verdict = ReleaseWorkflow.check(workflow)
+        val verdict = ReleaseWorkflow.check(workflow, contract)
 
         assertTrue(verdict.compliant, verdict.violations.joinToString("\n"))
     }

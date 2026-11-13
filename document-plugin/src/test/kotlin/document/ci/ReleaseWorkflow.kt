@@ -34,10 +34,13 @@ object ReleaseWorkflow {
     private val OSSRH_USERNAME = Regex("""OSSRH_USERNAME""")
     private val OSSRH_PASSWORD = Regex("""OSSRH_PASSWORD""")
 
-    fun check(workflowText: String): Verdict {
+    fun check(
+        workflowText: String,
+        contractText: String = "",
+    ): Verdict {
         val violations = mutableListOf<String>()
 
-        if (!PUBLISH_TASK.containsMatchIn(workflowText)) {
+        if (!PUBLISH_TASK.containsMatchIn(workflowText) && !PUBLISH_TASK.containsMatchIn(contractText)) {
             return Verdict(
                 listOf(
                     "the workflow no longer calls 'publishAggregationToCentralPortal' — " +
