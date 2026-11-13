@@ -3005,3 +3005,19 @@ consommé par academy (`deliverables[].kind`, `findings[].rule/severity/location
 *Critère de sortie* : un document de référence (livre FPA nettoyé) produit un HTML et
 un EPUB conformes WCAG 2.1 AA sur le périmètre texte, avec rapport versionné et limites
 PDF déclarées.
+
+'''
+
+== Session 294 — CNV-17 (JitPack canal unique)
+
+_Note de gouvernance (aucune US créée)._ Décision pilote S-045 : JitPack devient
+le **canal unique** des artefacts publics `education.cccp` (`foundry/private/**`
+et `office/**` exclus) — un artefact = un canal = un nom = une version. Le
+borough est aligné sur le N0 `workspace-bom 0.0.136` et
+`conventions-plugin 0.0.17` : contrats N0 et plateforme BOM en coordonnées
+JitPack `0.0.136`, `DocumentPluginPublicationTest` aligné, version injectée
+`ws.versions.workspace.bom`. CI verte `43473404203` (commit `f89a351`). Zéro
+bump, zéro publication. **Réserve** : l'artefact JitPack `document 0.0.30` ≠
+`0.0.30` Central (consommation traitée côté bakery, US-3c). Rapport
+`.agents/sessions/294-cnv-17-jitpack-channel.adoc`. EPIC transversal :
+`conventions-plugin/.agents/CADRAGE_EPIC_CNV_17_JITPACK_PRIMARY.adoc`.

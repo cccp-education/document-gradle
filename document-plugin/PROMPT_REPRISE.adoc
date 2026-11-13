@@ -1,38 +1,44 @@
 = PROMPT_REPRISE — document-gradle (New Orleans 🟢)
 
-:session: 293
+:session: 295
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-292 — **durcissement structurel** ✅ : `TranslatedTextSanitizer` + garde `ContentTranslationService.requireSameBlockStructure` ; CI `42077356614` verte ; **document 0.0.31** Portal + mavenLocal (`configurationCache = false`) ; Central au 2026-12-01.
-:epic_actif: GBL-010 — branche Data close ; garde structurelle de traduction livrée.
-:epic_suivant: consommation document 0.0.31 dans le C6 (en cours) ; publication Central 0.0.31 au reset ; DOC-OUT-3/4.
+:etat: S-294 — **CNV-17 : JitPack canal unique** ✅ : contrats N0 + plateforme BOM en coordonnées JitPack `0.0.136`, garde alignée ; CI `43473404203` verte ; zéro bump.
+:epic_actif: Aucun EPIC/US ouvert.
+:epic_suivant: maintenance ; toute release future = tag JitPack (Central/Portal désactivés pour `foundry/public/**`).
 
-== Acquis S-292 (2026-11-05)
+== Acquis S-294 (2026-11-13)
 
-* `TranslatedTextSanitizer` : CR/LF → espace, trim, échappement des marqueurs
-  de bloc en tête (`=`, `|`, `[`, `----`, `....`, `++++`) ; appliqué à tous les
-  textes traduits ; `PivotInline.LineBreak` préservé.
-* `ContentTranslationService.requireSameBlockStructure` : rendu en mémoire,
-  ré-parse, signature source ↔ variante ; écart = `IllegalStateException`,
-  fichier **non écrit**. Couvre les 3 chemins d'écriture.
-* `DocumentTranslator.structureSignature` partagé (delta + garde).
-* Tests : 9 sanitizer + 6 garde. Commit `61801cf`, CI `42077356614` **verte**.
-* **Build** : `com.gradle.plugin-publish 2.2.1` + `compatibility { features {
-  configurationCache = false } }` (commit `aad5e52`).
-* **Portal** : `document-plugin 0.0.31` publié (créé 2026-11-05 17:51:36) via
-  override d'init script (catalogue 0.0.122 déclare encore 0.0.30) ; POM
-  importe `workspace-bom:0.0.122` (publié). `publishToMavenLocal` 0.0.31 fait.
+* Décision pilote S-045 : JitPack = canal **unique** des artefacts publics
+  (`foundry/private/**` et `office/**` exclus) — un artefact = un canal = un nom
+  = une version.
+* `gradle/libs.versions.toml` : contrats N0 (`plantuml-contracts`,
+  `i18n-contracts`, `opencode-session-contracts`, `pipeline-contracts`) au
+  groupe `com.github.cccp-education.workspace-bom:*:0.0.136`.
+* `build.gradle.kts` : plateforme
+  `com.github.cccp-education.workspace-bom:workspace-bom:0.0.136` ; planner en
+  coordonnée JitPack ; version injectée `ws.versions.workspace.bom`.
+* `settings.gradle.kts` : catalogue `ws` JitPack `0.0.136` + dépôt JitPack.
+* `DocumentPluginPublicationTest` : garde de plateforme alignée sur JitPack.
+* **CI verte** : `Test` `43473404203` (commit `f89a351`).
+* Rapport `.agents/sessions/294-cnv-17-jitpack-channel.adoc`.
 
-== Mission session 293
+== Mission session 295
 
-. Consommer **document 0.0.31** dans le C6 (le site l'a déjà utilisé en local
-   pour le pilote `en` : 4 traduits, 11 rejetés par la garde, 787/0).
-. Attendre l'approbation Portal (`education.cccp.document 0.0.31`).
-. Au 2026-12-01 : publier la même **0.0.31** sur Central ; re-pinner le runner.
-. Rester : DOC-OUT-3 (statut réel, dépend de CB-I18N-SAFETY), DOC-OUT-4 (BDD
-   dogfooding), et la reprise C6 côté site.
+. **Maintenance** — aucun EPIC/US ouvert ; orientation à la demande du pilote.
+. **Réserve de contenu** : l'artefact JitPack `document 0.0.30` n'est pas
+   identique au `0.0.30` historiquement publié sur Central. La consommation est
+   traitée côté **bakery (US-3c)** ; ne pas relancer de publication sans
+   vérifier l'alignement de contenu.
+. Toute nouvelle release se fait désormais par **tag JitPack `vX.Y.Z`** (bump de
+   la version dans le dépôt avant le tag) : Central et le Plugin Portal ne sont
+   plus des canaux pour les dépôts publics.
+. Reste documentaire : DOC-OUT-3 (statut réel, dépend de CB-I18N-SAFETY),
+   DOC-OUT-4 (BDD dogfooding), DOC-A11Y-4.
 
 == Rappels
 
 * **Local = Build, Tests = CI** : compiler seulement.
 * **Zéro Python** ; English only code/tests/features (gouvernance `.adoc` en FR).
 * Ne pas lire les fichiers gitignorés. Commit/push sur accord pilote.
+* JitPack relabelle **tous** les modules d'un dépôt à la version du tag : une
+  seule version par dépôt.

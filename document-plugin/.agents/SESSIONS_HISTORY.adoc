@@ -587,3 +587,15 @@ Publication JitPack de document-plugin 0.0.30. JitPack : 0.0.30 — POM HTTP 200
 le tag v0.0.30 a aussi déclenché le workflow Central → échec doublon attendu.
 Shim `useModule` pour `education.cccp.build.*` (tag JitPack `0.0.15`).
 Rapport `293-jitpack-mirror.adoc`.
+
+== Session 294 — CNV-17 : JitPack canal unique — 2026-11-13
+
+Décision pilote S-045 : JitPack = canal unique des artefacts publics
+(`foundry/private/**` et `office/**` exclus). Contrats N0 au groupe
+`com.github.cccp-education.workspace-bom:*:0.0.136` ; plateforme BOM JitPack
+`0.0.136` ; `DocumentPluginPublicationTest` attend la coordonnée JitPack ;
+version injectée `ws.versions.workspace.bom`. **CI verte** : `Test`
+`43473404203` (commit `f89a351`). Réserve de contenu : l'artefact JitPack
+`document 0.0.30` ≠ `0.0.30` Central (consommation traitée côté bakery, US-3c).
+Zéro bump, zéro publication, zéro secret. Rapport
+`.agents/sessions/294-cnv-17-jitpack-channel.adoc`.
