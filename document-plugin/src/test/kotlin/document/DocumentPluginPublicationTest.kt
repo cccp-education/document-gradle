@@ -58,7 +58,7 @@ class DocumentPluginPublicationTest {
 
         assertThat(buildScript)
             .withFailMessage("workspace-bom platform pin must use the ws catalog BOM version ($publishedBomVersion)")
-            .contains("""platform("education.cccp:workspace-bom:$publishedBomVersion")""")
+            .contains("""platform("com.github.cccp-education.workspace-bom:workspace-bom:$publishedBomVersion")""")
     }
 
     /**
