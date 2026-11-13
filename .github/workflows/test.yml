@@ -21,39 +21,32 @@ jobs:
     name: Static (ktlint + validatePlugins)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: cccpeducation/cccp-ci-base@sha256:4722c1bcc71c0343c05257842b774715fc2574ff79182599a29fe8c1361cbeb3
     steps:
       - uses: actions/checkout@v4
       - name: Verify Gradle wrapper version
         uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+      # GBL-013 US-5 — the runtime image provides JDK 25; `ci/run.sh fast` is the gate.
       - name: Lint and plugin validation
-        run: ./gradlew ktlintCheck validatePlugins
-        working-directory: document-plugin
+        run: ci/run.sh fast
 
   unit:
     name: Unit (test)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    container:
+      image: cccpeducation/cccp-ci-base@sha256:4722c1bcc71c0343c05257842b774715fc2574ff79182599a29fe8c1361cbeb3
     steps:
       - uses: actions/checkout@v4
       - name: Verify Gradle wrapper version
         uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Unit tests
-        run: ./gradlew test
-        working-directory: document-plugin
+        run: ci/run.sh test
 
   functional:
     name: Functional shard ${{ matrix.shard }} (TestKit)
@@ -161,18 +154,18 @@ jobs:
     name: POM check (publishToMavenLocal)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: cccpeducation/cccp-ci-base@sha256:4722c1bcc71c0343c05257842b774715fc2574ff79182599a29fe8c1361cbeb3
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
+      - name: Verify Gradle wrapper version
+        uses: cccp-education/conventions-gradle/.github/actions/verify-gradle-wrapper@main
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Verify publishToMavenLocal (POM)
-        run: ./gradlew publishToMavenLocal
-        working-directory: document-plugin
+        run: ci/run.sh publish
+        env:
+          PUBLISH_TARGET: local
 
   # DOC-CI-ISOLATION-4 — release gate. Publishing to Maven Central happens only
   # from a `v*` tag, after every test job is green, and only when a GPG key is
@@ -186,15 +179,11 @@ jobs:
     timeout-minutes: 20
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [static, unit, functional, bdd, publish-local]
+    container:
+      image: cccpeducation/cccp-ci-base@sha256:4722c1bcc71c0343c05257842b774715fc2574ff79182599a29fe8c1361cbeb3
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -217,8 +206,8 @@ jobs:
           EOF
 
       - name: Publish to Maven Central
-        run: ./gradlew publishAggregationToCentralPortal --no-daemon
-        working-directory: document-plugin
+        run: ci/run.sh publish
         env:
           CI: "true"
           CCCP_PUBLISH: "true"
+          PUBLISH_TARGET: central
