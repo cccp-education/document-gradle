@@ -26,3 +26,13 @@ _Session 291 (2026-11-02) — DOC-A11Y socle (GBL-011-3)_
 === Prochaine session
 * Consommation 0.0.31 dans le C6 ; approbation Portal ; publication Central
   au reset ; DOC-OUT-3/4.
+
+== S-295 — GBL-013 vague 2 : static/unit/publish dans l'image ✅
+
+* `ci/run.sh` (`fast`/`test`/`publish` avec `PUBLISH_TARGET`).
+* Jobs `static`, `unit`, `publish-local`, `publish` épinglés sur
+  `cccpeducation/cccp-ci-base@sha256:4722c1bc…` ; shards functional/BDD hôte.
+* Garde `ReleaseWorkflow` réalignée sur le contrat (`check(workflow, contract)`).
+* Run `43503173120` VERT (commit `3b8ea42`).
+* Rapport `.agents/sessions/295-gbl-013-wave2.adoc`.
+

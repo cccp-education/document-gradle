@@ -599,3 +599,13 @@ version injectée `ws.versions.workspace.bom`. **CI verte** : `Test`
 `document 0.0.30` ≠ `0.0.30` Central (consommation traitée côté bakery, US-3c).
 Zéro bump, zéro publication, zéro secret. Rapport
 `.agents/sessions/294-cnv-17-jitpack-channel.adoc`.
+
+== Session 295 — GBL-013 vague 2 : static/unit/publish dans l'image — 2026-11-14
+
+`ci/run.sh` (`fast`/`test`/`publish` avec `PUBLISH_TARGET`) ; jobs `static`,
+`unit`, `publish-local`, `publish` épinglés sur
+`cccpeducation/cccp-ci-base@sha256:4722c1bc…` ; garde `ReleaseWorkflow`
+réalignée sur le contrat (`check(workflow, contract)`). Shards functional/BDD
+restent hôte. Run `43503173120` **VERT** (commit `3b8ea42`). Rapport
+`.agents/sessions/295-gbl-013-wave2.adoc`.
+

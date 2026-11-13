@@ -1943,3 +1943,12 @@ non passé) compile sans changement.
 Gates : `test` 3822/0 (baseline 3820 + 3 nettes), `functionalTest` 130/130
 baseline exacte, `plantUmlValidationCucumberTest` 10 scénarios PASSED,
 `validatePlugins` VERT, gate D16 word-boundary = 1 citation corpus réel.
+
+== Session 295 — GBL-013 (2026-11-14)
+
+Test-only : `ReleaseWorkflowTest` +1 test (`the publish task may live in the ci
+contract`) et `the real workflow is compliant` lit désormais `ci/run.sh` ; la
+garde `ReleaseWorkflow.check(workflow, contract)` accepte la délégation. Aucun
+test métier modifié, aucune couverture retirée. Preuve = CI `43503173120`
+verte (jobs static/unit/publish-local + shards inchangés).
+

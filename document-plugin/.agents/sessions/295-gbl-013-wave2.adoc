@@ -1,0 +1,25 @@
+= Session 295 — GBL-013 vague 2 : gates static/unit/publish dans l'image
+:date: 2026-11-14
+:borough: New Orleans (document-gradle)
+
+== Livré
+
+* `ci/run.sh` — `fast` (ktlint + validatePlugins), `test` (unit), `publish`
+  (`PUBLISH_TARGET=local|central`).
+* `.github/workflows/test.yml` : jobs `static`, `unit`, `publish-local` et
+  `publish` épinglés sur `cccpeducation/cccp-ci-base@sha256:4722c1bc…`,
+  `setup-java` supprimé dans ces jobs, délégation à `ci/run.sh`.
+* Garde `ReleaseWorkflow` réalignée sur le contrat : la tâche de publication
+  peut vivre dans `ci/run.sh` (`check(workflow, contract)`), +1 test.
+* Shards `functional`/`bdd` et release restent sur l'hôte (décision US-5).
+* Run `43503173120` **VERT** (commit `3b8ea42`), après un premier run rouge
+  `43501414220` dû à la garde qui encodait l'ancien inline.
+
+== Notes
+
+Zéro code métier modifié. Le job de release conserve GPG/OSSRH/`CCCP_PUBLISH`
+dans le workflow et délègue uniquement la commande Gradle.
+
+== Suivant
+
+US-5 se poursuit sur les dépôts restants de la vague 2.
