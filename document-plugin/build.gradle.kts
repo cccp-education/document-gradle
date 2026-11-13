@@ -18,7 +18,7 @@ version =
         .get()
 
 dependencies {
-    implementation(platform("education.cccp:workspace-bom:0.0.122"))
+    implementation(platform("com.github.cccp-education.workspace-bom:workspace-bom:0.0.136"))
 
     // kotlin-stdlib is pulled transitively (and pinned by the BOM). The
     // kotlin-stdlib-jdk8 shim is an empty 953-byte artifact since Kotlin 1.8
@@ -47,7 +47,7 @@ dependencies {
     implementation(libs.langchain4j.ollama)
 
     // LLM bridge — partage avec planner-gradle (compileOnly, evite duplication)
-    compileOnly("education.cccp:planner-plugin:0.0.1")
+    compileOnly("com.github.cccp-education.planner-gradle:planner-plugin:0.0.1")
 
     // PlantUML — composition (contenant→contenu), implementation pour validation syntaxique post-traduction
     implementation(libs.plantuml.plugin)

@@ -17,20 +17,20 @@ slf4j = "2.0.17"
 logback = "1.5.32"
 planner = "0.0.1"
 plantuml-plugin = "0.0.10"
-plantuml-contracts = "0.0.1"
-i18n-contracts = "0.0.5"
-opencode-session-contracts = "0.0.2"
-pipeline-contracts = "0.0.2"
+plantuml-contracts = "0.0.136"
+i18n-contracts = "0.0.136"
+opencode-session-contracts = "0.0.136"
+pipeline-contracts = "0.0.136"
 epubcheck = "5.2.1"
 coroutines = "1.10.2"
 jackson = "2.21.2"
 pdfbox = "3.0.4"
 
 [libraries]
-plantuml-contracts = { module = "education.cccp:plantuml-contracts", version.ref = "plantuml-contracts" }
-i18n-contracts = { module = "education.cccp:i18n-contracts", version.ref = "i18n-contracts" }
-opencode-session-contracts = { module = "education.cccp:opencode-session-contracts", version.ref = "opencode-session-contracts" }
-pipeline-contracts = { module = "education.cccp:pipeline-contracts", version.ref = "pipeline-contracts" }
+plantuml-contracts = { module = "com.github.cccp-education.workspace-bom:plantuml-contracts", version.ref = "plantuml-contracts" }
+i18n-contracts = { module = "com.github.cccp-education.workspace-bom:i18n-contracts", version.ref = "i18n-contracts" }
+opencode-session-contracts = { module = "com.github.cccp-education.workspace-bom:opencode-session-contracts", version.ref = "opencode-session-contracts" }
+pipeline-contracts = { module = "com.github.cccp-education.workspace-bom:pipeline-contracts", version.ref = "pipeline-contracts" }
 epubcheck = { module = "org.w3c:epubcheck", version.ref = "epubcheck" }
 asciidoctorj = { module = "org.asciidoctor:asciidoctorj", version.ref = "asciidoctorj" }
 asciidoctorj-diagram = { module = "org.asciidoctor:asciidoctorj-diagram", version.ref = "asciidoctorj-diagram" }
@@ -52,8 +52,8 @@ cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber"
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 cucumber-picocontainer = { module = "io.cucumber:cucumber-picocontainer", version.ref = "cucumber" }
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", version.ref = "junit-platform-suite" }
-planner-plugin = { module = "education.cccp:planner-plugin", version.ref = "planner" }
-plantuml-plugin = { module = "education.cccp:plantuml-plugin", version.ref = "plantuml-plugin" }
+planner-plugin = { module = "com.github.cccp-education.planner-gradle:planner-plugin", version.ref = "planner" }
+plantuml-plugin = { module = "com.github.cccp-education.plantuml-gradle:plantuml-plugin", version.ref = "plantuml-plugin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
 
