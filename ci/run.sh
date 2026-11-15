@@ -8,20 +8,23 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT/document-plugin"
 
 job="${1:-}"
+# GBL-014 — publication channel (jitpack default until the Sonatype reset).
+channel="${CHANNEL:-jitpack}"
 case "$job" in
   fast)
-    ./gradlew ktlintCheck validatePlugins --no-daemon --console=plain
+    ./gradlew ktlintCheck validatePlugins verifyChannel -Pchannel="$channel" --no-daemon --console=plain
     ;;
   test)
-    ./gradlew test --no-daemon --console=plain
+    ./gradlew test verifyChannel -Pchannel="$channel" --no-daemon --console=plain
     ;;
   publish)
     case "${PUBLISH_TARGET:-local}" in
       local)
-        ./gradlew publishToMavenLocal --no-daemon --console=plain
+        ./gradlew publishToMavenLocal -Pchannel="$channel" --no-daemon --console=plain
         ;;
       central)
-        ./gradlew publishAggregationToCentralPortal --no-daemon --console=plain
+        # GBL-014 — the nmcp aggregation is a central-channel task only.
+        ./gradlew publishAggregationToCentralPortal -Pchannel=central --no-daemon --console=plain
         ;;
       *)
         printf 'unsupported publish target for document-gradle: %s\n' "$PUBLISH_TARGET" >&2
