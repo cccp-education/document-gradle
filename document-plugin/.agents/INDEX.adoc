@@ -1,6 +1,8 @@
 = INDEX — Document Gradle (New Orleans 🟢)
 :toc:
 
+_Derniere mise a jour_ : 2026-11-15 — Session 296 — **GBL-014-5 rollout du canal + GBL-014-4 + GBL-013-10** ✅ : settings channel-conditionnels (`-Pchannel`, défaut `jitpack`), `ci/run.sh` (`fast`/`test`/`publish`, cible `central` = `-Pchannel=central`), shim conventions `0.0.19`, actions `node24`-natives et image `cccp-ci-base` re-pinée `sha256:03ead378…` (Node 26.13.1). CI `Test` verte sur les 4 commits (`43660592324`→`43690082515`). Zéro code métier, zéro bump, zéro secret. Rapport `.agents/sessions/296-gbl-014-5-channel-rollout.adoc`.
+
 _Session 292 (2026-11-05)_ : **durcissement structurel de la traduction + Portal 0.0.31** — `TranslatedTextSanitizer` + garde `requireSameBlockStructure` (commit `61801cf`, CI `42077356614` verte) ; `com.gradle.plugin-publish 2.2.1` + `configurationCache = false` (commit `aad5e52`) ; **document 0.0.31** publié sur le Plugin Portal (créé 2026-11-05 17:51:36) + mavenLocal ; Central au 2026-12-01. Rapport `.agents/sessions/292-structural-hardening-portal.adoc`.
 
 _Session 028 bis (DOC-I18N-OUTPUT DOC-OUT-2)_ : **garde structurelle de la sortie traduite** — `TranslationOutputIntegrity` compare le nombre de blocs checksum-relevant source ↔ rendu (même projection que le store de delta) et **refuse l'écriture** en cas de duplication (défaut `duplicated-content` mesuré : jusqu'à +123 %). Branché sur les 3 chemins d'écriture (`translateSingleFile`, branches delta) ; 5 UT + 3 tests de service dont **deux passes idempotentes**. **DOC-OUT-1** requalifié ✅ (fait en S-290) ; **DOC-OUT-2** ✅. Reste DOC-OUT-3 (statut réel, dépend de CB-I18N-SAFETY) + DOC-OUT-4 (BDD dogfooding).

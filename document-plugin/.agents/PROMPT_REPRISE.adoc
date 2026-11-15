@@ -2,20 +2,29 @@
 
 :session: 296
 :borough: New Orleans — document-gradle (N2, WRITE + PUBLISH)
-:etat: S-295 — **GBL-013 vague 2** ✅ : `ci/run.sh` (`fast`/`test`/`publish`), jobs static/unit/publish-local/publish sur `cccpeducation/cccp-ci-base@sha256:4722c1bc…`, garde `ReleaseWorkflow` réalignée sur le contrat ; CI `43503173120` verte. Shards functional/BDD restent hôte.
-:epic_actif: GBL-013 (portabilité CI) — vague 2 livrée pour document.
+:date: 2026-11-15
+:etat: S-296 — **GBL-014-5 rollout + GBL-014-4 + GBL-013-10** ✅ — settings channel-conditionnels (`-Pchannel`, défaut `jitpack`), `ci/run.sh` (`fast`/`test`/`publish`, cible `central` = `-Pchannel=central`), shim conventions `0.0.19`, actions `node24`-natives, image `cccp-ci-base` Node 26.13.1. CI `Test` verte sur les 4 commits.
+:epic_actif: aucun EPIC ouvert — maintenance à la demande du pilote.
 :epic_suivant: consommation document 0.0.31 dans le C6 ; publication Central au reset ; DOC-OUT-3/4.
+
+== Session 296 — rollout du canal + Node 26
+
+* `b96307d` — settings channel-conditionnels (racine + `document-plugin`) ;
+  JitPack + shim seulement en `jitpack` ; `ci/run.sh` `-Pchannel` ; la cible
+  `PUBLISH_TARGET=central` force `-Pchannel=central` (nmcp).
+* `7a03a7e` — shim `conventions-plugin` `0.0.19`.
+* `2171a8d` / `495ab93` — actions `node24`-natives + image
+  `cccp-ci-base@sha256:03ead378…` (Node 26.13.1).
+* Run `43690082515` **VERT** (commit `495ab93`). Rapport
+  `.agents/sessions/296-gbl-014-5-channel-rollout.adoc`.
 
 == Session 295 — GBL-013 vague 2 : static/unit/publish dans l'image
 
 * `ci/run.sh` — `fast`, `test`, `publish` (`PUBLISH_TARGET=local|central`).
 * Adapter : `container:` épinglé, `setup-java` supprimé sur ces jobs.
-* Garde `ReleaseWorkflow` : `check(workflow, contract)` (+1 test), car la
-  commande de publication vit désormais dans `ci/run.sh`.
+* Garde `ReleaseWorkflow` : `check(workflow, contract)` (+1 test).
 * Run `43503173120` VERT (commit `3b8ea42`). Rapport
   `.agents/sessions/295-gbl-013-wave2.adoc`.
-
-== Session 292 — durcissement structurel
 
 == Décision pilote (2026-11-05) — C6 prose / modèle
 
@@ -30,30 +39,15 @@
 == Acquis S-292 (2026-11-05)
 
 * `TranslatedTextSanitizer` : CR/LF → espace, trim, échappement des marqueurs
-  de bloc en tête (`=`, `|`, `[`, `----`, `....`, `++++`) ; appliqué à tous les
-  textes traduits ; `PivotInline.LineBreak` préservé.
+  de bloc en tête ; appliqué à tous les textes traduits.
 * `ContentTranslationService.requireSameBlockStructure` : rendu en mémoire,
   ré-parse, signature source ↔ variante ; écart = `IllegalStateException`,
-  fichier **non écrit**. Couvre les 3 chemins d'écriture.
-* `DocumentTranslator.structureSignature` partagé (delta + garde).
-* Tests : 9 sanitizer + 6 garde. Commit `61801cf`, CI `42077356614` **verte**.
-* **Build** : `com.gradle.plugin-publish 2.2.1` + `compatibility { features {
-  configurationCache = false } }` (commit `aad5e52`).
-* **Portal** : `document-plugin 0.0.31` publié (créé 2026-11-05 17:51:36) via
-  override d'init script (catalogue 0.0.122 déclare encore 0.0.30) ; POM
-  importe `workspace-bom:0.0.122` (publié). `publishToMavenLocal` 0.0.31 fait.
-
-== Mission session 293
-
-. Consommer **document 0.0.31** dans le C6 (le site l'a déjà utilisé en local
-   pour le pilote `en` : 4 traduits, 11 rejetés par la garde, 787/0).
-. Attendre l'approbation Portal (`education.cccp.document 0.0.31`).
-. Au 2026-12-01 : publier la même **0.0.31** sur Central ; re-pinner le runner.
-. Rester : DOC-OUT-3 (statut réel, dépend de CB-I18N-SAFETY), DOC-OUT-4 (BDD
-   dogfooding), et la reprise C6 côté site.
+  fichier **non écrit**.
+* **Portal** : `document-plugin 0.0.31` publié le 2026-11-05 ; Central au reset.
 
 == Rappels
 
 * **Local = Build, Tests = CI** : compiler seulement.
+* Canal = propriété `-Pchannel` (`jitpack` défaut) ; jamais de branche.
 * **Zéro Python** ; English only code/tests/features (gouvernance `.adoc` en FR).
 * Ne pas lire les fichiers gitignorés. Commit/push sur accord pilote.

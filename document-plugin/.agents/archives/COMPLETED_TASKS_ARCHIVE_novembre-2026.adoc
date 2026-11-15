@@ -36,3 +36,13 @@ _Session 291 (2026-11-02) — DOC-A11Y socle (GBL-011-3)_
 * Run `43503173120` VERT (commit `3b8ea42`).
 * Rapport `.agents/sessions/295-gbl-013-wave2.adoc`.
 
+
+== S-296 — GBL-014-5 rollout du canal + GBL-014-4 + GBL-013-10 ✅
+
+* Settings channel-conditionnels (`-Pchannel`, défaut `jitpack`) racine et
+  sous-build ; `ci/run.sh` `-Pchannel`, cible `central` = `-Pchannel=central`.
+* Shim conventions `0.0.19` ; actions `node24`-natives (checkout@v7,
+  setup-java@v6, setup-gradle@v6, upload-artifact@v7, download-artifact@v8).
+* Image `cccp-ci-base` Node 26.13.1 (`sha256:03ead378…`) sur les 4 jobs.
+* CI `Test` verte sur les 4 commits (`43660592324`→`43690082515`).
+* Rapport `.agents/sessions/296-gbl-014-5-channel-rollout.adoc`.
